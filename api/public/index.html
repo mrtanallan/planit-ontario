@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PlanIt — Ontario SSC Teacher OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============ VARIABLES ============ */
+:root {
+  --ink: #16120E;
+  --cream: #F8F4EE;
+  --paper: #FFFFFF;
+  --sage: #4A7C59;
+  --sage-light: #EAF0EA;
+  --amber: #C47B2A;
+  --amber-light: #FDF4E3;
+  --rust: #B54B2A;
+  --rust-light: #FCEEE9;
+  --blue: #2A5FA5;
+  --blue-light: #E8EFF9;
+  --border: #E0D8CC;
+  --muted: #7A726A;
+  --r: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; font-size: 14px; }
+
+/* ============ NAV — pure CSS tabs via hidden radios ============ */
+.tab-radio { display: none; }
+nav { background: var(--ink); display: flex; align-items: center; padding: 0 24px; height: 54px; position: sticky; top: 0; z-index: 100; }
+.nav-logo { font-family: 'Fraunces', serif; font-size: 1.3rem; font-weight: 700; color: var(--cream); margin-right: 32px; flex-shrink: 0; }
+.nav-logo span { color: var(--amber); }
+.nav-tabs { display: flex; gap: 2px; flex: 1; overflow-x: auto; }
+.nav-tab { padding: 8px 16px; color: #9CA3AF; cursor: pointer; border-radius: 6px; font-size: 0.82rem; font-weight: 500; white-space: nowrap; transition: all 0.15s; user-select: none; display: block; }
+.nav-tab:hover { color: var(--cream); background: rgba(255,255,255,0.07); }
+
+/* CSS tab switching */
+#t-plan:checked   ~ nav .nav-tab[for="t-plan"],
+#t-tracker:checked ~ nav .nav-tab[for="t-tracker"],
+#t-roster:checked  ~ nav .nav-tab[for="t-roster"],
+#t-curriculum:checked ~ nav .nav-tab[for="t-curriculum"] { color: var(--cream); background: rgba(255,255,255,0.14); }
+
+/* ============ PAGES ============ */
+.page { display: none; padding: 28px 24px; max-width: 1100px; margin: 0 auto; }
+#t-plan:checked       ~ #page-plan      { display: block; }
+#t-tracker:checked    ~ #page-tracker   { display: block; }
+#t-roster:checked     ~ #page-roster    { display: block; }
+#t-curriculum:checked ~ #page-curriculum { display: block; }
+
+/* ============ WORKFLOW STEPS ============ */
+.wf-steps { display: flex; align-items: center; background: var(--paper); border: 1px solid var(--border); border-radius: var(--r); padding: 14px 20px; margin-bottom: 24px; overflow-x: auto; gap: 0; }
+.wf-step { display: flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 6px; font-size: 0.82rem; font-weight: 500; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+.wf-step:hover { color: var(--ink); }
+.wf-step.active { background: var(--sage-light); color: var(--sage); }
+.wf-step.done { color: var(--sage); }
+.wf-step.locked { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+.wf-num { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 0.65rem; flex-shrink: 0; }
+.wf-step.done .wf-num { background: var(--sage); border-color: var(--sage); color: white; }
+.wf-arrow { color: var(--border); margin: 0 2px; }
+
+/* ============ CARDS ============ */
+.card { background: var(--paper); border: 1px solid var(--border); border-radius: var(--r); padding: 22px; margin-bottom: 20px; }
+.card-title { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+.page-header { margin-bottom: 24px; }
+.page-header h1 { font-family: 'Fraunces', serif; font-size: 1.6rem; font-weight: 600; line-height: 1.2; }
+.page-header h1 em { font-style: italic; color: var(--sage); }
+.page-header p { color: var(--muted); margin-top: 6px; font-size: 0.88rem; line-height: 1.5; }
+
+/* ============ FORMS ============ */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); gap: 14px; margin-bottom: 16px; }
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fg.full { grid-column: 1/-1; }
+.fg.span2 { grid-column: span 2; }
+.fg label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+select, input[type="text"], input[type="number"], textarea {
+  font-family: 'DM Sans', sans-serif; font-size: 0.88rem; padding: 9px 12px;
+  border: 1.5px solid var(--border); border-radius: 7px; background: var(--cream);
+  color: var(--ink); outline: none; transition: border-color 0.2s; width: 100%;
+}
+select:focus, input:focus, textarea:focus { border-color: var(--sage); }
+textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+/* ============ CHIPS ============ */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.chip { display: flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1.5px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 0.82rem; background: var(--cream); transition: all 0.15s; user-select: none; }
+.chip input[type="checkbox"] { width: 13px; height: 13px; accent-color: var(--sage); flex-shrink: 0; }
+.chip:has(input:checked) { border-color: var(--sage); background: var(--sage-light); color: var(--sage); font-weight: 500; }
+
+/* ============ BUTTONS ============ */
+.btn { padding: 10px 20px; border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-ink { background: var(--ink); color: var(--cream); }
+.btn-ink:hover:not(:disabled) { background: #2D2A27; }
+.btn-sage { background: var(--sage); color: white; }
+.btn-sage:hover { background: #3D6649; }
+.btn-blue { background: var(--blue); color: white; }
+.btn-blue:hover { background: #1E4A8A; }
+.btn-amber { background: var(--amber); color: white; }
+.btn-amber:hover { background: #A86820; }
+.btn-out { background: transparent; border: 1.5px solid var(--border); color: var(--ink); }
+.btn-out:hover { border-color: var(--sage); color: var(--sage); }
+.btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+.btn-full { width: 100%; justify-content: center; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ============ BANNERS ============ */
+.banner { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.83rem; line-height: 1.5; display: flex; gap: 10px; align-items: flex-start; }
+.ban-amber { background: var(--amber-light); border: 1px solid #E8C98A; color: #7A5020; }
+.ban-sage { background: var(--sage-light); border: 1px solid #A8C4AB; color: #2D5C38; }
+.ban-blue { background: var(--blue-light); border: 1px solid #B0C8E8; color: #1E3A6E; }
+
+/* ============ CONTENT BLOCKS (edit view) ============ */
+.cb { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 16px; }
+.cb-header { padding: 11px 16px; background: var(--cream); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+.cb-label { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.cb-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+.cb-body { padding: 18px; font-size: 0.88rem; line-height: 1.8; background: var(--paper); min-height: 80px; outline: none; white-space: pre-wrap; }
+.cb-body[contenteditable="true"]:focus { box-shadow: inset 0 0 0 2px var(--sage); }
+.cb-footer { padding: 9px 16px; background: var(--sage-light); border-top: 1px solid var(--border); font-size: 0.78rem; color: var(--sage); display: flex; align-items: center; justify-content: space-between; }
+
+/* ============ LOADING ============ */
+.dots { display: inline-flex; gap: 4px; }
+.dots span { width: 6px; height: 6px; background: var(--sage); border-radius: 50%; animation: dp 1.2s infinite; }
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dp { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
+
+/* ============ ASSESSMENT ============ */
+.assess-row { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--paper); margin-bottom: 10px; }
+.assess-row-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px; }
+.assess-name { font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+.tag { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); background: var(--cream); padding: 2px 7px; border-radius: 10px; border: 1px solid var(--border); }
+.level-group { display: flex; align-items: center; gap: 3px; }
+.lvl-divider { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+.level-btn { padding: 5px 10px; border: 1.5px solid var(--border); border-radius: 5px; font-family: 'DM Mono', monospace; font-size: 0.75rem; font-weight: 600; cursor: pointer; background: var(--cream); transition: all 0.12s; }
+.level-btn:hover { transform: translateY(-1px); border-color: var(--muted); }
+.level-btn.L1.sel { background: #FEE2E2; border-color: #EF4444; color: #991B1B; }
+.level-btn.L2.sel { background: #FEF9C3; border-color: #EAB308; color: #854D0E; }
+.level-btn.L3.sel { background: #DBEAFE; border-color: #3B82F6; color: #1E40AF; }
+.level-btn.L4.sel { background: #DCFCE7; border-color: #22C55E; color: #166534; }
+.assess-notes { display: flex; gap: 8px; margin-top: 8px; }
+.notes-input { flex: 1; padding: 7px 10px; font-size: 0.82rem; border: 1.5px solid var(--border); border-radius: 6px; background: var(--cream); font-family: 'DM Sans', sans-serif; outline: none; }
+.notes-input:focus { border-color: var(--sage); }
+.fb-box { margin-top: 10px; padding: 12px 14px; background: var(--blue-light); border: 1px solid #B0C8E8; border-radius: 7px; font-size: 0.85rem; line-height: 1.7; color: #1E3A6E; display: none; }
+.fb-editable { min-height: 60px; padding: 10px 12px; border: 1.5px solid var(--blue); border-radius: 6px; background: white; outline: none; cursor: text; line-height: 1.7; }
+.fb-editable:focus { border-color: var(--amber); }
+
+/* ============ ROSTER ============ */
+.roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.s-card { border: 1.5px solid var(--border); border-radius: 8px; padding: 12px 14px; background: var(--paper); transition: border-color 0.15s; }
+.s-card.has-iep { border-color: var(--amber); }
+.s-card-top { display: flex; align-items: center; gap: 10px; }
+.s-avatar { width: 32px; height: 32px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 0.9rem; font-weight: 600; flex-shrink: 0; }
+.s-info { flex: 1; min-width: 0; }
+.s-name { font-weight: 500; font-size: 0.85rem; }
+.s-meta { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
+.iep-badge { font-family: 'DM Mono', monospace; font-size: 0.55rem; background: var(--amber-light); color: var(--amber); padding: 2px 6px; border-radius: 4px; border: 1px solid #E8C98A; }
+.s-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.s-iep-edit { display: none; margin-top: 10px; }
+.s-iep-textarea { width: 100%; min-height: 70px; font-size: 0.82rem; padding: 8px; border: 1.5px solid var(--amber); border-radius: 6px; background: var(--amber-light); font-family: 'DM Sans', sans-serif; outline: none; resize: vertical; }
+
+/* ============ GRADE TRACKER ============ */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--paper); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; text-align: center; }
+.stat-num { font-family: 'Fraunces', serif; font-size: 1.8rem; font-weight: 600; }
+.stat-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.gp { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; font-family: 'DM Mono', monospace; }
+.gp-4 { background: #DCFCE7; color: #166534; }
+.gp-3 { background: #DBEAFE; color: #1E40AF; }
+.gp-2 { background: #FEF9C3; color: #854D0E; }
+.gp-1 { background: #FEE2E2; color: #991B1B; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.data-table th { text-align: left; padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border); background: var(--cream); }
+.data-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+
+/* ============ INNER TABS ============ */
+.inner-tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+.inner-tab { padding: 8px 16px; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+.inner-tab.on { color: var(--sage); border-bottom-color: var(--sage); }
+.inner-page { display: none; }
+.inner-page.on { display: block; }
+
+/* ============ CURRICULUM ============ */
+.prog-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin: 6px 0 4px; }
+.prog-fill { height: 100%; background: var(--sage); border-radius: 4px; transition: width 0.3s; }
+.exp-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 6px; background: var(--paper); margin-bottom: 5px; transition: background 0.15s; }
+.exp-item.covered { background: var(--sage-light); border-color: #A8C4AB; }
+.exp-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--sage); flex-shrink: 0; margin-top: 2px; }
+.exp-code { font-family: 'DM Mono', monospace; font-size: 0.58rem; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; white-space: nowrap; }
+.exp-text { font-size: 0.82rem; line-height: 1.4; }
+.exp-meta { font-family: 'DM Mono', monospace; font-size: 0.58rem; color: var(--muted); margin-top: 2px; }
+.grade-group { margin-bottom: 14px; }
+.grade-group-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; border-radius: 7px; cursor: pointer; margin-bottom: 5px; border: 1.5px solid var(--border); background: var(--cream); }
+.grade-group-header.in-class { background: var(--sage-light); border-color: var(--sage); }
+.in-class-badge { font-family: 'DM Mono', monospace; font-size: 0.55rem; background: var(--sage); color: white; padding: 2px 7px; border-radius: 10px; }
+
+/* ============ MODAL ============ */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: none; align-items: center; justify-content: center; }
+.modal-bg.open { display: flex; }
+.modal { background: var(--paper); border-radius: var(--r); padding: 28px; max-width: 460px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal h3 { font-family: 'Fraunces', serif; font-size: 1.15rem; font-weight: 600; margin-bottom: 6px; }
+.modal p { color: var(--muted); font-size: 0.85rem; margin-bottom: 18px; line-height: 1.5; }
+
+/* ============ WORKSHEET RENDERER ============ */
+.ws-wrap { font-size: 0.9rem; line-height: 1.85; }
+.ws-wrap h2 { font-family: 'Fraunces', serif; font-size: 1rem; font-weight: 600; margin: 16px 0 7px; padding: 7px 13px; background: var(--sage-light); border-left: 3px solid var(--sage); border-radius: 0 6px 6px 0; }
+.ws-wrap h3 { font-size: 0.78rem; font-weight: 600; color: var(--sage); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 5px; }
+.ws-wrap ul { padding-left: 18px; margin: 5px 0; }
+.ws-wrap li { margin-bottom: 3px; }
+.ws-in { width: 100%; border: none; border-bottom: 2px solid var(--sage); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; padding: 5px 3px; outline: none; color: var(--ink); display: block; margin: 3px 0 8px; }
+.ws-in:focus { border-bottom-color: var(--amber); background: var(--amber-light); border-radius: 3px 3px 0 0; padding: 5px 7px; }
+.ws-ta { width: 100%; border: 2px solid var(--sage); border-radius: 7px; background: var(--sage-light); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; padding: 9px 11px; outline: none; color: var(--ink); resize: vertical; min-height: 90px; margin: 5px 0 8px; display: block; }
+.ws-ta:focus { border-color: var(--amber); background: var(--amber-light); }
+.ws-choices { display: flex; flex-wrap: wrap; gap: 7px; margin: 7px 0 10px; }
+.ws-choice { display: flex; align-items: center; gap: 6px; padding: 6px 13px; border: 1.5px solid var(--border); border-radius: 18px; cursor: pointer; font-size: 0.84rem; background: var(--cream); }
+.ws-wordbank { background: var(--blue-light); border: 1px solid #B0C8E8; border-radius: 7px; padding: 11px 14px; margin: 9px 0; }
+.ws-wb-title { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; color: var(--blue); margin-bottom: 7px; }
+.ws-wb-words { display: flex; flex-wrap: wrap; gap: 7px; }
+.ws-wb-word { background: white; border: 1px solid var(--blue); border-radius: 4px; padding: 2px 10px; font-size: 0.82rem; }
+.ws-diagram { background: var(--amber-light); border: 1px dashed var(--amber); border-radius: 7px; padding: 13px; margin: 9px 0; font-style: italic; text-align: center; color: #7A5020; font-size: 0.85rem; }
+
+/* ============ MISC ============ */
+.split-tag { display: inline-flex; align-items: center; gap: 4px; background: var(--amber-light); border: 1px solid #E8C98A; color: var(--amber); padding: 3px 10px; border-radius: 12px; font-family: 'DM Mono', monospace; font-size: 0.65rem; }
+@media(max-width:640px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  nav { padding: 0 12px; }
+  .page { padding: 16px 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Tab radio controls -->
+<input type="radio" class="tab-radio" name="tab" id="t-plan" checked>
+<input type="radio" class="tab-radio" name="tab" id="t-tracker">
+<input type="radio" class="tab-radio" name="tab" id="t-roster">
+<input type="radio" class="tab-radio" name="tab" id="t-curriculum">
+
+<nav>
+  <div class="nav-logo">Plan<span>It</span></div>
+  <div class="nav-tabs">
+    <label class="nav-tab" for="t-plan">📅 Daily Workflow</label>
+    <label class="nav-tab" for="t-tracker">📊 Grade Tracker</label>
+    <label class="nav-tab" for="t-roster">👥 Class Roster</label>
+    <label class="nav-tab" for="t-curriculum">📋 Curriculum</label>
+  </div>
+</nav>
+
+<!-- Share Modal -->
+<div class="modal-bg" id="shareModal">
+  <div class="modal">
+    <h3>📤 Share to Google Classroom</h3>
+    <p>Opens Google Classroom with content pre-filled. You review and post from there.</p>
+    <div class="fg" style="margin-bottom:12px;"><label>Post title</label><input type="text" id="shareTitle"></div>
+    <div class="fg" style="margin-bottom:18px;"><label>Instructions for students</label><textarea id="shareInstructions" style="min-height:70px;">Please complete the activities below. Do your best work!</textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-blue btn-full" onclick="doGClassroom()">🎓 Open in Google Classroom</button>
+      <button class="btn btn-out" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE: DAILY WORKFLOW ===================== -->
+<div class="page" id="page-plan">
+
+  <!-- Workflow nav -->
+  <div class="wf-steps" id="wfSteps">
+    <div class="wf-step active" id="ws1" onclick="gotoStep(1)"><div class="wf-num">1</div>📝 Plan</div>
+    <span class="wf-arrow">›</span>
+    <div class="wf-step locked" id="ws2" onclick="gotoStep(2)"><div class="wf-num">2</div>✏️ Review & Edit</div>
+    <span class="wf-arrow">›</span>
+    <div class="wf-step locked" id="ws3" onclick="gotoStep(3)"><div class="wf-num">3</div>📤 Share</div>
+    <span class="wf-arrow">›</span>
+    <div class="wf-step locked" id="ws4" onclick="gotoStep(4)"><div class="wf-num">4</div>📊 Assess</div>
+    <span class="wf-arrow">›</span>
+    <div class="wf-step locked" id="ws5" onclick="gotoStep(5)"><div class="wf-num">5</div>💬 Feedback</div>
+  </div>
+
+  <!-- Step 1: Plan -->
+  <div id="step1">
+    <div class="banner ban-amber"><span>🍁</span><span>Aligned to the <strong>Ontario Curriculum</strong> — Reading, Writing, Oral Communication, Media Literacy. Supports up to 4-grade split classes.</span></div>
+    <div class="card">
+      <div class="card-title">📚 Class Setup</div>
+      <div class="banner ban-amber" style="margin-bottom:14px;font-size:.8rem;padding:9px 13px;">
+        <span>✂️</span><span>Select Grade A (required) + up to 3 more for split/multi-grade class. Leave extras as "—".</span>
+      </div>
+      <div class="form-grid">
+        <div class="fg"><label>Grade A ✱</label>
+          <select id="gradeA"><option value="">Select...</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        </div>
+        <div class="fg"><label>Grade B</label>
+          <select id="gradeB"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        </div>
+        <div class="fg"><label>Grade C</label>
+          <select id="gradeC"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        </div>
+        <div class="fg"><label>Grade D</label>
+          <select id="gradeD"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        </div>
+        <div class="fg"><label>Subject</label>
+          <select id="subject"><option>Language / Literacy</option><option>Mathematics</option><option>Science & Technology</option><option>Social Studies</option><option>Health & PE</option><option>The Arts</option></select>
+        </div>
+        <div class="fg"><label>Duration</label>
+          <select id="duration"><option>Single lesson (1 day)</option><option>3-day mini unit</option><option>1 week (5 days)</option><option>2 weeks</option></select>
+        </div>
+        <div class="fg span2"><label>Topic / Focus</label><input type="text" id="topic" placeholder="e.g. Inference, Narrative Writing, Fractions..."></div>
+        <div class="fg full"><label>Class context (optional)</label><textarea id="context" placeholder="e.g. 28 students, 4 ELL, iPads available, strong oral but weak written..."></textarea></div>
+      </div>
+      <div class="card-title" style="margin-bottom:10px;">📖 Literacy Strands</div>
+      <div class="chip-row">
+        <label class="chip"><input type="checkbox" id="ck-read" checked> 📖 Reading</label>
+        <label class="chip"><input type="checkbox" id="ck-write" checked> ✏️ Writing</label>
+        <label class="chip"><input type="checkbox" id="ck-oral"> 🎤 Oral Communication</label>
+        <label class="chip"><input type="checkbox" id="ck-media"> 📱 Media Literacy</label>
+      </div>
+      <div class="card-title" style="margin-bottom:10px;">📄 Generate</div>
+      <div class="chip-row">
+        <label class="chip"><input type="checkbox" id="ck-plan" checked> 🗓 Lesson Plan</label>
+        <label class="chip"><input type="checkbox" id="ck-ws" checked> 📝 Student Worksheet</label>
+        <label class="chip"><input type="checkbox" id="ck-read-res"> 📄 Reading Resource</label>
+        <label class="chip"><input type="checkbox" id="ck-rubric" checked> 📏 Assessment Rubric</label>
+        <label class="chip"><input type="checkbox" id="ck-diff"> ♿ Differentiation & Modified Expectations</label>
+      </div>
+      <button class="btn btn-ink btn-full" id="genBtn" onclick="generateLesson()">✨ Generate Lesson</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Review & Edit -->
+  <div id="step2" style="display:none;">
+    <div class="banner ban-sage"><span>✏️</span><span><strong>Review & Edit:</strong> Click "Edit" on any section to modify content before sharing. Changes are saved automatically.</span></div>
+    <div id="editBlocks"></div>
+    <div class="btn-row">
+      <button class="btn btn-ink" onclick="gotoStep(3)">Continue to Share →</button>
+      <button class="btn btn-out" onclick="gotoStep(1)">← Back to Plan</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Share -->
+  <div id="step3" style="display:none;">
+    <div class="banner ban-blue"><span>📤</span><span><strong>Share to Students:</strong> Opens Google Classroom pre-filled — you confirm before anything is posted.</span></div>
+    <div id="shareCards"></div>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn btn-ink" onclick="gotoStep(4)">Continue to Assess →</button>
+      <button class="btn btn-out" onclick="gotoStep(2)">← Back to Edit</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Assess -->
+  <div id="step4" style="display:none;">
+    <div class="banner ban-amber"><span>📊</span><span><strong>Quick Assessment:</strong> Tap a level for each student. Add observation notes while circulating.</span></div>
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-family:'Fraunces',serif;font-size:1rem;font-weight:600;" id="assessLabel">Today's Assessment</div>
+          <div style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);margin-top:3px;" id="assessMeta"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-sage btn-sm" onclick="saveAssessments()">💾 Save All</button>
+          <button class="btn btn-out btn-sm" onclick="gotoStep(5)">Feedback →</button>
+        </div>
+      </div>
+    </div>
+    <div id="assessGrid"><div style="color:var(--muted);font-size:.85rem;font-style:italic;padding:20px;">Add students in Class Roster first, then return here.</div></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-sage" onclick="saveAssessments()">💾 Save Assessment</button>
+      <button class="btn btn-out" onclick="gotoStep(3)">← Back to Share</button>
+    </div>
+  </div>
+
+  <!-- Step 5: Feedback -->
+  <div id="step5" style="display:none;">
+    <div class="banner ban-blue"><span>💬</span><span><strong>Descriptive Feedback:</strong> AI-generated Ontario-style feedback per student based on their level and your notes. Edit before copying.</span></div>
+    <div id="fbGrid"></div>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn btn-out" onclick="gotoStep(4)">← Back to Assess</button>
+      <button class="btn btn-ink" onclick="switchToTracker()">View Grade Tracker →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PAGE: GRADE TRACKER ===================== -->
+<div class="page" id="page-tracker">
+  <div class="page-header"><h1>Grade <em>Tracker</em></h1><p>Assessments recorded in the Daily Workflow appear here automatically.</p></div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="st-students">0</div><div class="stat-label">Students</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-sessions">0</div><div class="stat-label">Sessions</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-avg">—</div><div class="stat-label">Class Avg</div></div>
+    <div class="stat-card"><div class="stat-num" id="st-l4">0</div><div class="stat-label">At Level 4</div></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div class="card-title" style="margin-bottom:0;">Student Performance</div>
+      <button class="btn btn-out btn-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+    </div>
+    <div id="gradeTable"><div style="color:var(--muted);font-size:.85rem;font-style:italic;">No data yet. Complete Step 4 in Daily Workflow.</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Recent Sessions</div>
+    <div id="sessionList"><div style="color:var(--muted);font-size:.85rem;font-style:italic;">No sessions recorded yet.</div></div>
+  </div>
+</div>
+
+<!-- ===================== PAGE: CLASS ROSTER ===================== -->
+<div class="page" id="page-roster">
+  <div class="page-header"><h1>Class <em>Roster</em></h1><p>Students added here appear automatically in assessment screens. Add IEP expectations to differentiate lessons.</p></div>
+  <div class="card">
+    <div class="card-title">➕ Add Student</div>
+    <div class="form-grid">
+      <div class="fg"><label>First Name</label><input type="text" id="sFirst" placeholder="First name"></div>
+      <div class="fg"><label>Last Name</label><input type="text" id="sLast" placeholder="Last name"></div>
+      <div class="fg"><label>Grade</label>
+        <select id="sGrade"><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+      </div>
+      <div class="fg"><label>Accommodation / Notes</label><input type="text" id="sNotes" placeholder="e.g. ELL, IEP-Reading, Gifted..."></div>
+      <div class="fg full">
+        <label>Modified Expectations (IEP) — paste from your doc</label>
+        <textarea id="sIEP" style="min-height:90px;" placeholder="Optional — paste this student's modified expectations here. When provided, generated lessons will differentiate specifically for this student.&#10;&#10;e.g.:&#10;- Reading: identify main idea at Grade 2 level with visual supports&#10;- Writing: compose 3-5 sentence paragraphs using a graphic organizer"></textarea>
+      </div>
+    </div>
+    <div class="banner ban-amber" style="margin-bottom:14px;font-size:.8rem;"><span>📋</span><span>When Modified Expectations are provided, the lesson generator automatically differentiates for this student. Leave blank to use standard Ontario grade-level expectations.</span></div>
+    <div class="btn-row">
+      <button class="btn btn-sage" onclick="addStudent()">➕ Add Student</button>
+      <button class="btn btn-out" onclick="loadSample()">📋 Load Sample Roster</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div class="card-title" style="margin-bottom:0;">👥 Students <span id="rosterCount" style="color:var(--muted);">(0)</span></div>
+      <button class="btn btn-out btn-sm" style="color:var(--rust);border-color:var(--rust);" onclick="clearRoster()">Clear All</button>
+    </div>
+    <div class="roster-grid" id="rosterGrid"><div style="color:var(--muted);font-size:.85rem;font-style:italic;grid-column:1/-1;">No students yet. Add students above or load a sample roster.</div></div>
+  </div>
+</div>
+
+<!-- ===================== PAGE: CURRICULUM ===================== -->
+<div class="page" id="page-curriculum">
+  <div class="page-header"><h1>Curriculum <em>Tracker</em></h1><p>272 Ontario expectations across all subjects K–8. Grades in your roster are shown first.</p></div>
+
+  <div class="inner-tabs">
+    <div class="inner-tab on" onclick="showCurrTab('standard',this)">📋 Ontario Expectations</div>
+    <div class="inner-tab" onclick="showCurrTab('iep',this)">🎯 Student IEP Goals</div>
+  </div>
+
+  <div class="inner-page on" id="curr-standard">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div class="card-title" style="margin-bottom:0;">Overall Progress</div>
+        <span id="progLabel" style="font-family:'DM Mono',monospace;font-size:.75rem;color:var(--sage);">0 / 272</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Filter</div>
+      <div class="form-grid">
+        <div class="fg"><label>Grade</label>
+          <select id="fGrade" onchange="renderCurriculum()"><option value="all">All Grades</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        </div>
+        <div class="fg"><label>Subject</label>
+          <select id="fSubject" onchange="renderCurriculum()"><option value="all">All Subjects</option><option>Language</option><option>Mathematics</option><option>Science</option><option>Social Studies</option><option>Health &amp; PE</option><option>The Arts</option></select>
+        </div>
+        <div class="fg"><label>Strand</label>
+          <select id="fStrand" onchange="renderCurriculum()"><option value="all">All Strands</option><option>Reading</option><option>Writing</option><option>Oral Communication</option><option>Media Literacy</option><option>Number</option><option>Algebra</option><option>Geometry</option><option>Measurement</option><option>Data</option><option>Life Systems</option><option>Matter</option><option>Energy</option><option>Earth</option><option>Active Living</option><option>Healthy Living</option><option>Visual Arts</option><option>Music</option><option>Drama</option><option>Dance</option><option>Heritage &amp; Identity</option><option>People &amp; Environments</option></select>
+        </div>
+        <div class="fg"><label>Status</label>
+          <select id="fStatus" onchange="renderCurriculum()"><option value="all">All</option><option value="done">Covered ✅</option><option value="todo">Not yet</option></select>
+        </div>
+      </div>
+      <div class="banner ban-sage" style="margin-bottom:0;font-size:.8rem;"><span>💡</span><span>Grades in your <strong>Class Roster</strong> are expanded and highlighted. Other grades are collapsed — click to expand.</span></div>
+    </div>
+    <div id="currList"></div>
+  </div>
+
+  <div class="inner-page" id="curr-iep">
+    <div class="banner ban-amber"><span>🎯</span><span>Modified expectations from each student's IEP profile. Add or edit them in Class Roster, then track coverage here.</span></div>
+    <div id="iepList"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let students = [];
+let sessions = [];
+let currDone = {};
+let iepCovered = {};
+let genContent = {};
+let curSession = null;
+let shareKey = '';
+
+const BACKEND = '/api/generate';
+const GRADE_ORDER = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
+const AVATARS = ['#4A7C59','#2A5FA5','#C47B2A','#B54B2A','#6B46C1','#0F766E','#7C4A6E','#4A6E7C'];
+const BLOCK_LABELS = {lesson_plan:'📅 Lesson Plan',student_worksheet:'📝 Student Worksheet',reading_resource:'📄 Reading Resource',assessment_rubric:'📏 Assessment Rubric',differentiation_tips:'♿ Differentiation & Modified Expectations'};
+const SHAREABLE = ['student_worksheet','reading_resource','assessment_rubric'];
+
+// ============================================================
+// NAV HELPERS
+// ============================================================
+function switchToTracker() {
+  document.getElementById('t-tracker').checked = true;
+  renderTracker();
+}
+
+// ============================================================
+// WORKFLOW STEPS
+// ============================================================
+function gotoStep(n) {
+  const el = document.getElementById('ws'+n);
+  if (el.classList.contains('locked')) return;
+  for (let i=1;i<=5;i++) {
+    document.getElementById('step'+i).style.display = i===n?'block':'none';
+    const ws = document.getElementById('ws'+i);
+    ws.classList.remove('active');
+  }
+  el.classList.add('active');
+  if (n===4) renderAssessGrid();
+  if (n===5) renderFbGrid();
+}
+
+function unlockSteps() {
+  for (let i=2;i<=5;i++) {
+    const el = document.getElementById('ws'+i);
+    el.classList.remove('locked');
+    el.classList.add('done');
+  }
+}
+
+// ============================================================
+// LESSON GENERATOR
+// ============================================================
+async function generateLesson() {
+  const gA = document.getElementById('gradeA').value;
+  const topic = document.getElementById('topic').value.trim();
+  if (!gA || !topic) { alert('Please select Grade A and enter a topic.'); return; }
+
+  const grades = ['gradeA','gradeB','gradeC','gradeD'].map(id=>document.getElementById(id).value).filter(g=>g&&g!=='');
+  const isSplit = grades.length > 1;
+  const gradeDesc = isSplit ? grades.join(' / ') + ' multi-grade split class' : grades[0];
+  const subject = document.getElementById('subject').value;
+  const duration = document.getElementById('duration').value;
+  const context = document.getElementById('context').value;
+
+  const strands = [];
+  if(document.getElementById('ck-read').checked) strands.push('Reading');
+  if(document.getElementById('ck-write').checked) strands.push('Writing');
+  if(document.getElementById('ck-oral').checked) strands.push('Oral Communication');
+  if(document.getElementById('ck-media').checked) strands.push('Media Literacy');
+
+  const outputs = [];
+  if(document.getElementById('ck-plan').checked) outputs.push('lesson_plan');
+  if(document.getElementById('ck-ws').checked) outputs.push('student_worksheet');
+  if(document.getElementById('ck-read-res').checked) outputs.push('reading_resource');
+  if(document.getElementById('ck-rubric').checked) outputs.push('assessment_rubric');
+  if(document.getElementById('ck-diff').checked) outputs.push('differentiation_tips');
+  if(!outputs.length) { alert('Select at least one output type.'); return; }
+
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true; btn.textContent = '⏳ Generating...';
+
+  curSession = { id: Date.now(), date: new Date().toLocaleDateString('en-CA'), subject, strand: strands[0]||'General', grades, task: topic, marks: {} };
+
+  const splitNote = isSplit ? `IMPORTANT: MULTI-GRADE SPLIT CLASS: ${grades.join(', ')}. Clearly differentiate content per grade with headings like "## ${grades[0]} Activities" etc.` : '';
+  const iepStudents = students.filter(s=>s.iep&&s.iep.trim());
+  const iepNote = iepStudents.length>0 ? '\nMODIFIED EXPECTATIONS (IEP Students):\n' + iepStudents.map(s=>`${s.first} ${s.last} (${s.grade}):\n${s.iep}`).join('\n\n') : '';
+
+  const prompt = `You are an expert Ontario elementary SSC teacher. Generate a classroom-ready lesson package.
+Grade(s): ${gradeDesc}
+Subject: ${subject}
+Topic: ${topic}
+Duration: ${duration}
+Strands: ${strands.join(', ')||'General'}
+Context: ${context||'Standard Ontario classroom.'}
+${splitNote}
+${iepNote}
+Align to Ontario Ministry of Education curriculum expectations.
+Return ONLY valid JSON with keys: ${outputs.map(k=>'"'+k+'"').join(', ')}.
+Each value is a markdown string. Rules:
+- Use ## for major sections, ### for subsections, **bold** for key terms, - for bullets
+- lesson_plan: include timing (0:00-0:10 format), Minds On / Action / Consolidation, materials list
+- student_worksheet: NEVER use underscores for answer spaces. Use these markers instead:
+  [TEXT BOX] for short answer (becomes a text input on student device)
+  [LARGE BOX] for paragraph response (becomes a textarea)
+  [CIRCLE ONE: Option1 / Option2 / Option3] for multiple choice
+  [CHECK ALL THAT APPLY: Option1 / Option2 / Option3] for checkboxes
+  [WORD BANK: word1, word2, word3] for vocabulary support
+  Use emoji section headers (📖 🤔 ✏️ 💬) to make it visually engaging. Include 4-6 varied activities.
+- reading_resource: original 200-300 word passage appropriate for the grade(s)
+- assessment_rubric: Ontario Level 1/2/3/4 with specific success criteria per level${iepStudents.length>0?' Include modified criteria for IEP students only if they have modified expectations':''}
+- differentiation_tips: per-grade strategies, ELL support, per-student IEP accommodations
+For split classes: clearly separate by grade. No text outside the JSON object.`;
+
+  try {
+    const res = await fetch(BACKEND, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:4000, messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok) throw new Error(`Server error ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
+    const raw = data.content.map(i=>i.text||'').join('');
+    let parsed;
+    try { parsed = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
+    catch(e1) {
+      try { const s=raw.indexOf('{'),e=raw.lastIndexOf('}'); parsed=JSON.parse(raw.slice(s,e+1)); }
+      catch(e2) {
+        parsed={};
+        outputs.forEach(k=>{ const m=raw.match(new RegExp('"'+k+'"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"','s')); if(m) parsed[k]=m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"'); else parsed[k]=raw; });
+      }
+    }
+    genContent={};
+    outputs.forEach(k=>{ genContent[k]={original:parsed[k]||'',current:parsed[k]||''}; });
+    buildEditBlocks(outputs, gradeDesc, subject, topic);
+    buildShareCards(outputs);
+    unlockSteps();
+    gotoStep(2);
+  } catch(e) {
+    alert('Error: ' + e.message);
+    console.error(e);
+  }
+  btn.disabled=false; btn.textContent='✨ Generate Lesson';
+}
+
+// ============================================================
+// STEP 2: EDIT BLOCKS
+// ============================================================
+function buildEditBlocks(outputs, gradeDesc, subject, topic) {
+  const c = document.getElementById('editBlocks');
+  c.innerHTML = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+    <span style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:600;">Generated Lesson</span>
+    <span class="split-tag">${gradeDesc}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);">${subject} · ${topic}</span>
+  </div>`;
+  outputs.forEach(k=>{
+    const isWS = k==='student_worksheet';
+    const isShareable = SHAREABLE.includes(k);
+    const rendered = isWS ? renderWorksheet(genContent[k].current) : renderMD(genContent[k].current);
+    c.innerHTML += `<div class="cb" id="cb-${k}">
+      <div class="cb-header">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="cb-label">${BLOCK_LABELS[k]}</span>
+          ${isWS?'<span style="font-family:\'DM Mono\',monospace;font-size:.58rem;color:var(--blue);background:var(--blue-light);padding:2px 7px;border-radius:4px;">📱 Interactive</span>':''}
+        </div>
+        <div class="cb-actions">
+          <button class="btn btn-out btn-sm" onclick="toggleEdit('${k}')">✏️ Edit</button>
+          <button class="btn btn-out btn-sm" onclick="resetBlock('${k}')">↩ Reset</button>
+          <button class="btn btn-out btn-sm" onclick="copyBlock('${k}')">📋 Copy</button>
+          ${isShareable?`<button class="btn btn-blue btn-sm" onclick="openShareModal('${k}')">📤 Share</button>`:''}
+        </div>
+      </div>
+      <div class="cb-body" id="cbb-${k}" contenteditable="false">${rendered}</div>
+      ${isWS?`<div class="cb-footer"><span>💡 Students tap to fill in answers on their iPads</span><button class="btn btn-out btn-sm" onclick="previewWS('${k}')">👁 Full Preview</button></div>`:''}
+    </div>`;
+  });
+}
+
+function toggleEdit(k) {
+  const el = document.getElementById('cbb-'+k);
+  if(el.contentEditable==='true') {
+    el.contentEditable='false';
+    genContent[k].current = el.innerText;
+  } else {
+    el.contentEditable='true';
+    el.focus();
+  }
+}
+
+function resetBlock(k) {
+  if(!confirm('Reset to original AI-generated content?')) return;
+  const el = document.getElementById('cbb-'+k);
+  el.contentEditable='false';
+  genContent[k].current = genContent[k].original;
+  el.innerHTML = k==='student_worksheet' ? renderWorksheet(genContent[k].original) : renderMD(genContent[k].original);
+}
+
+function copyBlock(k) {
+  navigator.clipboard.writeText(document.getElementById('cbb-'+k).innerText);
+  event.target.textContent='Copied!';
+  setTimeout(()=>event.target.textContent='📋 Copy',1500);
+}
+
+// ============================================================
+// STEP 3: SHARE
+// ============================================================
+function buildShareCards(outputs) {
+  const c = document.getElementById('shareCards');
+  const shareable = outputs.filter(k=>SHAREABLE.includes(k));
+  if(!shareable.length) { c.innerHTML='<div style="color:var(--muted);font-style:italic;">No shareable content selected. Go back and include Worksheet, Reading Resource, or Rubric.</div>'; return; }
+  c.innerHTML = shareable.map(k=>`<div class="card" style="margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+      <div><div style="font-weight:600;margin-bottom:3px;">${BLOCK_LABELS[k]}</div><div style="font-size:.82rem;color:var(--muted);">Share directly to your Google Classroom</div></div>
+      <div class="btn-row">
+        <button class="btn btn-out btn-sm" onclick="gotoStep(2)">✏️ Edit first</button>
+        <button class="btn btn-blue btn-sm" onclick="openShareModal('${k}')">📤 Share to Classroom</button>
+      </div>
+    </div>
+  </div>`).join('');
+}
+
+function openShareModal(k) {
+  shareKey = k;
+  document.getElementById('shareTitle').value = BLOCK_LABELS[k].replace(/^[^\s]+\s/,'');
+  document.getElementById('shareModal').classList.add('open');
+}
+function closeModal() { document.getElementById('shareModal').classList.remove('open'); }
+function doGClassroom() {
+  const title = document.getElementById('shareTitle').value;
+  const inst = document.getElementById('shareInstructions').value;
+  const body = (document.getElementById('cbb-'+shareKey)?.innerText||'').substring(0,1500);
+  window.open(`https://classroom.google.com/u/0/share?title=${encodeURIComponent(title)}&body=${encodeURIComponent(inst+'\n\n---\n\n'+body)}`,'_blank');
+  closeModal();
+}
+
+// ============================================================
+// STEP 4: ASSESS
+// ============================================================
+function renderAssessGrid() {
+  if(!curSession) return;
+  document.getElementById('assessLabel').textContent = curSession.task||'Today\'s Assessment';
+  document.getElementById('assessMeta').textContent = `${curSession.subject} · ${curSession.strand} · ${curSession.date}`;
+  const g = document.getElementById('assessGrid');
+  if(!students.length) { g.innerHTML='<div style="color:var(--muted);font-size:.85rem;font-style:italic;padding:20px;">Add students in Class Roster first.</div>'; return; }
+  g.innerHTML = students.map((s,i)=>`
+    <div class="assess-row" id="ar-${s.id}">
+      <div class="assess-row-top">
+        <div class="assess-name">
+          <div class="s-avatar" style="background:${AVATARS[i%AVATARS.length]};width:28px;height:28px;font-size:.78rem;">${s.first[0]}${s.last[0]}</div>
+          ${s.first} ${s.last}
+          <span class="tag">${s.grade}</span>
+          ${s.notes?`<span class="tag">${s.notes}</span>`:''}
+        </div>
+        <div id="lvlDisplay-${s.id}" style="font-family:'DM Mono',monospace;font-size:.75rem;color:var(--muted);">Not assessed</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap;">
+        <div class="level-group">
+          <button class="level-btn L1" title="Level 1−" onclick="setLevel(${s.id},'L1-',this)">1−</button>
+          <button class="level-btn L1" title="Level 1" onclick="setLevel(${s.id},'L1',this)">L1</button>
+          <button class="level-btn L1" title="Level 1+" onclick="setLevel(${s.id},'L1+',this)">1+</button>
+        </div>
+        <div class="lvl-divider"></div>
+        <div class="level-group">
+          <button class="level-btn L2" title="Level 2−" onclick="setLevel(${s.id},'L2-',this)">2−</button>
+          <button class="level-btn L2" title="Level 2" onclick="setLevel(${s.id},'L2',this)">L2</button>
+          <button class="level-btn L2" title="Level 2+" onclick="setLevel(${s.id},'L2+',this)">2+</button>
+        </div>
+        <div class="lvl-divider"></div>
+        <div class="level-group">
+          <button class="level-btn L3" title="Level 3−" onclick="setLevel(${s.id},'L3-',this)">3−</button>
+          <button class="level-btn L3" title="Level 3" onclick="setLevel(${s.id},'L3',this)">L3</button>
+          <button class="level-btn L3" title="Level 3+" onclick="setLevel(${s.id},'L3+',this)">3+</button>
+        </div>
+        <div class="lvl-divider"></div>
+        <div class="level-group">
+          <button class="level-btn L4" title="Level 4−" onclick="setLevel(${s.id},'L4-',this)">4−</button>
+          <button class="level-btn L4" title="Level 4" onclick="setLevel(${s.id},'L4',this)">L4</button>
+          <button class="level-btn L4" title="Level 4+" onclick="setLevel(${s.id},'L4+',this)">4+</button>
+        </div>
+      </div>
+      <div class="assess-notes">
+        <input class="notes-input" type="text" placeholder="Observation notes (optional)..." id="note-${s.id}" oninput="setNote(${s.id})">
+      </div>
+    </div>`).join('');
+}
+
+function setLevel(sid, level, btn) {
+  document.getElementById('ar-'+sid).querySelectorAll('.level-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  if(!curSession.marks[sid]) curSession.marks[sid]={};
+  curSession.marks[sid].level = level;
+  const base = level.replace(/[+-]/,'');
+  const num = base.replace('L','');
+  const sfx = level.includes('+')?'+':level.includes('-')?'−':'';
+  const colors = {L1:'var(--rust)',L2:'var(--amber)',L3:'var(--blue)',L4:'var(--sage)'};
+  const d = document.getElementById('lvlDisplay-'+sid);
+  d.textContent = 'Level '+num+sfx+' ●';
+  d.style.color = colors[base];
+}
+
+function setNote(sid) {
+  if(!curSession.marks[sid]) curSession.marks[sid]={};
+  curSession.marks[sid].notes = document.getElementById('note-'+sid)?.value||'';
+}
+
+function saveAssessments() {
+  const assessed = Object.keys(curSession.marks).filter(sid=>curSession.marks[sid].level);
+  if(!assessed.length) { alert('Assess at least one student before saving.'); return; }
+  const idx = sessions.findIndex(s=>s.id===curSession.id);
+  if(idx>=0) sessions[idx]={...curSession}; else sessions.push({...curSession});
+  alert(`✅ Saved for ${assessed.length} student(s).`);
+  renderTracker();
+}
+
+// ============================================================
+// STEP 5: FEEDBACK
+// ============================================================
+function renderFbGrid() {
+  const g = document.getElementById('fbGrid');
+  if(!curSession||!students.length) { g.innerHTML='<div style="color:var(--muted);font-style:italic;">Complete Step 4 first.</div>'; return; }
+  const assessed = students.filter(s=>curSession.marks[s.id]?.level);
+  if(!assessed.length) { g.innerHTML='<div style="color:var(--muted);font-style:italic;">No students assessed yet. Go back to Step 4.</div>'; return; }
+  g.innerHTML = assessed.map((s,i)=>{
+    const m = curSession.marks[s.id];
+    const base=m.level.replace(/[+-]/,'');
+    const num=base.replace('L','');
+    const sfx=m.level.includes('+')?'+':m.level.includes('-')?'−':'';
+    return `<div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="s-avatar" style="background:${AVATARS[i%AVATARS.length]}">${s.first[0]}${s.last[0]}</div>
+          <div>
+            <div style="font-weight:600;">${s.first} ${s.last}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);">${s.grade} · Level ${num}${sfx}</div>
+          </div>
+        </div>
+        <button class="btn btn-ink btn-sm" onclick="genFeedback(${s.id})">✨ Generate Feedback</button>
+      </div>
+      ${m.notes?`<div style="font-size:.82rem;color:var(--muted);margin-bottom:8px;font-style:italic;">Notes: ${m.notes}</div>`:''}
+      <div class="fb-box" id="fb-${s.id}"></div>
+    </div>`;
+  }).join('');
+}
+
+async function genFeedback(sid) {
+  const s = students.find(x=>x.id===sid);
+  const m = curSession?.marks[sid];
+  if(!s||!m?.level) return;
+  const fbEl = document.getElementById('fb-'+sid);
+  fbEl.style.display='block';
+  fbEl.innerHTML='<div class="dots"><span></span><span></span><span></span></div> Generating feedback...';
+  const base=m.level.replace(/[+-]/,'');
+  const sfx=m.level.includes('+')?'(strong, approaching next level)':m.level.includes('-')?'(emerging, needs support)':'';
+  const lvlMap={L1:'Level 1 (50-59%)',L2:'Level 2 (60-69%)',L3:'Level 3 (70-79%)',L4:'Level 4 (80%+)'};
+  const prompt = `Write Ontario-style descriptive feedback for a student. Warm, specific, professional, 3-4 sentences.
+Student: ${s.first} ${s.last}, ${s.grade}
+Subject: ${curSession.subject} — ${curSession.strand}
+Task: ${curSession.task}
+Achievement: ${lvlMap[base]} ${sfx}
+Teacher notes: ${m.notes||'None'}
+Accommodations: ${s.notes||'None'}
+${s.iep?'IEP expectations: '+s.iep:''}
+Start with a specific strength. Describe achievement with evidence. Give one clear next step. Use Ontario growth mindset language. Address student directly ("you"). Never say "good", "nice", or "great". Write only the feedback, no labels or preamble.`;
+  try {
+    const res = await fetch(BACKEND,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    const data = await res.json();
+    const text = data.content?.map(i=>i.text||'').join('')||'Error generating feedback.';
+    fbEl.innerHTML=`
+      <div style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">✏️ Click to edit before copying</div>
+      <div class="fb-editable" contenteditable="true" id="fbt-${sid}">${text}</div>
+      <div class="btn-row" style="margin-top:8px;">
+        <button class="btn btn-sage btn-sm" onclick="copyFb(${sid})">📋 Copy Feedback</button>
+        <button class="btn btn-out btn-sm" onclick="regenFb(${sid})">🔄 Regenerate</button>
+      </div>`;
+  } catch(e) { fbEl.innerHTML='Error: '+e.message; }
+}
+
+function copyFb(sid) {
+  const el = document.getElementById('fbt-'+sid);
+  if(!el) return;
+  navigator.clipboard.writeText(el.innerText.trim()).then(()=>{
+    const btn = el.nextElementSibling?.querySelector('.btn-sage');
+    if(btn){btn.textContent='✅ Copied!';setTimeout(()=>btn.textContent='📋 Copy Feedback',2000);}
+  });
+}
+
+function regenFb(sid) {
+  const fb = document.getElementById('fb-'+sid);
+  if(fb) fb.style.display='none';
+  genFeedback(sid);
+}
+
+// ============================================================
+// ROSTER
+// ============================================================
+function addStudent() {
+  const first = document.getElementById('sFirst').value.trim();
+  const last = document.getElementById('sLast').value.trim();
+  if(!first||!last){alert('Enter first and last name.');return;}
+  students.push({
+    id: Date.now()+Math.random(),
+    first, last,
+    grade: document.getElementById('sGrade').value,
+    notes: document.getElementById('sNotes').value.trim(),
+    iep: document.getElementById('sIEP').value.trim()
+  });
+  document.getElementById('sFirst').value='';
+  document.getElementById('sLast').value='';
+  document.getElementById('sNotes').value='';
+  document.getElementById('sIEP').value='';
+  renderRoster();
+}
+
+function loadSample() {
+  const s=[
+    {first:'Amara',last:'Okafor',grade:'Grade 5',notes:'ELL',iep:''},
+    {first:'Liam',last:'Chen',grade:'Grade 4',notes:'',iep:''},
+    {first:'Sofia',last:'Patel',grade:'Grade 5',notes:'IEP-Reading',iep:'Reading: identify main idea in Grade 2-level texts with visual supports\nWriting: compose 3-5 sentence paragraphs using a graphic organizer\nOral: participate in small group discussions with sentence starters'},
+    {first:'Marcus',last:'Williams',grade:'Grade 4',notes:'Gifted',iep:''},
+    {first:'Priya',last:'Singh',grade:'Grade 7',notes:'',iep:''},
+    {first:'Noah',last:'Tremblay',grade:'Grade 6',notes:'ELL',iep:'Reading: demonstrate understanding with bilingual dictionary support\nWriting: write structured paragraphs with French/English vocabulary scaffolding'},
+    {first:'Aisha',last:'Hassan',grade:'Grade 7',notes:'',iep:''},
+    {first:'Ethan',last:'Park',grade:'Grade 6',notes:'',iep:''},
+  ];
+  s.forEach(x=>students.push({id:Date.now()+Math.random(),...x}));
+  renderRoster();
+}
+
+function clearRoster(){if(!confirm('Clear all students?'))return;students=[];renderRoster();}
+
+function renderRoster() {
+  document.getElementById('rosterCount').textContent=`(${students.length})`;
+  const g = document.getElementById('rosterGrid');
+  if(!students.length){g.innerHTML='<div style="color:var(--muted);font-size:.85rem;font-style:italic;grid-column:1/-1;">No students yet.</div>';return;}
+  g.innerHTML = students.map((s,i)=>`
+    <div class="s-card ${s.iep?'has-iep':''}" id="sc-${s.id}">
+      <div class="s-card-top">
+        <div class="s-avatar" style="background:${AVATARS[i%AVATARS.length]}">${s.first[0]}${s.last[0]}</div>
+        <div class="s-info">
+          <div class="s-name">${s.first} ${s.last} ${s.iep?'<span class="iep-badge">IEP</span>':''}</div>
+          <div class="s-meta">${s.grade}${s.notes?' · '+s.notes:''}</div>
+        </div>
+        <div class="s-actions">
+          <button class="btn btn-out btn-sm" style="padding:3px 7px;" onclick="toggleIEP(${s.id})">✏️</button>
+          <button class="btn btn-out btn-sm" style="padding:3px 7px;color:var(--rust);border-color:var(--rust);" onclick="removeStudent(${s.id})">✕</button>
+        </div>
+      </div>
+      <div class="s-iep-edit" id="iep-${s.id}">
+        <label style="font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin:8px 0 4px;">Modified Expectations (IEP)</label>
+        <textarea class="s-iep-textarea" id="iept-${s.id}" placeholder="Paste modified expectations...">${s.iep||''}</textarea>
+        <div class="btn-row" style="margin-top:6px;">
+          <button class="btn btn-amber btn-sm" onclick="saveIEP(${s.id})">💾 Save</button>
+          <button class="btn btn-out btn-sm" onclick="toggleIEP(${s.id})">Cancel</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleIEP(sid) {
+  const el = document.getElementById('iep-'+sid);
+  el.style.display = el.style.display==='none'||!el.style.display ? 'block' : 'none';
+}
+
+function saveIEP(sid) {
+  const s = students.find(x=>x.id==sid);
+  if(s) s.iep = document.getElementById('iept-'+sid)?.value.trim()||'';
+  toggleIEP(sid);
+  renderRoster();
+}
+
+function removeStudent(sid) {
+  if(!confirm('Remove this student?'))return;
+  students=students.filter(s=>s.id!=sid);
+  renderRoster();
+}
+
+// ============================================================
+// GRADE TRACKER
+// ============================================================
+function renderTracker() {
+  document.getElementById('st-students').textContent=students.length;
+  document.getElementById('st-sessions').textContent=sessions.length;
+  if(!students.length||!sessions.length){
+    document.getElementById('gradeTable').innerHTML='<div style="color:var(--muted);font-size:.85rem;font-style:italic;">No data yet.</div>';
+    document.getElementById('sessionList').innerHTML='<div style="color:var(--muted);font-size:.85rem;font-style:italic;">No sessions yet.</div>';
+    document.getElementById('st-avg').textContent='—';document.getElementById('st-l4').textContent='0';return;
+  }
+  const lvNum={L1:1,'L1-':0.7,'L1+':1.3,L2:2,'L2-':1.7,'L2+':2.3,L3:3,'L3-':2.7,'L3+':3.3,L4:4,'L4-':3.7,'L4+':4.3};
+  const lvLabel=n=>n>=3.5?{l:'Level 4',c:'gp-4'}:n>=2.5?{l:'Level 3',c:'gp-3'}:n>=1.5?{l:'Level 2',c:'gp-2'}:{l:'Level 1',c:'gp-1'};
+  const rows=students.map(s=>{
+    const marks=sessions.flatMap(sess=>sess.marks[s.id]?.level?[lvNum[sess.marks[s.id].level]||2]:[]);
+    const avg=marks.length?marks.reduce((a,b)=>a+b,0)/marks.length:null;
+    return{...s,avg,count:marks.length};
+  });
+  const withData=rows.filter(r=>r.avg!==null);
+  const clsAvg=withData.length?withData.reduce((a,b)=>a+b.avg,0)/withData.length:null;
+  document.getElementById('st-avg').textContent=clsAvg?`L${Math.round(clsAvg)}`:'—';
+  document.getElementById('st-l4').textContent=withData.filter(r=>r.avg>=3.5).length;
+  document.getElementById('gradeTable').innerHTML=`<table class="data-table"><thead><tr><th>Student</th><th>Grade</th><th>Sessions</th><th>Avg Level</th><th>Notes</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${r.first} ${r.last}</strong></td><td>${r.grade}</td><td style="font-family:'DM Mono',monospace;">${r.count}</td><td>${r.avg!==null?`<span class="gp ${lvLabel(r.avg).c}">${lvLabel(r.avg).l}</span>`:'<span style="color:var(--muted)">—</span>'}</td><td style="color:var(--muted);font-size:.78rem;">${r.notes||'—'}</td></tr>`).join('')}</tbody></table>`;
+  document.getElementById('sessionList').innerHTML=sessions.slice().reverse().map(sess=>{
+    const cnt=Object.keys(sess.marks).filter(sid=>sess.marks[sid]?.level).length;
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);"><div><div style="font-weight:500;">${sess.task}</div><div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);">${sess.date} · ${sess.subject} · ${sess.strand} · ${sess.grades.join('/')}</div></div><div style="font-family:'DM Mono',monospace;font-size:.75rem;color:var(--sage);">${cnt} students</div></div>`;
+  }).join('');
+}
+
+function exportCSV() {
+  const lvNum={L1:1,'L1-':0.7,'L1+':1.3,L2:2,'L2-':1.7,'L2+':2.3,L3:3,'L3-':2.7,'L3+':3.3,L4:4,'L4-':3.7,'L4+':4.3};
+  const rows=[['Student','Grade','Notes','Sessions','Avg Level']];
+  students.forEach(s=>{
+    const marks=sessions.flatMap(sess=>sess.marks[s.id]?.level?[lvNum[sess.marks[s.id].level]||2]:[]);
+    const avg=marks.length?marks.reduce((a,b)=>a+b,0)/marks.length:null;
+    const lv=avg?(avg>=3.5?'Level 4':avg>=2.5?'Level 3':avg>=1.5?'Level 2':'Level 1'):'—';
+    rows.push([`${s.first} ${s.last}`,s.grade,s.notes||'',marks.length,lv]);
+  });
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));a.download='PlanIt_Grades.csv';a.click();
+}
+
+// ============================================================
+// CURRICULUM
+// ============================================================
+const ALL_EXP = [
+  // LANGUAGE — K
+  {id:'K-R-1',grade:'Kindergarten',subject:'Language',strand:'Reading',text:'Demonstrate understanding of concepts of print (left-to-right, top-to-bottom, front-to-back).'},
+  {id:'K-R-2',grade:'Kindergarten',subject:'Language',strand:'Reading',text:'Identify and name uppercase and lowercase letters of the alphabet.'},
+  {id:'K-R-3',grade:'Kindergarten',subject:'Language',strand:'Reading',text:'Recognize that letters represent sounds and that words are made up of letters.'},
+  {id:'K-R-4',grade:'Kindergarten',subject:'Language',strand:'Reading',text:'Read simple high-frequency words (e.g., the, I, a, is, we).'},
+  {id:'K-R-5',grade:'Kindergarten',subject:'Language',strand:'Reading',text:'Use pictures and context to predict and confirm meaning in simple texts.'},
+  {id:'K-W-1',grade:'Kindergarten',subject:'Language',strand:'Writing',text:'Use drawings, symbols, and letters to communicate ideas.'},
+  {id:'K-W-2',grade:'Kindergarten',subject:'Language',strand:'Writing',text:'Write some letters of the alphabet, including letters in their own name.'},
+  {id:'K-W-3',grade:'Kindergarten',subject:'Language',strand:'Writing',text:'Attempt to represent sounds heard in words using letters (phonetic spelling).'},
+  {id:'K-O-1',grade:'Kindergarten',subject:'Language',strand:'Oral Communication',text:'Listen and respond to simple oral instructions and stories.'},
+  {id:'K-O-2',grade:'Kindergarten',subject:'Language',strand:'Oral Communication',text:'Speak in full sentences to share ideas and feelings.'},
+  {id:'K-M-1',grade:'Kindergarten',subject:'Language',strand:'Media Literacy',text:'Identify and describe familiar media forms (e.g., picture books, TV shows).'},
+  // LANGUAGE — G1
+  {id:'1-R-1',grade:'Grade 1',subject:'Language',strand:'Reading',text:'Read simple texts using phonics, sight words, and context clues.'},
+  {id:'1-R-2',grade:'Grade 1',subject:'Language',strand:'Reading',text:'Identify the main idea and some supporting details in simple texts.'},
+  {id:'1-R-3',grade:'Grade 1',subject:'Language',strand:'Reading',text:'Make simple predictions and text-to-self connections before and during reading.'},
+  {id:'1-R-4',grade:'Grade 1',subject:'Language',strand:'Reading',text:'Identify the purpose of a variety of text forms (stories, lists, signs).'},
+  {id:'1-W-1',grade:'Grade 1',subject:'Language',strand:'Writing',text:'Write simple sentences to communicate ideas.'},
+  {id:'1-W-2',grade:'Grade 1',subject:'Language',strand:'Writing',text:'Use basic punctuation: capital letters, periods, question marks.'},
+  {id:'1-W-3',grade:'Grade 1',subject:'Language',strand:'Writing',text:'Write for a specific purpose (e.g., to describe, to tell a story).'},
+  {id:'1-O-1',grade:'Grade 1',subject:'Language',strand:'Oral Communication',text:'Listen attentively and ask questions to clarify understanding.'},
+  {id:'1-O-2',grade:'Grade 1',subject:'Language',strand:'Oral Communication',text:'Share ideas and opinions in full sentences with appropriate volume.'},
+  {id:'1-M-1',grade:'Grade 1',subject:'Language',strand:'Media Literacy',text:'Identify the purpose of simple media texts (to entertain, to inform).'},
+  // LANGUAGE — G2
+  {id:'2-R-1',grade:'Grade 2',subject:'Language',strand:'Reading',text:'Read a variety of texts and demonstrate understanding of main idea and details.'},
+  {id:'2-R-2',grade:'Grade 2',subject:'Language',strand:'Reading',text:'Use reading strategies (predicting, visualizing, making connections) to construct meaning.'},
+  {id:'2-R-3',grade:'Grade 2',subject:'Language',strand:'Reading',text:'Identify the characteristics of different text forms (story, report, poem).'},
+  {id:'2-R-4',grade:'Grade 2',subject:'Language',strand:'Reading',text:'Make inferences using stated and implied ideas with text evidence.'},
+  {id:'2-W-1',grade:'Grade 2',subject:'Language',strand:'Writing',text:'Write short texts for a variety of purposes and audiences.'},
+  {id:'2-W-2',grade:'Grade 2',subject:'Language',strand:'Writing',text:'Organize ideas with a beginning, middle, and end.'},
+  {id:'2-W-3',grade:'Grade 2',subject:'Language',strand:'Writing',text:'Use the writing process: plan, draft, revise, edit.'},
+  {id:'2-O-1',grade:'Grade 2',subject:'Language',strand:'Oral Communication',text:'Listen actively and respond appropriately to oral texts.'},
+  {id:'2-M-1',grade:'Grade 2',subject:'Language',strand:'Media Literacy',text:'Identify purpose and audience in simple media texts.'},
+  // LANGUAGE — G3
+  {id:'3-R-1',grade:'Grade 3',subject:'Language',strand:'Reading',text:'Read a variety of literary and informational texts with understanding.'},
+  {id:'3-R-2',grade:'Grade 3',subject:'Language',strand:'Reading',text:'Identify main idea and supporting details; distinguish fact from opinion.'},
+  {id:'3-R-3',grade:'Grade 3',subject:'Language',strand:'Reading',text:'Use multiple reading strategies flexibly to monitor comprehension.'},
+  {id:'3-R-4',grade:'Grade 3',subject:'Language',strand:'Reading',text:'Make text-to-text and text-to-world connections.'},
+  {id:'3-W-1',grade:'Grade 3',subject:'Language',strand:'Writing',text:'Write multi-sentence texts for a variety of purposes and audiences.'},
+  {id:'3-W-2',grade:'Grade 3',subject:'Language',strand:'Writing',text:'Use paragraphs to organize ideas with topic sentences and supporting details.'},
+  {id:'3-W-3',grade:'Grade 3',subject:'Language',strand:'Writing',text:'Revise and edit drafts for clarity, word choice, and conventions.'},
+  {id:'3-O-1',grade:'Grade 3',subject:'Language',strand:'Oral Communication',text:'Demonstrate active listening and ask clarifying questions.'},
+  {id:'3-M-1',grade:'Grade 3',subject:'Language',strand:'Media Literacy',text:'Identify techniques used in media texts to convey messages.'},
+  // LANGUAGE — G4
+  {id:'4-R-1',grade:'Grade 4',subject:'Language',strand:'Reading',text:'Read a variety of texts identifying main idea, supporting details, and author\'s purpose.'},
+  {id:'4-R-2',grade:'Grade 4',subject:'Language',strand:'Reading',text:'Use reading strategies (predicting, questioning, visualizing, summarizing) to construct meaning.'},
+  {id:'4-R-3',grade:'Grade 4',subject:'Language',strand:'Reading',text:'Make inferences and draw conclusions using stated and implied ideas with evidence.'},
+  {id:'4-R-4',grade:'Grade 4',subject:'Language',strand:'Reading',text:'Identify characteristics of text forms including fiction, non-fiction, and poetry.'},
+  {id:'4-R-5',grade:'Grade 4',subject:'Language',strand:'Reading',text:'Identify the author\'s perspective and recognize bias in texts.'},
+  {id:'4-W-1',grade:'Grade 4',subject:'Language',strand:'Writing',text:'Write for a variety of purposes and audiences using appropriate form and voice.'},
+  {id:'4-W-2',grade:'Grade 4',subject:'Language',strand:'Writing',text:'Organize ideas in a logical sequence with clear paragraph structure.'},
+  {id:'4-W-3',grade:'Grade 4',subject:'Language',strand:'Writing',text:'Use the writing process: planning, drafting, revising, editing, publishing.'},
+  {id:'4-W-4',grade:'Grade 4',subject:'Language',strand:'Writing',text:'Apply knowledge of spelling patterns, grammar conventions, and punctuation.'},
+  {id:'4-O-1',grade:'Grade 4',subject:'Language',strand:'Oral Communication',text:'Listen actively and ask clarifying questions to understand oral messages.'},
+  {id:'4-O-2',grade:'Grade 4',subject:'Language',strand:'Oral Communication',text:'Communicate ideas clearly with appropriate vocabulary in small and large group settings.'},
+  {id:'4-M-1',grade:'Grade 4',subject:'Language',strand:'Media Literacy',text:'Identify and describe the purpose and intended audience of media texts.'},
+  {id:'4-M-2',grade:'Grade 4',subject:'Language',strand:'Media Literacy',text:'Identify techniques used in media texts to influence the audience.'},
+  // LANGUAGE — G5
+  {id:'5-R-1',grade:'Grade 5',subject:'Language',strand:'Reading',text:'Read and demonstrate understanding of a variety of literary and informational texts.'},
+  {id:'5-R-2',grade:'Grade 5',subject:'Language',strand:'Reading',text:'Make connections between texts and personal experiences, other texts, and the world.'},
+  {id:'5-R-3',grade:'Grade 5',subject:'Language',strand:'Reading',text:'Analyse texts to identify the author\'s purpose, perspective, and use of language.'},
+  {id:'5-R-4',grade:'Grade 5',subject:'Language',strand:'Reading',text:'Evaluate the effectiveness of ideas, information, and style in texts.'},
+  {id:'5-R-5',grade:'Grade 5',subject:'Language',strand:'Reading',text:'Identify and explain the use of literary devices (foreshadowing, symbolism, metaphor).'},
+  {id:'5-W-1',grade:'Grade 5',subject:'Language',strand:'Writing',text:'Generate and organize ideas using a variety of prewriting strategies.'},
+  {id:'5-W-2',grade:'Grade 5',subject:'Language',strand:'Writing',text:'Write multi-paragraph texts with a clear controlling idea and supporting details.'},
+  {id:'5-W-3',grade:'Grade 5',subject:'Language',strand:'Writing',text:'Revise drafts to improve content, organization, style, and word choice.'},
+  {id:'5-W-4',grade:'Grade 5',subject:'Language',strand:'Writing',text:'Write in a variety of forms: narrative, expository, persuasive, descriptive.'},
+  {id:'5-O-1',grade:'Grade 5',subject:'Language',strand:'Oral Communication',text:'Identify characteristics of effective oral communication in various contexts.'},
+  {id:'5-O-2',grade:'Grade 5',subject:'Language',strand:'Oral Communication',text:'Plan and deliver short oral presentations using appropriate vocabulary and expression.'},
+  {id:'5-M-1',grade:'Grade 5',subject:'Language',strand:'Media Literacy',text:'Explain how media texts address their intended purpose and audience.'},
+  {id:'5-M-2',grade:'Grade 5',subject:'Language',strand:'Media Literacy',text:'Identify techniques used in media texts to create specific effects.'},
+  // LANGUAGE — G6
+  {id:'6-R-1',grade:'Grade 6',subject:'Language',strand:'Reading',text:'Read and demonstrate understanding of complex literary and informational texts.'},
+  {id:'6-R-2',grade:'Grade 6',subject:'Language',strand:'Reading',text:'Evaluate the effectiveness of ideas, arguments, and use of evidence in texts.'},
+  {id:'6-R-3',grade:'Grade 6',subject:'Language',strand:'Reading',text:'Analyse how text form, structure, and style contribute to meaning.'},
+  {id:'6-R-4',grade:'Grade 6',subject:'Language',strand:'Reading',text:'Identify and analyse the use of persuasive techniques and bias in texts.'},
+  {id:'6-W-1',grade:'Grade 6',subject:'Language',strand:'Writing',text:'Write increasingly complex texts using multiple forms for different purposes.'},
+  {id:'6-W-2',grade:'Grade 6',subject:'Language',strand:'Writing',text:'Demonstrate understanding of paragraph structure, transitions, and organizational patterns.'},
+  {id:'6-W-3',grade:'Grade 6',subject:'Language',strand:'Writing',text:'Use precise and varied vocabulary appropriate to purpose and audience.'},
+  {id:'6-O-1',grade:'Grade 6',subject:'Language',strand:'Oral Communication',text:'Demonstrate understanding of appropriate speaking and listening etiquette in formal and informal contexts.'},
+  {id:'6-O-2',grade:'Grade 6',subject:'Language',strand:'Oral Communication',text:'Deliver structured oral presentations with clear organization and supporting details.'},
+  {id:'6-M-1',grade:'Grade 6',subject:'Language',strand:'Media Literacy',text:'Analyse the relationship between the form of a media text and its purpose and audience.'},
+  {id:'6-M-2',grade:'Grade 6',subject:'Language',strand:'Media Literacy',text:'Evaluate the effectiveness and reliability of media texts.'},
+  // LANGUAGE — G7
+  {id:'7-R-1',grade:'Grade 7',subject:'Language',strand:'Reading',text:'Read and analyse a range of complex texts identifying theme, perspective, and literary devices.'},
+  {id:'7-R-2',grade:'Grade 7',subject:'Language',strand:'Reading',text:'Evaluate the reliability, validity, and credibility of information in a variety of texts.'},
+  {id:'7-R-3',grade:'Grade 7',subject:'Language',strand:'Reading',text:'Analyse how author\'s choices about form, structure, and language create meaning.'},
+  {id:'7-R-4',grade:'Grade 7',subject:'Language',strand:'Reading',text:'Identify and evaluate the use of argument, evidence, and rhetorical strategies in persuasive texts.'},
+  {id:'7-W-1',grade:'Grade 7',subject:'Language',strand:'Writing',text:'Write for a range of purposes: persuasive, expository, narrative, and reflective.'},
+  {id:'7-W-2',grade:'Grade 7',subject:'Language',strand:'Writing',text:'Demonstrate control over sentence structure, punctuation, and mechanics.'},
+  {id:'7-W-3',grade:'Grade 7',subject:'Language',strand:'Writing',text:'Use research skills to gather and integrate information from multiple sources.'},
+  {id:'7-O-1',grade:'Grade 7',subject:'Language',strand:'Oral Communication',text:'Analyse and evaluate the effectiveness of oral texts in achieving their purpose.'},
+  {id:'7-O-2',grade:'Grade 7',subject:'Language',strand:'Oral Communication',text:'Prepare and deliver structured oral presentations with evidence and logical reasoning.'},
+  {id:'7-M-1',grade:'Grade 7',subject:'Language',strand:'Media Literacy',text:'Critically evaluate media texts identifying bias, stereotypes, and point of view.'},
+  {id:'7-M-2',grade:'Grade 7',subject:'Language',strand:'Media Literacy',text:'Analyse how media texts reflect and influence social and cultural values.'},
+  // LANGUAGE — G8
+  {id:'8-R-1',grade:'Grade 8',subject:'Language',strand:'Reading',text:'Read and critically analyse complex texts from a variety of genres and cultural perspectives.'},
+  {id:'8-R-2',grade:'Grade 8',subject:'Language',strand:'Reading',text:'Evaluate the quality of ideas, the effectiveness of arguments, and the use of evidence.'},
+  {id:'8-R-3',grade:'Grade 8',subject:'Language',strand:'Reading',text:'Analyse how an author\'s craft — diction, syntax, literary devices — shapes meaning.'},
+  {id:'8-W-1',grade:'Grade 8',subject:'Language',strand:'Writing',text:'Write polished, complex texts demonstrating control over organization, style, and mechanics.'},
+  {id:'8-W-2',grade:'Grade 8',subject:'Language',strand:'Writing',text:'Write well-structured arguments with a clear thesis, evidence, and counterargument.'},
+  {id:'8-O-1',grade:'Grade 8',subject:'Language',strand:'Oral Communication',text:'Prepare and deliver well-organized oral presentations with research-supported evidence.'},
+  {id:'8-O-2',grade:'Grade 8',subject:'Language',strand:'Oral Communication',text:'Lead and participate in Socratic seminars and structured academic discussions.'},
+  {id:'8-M-1',grade:'Grade 8',subject:'Language',strand:'Media Literacy',text:'Demonstrate understanding of how media ownership and production influence content.'},
+  {id:'8-M-2',grade:'Grade 8',subject:'Language',strand:'Media Literacy',text:'Critically analyse media representations of identity, power, and culture.'},
+  // MATH
+  {id:'K-MA-1',grade:'Kindergarten',subject:'Mathematics',strand:'Number',text:'Count to 10 and recognize numerals 0–10; compare groups using more, less, equal.'},
+  {id:'K-MA-2',grade:'Kindergarten',subject:'Mathematics',strand:'Geometry',text:'Identify and describe basic 2D shapes: circle, square, triangle, rectangle.'},
+  {id:'1-MA-1',grade:'Grade 1',subject:'Mathematics',strand:'Number',text:'Count forward and backward to 100; demonstrate addition and subtraction to 20.'},
+  {id:'1-MA-2',grade:'Grade 1',subject:'Mathematics',strand:'Geometry',text:'Identify, describe, and classify 2D and 3D shapes.'},
+  {id:'1-MA-3',grade:'Grade 1',subject:'Mathematics',strand:'Measurement',text:'Measure using non-standard units; compare length, mass, and capacity.'},
+  {id:'2-MA-1',grade:'Grade 2',subject:'Mathematics',strand:'Number',text:'Represent and order numbers to 1000; add and subtract two-digit numbers with regrouping.'},
+  {id:'2-MA-2',grade:'Grade 2',subject:'Mathematics',strand:'Number',text:'Demonstrate understanding of multiplication as repeated addition.'},
+  {id:'2-MA-3',grade:'Grade 2',subject:'Mathematics',strand:'Geometry',text:'Compose and decompose 2D and 3D shapes.'},
+  {id:'3-MA-1',grade:'Grade 3',subject:'Mathematics',strand:'Number',text:'Represent and order whole numbers to 10 000; multiply to 7×7.'},
+  {id:'3-MA-2',grade:'Grade 3',subject:'Mathematics',strand:'Number',text:'Demonstrate understanding of fractions as parts of a whole.'},
+  {id:'3-MA-3',grade:'Grade 3',subject:'Mathematics',strand:'Algebra',text:'Identify, extend, and create repeating and growing patterns.'},
+  {id:'4-MA-1',grade:'Grade 4',subject:'Mathematics',strand:'Number',text:'Represent numbers to 100 000; multiply two-digit numbers; understand fractions and decimals to tenths.'},
+  {id:'4-MA-2',grade:'Grade 4',subject:'Mathematics',strand:'Geometry',text:'Classify quadrilaterals and triangles; identify lines of symmetry.'},
+  {id:'4-MA-3',grade:'Grade 4',subject:'Mathematics',strand:'Measurement',text:'Measure perimeter and area using standard units.'},
+  {id:'5-MA-1',grade:'Grade 5',subject:'Mathematics',strand:'Number',text:'Represent numbers to 1 000 000; multiply three-digit by two-digit; add/subtract decimals to hundredths.'},
+  {id:'5-MA-2',grade:'Grade 5',subject:'Mathematics',strand:'Number',text:'Demonstrate understanding of fractions, mixed numbers, and improper fractions.'},
+  {id:'5-MA-3',grade:'Grade 5',subject:'Mathematics',strand:'Algebra',text:'Describe and represent patterns using tables and graphs.'},
+  {id:'5-MA-4',grade:'Grade 5',subject:'Mathematics',strand:'Geometry',text:'Identify and classify polygons; understand transformations.'},
+  {id:'6-MA-1',grade:'Grade 6',subject:'Mathematics',strand:'Number',text:'Represent and order integers; add/subtract fractions with like denominators; understand percent.'},
+  {id:'6-MA-2',grade:'Grade 6',subject:'Mathematics',strand:'Algebra',text:'Write and evaluate algebraic expressions using variables.'},
+  {id:'6-MA-3',grade:'Grade 6',subject:'Mathematics',strand:'Data',text:'Collect, organize, and describe data using mean, median, and mode.'},
+  {id:'7-MA-1',grade:'Grade 7',subject:'Mathematics',strand:'Number',text:'Demonstrate understanding of integers, fractions, decimals, and percents; multiply and divide integers.'},
+  {id:'7-MA-2',grade:'Grade 7',subject:'Mathematics',strand:'Algebra',text:'Solve simple linear equations using inverse operations.'},
+  {id:'7-MA-3',grade:'Grade 7',subject:'Mathematics',strand:'Geometry',text:'Calculate area of composite figures; understand properties of 3D figures.'},
+  {id:'7-MA-4',grade:'Grade 7',subject:'Mathematics',strand:'Data',text:'Construct and interpret a variety of graphs; calculate probability.'},
+  {id:'8-MA-1',grade:'Grade 8',subject:'Mathematics',strand:'Number',text:'Represent rational numbers; apply order of operations; multiply and divide fractions.'},
+  {id:'8-MA-2',grade:'Grade 8',subject:'Mathematics',strand:'Algebra',text:'Solve and verify linear equations with integer coefficients.'},
+  {id:'8-MA-3',grade:'Grade 8',subject:'Mathematics',strand:'Geometry',text:'Apply the Pythagorean theorem; calculate volume and surface area of 3D figures.'},
+  {id:'8-MA-4',grade:'Grade 8',subject:'Mathematics',strand:'Data',text:'Analyse data using measures of central tendency; calculate theoretical probability.'},
+  // SCIENCE
+  {id:'K-SC-1',grade:'Kindergarten',subject:'Science',strand:'Life Systems',text:'Identify characteristics of living and non-living things; explore properties of materials.'},
+  {id:'1-SC-1',grade:'Grade 1',subject:'Science',strand:'Life Systems',text:'Identify basic needs of plants and animals; describe life cycles simply.'},
+  {id:'1-SC-2',grade:'Grade 1',subject:'Science',strand:'Earth',text:'Identify daily and seasonal changes in the environment.'},
+  {id:'2-SC-1',grade:'Grade 2',subject:'Science',strand:'Life Systems',text:'Identify characteristics of animals in different habitats.'},
+  {id:'2-SC-2',grade:'Grade 2',subject:'Science',strand:'Matter',text:'Investigate properties of liquids and solids; describe states of matter.'},
+  {id:'3-SC-1',grade:'Grade 3',subject:'Science',strand:'Life Systems',text:'Explain how plants and animals adapt to their habitats.'},
+  {id:'3-SC-2',grade:'Grade 3',subject:'Science',strand:'Energy',text:'Describe different forms of energy (light, heat, sound) and their uses.'},
+  {id:'4-SC-1',grade:'Grade 4',subject:'Science',strand:'Life Systems',text:'Describe the habitats of local plants and animals and explain food chains.'},
+  {id:'4-SC-2',grade:'Grade 4',subject:'Science',strand:'Energy',text:'Explain how pulleys and gears transfer and change motion.'},
+  {id:'4-SC-3',grade:'Grade 4',subject:'Science',strand:'Earth',text:'Describe the water cycle and the properties of rocks and minerals.'},
+  {id:'5-SC-1',grade:'Grade 5',subject:'Science',strand:'Life Systems',text:'Explain structural adaptations of plants and animals for survival.'},
+  {id:'5-SC-2',grade:'Grade 5',subject:'Science',strand:'Matter',text:'Investigate properties and changes of matter including mixtures and solutions.'},
+  {id:'5-SC-3',grade:'Grade 5',subject:'Science',strand:'Energy',text:'Describe how electrical energy is generated and transferred.'},
+  {id:'6-SC-1',grade:'Grade 6',subject:'Science',strand:'Life Systems',text:'Explain biodiversity and the interdependence of organisms in ecosystems.'},
+  {id:'6-SC-2',grade:'Grade 6',subject:'Science',strand:'Energy',text:'Explain how electricity is generated and distributed; investigate circuits.'},
+  {id:'6-SC-3',grade:'Grade 6',subject:'Science',strand:'Earth',text:'Describe space exploration and the characteristics of the solar system.'},
+  {id:'7-SC-1',grade:'Grade 7',subject:'Science',strand:'Life Systems',text:'Explain the structure and function of cells as the basic unit of life.'},
+  {id:'7-SC-2',grade:'Grade 7',subject:'Science',strand:'Matter',text:'Investigate pure substances and mixtures; describe particle theory.'},
+  {id:'7-SC-3',grade:'Grade 7',subject:'Science',strand:'Energy',text:'Explain how heat is generated and transferred; investigate thermal energy.'},
+  {id:'7-SC-4',grade:'Grade 7',subject:'Science',strand:'Earth',text:'Describe the structure of the Earth and explain plate tectonics.'},
+  {id:'8-SC-1',grade:'Grade 8',subject:'Science',strand:'Life Systems',text:'Explain systems in living things including cells, tissues, organs, and body systems.'},
+  {id:'8-SC-2',grade:'Grade 8',subject:'Science',strand:'Matter',text:'Investigate the properties and applications of fluids; apply WHMIS principles.'},
+  {id:'8-SC-3',grade:'Grade 8',subject:'Science',strand:'Energy',text:'Explain how mechanical systems work using Newton\'s laws.'},
+  {id:'8-SC-4',grade:'Grade 8',subject:'Science',strand:'Earth',text:'Describe the water systems of the Earth and the impact of human activity.'},
+  // SOCIAL STUDIES
+  {id:'K-SS-1',grade:'Kindergarten',subject:'Social Studies',strand:'People & Environments',text:'Describe their family, school, and community using simple maps and labels.'},
+  {id:'1-SS-1',grade:'Grade 1',subject:'Social Studies',strand:'Heritage & Identity',text:'Describe the roles of family members and traditions in their community.'},
+  {id:'2-SS-1',grade:'Grade 2',subject:'Social Studies',strand:'Heritage & Identity',text:'Compare traditions and celebrations of communities in Canada.'},
+  {id:'2-SS-2',grade:'Grade 2',subject:'Social Studies',strand:'People & Environments',text:'Describe features of urban, suburban, and rural communities.'},
+  {id:'3-SS-1',grade:'Grade 3',subject:'Social Studies',strand:'Heritage & Identity',text:'Explain how early settler communities developed in Canada.'},
+  {id:'4-SS-1',grade:'Grade 4',subject:'Social Studies',strand:'Heritage & Identity',text:'Describe the political and physical regions of Canada.'},
+  {id:'4-SS-2',grade:'Grade 4',subject:'Social Studies',strand:'People & Environments',text:'Explain how the physical environment influences human activity in Ontario.'},
+  {id:'5-SS-1',grade:'Grade 5',subject:'Social Studies',strand:'Heritage & Identity',text:'Analyse factors that shaped Canadian identity including Indigenous cultures.'},
+  {id:'5-SS-2',grade:'Grade 5',subject:'Social Studies',strand:'People & Environments',text:'Explain how human activities affect the physical environment in Canada.'},
+  {id:'6-SS-1',grade:'Grade 6',subject:'Social Studies',strand:'Heritage & Identity',text:'Compare the political and social structures of ancient civilizations.'},
+  {id:'6-SS-2',grade:'Grade 6',subject:'Social Studies',strand:'People & Environments',text:'Analyse the relationship between the physical environment and human activities globally.'},
+  {id:'7-SS-1',grade:'Grade 7',subject:'Social Studies',strand:'Heritage & Identity',text:'Analyse the causes and consequences of significant turning points in Canadian history.'},
+  {id:'7-SS-2',grade:'Grade 7',subject:'Social Studies',strand:'People & Environments',text:'Examine the impact of globalization on peoples and environments worldwide.'},
+  {id:'8-SS-1',grade:'Grade 8',subject:'Social Studies',strand:'Heritage & Identity',text:'Analyse the development of Canada as a nation including Confederation and key events.'},
+  {id:'8-SS-2',grade:'Grade 8',subject:'Social Studies',strand:'People & Environments',text:'Evaluate the impact of human activity on natural systems and propose solutions.'},
+  // HEALTH & PE
+  {id:'K-HP-1',grade:'Kindergarten',subject:'Health & PE',strand:'Active Living',text:'Participate in daily physical activity; develop gross motor skills through play.'},
+  {id:'K-HP-2',grade:'Kindergarten',subject:'Health & PE',strand:'Healthy Living',text:'Identify healthy food choices and basic hygiene practices.'},
+  {id:'1-HP-1',grade:'Grade 1',subject:'Health & PE',strand:'Active Living',text:'Demonstrate basic locomotor skills: running, jumping, hopping, skipping.'},
+  {id:'1-HP-2',grade:'Grade 1',subject:'Health & PE',strand:'Healthy Living',text:'Identify practices that promote personal health and safety.'},
+  {id:'2-HP-1',grade:'Grade 2',subject:'Health & PE',strand:'Active Living',text:'Apply movement concepts in a variety of physical activities and games.'},
+  {id:'2-HP-2',grade:'Grade 2',subject:'Health & PE',strand:'Healthy Living',text:'Describe strategies for managing emotions and resolving conflicts.'},
+  {id:'3-HP-1',grade:'Grade 3',subject:'Health & PE',strand:'Active Living',text:'Demonstrate improved skill in locomotor and non-locomotor movements.'},
+  {id:'3-HP-2',grade:'Grade 3',subject:'Health & PE',strand:'Healthy Living',text:'Identify the effects of physical activity on the body and mental well-being.'},
+  {id:'4-HP-1',grade:'Grade 4',subject:'Health & PE',strand:'Active Living',text:'Apply tactics and strategies in cooperative and competitive physical activities.'},
+  {id:'4-HP-2',grade:'Grade 4',subject:'Health & PE',strand:'Healthy Living',text:'Describe the effects of healthy and unhealthy choices on the body.'},
+  {id:'5-HP-1',grade:'Grade 5',subject:'Health & PE',strand:'Active Living',text:'Demonstrate skill and strategy in a variety of physical activities.'},
+  {id:'5-HP-2',grade:'Grade 5',subject:'Health & PE',strand:'Healthy Living',text:'Analyse the influences on healthy choices including media, peers, and family.'},
+  {id:'6-HP-1',grade:'Grade 6',subject:'Health & PE',strand:'Active Living',text:'Demonstrate leadership and fair play in physical activities.'},
+  {id:'6-HP-2',grade:'Grade 6',subject:'Health & PE',strand:'Healthy Living',text:'Explain the physical and emotional changes of puberty; develop personal fitness goals.'},
+  {id:'7-HP-1',grade:'Grade 7',subject:'Health & PE',strand:'Active Living',text:'Apply advanced movement skills and tactical awareness in physical activities.'},
+  {id:'7-HP-2',grade:'Grade 7',subject:'Health & PE',strand:'Healthy Living',text:'Analyse the impact of substance use, mental health, and relationships on well-being.'},
+  {id:'7-HP-3',grade:'Grade 7',subject:'Health & PE',strand:'Healthy Living',text:'Demonstrate understanding of consent, boundaries, and healthy relationships.'},
+  {id:'8-HP-1',grade:'Grade 8',subject:'Health & PE',strand:'Active Living',text:'Plan and implement a personal fitness program based on health-related fitness principles.'},
+  {id:'8-HP-2',grade:'Grade 8',subject:'Health & PE',strand:'Healthy Living',text:'Analyse health issues facing youth: mental health, nutrition, and substance use.'},
+  {id:'8-HP-3',grade:'Grade 8',subject:'Health & PE',strand:'Healthy Living',text:'Demonstrate understanding of sexual health, contraception, and STI prevention.'},
+  // THE ARTS
+  {id:'K-AR-1',grade:'Kindergarten',subject:'The Arts',strand:'Visual Arts',text:'Explore and create art using a variety of materials and tools.'},
+  {id:'K-AR-2',grade:'Kindergarten',subject:'The Arts',strand:'Music',text:'Explore rhythm, beat, and simple melodies through singing and movement.'},
+  {id:'K-AR-3',grade:'Kindergarten',subject:'The Arts',strand:'Drama',text:'Use imagination and role play to explore ideas and feelings.'},
+  {id:'1-AR-1',grade:'Grade 1',subject:'The Arts',strand:'Visual Arts',text:'Create art works using elements of design: line, shape, colour, texture.'},
+  {id:'1-AR-2',grade:'Grade 1',subject:'The Arts',strand:'Music',text:'Sing in tune and maintain a steady beat; identify simple musical patterns.'},
+  {id:'2-AR-1',grade:'Grade 2',subject:'The Arts',strand:'Visual Arts',text:'Demonstrate understanding of principles of design in creating art.'},
+  {id:'2-AR-2',grade:'Grade 2',subject:'The Arts',strand:'Drama',text:'Create and present simple dramatic works for an audience.'},
+  {id:'3-AR-1',grade:'Grade 3',subject:'The Arts',strand:'Visual Arts',text:'Use a variety of art-making strategies and forms to communicate ideas.'},
+  {id:'3-AR-2',grade:'Grade 3',subject:'The Arts',strand:'Music',text:'Demonstrate understanding of musical elements including melody, rhythm, and dynamics.'},
+  {id:'4-AR-1',grade:'Grade 4',subject:'The Arts',strand:'Visual Arts',text:'Apply elements and principles of design to create purposeful art works.'},
+  {id:'4-AR-2',grade:'Grade 4',subject:'The Arts',strand:'Music',text:'Read and write music using standard notation; perform in ensembles.'},
+  {id:'4-AR-3',grade:'Grade 4',subject:'The Arts',strand:'Drama',text:'Create and perform dramatic works demonstrating understanding of character and conflict.'},
+  {id:'4-AR-4',grade:'Grade 4',subject:'The Arts',strand:'Dance',text:'Create and perform dances using elements of dance: body, space, time, energy.'},
+  {id:'5-AR-1',grade:'Grade 5',subject:'The Arts',strand:'Visual Arts',text:'Create art works that communicate personal ideas using a variety of media.'},
+  {id:'5-AR-2',grade:'Grade 5',subject:'The Arts',strand:'Music',text:'Demonstrate understanding of musical form; perform solo and ensemble pieces.'},
+  {id:'5-AR-3',grade:'Grade 5',subject:'The Arts',strand:'Drama',text:'Devise and perform original dramatic works; reflect on the creative process.'},
+  {id:'6-AR-1',grade:'Grade 6',subject:'The Arts',strand:'Visual Arts',text:'Analyse and create art works reflecting personal and cultural perspectives.'},
+  {id:'6-AR-2',grade:'Grade 6',subject:'The Arts',strand:'Music',text:'Analyse musical works; compose and arrange short pieces using digital tools.'},
+  {id:'7-AR-1',grade:'Grade 7',subject:'The Arts',strand:'Visual Arts',text:'Demonstrate sophisticated use of design elements and principles in art making.'},
+  {id:'7-AR-2',grade:'Grade 7',subject:'The Arts',strand:'Music',text:'Demonstrate understanding of music history and theory; compose original works.'},
+  {id:'7-AR-3',grade:'Grade 7',subject:'The Arts',strand:'Drama',text:'Direct and perform dramatic works demonstrating understanding of theatrical elements.'},
+  {id:'8-AR-1',grade:'Grade 8',subject:'The Arts',strand:'Visual Arts',text:'Create art works that demonstrate personal artistic voice and critical thinking.'},
+  {id:'8-AR-2',grade:'Grade 8',subject:'The Arts',strand:'Music',text:'Perform and compose advanced musical works; analyse music from diverse cultures.'},
+  {id:'8-AR-3',grade:'Grade 8',subject:'The Arts',strand:'Drama',text:'Create and produce polished dramatic presentations for diverse audiences.'},
+];
+
+const STRAND_COLORS = {
+  Reading:['#2A5FA5','#E8EFF9'], Writing:['#4A7C59','#EAF0EA'],
+  'Oral Communication':['#C47B2A','#FDF4E3'], 'Media Literacy':['#B54B2A','#FCEEE9'],
+  Number:['#6B46C1','#F3F0FF'], Algebra:['#0F766E','#CCFBF1'],
+  Geometry:['#2A5FA5','#E8EFF9'], Measurement:['#C47B2A','#FDF4E3'],
+  Data:['#4A7C59','#EAF0EA'], 'Life Systems':['#4A7C59','#EAF0EA'],
+  Matter:['#6B46C1','#F3F0FF'], Energy:['#C47B2A','#FDF4E3'],
+  Earth:['#0F766E','#CCFBF1'], 'Active Living':['#2A5FA5','#E8EFF9'],
+  'Healthy Living':['#4A7C59','#EAF0EA'], 'Visual Arts':['#B54B2A','#FCEEE9'],
+  Music:['#6B46C1','#F3F0FF'], Drama:['#C47B2A','#FDF4E3'],
+  Dance:['#0F766E','#CCFBF1'], 'Heritage & Identity':['#2A5FA5','#E8EFF9'],
+  'People & Environments':['#4A7C59','#EAF0EA'],
+};
+
+function renderCurriculum() {
+  const fG = document.getElementById('fGrade').value;
+  const fSub = document.getElementById('fSubject').value;
+  const fStr = document.getElementById('fStrand').value;
+  const fSt = document.getElementById('fStatus').value;
+  const rosterGrades = [...new Set(students.map(s=>s.grade))];
+  let filtered = ALL_EXP;
+  if(fG!=='all') filtered=filtered.filter(e=>e.grade===fG);
+  if(fSub!=='all') filtered=filtered.filter(e=>e.subject===fSub);
+  if(fStr!=='all') filtered=filtered.filter(e=>e.strand===fStr);
+  if(fSt==='done') filtered=filtered.filter(e=>currDone[e.id]);
+  if(fSt==='todo') filtered=filtered.filter(e=>!currDone[e.id]);
+  const done=Object.values(currDone).filter(Boolean).length;
+  document.getElementById('progLabel').textContent=`${done} / ${ALL_EXP.length} covered`;
+  document.getElementById('progFill').style.width=`${(done/ALL_EXP.length*100).toFixed(1)}%`;
+  if(!filtered.length){document.getElementById('currList').innerHTML='<div style="color:var(--muted);font-size:.85rem;font-style:italic;padding:10px;">No expectations match your filters.</div>';return;}
+  const grades=[...new Set(filtered.map(e=>e.grade))].sort((a,b)=>GRADE_ORDER.indexOf(a)-GRADE_ORDER.indexOf(b));
+  let html='';
+  grades.forEach(grade=>{
+    const inClass=rosterGrades.includes(grade)||rosterGrades.length===0;
+    const gItems=filtered.filter(e=>e.grade===grade);
+    const gDone=gItems.filter(e=>currDone[e.id]).length;
+    const gid='gg-'+grade.replace(/\s/g,'');
+    html+=`<div class="grade-group">
+      <div class="grade-group-header ${inClass?'in-class':''}" onclick="toggleGroup('${gid}')">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-weight:600;font-size:.9rem;">${grade}</span>
+          ${inClass?'<span class="in-class-badge">IN YOUR CLASS</span>':''}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);">${gDone}/${gItems.length}</span>
+          <span id="arr-${gid}">${inClass?'▾':'▸'}</span>
+        </div>
+      </div>
+      <div id="${gid}" style="display:${inClass?'block':'none'};padding-left:8px;">`;
+    const subjects=[...new Set(gItems.map(e=>e.subject))];
+    subjects.forEach(sub=>{
+      const sItems=gItems.filter(e=>e.subject===sub);
+      html+=`<div style="margin-bottom:10px;"><div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:5px 8px;">${sub}</div>`;
+      const strands=[...new Set(sItems.map(e=>e.strand))];
+      strands.forEach(str=>{
+        const stItems=sItems.filter(e=>e.strand===str);
+        const [c,bg]=STRAND_COLORS[str]||['#4A7C59','#EAF0EA'];
+        html+=`<div style="margin-left:8px;margin-bottom:6px;"><div style="font-size:.75rem;font-weight:600;color:${c};padding:3px 7px;margin-bottom:3px;">${str}</div>`;
+        stItems.forEach(e=>{
+          html+=`<div class="exp-item ${currDone[e.id]?'covered':''}" id="ei-${e.id}">
+            <input type="checkbox" ${currDone[e.id]?'checked':''} onchange="toggleExp('${e.id}')">
+            <span class="exp-code" style="color:${c};background:${bg};">${e.id}</span>
+            <div><div class="exp-text">${e.text}</div></div>
+          </div>`;
+        });
+        html+='</div>';
+      });
+      html+='</div>';
+    });
+    html+='</div></div>';
+  });
+  document.getElementById('currList').innerHTML=html;
+}
+
+function toggleGroup(id) {
+  const el=document.getElementById(id);
+  const arr=document.getElementById('arr-'+id);
+  if(el.style.display==='none'){el.style.display='block';arr.textContent='▾';}
+  else{el.style.display='none';arr.textContent='▸';}
+}
+
+function toggleExp(id) {
+  currDone[id]=!currDone[id];
+  const item=document.getElementById('ei-'+id);
+  if(item) item.classList.toggle('covered',currDone[id]);
+  const done=Object.values(currDone).filter(Boolean).length;
+  document.getElementById('progLabel').textContent=`${done} / ${ALL_EXP.length} covered`;
+  document.getElementById('progFill').style.width=`${(done/ALL_EXP.length*100).toFixed(1)}%`;
+  const cb=item?.querySelector('input[type=checkbox]');
+  if(cb) cb.checked=currDone[id];
+}
+
+function showCurrTab(tab, el) {
+  document.querySelectorAll('#page-curriculum .inner-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('#page-curriculum .inner-page').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('curr-'+tab).classList.add('on');
+  if(tab==='iep') renderIEPList();
+  else renderCurriculum();
+}
+
+function renderIEPList() {
+  const c=document.getElementById('iepList');
+  const iepStudents=students.filter(s=>s.iep&&s.iep.trim());
+  if(!iepStudents.length){c.innerHTML='<div class="card"><div style="color:var(--muted);font-size:.85rem;font-style:italic;">No students with modified expectations yet. Add IEP expectations in Class Roster.</div></div>';return;}
+  if(!iepCovered) window.iepCovered={};
+  c.innerHTML=iepStudents.map((s,i)=>{
+    const goals=s.iep.split('\n').filter(l=>l.trim());
+    if(!iepCovered[s.id]) iepCovered[s.id]={};
+    const covered=goals.filter((_,gi)=>iepCovered[s.id][gi]).length;
+    return`<div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div class="s-avatar" style="background:${AVATARS[i%AVATARS.length]}">${s.first[0]}${s.last[0]}</div>
+        <div><div style="font-weight:600;">${s.first} ${s.last}</div><div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);">${s.grade} · ${covered}/${goals.length} goals covered</div></div>
+      </div>
+      <div class="prog-bar" style="margin-bottom:10px;"><div class="prog-fill" style="width:${goals.length?(covered/goals.length*100):0}%"></div></div>
+      ${goals.map((g,gi)=>`<div class="exp-item ${iepCovered[s.id][gi]?'covered':''}" style="margin-bottom:5px;">
+        <input type="checkbox" ${iepCovered[s.id][gi]?'checked':''} onchange="toggleIEPGoal(${s.id},${gi})">
+        <div class="exp-text">${g.replace(/^[-•]\s*/,'')}</div>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function toggleIEPGoal(sid,gi) {
+  if(!iepCovered[sid]) iepCovered[sid]={};
+  iepCovered[sid][gi]=!iepCovered[sid][gi];
+  renderIEPList();
+}
+
+// ============================================================
+// WORKSHEET RENDERER
+// ============================================================
+let wsN=0;
+function renderWorksheet(text) {
+  if(!text) return '';
+  wsN=0;
+  let html='<div class="ws-wrap">';
+  text.split('\n').forEach(line=>{
+    if(line.startsWith('## ')) { html+=`<h2>${line.slice(3)}</h2>`; return; }
+    if(line.startsWith('### ')) { html+=`<h3>${line.slice(4)}</h3>`; return; }
+    if(line.includes('[TEXT BOX]')) {
+      const lbl=line.replace('[TEXT BOX]','').replace(/^[-*\d.]+\s*/,'').trim();
+      wsN++;
+      html+=`${lbl?`<div style="font-size:.88rem;margin-bottom:3px;">${lbl.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</div>`:''}
+        <input class="ws-in" type="text" placeholder="Write your answer here...">`;
+      return;
+    }
+    if(line.includes('[LARGE BOX]')) {
+      const lbl=line.replace('[LARGE BOX]','').replace(/^[-*\d.]+\s*/,'').trim();
+      wsN++;
+      html+=`${lbl?`<div style="font-size:.88rem;margin-bottom:3px;">${lbl.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</div>`:''}
+        <textarea class="ws-ta" placeholder="Write your answer here..."></textarea>`;
+      return;
+    }
+    if(line.includes('[CIRCLE ONE:')) {
+      const m=line.match(/\[CIRCLE ONE: (.+?)\]/);
+      const pre=line.split('[CIRCLE ONE:')[0].replace(/^[-*\d.]+\s*/,'').trim();
+      if(m){ wsN++; const name='r'+wsN;
+        html+=`${pre?`<div style="font-size:.88rem;margin-bottom:5px;">${pre}</div>`:''}
+          <div class="ws-choices">${m[1].split('/').map(o=>`<label class="ws-choice"><input type="radio" name="${name}"> ${o.trim()}</label>`).join('')}</div>`; return; }
+    }
+    if(line.includes('[CHECK ALL THAT APPLY:')) {
+      const m=line.match(/\[CHECK ALL THAT APPLY: (.+?)\]/);
+      const pre=line.split('[CHECK ALL THAT APPLY:')[0].replace(/^[-*\d.]+\s*/,'').trim();
+      if(m){ wsN++;
+        html+=`${pre?`<div style="font-size:.88rem;margin-bottom:5px;">${pre}</div>`:''}
+          <div class="ws-choices">${m[1].split('/').map((o,oi)=>`<label class="ws-choice"><input type="checkbox" id="wc${wsN}-${oi}"> ${o.trim()}</label>`).join('')}</div>`; return; }
+    }
+    if(line.includes('[WORD BANK:')) {
+      const m=line.match(/\[WORD BANK: (.+?)\]/);
+      if(m){ html+=`<div class="ws-wordbank"><div class="ws-wb-title">📚 Word Bank</div><div class="ws-wb-words">${m[1].split(',').map(w=>`<span class="ws-wb-word">${w.trim()}</span>`).join('')}</div></div>`; return; }
+    }
+    if(line.includes('[DIAGRAM:')) {
+      const m=line.match(/\[DIAGRAM: (.+?)\]/);
+      if(m){ html+=`<div class="ws-diagram">📊 ${m[1]}</div>`; return; }
+    }
+    if(line.match(/^\d+\.\s/)) {
+      const content=line.replace(/^\d+\.\s*/,'');
+      const num=line.match(/^(\d+)/)[1];
+      if(content.includes('[LARGE BOX]')) { wsN++; html+=`<div style="margin:8px 0;"><div style="font-size:.88rem;margin-bottom:3px;"><strong>${num}.</strong> ${content.replace('[LARGE BOX]','').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim()}</div><textarea class="ws-ta" placeholder="Write your answer here..."></textarea></div>`; return; }
+      if(content.includes('[TEXT BOX]')) { wsN++; html+=`<div style="margin:6px 0;display:flex;align-items:flex-start;gap:7px;"><span style="font-weight:600;flex-shrink:0;">${num}.</span><div style="flex:1;"><div style="font-size:.88rem;margin-bottom:3px;">${content.replace('[TEXT BOX]','').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim()}</div><input class="ws-in" type="text" placeholder="Your answer..."></div></div>`; return; }
+      html+=`<div style="margin:5px 0;"><strong>${num}.</strong> ${content.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</div>`; return;
+    }
+    if(line.match(/^[-*] /)) { html+=`<li style="margin-bottom:3px;">${line.slice(2).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</li>`; return; }
+    if(line.trim()==='') { html+='<div style="height:5px;"></div>'; return; }
+    html+=`<p style="margin:3px 0;">${line.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</p>`;
+  });
+  html+='</div>';
+  return html;
+}
+
+function renderMD(text) {
+  if(!text) return '';
+  return text
+    .replace(/^## (.+)$/gm,'<h2 style="font-family:Fraunces,serif;font-size:1rem;font-weight:600;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);">$1</h2>')
+    .replace(/^### (.+)$/gm,'<h3 style="font-size:.78rem;font-weight:600;color:var(--sage);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 4px;">$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^- (.+)$/gm,'<li style="margin-bottom:3px;">$1</li>')
+    .replace(/(<li[^>]*>.*?<\/li>\n?)+/gs,m=>`<ul style="padding-left:18px;margin:5px 0;">${m}</ul>`)
+    .replace(/\n\n/g,'<br><br>');
+}
+
+function previewWS(k) {
+  const txt = genContent[k]?.current||'';
+  const topic = document.getElementById('topic')?.value||'Worksheet';
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${topic}</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;background:#F8F4EE;color:#16120E;}
+.pg{max-width:760px;margin:0 auto;background:white;min-height:100vh;padding:32px 40px;}
+.hd{border-bottom:3px solid #4A7C59;padding-bottom:14px;margin-bottom:22px;}
+.title{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:600;}
+.meta{font-size:.8rem;color:#7A726A;margin-top:3px;}
+.nr{display:flex;gap:18px;margin-bottom:22px;flex-wrap:wrap;}
+.nf{flex:1;min-width:160px;}
+.nl{font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:#7A726A;display:block;margin-bottom:3px;}
+.ni{width:100%;border:none;border-bottom:2px solid #4A7C59;background:transparent;font-size:.92rem;padding:4px 2px;outline:none;font-family:'DM Sans',sans-serif;}
+h2{font-family:'Fraunces',serif;font-size:1rem;font-weight:600;margin:18px 0 7px;padding:7px 13px;background:#EAF0EA;border-left:3px solid #4A7C59;border-radius:0 6px 6px 0;}
+h3{font-size:.8rem;font-weight:600;color:#4A7C59;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 5px;}
+.ws-in{width:100%;border:none;border-bottom:2px solid #4A7C59;background:transparent;font-family:'DM Sans',sans-serif;font-size:.92rem;padding:5px 2px;outline:none;display:block;margin:3px 0 8px;}
+.ws-in:focus{border-bottom-color:#C47B2A;background:#FDF4E3;border-radius:3px 3px 0 0;padding:5px 7px;}
+.ws-ta{width:100%;border:2px solid #4A7C59;border-radius:7px;background:#EAF0EA;font-family:'DM Sans',sans-serif;font-size:.92rem;padding:9px 11px;outline:none;resize:vertical;min-height:90px;margin:5px 0 8px;display:block;}
+.ws-ta:focus{border-color:#C47B2A;background:#FDF4E3;}
+.ws-choices{display:flex;flex-wrap:wrap;gap:7px;margin:7px 0 10px;}
+.ws-choice{display:flex;align-items:center;gap:6px;padding:6px 13px;border:1.5px solid #E0D8CC;border-radius:18px;cursor:pointer;font-size:.84rem;background:#F8F4EE;}
+.ws-wordbank{background:#E8EFF9;border:1px solid #B0C8E8;border-radius:7px;padding:11px 14px;margin:9px 0;}
+.ws-wb-title{font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:#2A5FA5;margin-bottom:7px;font-weight:600;}
+.ws-wb-words{display:flex;flex-wrap:wrap;gap:7px;}
+.ws-wb-word{background:white;border:1px solid #2A5FA5;border-radius:4px;padding:2px 10px;font-size:.82rem;}
+.ws-diagram{background:#FDF4E3;border:1px dashed #C47B2A;border-radius:7px;padding:13px;margin:9px 0;font-style:italic;text-align:center;color:#7A5020;}
+p{margin:3px 0;line-height:1.7;}li{margin-bottom:3px;line-height:1.6;}ul{padding-left:18px;margin:5px 0;}
+@media print{body{background:white;}.pg{padding:20px;}}
+</style></head><body><div class="pg">
+<div class="hd"><div class="title">📝 ${topic}</div><div class="meta">${new Date().toLocaleDateString('en-CA')}</div></div>
+<div class="nr"><div class="nf"><label class="nl">Student Name</label><input class="ni" type="text" placeholder="Type your name..."></div><div class="nf"><label class="nl">Date</label><input class="ni" type="text" placeholder="${new Date().toLocaleDateString('en-CA')}"></div></div>
+${renderWorksheet(txt)}
+</div></body></html>`);
+  w.document.close();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderRoster();
+renderCurriculum();
+</script>
+</body>
+</html>
