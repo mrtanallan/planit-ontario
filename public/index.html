@@ -1016,41 +1016,42 @@ async function getStudentLink(k) {
     // Generate the student link
     const link = `${window.location.origin}/ws?id=${data.id}`;
 
-    // Copy to clipboard (with Safari fallback)
-    try {
-      await navigator.clipboard.writeText(link);
-    } catch(clipErr) {
-      // Safari fallback
-      const ta = document.createElement('textarea');
-      ta.value = link; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    }
-
-    // Show success
-    btn.textContent = '✅ Link Copied!';
-    btn.style.background = '#4A7C59';
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.textContent = '🔗 Get Student Link';
-      btn.style.background = '';
-    }, 3000);
-
-    // Show the link visually
+    // Replace the button with the link directly — no clipboard permission needed
     const block = document.getElementById('cb-' + k);
     let linkDiv = document.getElementById('studentLinkDiv');
     if (linkDiv) linkDiv.remove();
     const div = document.createElement('div');
     div.id = 'studentLinkDiv';
-    div.style.cssText = 'padding:12px 16px;background:#EAF0EA;border-top:1px solid #A8C4AB;font-size:.82rem;';
-    div.innerHTML = `<div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:#4A7C59;margin-bottom:6px;">🔗 Student Link — copied to clipboard</div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <input type="text" value="${link}" readonly style="flex:1;font-family:'DM Mono',monospace;font-size:.72rem;padding:6px 10px;border:1px solid #A8C4AB;border-radius:5px;background:white;outline:none;min-width:0;">
-        <button class="btn b-out b-sm" onclick="navigator.clipboard.writeText('${link}');event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='Copy',1500)">Copy</button>
+    div.style.cssText = 'padding:14px 16px;background:#EAF0EA;border-top:1px solid #A8C4AB;';
+    div.innerHTML = `
+      <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:#4A7C59;margin-bottom:8px;">🔗 Student Link — paste into Google Classroom</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+        <input type="text" id="studentLinkInput" value="${link}" readonly
+          style="flex:1;font-family:'DM Mono',monospace;font-size:.78rem;padding:8px 12px;border:1.5px solid #A8C4AB;border-radius:7px;background:white;outline:none;min-width:0;cursor:text;"
+          onclick="this.select()">
+        <button class="btn b-sage b-sm" id="copyLinkBtn" onclick="
+          const inp = document.getElementById('studentLinkInput');
+          inp.select();
+          try {
+            navigator.clipboard.writeText(inp.value).then(()=>{
+              document.getElementById('copyLinkBtn').textContent='✅ Copied!';
+              setTimeout(()=>document.getElementById('copyLinkBtn').textContent='📋 Copy',2000);
+            });
+          } catch(e) {
+            document.execCommand('copy');
+            document.getElementById('copyLinkBtn').textContent='✅ Copied!';
+            setTimeout(()=>document.getElementById('copyLinkBtn').textContent='📋 Copy',2000);
+          }
+        ">📋 Copy</button>
       </div>
-      <div style="margin-top:6px;font-size:.75rem;color:#2D5C38;">Paste this link into Google Classroom as an assignment. Students open it, fill in their answers, and click Submit.</div>`;
+      <div style="font-size:.75rem;color:#2D5C38;line-height:1.5;">Paste this into Google Classroom as an assignment link. Students click it, fill in their answers, and submit. You'll see their responses in the Assessment tab.</div>`;
     block.appendChild(div);
+
+    // Hide the Get Student Link button — replace with "Regenerate Link"
+    btn.textContent = '✅ Link Ready';
+    btn.style.background = '#4A7C59';
+    btn.style.color = 'white';
+    btn.disabled = false;
 
   } catch(e) {
     btn.disabled = false;
