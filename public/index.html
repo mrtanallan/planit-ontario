@@ -837,23 +837,77 @@ function doShare(){
 // ============================================================
 // ASSESS
 // ============================================================
-function renderAssGrid(){
+async function renderAssGrid(){
   if(!curSess)return;
   document.getElementById('assLabel').textContent=curSess.task||'Today\'s Assessment';
   document.getElementById('assMeta').textContent=`${curSess.subject} · ${curSess.strand} · ${curSess.date}`;
   const g=document.getElementById('assGrid');
   if(!students.length){g.innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;padding:14px;">Add students in Class Roster first.</div>';return;}
-  g.innerHTML=students.map((s,i)=>`
+
+  // Fetch submissions for this lesson's worksheets
+  let submissionsByStudent = {};
+  try {
+    const { data: worksheets } = await db.from('worksheets')
+      .select('id')
+      .eq('teacher_id', currentUser.id)
+      .eq('topic', curSess.task);
+    if (worksheets && worksheets.length) {
+      const wsIds = worksheets.map(w => w.id);
+      const { data: subs } = await db.from('worksheet_submissions')
+        .select('*')
+        .in('worksheet_id', wsIds)
+        .order('submitted_at', { ascending: false });
+      if (subs) {
+        // Match submissions to students by student_id first, then fuzzy name match
+        subs.forEach(sub => {
+          // Try exact student_id match first
+          const byId = students.find(s => s.id === sub.student_id);
+          if (byId) {
+            if (!submissionsByStudent[byId.id]) submissionsByStudent[byId.id] = sub;
+            return;
+          }
+          // Fall back to name match
+          const name = (sub.student_name || '').toLowerCase().trim();
+          const byName = students.find(s =>
+            s.first.toLowerCase() === name ||
+            `${s.first} ${s.last||''}`.toLowerCase().trim() === name
+          );
+          if (byName && !submissionsByStudent[byName.id]) {
+            submissionsByStudent[byName.id] = sub;
+          }
+        });
+      }
+    }
+  } catch(e) { console.log('Could not load submissions:', e); }
+
+  g.innerHTML=students.map((s,i)=>{
+    const sub = submissionsByStudent[s.id];
+    const subHtml = sub ? `
+      <div style="margin-top:10px;">
+        <button class="btn b-out b-sm" style="font-size:.7rem;margin-bottom:7px;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent.includes('▼')?'▶ Hide submitted work':'▼ View submitted work'">▼ View submitted work</button>
+        <div style="background:var(--blue-l);border:1px solid #B0C8E8;border-radius:7px;padding:11px 13px;font-size:.82rem;">
+          <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📥 Submitted ${new Date(sub.submitted_at).toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})} · ${new Date(sub.submitted_at).toLocaleDateString('en-CA')}</div>
+          ${sub.responses ? Object.entries(sub.responses).filter(([,v])=>v&&v!=='—').map(([q,a])=>`
+            <div style="margin-bottom:6px;">
+              <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">${q}</div>
+              <div style="padding:4px 8px;background:white;border-radius:4px;margin-top:2px;line-height:1.5;">${Array.isArray(a)?a.join(', '):a}</div>
+            </div>`).join('') : '<div style="color:var(--muted);">No responses recorded.</div>'}
+        </div>
+      </div>` : `<div style="margin-top:8px;font-size:.78rem;color:var(--muted);font-style:italic;">No submission yet for this lesson.</div>`;
+
+    return`
     <div class="ar" id="ar-${s.id}" data-sid="${s.id}">
       <div class="art">
         <div class="an">
           <div class="av" style="background:${AVCOLORS[i%AVCOLORS.length]};width:26px;height:26px;font-size:.75rem;">${s.first[0]}${(s.last||' ')[0]}</div>
           ${s.first} ${s.last||''}
           <span class="atag">${s.grade}</span>${s.notes?`<span class="atag">${s.notes}</span>`:''}
+          ${sub?'<span class="atag" style="background:var(--blue-l);border-color:#B0C8E8;color:var(--blue);">📥 submitted</span>':''}
         </div>
         <div id="ld-${s.id}" style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);">Not assessed</div>
       </div>
-      <div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap;">
+      ${subHtml}
+      <div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap;margin-top:10px;">
         <div class="lbg">
           <button class="lb L1" data-sid="${s.id}" data-level="L1-">1−</button>
           <button class="lb L1" data-sid="${s.id}" data-level="L1">L1</button>
@@ -878,9 +932,10 @@ function renderAssGrid(){
       <div style="display:flex;gap:7px;margin-top:7px;">
         <input class="ni" type="text" placeholder="Observation notes..." id="nt-${s.id}" data-sid="${s.id}">
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
-  // Attach level button listeners via JS — avoids quote-escaping issues with UUIDs in inline onclick
+  // Attach level button listeners
   document.querySelectorAll('.lb[data-sid]').forEach(btn => {
     btn.addEventListener('click', function() {
       sl(this.dataset.sid, this.dataset.level, this);
