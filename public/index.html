@@ -546,6 +546,1173 @@ async function signOut() {
 // INIT — check session on load
 // ============================================================
 async function initApp() {
+  // Safety timeout — never get permanently stuck loading
+  const loadTimeout = setTimeout(()=>{
+    hideLoading();
+    document.getElementById('authScreen').style.display='flex';
+  }, 5000);
+
+  try {
+    showLoading('Loading TeacherAI...');
+    const {data:{session}}=await db.auth.getSession();
+    clearTimeout(loadTimeout);
+    if(session) {
+      currentUser=session.user;
+      await loadUserData();
+      showApp();
+    } else {
+      hideLoading();
+    }
+  } catch(e) {
+    clearTimeout(loadTimeout);
+    hideLoading();
+    console.error('Init error:', e);
+  }
+
+  // Listen for auth changes
+  db.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN'&&session){
+      currentUser=session.user;
+      showLoading('Loading your data...');
+      try {
+        await loadUserData();
+      } catch(e) { console.error(e); }
+      hideLoading();
+      showApp();
+    } else if(event==='SIGNED_OUT'){
+      document.getElementById('appScreen').style.display='none';
+      document.getElementById('authScreen').style.display='flex';
+    }
+  });
+}
+
+function showApp() {
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('appScreen').style.display='block';
+  document.getElementById('navEmail').textContent=currentUser.email;
+  renderR();
+  renderTracker();
+  renderLessonsList();
+}
+
+// ============================================================
+// LOAD USER DATA FROM SUPABASE
+// ============================================================
+async function loadUserData() {
+  // Load students
+  const {data:stuData}=await db.from('students').select('*').order('created_at');
+  if(stuData) students=stuData.map(s=>({id:s.id,first:s.first_name,last:s.last_name||'',grade:s.grade,notes:s.notes||'',iep:s.learning_profile||'',dbId:s.id}));
+
+  // Load sessions
+  const {data:sessData}=await db.from('assessment_sessions').select('*, student_marks(*)').order('created_at',{ascending:false});
+  if(sessData) sessions=sessData.map(sess=>({
+    id:sess.id, date:sess.date, subject:sess.subject, strand:sess.strand,
+    grades:sess.grades, task:sess.task,
+    marks:Object.fromEntries((sess.student_marks||[]).map(m=>[m.student_id,{level:m.level,notes:m.notes}]))
+  }));
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchToAssess() { document.getElementById('tr-assess').checked=true; renderTracker(); }
+
+// ============================================================
+// WORKFLOW
+// ============================================================
+function gs(n) {
+  const el=document.getElementById('ws'+n);
+  if(el.classList.contains('locked'))return;
+  for(let i=1;i<=5;i++){
+    document.getElementById('s'+i).style.display=i===n?'block':'none';
+    document.getElementById('ws'+i).classList.remove('on');
+  }
+  el.classList.add('on');
+  if(n===4)renderAssGrid();
+  if(n===5)renderFbGrid();
+}
+
+function unlock(){for(let i=2;i<=5;i++){const e=document.getElementById('ws'+i);e.classList.remove('locked');e.classList.add('done');}}
+
+// ============================================================
+// GENERATE
+// ============================================================
+async function generate() {
+  const gA=document.getElementById('gA').value;
+  const topic=document.getElementById('topic').value.trim();
+  if(!gA||!topic){alert('Select Grade A and enter a topic.');return;}
+  const grades=['gA','gB','gC','gD'].map(id=>document.getElementById(id).value).filter(g=>g&&g!=='');
+  const isSplit=grades.length>1;
+  const gradeDesc=isSplit?grades.join(' / ')+' multi-grade split class':grades[0];
+  const subj=document.getElementById('subj').value;
+  const dur=document.getElementById('dur').value;
+  const ctx=document.getElementById('ctx').value;
+
+  const strands=[];
+  if(document.getElementById('ck-r').checked)strands.push('Reading');
+  if(document.getElementById('ck-w').checked)strands.push('Writing');
+  if(document.getElementById('ck-o').checked)strands.push('Oral Communication');
+  if(document.getElementById('ck-m').checked)strands.push('Media Literacy');
+
+  const outputs=[];
+  if(document.getElementById('ck-lp').checked)outputs.push('lesson_plan');
+  if(document.getElementById('ck-ws').checked)outputs.push('student_worksheet');
+  if(document.getElementById('ck-rr').checked)outputs.push('reading_resource');
+  if(document.getElementById('ck-rb').checked)outputs.push('assessment_rubric');
+  if(document.getElementById('ck-dt').checked)outputs.push('differentiation_tips');
+  if(!outputs.length){alert('Select at least one output.');return;}
+
+  const btn=document.getElementById('genBtn');
+  btn.disabled=true; btn.textContent='⏳ Generating...';
+
+  curSess={id:null,date:new Date().toLocaleDateString('en-CA'),subject:subj,strand:strands[0]||'General',grades,task:topic,marks:{}};
+
+  // ANONYMIZE — never send real student names to Anthropic
+  const iepStudents=students.filter(s=>s.iep&&s.iep.trim());
+  const anonIEP=iepStudents.length
+    ?'\nMODIFIED EXPECTATIONS (anonymized for privacy):\n'+iepStudents.map((s,i)=>`Student ${String.fromCharCode(65+i)} (${s.grade}):\n${s.iep}`).join('\n\n')
+    :'';
+
+  const splitNote=isSplit?`IMPORTANT: MULTI-GRADE SPLIT CLASS: ${grades.join(', ')}. Clearly differentiate content per grade.`:'';
+
+  const prompt=`You are an expert Ontario elementary SSC teacher. Generate a classroom-ready lesson package.
+Grade(s): ${gradeDesc}
+Subject: ${subj}
+Topic: ${topic}
+Duration: ${dur}
+Strands: ${strands.join(', ')||'General'}
+Context: ${ctx||'Standard Ontario classroom.'}
+${splitNote}
+${anonIEP}
+Align to Ontario Ministry of Education curriculum expectations.
+Return ONLY valid JSON with keys: ${outputs.map(k=>'"'+k+'"').join(', ')}.
+Each value is a markdown string:
+- Use ## major sections, ### subsections, **bold**, - bullets
+- lesson_plan: timing (0:00-0:10), Minds On/Action/Consolidation, materials
+- student_worksheet: NEVER use underscores. Use [TEXT BOX] short answer, [LARGE BOX] paragraph, [CIRCLE ONE: A / B / C] multiple choice, [CHECK ALL THAT APPLY: A / B / C] checkboxes, [WORD BANK: w1, w2, w3]. Use emoji headers 📖 ✏️ 🤔 💬. 4-6 varied activities.
+- reading_resource: original 200-300 word passage for the grade(s)
+- assessment_rubric: Ontario Level 1/2/3/4 with specific success criteria${iepStudents.length?' plus modified criteria for IEP students':''}
+- differentiation_tips: per-grade and per-student strategies
+For split classes: clearly separate by grade. No text outside the JSON.`;
+
+  try {
+    const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
+    if(!res.ok) throw new Error(`Server error ${res.status}`);
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
+    const raw=data.content.map(i=>i.text||'').join('');
+    let parsed;
+    try{parsed=JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim());}
+    catch(e1){try{const s=raw.indexOf('{'),e=raw.lastIndexOf('}');parsed=JSON.parse(raw.slice(s,e+1));}
+    catch(e2){parsed={};outputs.forEach(k=>{const m=raw.match(new RegExp('"'+k+'"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"','s'));if(m)parsed[k]=m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"');else parsed[k]=raw;});}}
+
+    genC={};outputs.forEach(k=>{genC[k]={orig:parsed[k]||'',cur:parsed[k]||''};});
+    buildEditBlocks(outputs,gradeDesc,subj,topic);
+    buildShareCards(outputs);
+    unlock(); gs(2);
+
+    // Save lesson to Supabase
+    if(currentUser) {
+      await db.from('lessons').insert({
+        teacher_id:currentUser.id,
+        topic,grades,subject:subj,
+        content:parsed
+      });
+      renderLessonsList();
+    }
+  } catch(e) {
+    alert('Error: '+e.message);
+  }
+  btn.disabled=false; btn.textContent='✨ Generate Lesson';
+}
+
+// ============================================================
+// EDIT BLOCKS
+// ============================================================
+function buildEditBlocks(outputs,gradeDesc,subj,topic){
+  const c=document.getElementById('editBlocks');
+  c.innerHTML=`<div style="display:flex;align-items:center;gap:9px;margin-bottom:14px;flex-wrap:wrap;">
+    <span style="font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;">Generated Lesson</span>
+    <span style="background:var(--amber-l);border:1px solid #E8C98A;color:var(--amber);padding:2px 9px;border-radius:10px;font-family:'DM Mono',monospace;font-size:.62rem;">${gradeDesc}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);">${subj} · ${topic}</span>
+  </div>`;
+  outputs.forEach(k=>{
+    const isWS=k==='student_worksheet';
+    const isSh=SHAREABLE.includes(k);
+    const rendered=isWS?renderWS(genC[k].cur):renderMD(genC[k].cur);
+    c.innerHTML+=`<div class="cb" id="cb-${k}">
+      <div class="cbh">
+        <div style="display:flex;align-items:center;gap:7px;">
+          <span class="cbl">${BLABELS[k]}</span>
+          ${isWS?'<span style="font-family:\'DM Mono\',monospace;font-size:.55rem;color:var(--blue);background:var(--blue-l);padding:1px 6px;border-radius:3px;">📱 Interactive</span>':''}
+        </div>
+        <div class="cba">
+          <button class="btn b-out b-sm" onclick="toggleEdit('${k}')">✏️ Edit</button>
+          <button class="btn b-out b-sm" onclick="resetBlock('${k}')">↩ Reset</button>
+          <button class="btn b-out b-sm" onclick="copyBlock('${k}')">📋 Copy</button>
+          ${isSh?`<button class="btn b-blue b-sm" onclick="openShare('${k}')">📤 Share</button>`:''}
+        </div>
+      </div>
+      <div class="cbb" id="cbb-${k}" contenteditable="false">${rendered}</div>
+      ${isWS?`<div class="cbf"><span>💡 Students tap to fill in answers on their devices</span><button class="btn b-out b-sm" onclick="previewWS('${k}')">👁 Full Preview</button></div>`:''}
+    </div>`;
+  });
+}
+
+function toggleEdit(k){const el=document.getElementById('cbb-'+k);if(el.contentEditable==='true'){el.contentEditable='false';genC[k].cur=el.innerText;}else{el.contentEditable='true';el.focus();}}
+function resetBlock(k){if(!confirm('Reset to original?'))return;const el=document.getElementById('cbb-'+k);el.contentEditable='false';genC[k].cur=genC[k].orig;el.innerHTML=k==='student_worksheet'?renderWS(genC[k].orig):renderMD(genC[k].orig);}
+function copyBlock(k){navigator.clipboard.writeText(document.getElementById('cbb-'+k).innerText);event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='📋 Copy',1500);}
+
+// ============================================================
+// SHARE
+// ============================================================
+function buildShareCards(outputs){
+  const c=document.getElementById('shareCards');
+  const sh=outputs.filter(k=>SHAREABLE.includes(k));
+  if(!sh.length){c.innerHTML='<div style="color:var(--muted);font-style:italic;">No shareable content selected.</div>';return;}
+  c.innerHTML=sh.map(k=>`<div class="card" style="margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;">
+      <div><div style="font-weight:600;margin-bottom:2px;">${BLABELS[k]}</div><div style="font-size:.8rem;color:var(--muted);">Share to Google Classroom</div></div>
+      <div class="brow">
+        <button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit first</button>
+        <button class="btn b-blue b-sm" onclick="openShare('${k}')">📤 Share to Classroom</button>
+      </div>
+    </div>
+  </div>`).join('');
+}
+
+function openShare(k){shareKey=k;document.getElementById('shareTitle').value=BLABELS[k].replace(/^[^\s]+\s/,'');document.getElementById('shareModal').classList.add('open');}
+function closeModal(){document.getElementById('shareModal').classList.remove('open');}
+function doShare(){
+  const title=document.getElementById('shareTitle').value;
+  const inst=document.getElementById('shareInst').value;
+  const body=(document.getElementById('cbb-'+shareKey)?.innerText||'').substring(0,1500);
+  window.open(`https://classroom.google.com/u/0/share?title=${encodeURIComponent(title)}&body=${encodeURIComponent(inst+'\n\n---\n\n'+body)}`,'_blank');
+  closeModal();
+}
+
+// ============================================================
+// ASSESS
+// ============================================================
+function renderAssGrid(){
+  if(!curSess)return;
+  document.getElementById('assLabel').textContent=curSess.task||'Today\'s Assessment';
+  document.getElementById('assMeta').textContent=`${curSess.subject} · ${curSess.strand} · ${curSess.date}`;
+  const g=document.getElementById('assGrid');
+  if(!students.length){g.innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;padding:14px;">Add students in Class Roster first.</div>';return;}
+  g.innerHTML=students.map((s,i)=>`
+    <div class="ar" id="ar-${s.id}">
+      <div class="art">
+        <div class="an">
+          <div class="av" style="background:${AVCOLORS[i%AVCOLORS.length]};width:26px;height:26px;font-size:.75rem;">${s.first[0]}${(s.last||' ')[0]}</div>
+          ${s.first} ${s.last||''}
+          <span class="atag">${s.grade}</span>${s.notes?`<span class="atag">${s.notes}</span>`:''}
+        </div>
+        <div id="ld-${s.id}" style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);">Not assessed</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap;">
+        <div class="lbg">
+          <button class="lb L1" onclick="sl(${JSON.stringify(s.id)},'L1-',this)">1−</button>
+          <button class="lb L1" onclick="sl(${JSON.stringify(s.id)},'L1',this)">L1</button>
+          <button class="lb L1" onclick="sl(${JSON.stringify(s.id)},'L1+',this)">1+</button>
+        </div><div class="ld"></div>
+        <div class="lbg">
+          <button class="lb L2" onclick="sl(${JSON.stringify(s.id)},'L2-',this)">2−</button>
+          <button class="lb L2" onclick="sl(${JSON.stringify(s.id)},'L2',this)">L2</button>
+          <button class="lb L2" onclick="sl(${JSON.stringify(s.id)},'L2+',this)">2+</button>
+        </div><div class="ld"></div>
+        <div class="lbg">
+          <button class="lb L3" onclick="sl(${JSON.stringify(s.id)},'L3-',this)">3−</button>
+          <button class="lb L3" onclick="sl(${JSON.stringify(s.id)},'L3',this)">L3</button>
+          <button class="lb L3" onclick="sl(${JSON.stringify(s.id)},'L3+',this)">3+</button>
+        </div><div class="ld"></div>
+        <div class="lbg">
+          <button class="lb L4" onclick="sl(${JSON.stringify(s.id)},'L4-',this)">4−</button>
+          <button class="lb L4" onclick="sl(${JSON.stringify(s.id)},'L4',this)">L4</button>
+          <button class="lb L4" onclick="sl(${JSON.stringify(s.id)},'L4+',this)">4+</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:7px;margin-top:7px;">
+        <input class="ni" type="text" placeholder="Observation notes..." id="nt-${s.id}" oninput="sn(${JSON.stringify(s.id)})">
+      </div>
+    </div>`).join('');
+}
+
+function sl(sid,level,btn){
+  document.getElementById('ar-'+sid).querySelectorAll('.lb').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  if(!curSess.marks[sid])curSess.marks[sid]={};
+  curSess.marks[sid].level=level;
+  const base=level.replace(/[+-]/,'');
+  const num=base.replace('L','');
+  const sfx=level.includes('+')?'+':level.includes('-')?'−':'';
+  const cols={L1:'var(--rust)',L2:'var(--amber)',L3:'var(--blue)',L4:'var(--sage)'};
+  const d=document.getElementById('ld-'+sid);
+  d.textContent='Level '+num+sfx+' ●'; d.style.color=cols[base];
+}
+
+function sn(sid){if(!curSess.marks[sid])curSess.marks[sid]={};curSess.marks[sid].notes=document.getElementById('nt-'+sid)?.value||'';}
+
+async function saveAss(){
+  const assessed=Object.keys(curSess.marks).filter(sid=>curSess.marks[sid].level);
+  if(!assessed.length){alert('Assess at least one student first.');return;}
+  showLoading('Saving assessment...');
+  try {
+    // Save session
+    const {data:sessData,error:sessErr}=await db.from('assessment_sessions').insert({
+      teacher_id:currentUser.id,
+      task:curSess.task, subject:curSess.subject,
+      strand:curSess.strand, grades:curSess.grades, date:curSess.date
+    }).select().single();
+    if(sessErr) throw sessErr;
+    curSess.id=sessData.id;
+
+    // Save marks
+    const marks=assessed.map(sid=>({
+      session_id:sessData.id,
+      student_id:sid,
+      level:curSess.marks[sid].level,
+      notes:curSess.marks[sid].notes||''
+    }));
+    await db.from('student_marks').insert(marks);
+
+    // Reload sessions
+    await loadUserData();
+    renderTracker();
+    hideLoading();
+    alert(`✅ Assessment saved for ${assessed.length} student(s).`);
+  } catch(e) {
+    hideLoading();
+    alert('Error saving: '+e.message);
+  }
+}
+
+// ============================================================
+// FEEDBACK
+// ============================================================
+function renderFbGrid(){
+  const g=document.getElementById('fbGrid');
+  if(!curSess||!students.length){g.innerHTML='<div style="color:var(--muted);font-style:italic;">Complete Step 4 first.</div>';return;}
+  const assessed=students.filter(s=>curSess.marks[s.id]?.level);
+  if(!assessed.length){g.innerHTML='<div style="color:var(--muted);font-style:italic;">No students assessed. Go back to Step 4.</div>';return;}
+  g.innerHTML=assessed.map((s,i)=>{
+    const m=curSess.marks[s.id];
+    const base=m.level.replace(/[+-]/,'');
+    const num=base.replace('L','');
+    const sfx=m.level.includes('+')?'+':m.level.includes('-')?'−':'';
+    return`<div class="card" style="margin-bottom:11px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div class="av" style="background:${AVCOLORS[i%AVCOLORS.length]}">${s.first[0]}${(s.last||' ')[0]}</div>
+          <div><div style="font-weight:600;">${s.first} ${s.last||''}</div><div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);">${s.grade} · Level ${num}${sfx}</div></div>
+        </div>
+        <button class="btn b-ink b-sm" onclick="genFb(${JSON.stringify(s.id)})">✨ Generate Feedback</button>
+      </div>
+      ${m.notes?`<div style="font-size:.8rem;color:var(--muted);margin-bottom:7px;font-style:italic;">Notes: ${m.notes}</div>`:''}
+      <div class="fb" id="fb-${s.id}"></div>
+    </div>`;
+  }).join('');
+}
+
+async function genFb(sid){
+  const s=students.find(x=>x.id===sid);
+  const m=curSess?.marks[sid];
+  if(!s||!m?.level)return;
+  const fbEl=document.getElementById('fb-'+sid);
+  fbEl.style.display='block';
+  fbEl.innerHTML='<div class="dots"><span></span><span></span><span></span></div> Generating feedback...';
+  const base=m.level.replace(/[+-]/,'');
+  const sfx=m.level.includes('+')?'(strong, approaching next level)':m.level.includes('-')?'(emerging, needs support)':'';
+  const lvMap={L1:'Level 1 (50-59%)',L2:'Level 2 (60-69%)',L3:'Level 3 (70-79%)',L4:'Level 4 (80%+)'};
+  // Anonymize student name for Anthropic
+  const prompt=`Write Ontario-style descriptive feedback. Warm, specific, professional, 3-4 sentences.
+Student grade: ${s.grade}
+Subject: ${curSess.subject} — ${curSess.strand}
+Task: ${curSess.task}
+Achievement: ${lvMap[base]} ${sfx}
+Teacher notes: ${m.notes||'None'}
+Accommodations: ${s.notes||'None'}
+${s.iep?'Modified expectations: '+s.iep:''}
+Start with a specific strength. Describe achievement with evidence. Give one clear next step. Use Ontario growth mindset language. Address student directly ("you"). Never say "good", "nice", or "great". Write only the feedback, no preamble.`;
+  try{
+    const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const text=data.content?.map(i=>i.text||'').join('')||'Error generating.';
+    fbEl.innerHTML=`<div style="font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">✏️ Click to edit before copying</div>
+      <div class="fbe" contenteditable="true" id="fbt-${sid}">${text}</div>
+      <div class="brow" style="margin-top:7px;">
+        <button class="btn b-sage b-sm" onclick="copyFb(${JSON.stringify(sid)})">📋 Copy Feedback</button>
+        <button class="btn b-out b-sm" onclick="regenFb(${JSON.stringify(sid)})">🔄 Regenerate</button>
+      </div>`;
+  }catch(e){fbEl.innerHTML='Error: '+e.message;}
+}
+
+function copyFb(sid){const el=document.getElementById('fbt-'+sid);if(!el)return;navigator.clipboard.writeText(el.innerText.trim()).then(()=>{const btn=el.nextElementSibling?.querySelector('.b-sage');if(btn){btn.textContent='✅ Copied!';setTimeout(()=>btn.textContent='📋 Copy Feedback',2000);}});}
+function regenFb(sid){const fb=document.getElementById('fb-'+sid);if(fb)fb.style.display='none';genFb(sid);}
+
+// ============================================================
+// ROSTER
+// ============================================================
+async function addStu(){
+  const f=document.getElementById('sF').value.trim();
+  const l=document.getElementById('sL').value.trim();
+  if(!f){alert('Enter at least a first name.');return;}
+  showLoading('Saving student...');
+  const {data,error}=await db.from('students').insert({
+    teacher_id:currentUser.id,
+    first_name:f, last_name:l||null,
+    grade:document.getElementById('sG').value,
+    notes:document.getElementById('sN').value.trim()||null,
+    learning_profile:document.getElementById('sI').value.trim()||null
+  }).select().single();
+  hideLoading();
+  if(error){alert('Error: '+error.message);return;}
+  students.push({id:data.id,first:data.first_name,last:data.last_name||'',grade:data.grade,notes:data.notes||'',iep:data.learning_profile||'',dbId:data.id});
+  document.getElementById('sF').value='';document.getElementById('sL').value='';document.getElementById('sN').value='';document.getElementById('sI').value='';
+  renderR();
+}
+
+async function loadSample(){
+  if(!confirm('This will add 8 sample students to your roster. Continue?'))return;
+  const samples=[
+    {first_name:'Amara',last_name:'O.',grade:'Grade 5',notes:'ELL',learning_profile:null},
+    {first_name:'Liam',last_name:'C.',grade:'Grade 4',notes:null,learning_profile:null},
+    {first_name:'Sofia',last_name:'P.',grade:'Grade 5',notes:'IEP-Reading',learning_profile:'Reading: identify main idea at Grade 2 level with visual supports\nWriting: compose 3-5 sentence paragraphs with graphic organizer support'},
+    {first_name:'Marcus',last_name:'W.',grade:'Grade 4',notes:'Gifted',learning_profile:null},
+    {first_name:'Priya',last_name:'S.',grade:'Grade 7',notes:null,learning_profile:null},
+    {first_name:'Noah',last_name:'T.',grade:'Grade 6',notes:'ELL',learning_profile:'Reading: demonstrate understanding with bilingual dictionary support\nWriting: structured paragraphs with vocabulary scaffolding'},
+    {first_name:'Aisha',last_name:'H.',grade:'Grade 7',notes:null,learning_profile:null},
+    {first_name:'Ethan',last_name:'P.',grade:'Grade 6',notes:null,learning_profile:null},
+  ];
+  showLoading('Adding sample students...');
+  const {data,error}=await db.from('students').insert(samples.map(s=>({...s,teacher_id:currentUser.id}))).select();
+  hideLoading();
+  if(error){alert('Error: '+error.message);return;}
+  data.forEach(s=>students.push({id:s.id,first:s.first_name,last:s.last_name||'',grade:s.grade,notes:s.notes||'',iep:s.learning_profile||'',dbId:s.id}));
+  renderR();
+}
+
+async function clearR(){
+  if(!confirm('Remove all students from your roster? This cannot be undone.'))return;
+  showLoading('Clearing roster...');
+  await db.from('students').delete().eq('teacher_id',currentUser.id);
+  students=[];
+  hideLoading();
+  renderR();
+}
+
+async function removeStu(sid){
+  if(!confirm('Remove this student?'))return;
+  await db.from('students').delete().eq('id',sid);
+  students=students.filter(s=>s.id!==sid);
+  renderR();
+}
+
+function toggleIEP(sid){const el=document.getElementById('iep-'+sid);el.style.display=el.style.display==='block'?'none':'block';}
+
+async function saveIEP(sid){
+  const val=document.getElementById('iept-'+sid)?.value.trim()||null;
+  await db.from('students').update({learning_profile:val}).eq('id',sid);
+  const s=students.find(x=>x.id===sid);
+  if(s)s.iep=val||'';
+  toggleIEP(sid);
+  renderR();
+}
+
+function renderR(){
+  document.getElementById('rCount').textContent=`(${students.length})`;
+  const g=document.getElementById('rGrid');
+  if(!students.length){g.innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;grid-column:1/-1;">No students yet. Add students above.</div>';return;}
+  g.innerHTML=students.map((s,i)=>`
+    <div class="sc ${s.iep?'iep':''}" id="sc-${s.id}">
+      <div class="sct">
+        <div class="av" style="background:${AVCOLORS[i%AVCOLORS.length]}">${s.first[0]}${(s.last||' ')[0]}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="sn">${s.first} ${s.last||''} ${s.iep?'<span class="ib">Profile</span>':''}</div>
+          <div class="sm">${s.grade}${s.notes?' · '+s.notes:''}</div>
+        </div>
+        <div style="display:flex;gap:3px;">
+          <button class="btn b-out b-sm" style="padding:2px 6px;" onclick="toggleIEP(${JSON.stringify(s.id)})">✏️</button>
+          <button class="btn b-out b-sm" style="padding:2px 6px;color:var(--rust);border-color:var(--rust);" onclick="removeStu(${JSON.stringify(s.id)})">✕</button>
+        </div>
+      </div>
+      <div class="sie" id="iep-${s.id}">
+        <label style="font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin:7px 0 3px;">Learning Profile & Modified Expectations</label>
+        <textarea class="sit" id="iept-${s.id}" placeholder="Paste modified expectations...">${s.iep||''}</textarea>
+        <div class="brow" style="margin-top:5px;">
+          <button class="btn b-amber b-sm" onclick="saveIEP(${JSON.stringify(s.id)})">💾 Save</button>
+          <button class="btn b-out b-sm" onclick="toggleIEP(${JSON.stringify(s.id)})">Cancel</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// GRADE TRACKER
+// ============================================================
+function renderTracker(){
+  document.getElementById('tStu').textContent=students.length;
+  document.getElementById('tSess').textContent=sessions.length;
+  if(!students.length||!sessions.length){
+    document.getElementById('gTable').innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;">No data yet.</div>';
+    document.getElementById('sList').innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;">No sessions yet.</div>';
+    document.getElementById('tAvg').textContent='—'; document.getElementById('tL4').textContent='0'; return;
+  }
+  const lvN={L1:1,'L1-':.7,'L1+':1.3,L2:2,'L2-':1.7,'L2+':2.3,L3:3,'L3-':2.7,'L3+':3.3,L4:4,'L4-':3.7,'L4+':4.3};
+  const lvL=n=>n>=3.5?{l:'Level 4',c:'gp4'}:n>=2.5?{l:'Level 3',c:'gp3'}:n>=1.5?{l:'Level 2',c:'gp2'}:{l:'Level 1',c:'gp1'};
+  const rows=students.map(s=>{
+    const marks=sessions.flatMap(sess=>sess.marks[s.id]?.level?[lvN[sess.marks[s.id].level]||2]:[]);
+    const avg=marks.length?marks.reduce((a,b)=>a+b,0)/marks.length:null;
+    return{...s,avg,count:marks.length};
+  });
+  const wd=rows.filter(r=>r.avg!==null);
+  const ca=wd.length?wd.reduce((a,b)=>a+b.avg,0)/wd.length:null;
+  document.getElementById('tAvg').textContent=ca?`L${Math.round(ca)}`:'—';
+  document.getElementById('tL4').textContent=wd.filter(r=>r.avg>=3.5).length;
+  document.getElementById('gTable').innerHTML=`<table class="dt"><thead><tr><th>Student</th><th>Grade</th><th>Sessions</th><th>Avg Level</th><th>Notes</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${r.first} ${r.last||''}</strong></td><td>${r.grade}</td><td style="font-family:'DM Mono',monospace;">${r.count}</td><td>${r.avg!==null?`<span class="gp ${lvL(r.avg).c}">${lvL(r.avg).l}</span>`:'<span style="color:var(--muted)">—</span>'}</td><td style="color:var(--muted);font-size:.78rem;">${r.notes||'—'}</td></tr>`).join('')}</tbody></table>`;
+  document.getElementById('sList').innerHTML=sessions.slice(0,10).map(sess=>{
+    const cnt=Object.keys(sess.marks).filter(sid=>sess.marks[sid]?.level).length;
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);"><div><div style="font-weight:500;font-size:.88rem;">${sess.task}</div><div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);">${sess.date} · ${sess.subject} · ${sess.strand}</div></div><div style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--sage);">${cnt} students</div></div>`;
+  }).join('');
+}
+
+function exportCSV(){
+  const lvN={L1:1,'L1-':.7,'L1+':1.3,L2:2,'L2-':1.7,'L2+':2.3,L3:3,'L3-':2.7,'L3+':3.3,L4:4,'L4-':3.7,'L4+':4.3};
+  const rows=[['Student','Grade','Notes','Sessions','Avg Level']];
+  students.forEach(s=>{
+    const marks=sessions.flatMap(sess=>sess.marks[s.id]?.level?[lvN[sess.marks[s.id].level]||2]:[]);
+    const avg=marks.length?marks.reduce((a,b)=>a+b,0)/marks.length:null;
+    const lv=avg?(avg>=3.5?'Level 4':avg>=2.5?'Level 3':avg>=1.5?'Level 2':'Level 1'):'—';
+    rows.push([`${s.first} ${s.last||''}`,s.grade,s.notes||'',marks.length,lv]);
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.download='TeacherAI_Grades.csv'; a.click();
+}
+
+// ============================================================
+// LESSONS LIST
+// ============================================================
+async function renderLessonsList(){
+  const {data}=await db.from('lessons').select('*').order('created_at',{ascending:false}).limit(20);
+  const c=document.getElementById('lessonsList');
+  if(!data||!data.length){c.innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;">No lessons saved yet.</div>';return;}
+  c.innerHTML=data.map(l=>`
+    <div class="lesson-card" onclick="loadLesson(${JSON.stringify(l)})">
+      <div>
+        <div class="lesson-title">${l.topic}</div>
+        <div class="lesson-meta">${(l.grades||[]).join(' / ')} · ${l.subject} · ${new Date(l.created_at).toLocaleDateString('en-CA')}</div>
+      </div>
+      <button class="btn b-out b-sm">View →</button>
+    </div>`).join('');
+}
+
+function loadLesson(l){
+  // Load a saved lesson back into the workflow
+  genC={};
+  if(l.content) Object.keys(l.content).forEach(k=>{genC[k]={orig:l.content[k],cur:l.content[k]};});
+  buildEditBlocks(Object.keys(l.content||{}),( l.grades||[]).join(' / '),l.subject,l.topic);
+  buildShareCards(Object.keys(l.content||{}));
+  unlock();
+  document.getElementById('tr-plan').checked=true;
+  setTimeout(()=>gs(2),100);
+}
+
+// ============================================================
+// WORKSHEET RENDERER
+// ============================================================
+function renderWS(text){
+  if(!text)return''; wsN=0;
+  let h='<div class="wsw">';
+  text.split('\n').forEach(line=>{
+    if(line.startsWith('## ')){h+=`<h2>${line.slice(3)}</h2>`;return;}
+    if(line.startsWith('### ')){h+=`<h3>${line.slice(4)}</h3>`;return;}
+    if(line.includes('[TEXT BOX]')){const l=line.replace('[TEXT BOX]','').replace(/^[-*\d.]+\s*/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim();wsN++;h+=`${l?`<div style="font-size:.86rem;margin-bottom:2px;">${l}</div>`:''}<input class="wsi" type="text" placeholder="Write your answer here...">`;return;}
+    if(line.includes('[LARGE BOX]')){const l=line.replace('[LARGE BOX]','').replace(/^[-*\d.]+\s*/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim();wsN++;h+=`${l?`<div style="font-size:.86rem;margin-bottom:2px;">${l}</div>`:''}<textarea class="wst" placeholder="Write your answer here..."></textarea>`;return;}
+    if(line.includes('[CIRCLE ONE:')){const m=line.match(/\[CIRCLE ONE: (.+?)\]/);const pre=line.split('[CIRCLE ONE:')[0].replace(/^[-*\d.]+\s*/,'').trim();if(m){wsN++;const nm='r'+wsN;h+=`${pre?`<div style="font-size:.86rem;margin-bottom:4px;">${pre}</div>`:''}<div class="wsc">${m[1].split('/').map(o=>`<label class="wscho"><input type="radio" name="${nm}"> ${o.trim()}</label>`).join('')}</div>`;return;}}
+    if(line.includes('[CHECK ALL THAT APPLY:')){const m=line.match(/\[CHECK ALL THAT APPLY: (.+?)\]/);const pre=line.split('[CHECK ALL THAT APPLY:')[0].replace(/^[-*\d.]+\s*/,'').trim();if(m){wsN++;h+=`${pre?`<div style="font-size:.86rem;margin-bottom:4px;">${pre}</div>`:''}<div class="wsc">${m[1].split('/').map((o,oi)=>`<label class="wscho"><input type="checkbox" id="wc${wsN}-${oi}"> ${o.trim()}</label>`).join('')}</div>`;return;}}
+    if(line.includes('[WORD BANK:')){const m=line.match(/\[WORD BANK: (.+?)\]/);if(m){h+=`<div class="wswb"><div class="wswbt">📚 Word Bank</div><div class="wswbw">${m[1].split(',').map(w=>`<span class="wswbwd">${w.trim()}</span>`).join('')}</div></div>`;return;}}
+    if(line.includes('[DIAGRAM:')){const m=line.match(/\[DIAGRAM: (.+?)\]/);if(m){h+=`<div class="wsd">📊 ${m[1]}</div>`;return;}}
+    if(line.match(/^\d+\.\s/)){
+      const cont=line.replace(/^\d+\.\s*/,'');const num=line.match(/^(\d+)/)[1];
+      if(cont.includes('[LARGE BOX]')){wsN++;h+=`<div style="margin:7px 0;"><div style="font-size:.86rem;margin-bottom:2px;"><strong>${num}.</strong> ${cont.replace('[LARGE BOX]','').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim()}</div><textarea class="wst" placeholder="Write your answer here..."></textarea></div>`;return;}
+      if(cont.includes('[TEXT BOX]')){wsN++;h+=`<div style="margin:5px 0;display:flex;align-items:flex-start;gap:6px;"><span style="font-weight:600;flex-shrink:0;">${num}.</span><div style="flex:1;"><div style="font-size:.86rem;margin-bottom:2px;">${cont.replace('[TEXT BOX]','').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim()}</div><input class="wsi" type="text" placeholder="Your answer..."></div></div>`;return;}
+      h+=`<div style="margin:4px 0;"><strong>${num}.</strong> ${cont.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</div>`;return;
+    }
+    if(line.match(/^[-*] /)){h+=`<li style="margin-bottom:2px;">${line.slice(2).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</li>`;return;}
+    if(line.trim()===''){h+='<div style="height:4px;"></div>';return;}
+    h+=`<p style="margin:2px 0;">${line.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</p>`;
+  });
+  return h+'</div>';
+}
+
+function renderMD(text){
+  if(!text)return'';
+  return text
+    .replace(/^## (.+)$/gm,'<h2 style="font-family:Fraunces,serif;font-size:.96rem;font-weight:600;margin:13px 0 5px;padding-bottom:3px;border-bottom:1px solid var(--border);">$1</h2>')
+    .replace(/^### (.+)$/gm,'<h3 style="font-size:.75rem;font-weight:600;color:var(--sage);text-transform:uppercase;letter-spacing:.5px;margin:9px 0 3px;">$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^- (.+)$/gm,'<li style="margin-bottom:2px;">$1</li>')
+    .replace(/(<li[^>]*>.*?<\/li>\n?)+/gs,m=>`<ul style="padding-left:17px;margin:4px 0;">${m}</ul>`)
+    .replace(/\n\n/g,'<br><br>');
+}
+
+function previewWS(k){
+  const txt=genC[k]?.cur||'';
+  const topic=document.getElementById('topic')?.value||'Worksheet';
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${topic}</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;background:#F8F4EE;color:#16120E;}
+.pg{max-width:720px;margin:0 auto;background:white;min-height:100vh;padding:28px 36px;}
+.hd{border-bottom:3px solid #4A7C59;padding-bottom:12px;margin-bottom:20px;}
+.ti{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;}.me{font-size:.78rem;color:#7A726A;margin-top:2px;}
+.nr{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;}.nf{flex:1;min-width:150px;}
+.nl{font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:#7A726A;display:block;margin-bottom:2px;}
+.ni{width:100%;border:none;border-bottom:2px solid #4A7C59;background:transparent;font-size:.9rem;padding:4px 2px;outline:none;font-family:'DM Sans',sans-serif;}
+h2{font-family:'Fraunces',serif;font-size:.96rem;font-weight:600;margin:16px 0 6px;padding:7px 12px;background:#EAF0EA;border-left:3px solid #4A7C59;border-radius:0 5px 5px 0;}
+h3{font-size:.75rem;font-weight:600;color:#4A7C59;text-transform:uppercase;letter-spacing:.5px;margin:11px 0 4px;}
+.wsi{width:100%;border:none;border-bottom:2px solid #4A7C59;background:transparent;font-family:'DM Sans',sans-serif;font-size:.9rem;padding:4px 2px;outline:none;display:block;margin:2px 0 7px;}
+.wsi:focus{border-bottom-color:#C47B2A;background:#FDF4E3;border-radius:3px 3px 0 0;padding:4px 6px;}
+.wst{width:100%;border:2px solid #4A7C59;border-radius:6px;background:#EAF0EA;font-family:'DM Sans',sans-serif;font-size:.9rem;padding:8px 10px;outline:none;resize:vertical;min-height:80px;margin:4px 0 7px;display:block;}
+.wst:focus{border-color:#C47B2A;background:#FDF4E3;}
+.wsc{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 9px;}
+.wscho{display:flex;align-items:center;gap:5px;padding:5px 11px;border:1.5px solid #E0D8CC;border-radius:15px;cursor:pointer;font-size:.8rem;background:#F8F4EE;}
+.wswb{background:#E8EFF9;border:1px solid #B0C8E8;border-radius:6px;padding:10px 12px;margin:8px 0;}
+.wswbt{font-size:.58rem;letter-spacing:1px;text-transform:uppercase;color:#2A5FA5;margin-bottom:6px;font-weight:600;}
+.wswbw{display:flex;flex-wrap:wrap;gap:6px;}.wswbwd{background:white;border:1px solid #2A5FA5;border-radius:3px;padding:1px 8px;font-size:.78rem;}
+.wsd{background:#FDF4E3;border:1px dashed #C47B2A;border-radius:6px;padding:11px;margin:8px 0;font-style:italic;text-align:center;color:#7A5020;}
+p{margin:2px 0;line-height:1.65;}li{margin-bottom:2px;}ul{padding-left:17px;margin:4px 0;}
+.footer{margin-top:30px;padding-top:14px;border-top:1px solid #E0D8CC;font-size:.72rem;color:#9CA3AF;text-align:center;}
+@media print{body{background:white;}.pg{padding:18px;}}
+</style></head><body><div class="pg">
+<div class="hd"><div class="ti">📝 ${topic}</div><div class="me">TeacherAI · ${new Date().toLocaleDateString('en-CA')}</div></div>
+<div class="nr"><div class="nf"><label class="nl">Name</label><input class="ni" type="text" placeholder="Type your name..."></div><div class="nf"><label class="nl">Date</label><input class="ni" type="text" placeholder="${new Date().toLocaleDateString('en-CA')}"></div></div>
+${renderWS(txt)}
+<div class="footer">Generated with TeacherAI · teacherai.ca</div>
+</div></body></html>`);
+  w.document.close();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+initApp();
+</script>
+</body>
+</html>
+.auth-msg { background: var(--sage-l); border: 1px solid var(--sage); color: var(--sage); padding: 10px 13px; border-radius: 7px; font-size: 0.83rem; margin-bottom: 14px; display: none; }
+
+/* NAV */
+.tab-r { display: none; }
+#appScreen { display: none; }
+nav {
+  background: var(--ink); display: flex; align-items: center;
+  padding: 0 20px; height: 52px; position: sticky; top: 0; z-index: 100;
+}
+.logo { font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 700; color: var(--cream); margin-right: 24px; flex-shrink: 0; }
+.logo span { color: var(--amber); }
+.nav-tabs { display: flex; gap: 2px; overflow-x: auto; flex: 1; }
+.tab { padding: 7px 13px; color: #9CA3AF; cursor: pointer; border-radius: 6px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; transition: all 0.15s; user-select: none; display: block; }
+.tab:hover { color: var(--cream); background: rgba(255,255,255,0.08); }
+#tr-plan:checked   ~ #appScreen nav .tab[for="tr-plan"],
+#tr-roster:checked ~ #appScreen nav .tab[for="tr-roster"],
+#tr-assess:checked ~ #appScreen nav .tab[for="tr-assess"],
+#tr-lessons:checked ~ #appScreen nav .tab[for="tr-lessons"] {
+  color: var(--cream); background: rgba(255,255,255,0.14);
+}
+.nav-user { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.nav-email { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: #9CA3AF; }
+.signout-btn { padding: 5px 11px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--cream); border-radius: 5px; font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.signout-btn:hover { background: rgba(255,255,255,0.2); }
+
+/* PAGES */
+.page { display: none; padding: 24px 20px; max-width: 960px; margin: 0 auto; }
+#tr-plan:checked   ~ #appScreen #pg-plan   { display: block; }
+#tr-roster:checked ~ #appScreen #pg-roster { display: block; }
+#tr-assess:checked ~ #appScreen #pg-assess { display: block; }
+#tr-lessons:checked ~ #appScreen #pg-lessons { display: block; }
+
+/* WORKFLOW */
+.wf { display: flex; align-items: center; background: var(--paper); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 16px; margin-bottom: 20px; overflow-x: auto; gap: 0; }
+.ws { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; color: var(--muted); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+.ws.on { background: var(--sage-l); color: var(--sage); }
+.ws.done { color: var(--sage); }
+.ws.locked { opacity: 0.3; pointer-events: none; }
+.wn { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; font-family: 'DM Mono', monospace; font-size: 0.6rem; flex-shrink: 0; }
+.ws.done .wn { background: var(--sage); border-color: var(--sage); color: white; }
+.wa { color: var(--border); margin: 0 2px; }
+
+/* CARDS */
+.card { background: var(--paper); border: 1px solid var(--border); border-radius: var(--r); padding: 20px; margin-bottom: 16px; }
+.ct { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+
+/* FORMS */
+.fg { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 11px; margin-bottom: 13px; }
+.fi { display: flex; flex-direction: column; gap: 4px; }
+.fi.full { grid-column: 1/-1; }
+.fi.s2 { grid-column: span 2; }
+.fi label { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+select, input[type="text"], input[type="email"], input[type="password"], textarea {
+  font-family: 'DM Sans', sans-serif; font-size: 0.86rem; padding: 8px 11px;
+  border: 1.5px solid var(--border); border-radius: 7px; background: var(--cream);
+  color: var(--ink); outline: none; transition: border-color 0.2s; width: 100%;
+}
+select:focus, input:focus, textarea:focus { border-color: var(--sage); }
+textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+
+/* CHIPS */
+.chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 13px; }
+.chip { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border: 1.5px solid var(--border); border-radius: 18px; cursor: pointer; font-size: 0.8rem; background: var(--cream); transition: all 0.15s; user-select: none; }
+.chip input { width: 12px; height: 12px; accent-color: var(--sage); }
+.chip:has(input:checked) { border-color: var(--sage); background: var(--sage-l); color: var(--sage); font-weight: 500; }
+
+/* BUTTONS */
+.btn { padding: 9px 18px; border: none; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 0.86rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.b-ink { background: var(--ink); color: var(--cream); }
+.b-ink:hover:not(:disabled) { background: #2D2A27; }
+.b-sage { background: var(--sage); color: white; }
+.b-sage:hover { background: #3D6649; }
+.b-blue { background: var(--blue); color: white; }
+.b-blue:hover { background: #1E4A8A; }
+.b-amber { background: var(--amber); color: white; }
+.b-out { background: transparent; border: 1.5px solid var(--border); color: var(--ink); }
+.b-out:hover { border-color: var(--sage); color: var(--sage); }
+.b-sm { padding: 4px 10px; font-size: 0.75rem; }
+.b-full { width: 100%; justify-content: center; }
+.brow { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* BANNERS */
+.ban { padding: 11px 15px; border-radius: 8px; margin-bottom: 16px; font-size: 0.82rem; line-height: 1.5; display: flex; gap: 9px; align-items: flex-start; }
+.ban-a { background: var(--amber-l); border: 1px solid #E8C98A; color: #7A5020; }
+.ban-s { background: var(--sage-l); border: 1px solid #A8C4AB; color: #2D5C38; }
+.ban-b { background: var(--blue-l); border: 1px solid #B0C8E8; color: #1E3A6E; }
+
+/* CONTENT BLOCKS */
+.cb { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 13px; }
+.cbh { padding: 10px 14px; background: var(--cream); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 7px; }
+.cbl { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.cba { display: flex; gap: 5px; flex-wrap: wrap; }
+.cbb { padding: 16px; font-size: 0.86rem; line-height: 1.8; background: var(--paper); min-height: 60px; outline: none; }
+.cbb[contenteditable="true"]:focus { box-shadow: inset 0 0 0 2px var(--sage); }
+.cbf { padding: 8px 14px; background: var(--sage-l); border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--sage); display: flex; align-items: center; justify-content: space-between; }
+
+/* LOADING */
+.dots { display: inline-flex; gap: 4px; }
+.dots span { width: 5px; height: 5px; background: var(--sage); border-radius: 50%; animation: dp 1.2s infinite; }
+.dots span:nth-child(2) { animation-delay: .2s; }
+.dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes dp { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
+.loading-overlay { position: fixed; inset: 0; background: rgba(22,18,14,0.7); z-index: 300; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
+.loading-overlay.show { display: flex; }
+.loading-overlay .dots span { background: white; width: 8px; height: 8px; }
+.loading-text { color: white; font-size: 0.9rem; font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+
+/* ASSESS */
+.ar { border: 1px solid var(--border); border-radius: 8px; padding: 13px 14px; background: var(--paper); margin-bottom: 9px; }
+.art { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; flex-wrap: wrap; gap: 6px; }
+.an { font-weight: 600; font-size: 0.88rem; display: flex; align-items: center; gap: 7px; }
+.atag { font-family: 'DM Mono', monospace; font-size: 0.58rem; color: var(--muted); background: var(--cream); padding: 2px 6px; border-radius: 8px; border: 1px solid var(--border); }
+.lbg { display: flex; align-items: center; gap: 2px; }
+.ld { width: 1px; height: 20px; background: var(--border); margin: 0 3px; }
+.lb { padding: 4px 9px; border: 1.5px solid var(--border); border-radius: 5px; font-family: 'DM Mono', monospace; font-size: 0.72rem; font-weight: 600; cursor: pointer; background: var(--cream); transition: all 0.12s; }
+.lb:hover { transform: translateY(-1px); }
+.lb.L1.sel { background: #FEE2E2; border-color: #EF4444; color: #991B1B; }
+.lb.L2.sel { background: #FEF9C3; border-color: #EAB308; color: #854D0E; }
+.lb.L3.sel { background: #DBEAFE; border-color: #3B82F6; color: #1E40AF; }
+.lb.L4.sel { background: #DCFCE7; border-color: #22C55E; color: #166534; }
+.ni { flex: 1; padding: 6px 9px; font-size: 0.8rem; border: 1.5px solid var(--border); border-radius: 6px; background: var(--cream); font-family: 'DM Sans', sans-serif; outline: none; }
+.ni:focus { border-color: var(--sage); }
+.fb { margin-top: 9px; padding: 11px 13px; background: var(--blue-l); border: 1px solid #B0C8E8; border-radius: 6px; font-size: 0.83rem; line-height: 1.65; color: #1E3A6E; display: none; }
+.fbe { min-height: 55px; padding: 9px 11px; border: 1.5px solid var(--blue); border-radius: 5px; background: white; outline: none; cursor: text; line-height: 1.65; }
+.fbe:focus { border-color: var(--amber); }
+
+/* ROSTER */
+.rg { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 9px; }
+.sc { border: 1.5px solid var(--border); border-radius: 8px; padding: 11px 13px; background: var(--paper); }
+.sc.iep { border-color: var(--amber); }
+.sct { display: flex; align-items: center; gap: 9px; }
+.av { width: 30px; height: 30px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 0.85rem; font-weight: 600; flex-shrink: 0; }
+.sn { font-weight: 500; font-size: 0.83rem; }
+.sm { font-family: 'DM Mono', monospace; font-size: 0.58rem; color: var(--muted); margin-top: 1px; }
+.ib { font-family: 'DM Mono', monospace; font-size: 0.52rem; background: var(--amber-l); color: var(--amber); padding: 1px 5px; border-radius: 3px; border: 1px solid #E8C98A; }
+.sie { display: none; margin-top: 9px; }
+.sit { width: 100%; min-height: 65px; font-size: 0.8rem; padding: 7px; border: 1.5px solid var(--amber); border-radius: 5px; background: var(--amber-l); font-family: 'DM Sans', sans-serif; outline: none; resize: vertical; }
+
+/* TRACKER */
+.st { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+.sc2 { background: var(--paper); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; text-align: center; }
+.sn2 { font-family: 'Fraunces', serif; font-size: 1.7rem; font-weight: 600; }
+.sl { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
+.gp { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 0.72rem; font-weight: 600; font-family: 'DM Mono', monospace; }
+.gp4 { background: #DCFCE7; color: #166534; }
+.gp3 { background: #DBEAFE; color: #1E40AF; }
+.gp2 { background: #FEF9C3; color: #854D0E; }
+.gp1 { background: #FEE2E2; color: #991B1B; }
+.dt { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+.dt th { text-align: left; padding: 8px 11px; font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border); background: var(--cream); }
+.dt td { padding: 8px 11px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.dt tr:last-child td { border-bottom: none; }
+
+/* LESSONS LIST */
+.lesson-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--paper); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 9px; cursor: pointer; transition: border-color 0.15s; }
+.lesson-card:hover { border-color: var(--sage); }
+.lesson-title { font-weight: 600; font-size: 0.88rem; }
+.lesson-meta { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); margin-top: 2px; }
+
+/* MODAL */
+.mbg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: none; align-items: center; justify-content: center; }
+.mbg.open { display: flex; }
+.modal { background: var(--paper); border-radius: var(--r); padding: 26px; max-width: 440px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+.modal h3 { font-family: 'Fraunces', serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 5px; }
+.modal p { color: var(--muted); font-size: 0.83rem; margin-bottom: 16px; }
+
+/* WORKSHEET */
+.wsw { font-size: 0.88rem; line-height: 1.85; }
+.wsw h2 { font-family: 'Fraunces', serif; font-size: 0.98rem; font-weight: 600; margin: 15px 0 6px; padding: 7px 12px; background: var(--sage-l); border-left: 3px solid var(--sage); border-radius: 0 5px 5px 0; }
+.wsw h3 { font-size: 0.75rem; font-weight: 600; color: var(--sage); text-transform: uppercase; letter-spacing: .5px; margin: 11px 0 4px; }
+.wsi { width: 100%; border: none; border-bottom: 2px solid var(--sage); background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; padding: 4px 2px; outline: none; display: block; margin: 2px 0 7px; }
+.wsi:focus { border-bottom-color: var(--amber); background: var(--amber-l); border-radius: 3px 3px 0 0; padding: 4px 6px; }
+.wst { width: 100%; border: 2px solid var(--sage); border-radius: 6px; background: var(--sage-l); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; padding: 8px 10px; outline: none; resize: vertical; min-height: 85px; margin: 4px 0 7px; display: block; }
+.wst:focus { border-color: var(--amber); background: var(--amber-l); }
+.wsc { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 9px; }
+.wscho { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border: 1.5px solid var(--border); border-radius: 16px; cursor: pointer; font-size: 0.82rem; background: var(--cream); }
+.wswb { background: var(--blue-l); border: 1px solid #B0C8E8; border-radius: 6px; padding: 10px 13px; margin: 8px 0; }
+.wswbt { font-family: 'DM Mono', monospace; font-size: 0.58rem; letter-spacing: 1px; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; }
+.wswbw { display: flex; flex-wrap: wrap; gap: 6px; }
+.wswbwd { background: white; border: 1px solid var(--blue); border-radius: 3px; padding: 1px 9px; font-size: 0.8rem; }
+.wsd { background: var(--amber-l); border: 1px dashed var(--amber); border-radius: 6px; padding: 12px; margin: 8px 0; font-style: italic; text-align: center; color: #7A5020; }
+
+/* PAGE HEADER */
+.ph { margin-bottom: 20px; }
+.ph h1 { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 600; }
+.ph h1 em { font-style: italic; color: var(--sage); }
+.ph p { color: var(--muted); margin-top: 5px; font-size: 0.86rem; }
+
+@media(max-width:600px) { .st{grid-template-columns:1fr 1fr;} nav{padding:0 12px;} .page{padding:14px 12px;} .auth-box{padding:28px 20px;} }
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="dots"><span></span><span></span><span></span></div>
+  <div class="loading-text" id="loadingText">Loading...</div>
+</div>
+
+<!-- AUTH SCREEN -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">Teacher<span>AI</span></div>
+    <div class="auth-tagline">Ontario's AI teaching platform for SSC & split-grade classrooms</div>
+    <div class="auth-tabs">
+      <div class="auth-tab on" onclick="switchAuth('login',this)">Sign In</div>
+      <div class="auth-tab" onclick="switchAuth('signup',this)">Create Account</div>
+    </div>
+    <div class="auth-err" id="authErr"></div>
+    <div class="auth-msg" id="authMsg"></div>
+    <div id="loginForm">
+      <div class="fi" style="margin-bottom:12px;"><label>Email</label><input type="email" id="loginEmail" placeholder="your@email.com"></div>
+      <div class="fi" style="margin-bottom:20px;"><label>Password</label><input type="password" id="loginPass" placeholder="Your password"></div>
+      <button class="btn b-ink b-full" onclick="signIn()">Sign In →</button>
+    </div>
+    <div id="signupForm" style="display:none;">
+      <div class="fi" style="margin-bottom:12px;"><label>Full Name</label><input type="text" id="signupName" placeholder="Your name"></div>
+      <div class="fi" style="margin-bottom:12px;"><label>Email</label><input type="email" id="signupEmail" placeholder="your@email.com"></div>
+      <div class="fi" style="margin-bottom:12px;"><label>School (optional)</label><input type="text" id="signupSchool" placeholder="e.g. Toronto DSB"></div>
+      <div class="fi" style="margin-bottom:20px;"><label>Password</label><input type="password" id="signupPass" placeholder="Min 6 characters"></div>
+      <button class="btn b-ink b-full" onclick="signUp()">Create Account →</button>
+    </div>
+    <div style="text-align:center;margin-top:16px;font-size:0.75rem;color:var(--muted);">🇨🇦 Data stored in Canada · Privacy-first design</div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<input type="radio" class="tab-r" name="tab" id="tr-plan" checked>
+<input type="radio" class="tab-r" name="tab" id="tr-roster">
+<input type="radio" class="tab-r" name="tab" id="tr-assess">
+<input type="radio" class="tab-r" name="tab" id="tr-lessons">
+
+<div id="appScreen">
+<nav>
+  <div class="logo">Teacher<span>AI</span></div>
+  <div class="nav-tabs">
+    <label class="tab" for="tr-plan">📅 Daily Workflow</label>
+    <label class="tab" for="tr-roster">👥 Class Roster</label>
+    <label class="tab" for="tr-assess">📊 Assessment</label>
+    <label class="tab" for="tr-lessons">📚 My Lessons</label>
+  </div>
+  <div class="nav-user">
+    <span class="nav-email" id="navEmail"></span>
+    <button class="signout-btn" onclick="signOut()">Sign Out</button>
+  </div>
+</nav>
+
+<!-- Share modal -->
+<div class="mbg" id="shareModal">
+  <div class="modal">
+    <h3>📤 Share to Google Classroom</h3>
+    <p>Opens Google Classroom pre-filled — you review and post from there.</p>
+    <div class="fi" style="margin-bottom:10px;"><label>Post title</label><input type="text" id="shareTitle"></div>
+    <div class="fi" style="margin-bottom:16px;"><label>Instructions for students</label><textarea id="shareInst" style="min-height:60px;">Please complete the activities below. Do your best work!</textarea></div>
+    <div class="brow">
+      <button class="btn b-blue b-full" onclick="doShare()">🎓 Open in Google Classroom</button>
+      <button class="btn b-out" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DAILY WORKFLOW ===== -->
+<div class="page" id="pg-plan">
+  <div class="wf">
+    <div class="ws on" id="ws1" onclick="gs(1)"><div class="wn">1</div>📝 Plan</div>
+    <span class="wa">›</span>
+    <div class="ws locked" id="ws2" onclick="gs(2)"><div class="wn">2</div>✏️ Review & Edit</div>
+    <span class="wa">›</span>
+    <div class="ws locked" id="ws3" onclick="gs(3)"><div class="wn">3</div>📤 Share</div>
+    <span class="wa">›</span>
+    <div class="ws locked" id="ws4" onclick="gs(4)"><div class="wn">4</div>📊 Assess</div>
+    <span class="wa">›</span>
+    <div class="ws locked" id="ws5" onclick="gs(5)"><div class="wn">5</div>💬 Feedback</div>
+  </div>
+
+  <!-- Step 1 -->
+  <div id="s1">
+    <div class="ban ban-a"><span>🍁</span><span>Aligned to the <strong>Ontario Curriculum</strong>. Supports up to 4-grade split/multi-grade SSC classes. Student names are anonymized before AI processing.</span></div>
+    <div class="card">
+      <div class="ct">📚 Class Setup</div>
+      <div class="fg">
+        <div class="fi"><label>Grade A ✱</label>
+          <select id="gA"><option value="">Select...</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        </div>
+        <div class="fi"><label>Grade B</label>
+          <select id="gB"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        </div>
+        <div class="fi"><label>Grade C</label>
+          <select id="gC"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        </div>
+        <div class="fi"><label>Grade D</label>
+          <select id="gD"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        </div>
+        <div class="fi"><label>Subject</label>
+          <select id="subj"><option>Language / Literacy</option><option>Mathematics</option><option>Science & Technology</option><option>Social Studies</option><option>Health & PE</option><option>The Arts</option></select>
+        </div>
+        <div class="fi"><label>Duration</label>
+          <select id="dur"><option>Single lesson (1 day)</option><option>3-day mini unit</option><option>1 week (5 days)</option><option>2 weeks</option></select>
+        </div>
+        <div class="fi s2"><label>Topic / Focus</label><input type="text" id="topic" placeholder="e.g. Inference, Narrative Writing, Fractions..."></div>
+        <div class="fi full"><label>Class context (optional)</label><textarea id="ctx" placeholder="e.g. 28 students, 4 ELL, iPads available, strong oral communicators..."></textarea></div>
+      </div>
+      <div class="ct" style="margin-bottom:9px;">📖 Literacy Strands</div>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" id="ck-r" checked> 📖 Reading</label>
+        <label class="chip"><input type="checkbox" id="ck-w" checked> ✏️ Writing</label>
+        <label class="chip"><input type="checkbox" id="ck-o"> 🎤 Oral Communication</label>
+        <label class="chip"><input type="checkbox" id="ck-m"> 📱 Media Literacy</label>
+      </div>
+      <div class="ct" style="margin-bottom:9px;">📄 Generate</div>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" id="ck-lp" checked> 🗓 Lesson Plan</label>
+        <label class="chip"><input type="checkbox" id="ck-ws" checked> 📝 Student Worksheet</label>
+        <label class="chip"><input type="checkbox" id="ck-rr"> 📄 Reading Resource</label>
+        <label class="chip"><input type="checkbox" id="ck-rb" checked> 📏 Assessment Rubric</label>
+        <label class="chip"><input type="checkbox" id="ck-dt"> ♿ Differentiation & Modified Expectations</label>
+      </div>
+      <button class="btn b-ink b-full" id="genBtn" onclick="generate()">✨ Generate Lesson</button>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div id="s2" style="display:none;">
+    <div class="ban ban-s"><span>✏️</span><span><strong>Review & Edit:</strong> Click "Edit" on any section to modify before sharing with students.</span></div>
+    <div id="editBlocks"></div>
+    <div class="brow">
+      <button class="btn b-ink" onclick="gs(3)">Continue to Share →</button>
+      <button class="btn b-out" onclick="gs(1)">← Back to Plan</button>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div id="s3" style="display:none;">
+    <div class="ban ban-b"><span>📤</span><span><strong>Share to Students:</strong> Opens Google Classroom pre-filled — you confirm before anything posts.</span></div>
+    <div id="shareCards"></div>
+    <div class="brow" style="margin-top:8px;">
+      <button class="btn b-ink" onclick="gs(4)">Continue to Assess →</button>
+      <button class="btn b-out" onclick="gs(2)">← Back to Edit</button>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div id="s4" style="display:none;">
+    <div class="ban ban-a"><span>📊</span><span><strong>Quick Assessment:</strong> Tap a level for each student. Add notes while circulating.</span></div>
+    <div class="card" style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;">
+        <div>
+          <div style="font-family:'Fraunces',serif;font-size:.98rem;font-weight:600;" id="assLabel">Today's Assessment</div>
+          <div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);margin-top:2px;" id="assMeta"></div>
+        </div>
+        <div class="brow">
+          <button class="btn b-sage b-sm" onclick="saveAss()">💾 Save All</button>
+          <button class="btn b-out b-sm" onclick="gs(5)">Feedback →</button>
+        </div>
+      </div>
+    </div>
+    <div id="assGrid"><div style="color:var(--muted);font-size:.83rem;font-style:italic;padding:14px;">Add students in Class Roster first.</div></div>
+    <div class="brow" style="margin-top:14px;">
+      <button class="btn b-sage" onclick="saveAss()">💾 Save Assessment</button>
+      <button class="btn b-out" onclick="gs(3)">← Back to Share</button>
+    </div>
+  </div>
+
+  <!-- Step 5 -->
+  <div id="s5" style="display:none;">
+    <div class="ban ban-b"><span>💬</span><span><strong>Descriptive Feedback:</strong> AI-generated Ontario-style feedback per student. Edit before copying.</span></div>
+    <div id="fbGrid"></div>
+    <div class="brow" style="margin-top:8px;">
+      <button class="btn b-out" onclick="gs(4)">← Back to Assess</button>
+      <button class="btn b-ink" onclick="switchToAssess()">View Grade Tracker →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CLASS ROSTER ===== -->
+<div class="page" id="pg-roster">
+  <div class="ph"><h1>Class <em>Roster</em></h1><p>Students are saved to your account and persist between sessions. Add Learning Profiles to differentiate AI-generated lessons.</p></div>
+  <div class="card">
+    <div class="ct">➕ Add Student</div>
+    <div class="fg">
+      <div class="fi"><label>First Name</label><input type="text" id="sF" placeholder="First"></div>
+      <div class="fi"><label>Last Name (optional)</label><input type="text" id="sL" placeholder="Last"></div>
+      <div class="fi"><label>Grade</label>
+        <select id="sG"><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+      </div>
+      <div class="fi"><label>Accommodation / Notes</label><input type="text" id="sN" placeholder="e.g. ELL, Gifted..."></div>
+      <div class="fi full">
+        <label>Learning Profile — teacher's professional notes & modified expectations</label>
+        <textarea id="sI" style="min-height:80px;" placeholder="Optional — paste modified learning expectations here. Lessons will differentiate for this student.&#10;&#10;e.g.:&#10;- Reading: identify main idea at Grade 2 level with visual supports&#10;- Writing: compose 3-5 sentence paragraphs with graphic organizer&#10;&#10;Note: Do not paste full IEP documents. First name + modified expectations only."></textarea>
+      </div>
+    </div>
+    <div class="ban ban-a" style="margin-bottom:12px;font-size:.78rem;"><span>🔒</span><span>Learning profiles are stored securely in Canada. Student first names are anonymized before any AI processing — only modified expectations are used.</span></div>
+    <div class="brow">
+      <button class="btn b-sage" onclick="addStu()">➕ Add Student</button>
+      <button class="btn b-out" onclick="loadSample()">📋 Load Sample Roster</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="ct" style="margin-bottom:0;">👥 Your Students <span id="rCount" style="color:var(--muted);">(0)</span></div>
+      <button class="btn b-out b-sm" style="color:var(--rust);border-color:var(--rust);" onclick="clearR()">Clear All</button>
+    </div>
+    <div class="rg" id="rGrid"><div style="color:var(--muted);font-size:.83rem;font-style:italic;grid-column:1/-1;">No students yet. Add students above.</div></div>
+  </div>
+</div>
+
+<!-- ===== ASSESSMENT ===== -->
+<div class="page" id="pg-assess">
+  <div class="ph"><h1>Grade <em>Tracker</em></h1><p>All assessments are saved to your account automatically.</p></div>
+  <div class="st">
+    <div class="sc2"><div class="sn2" id="tStu">0</div><div class="sl">Students</div></div>
+    <div class="sc2"><div class="sn2" id="tSess">0</div><div class="sl">Sessions</div></div>
+    <div class="sc2"><div class="sn2" id="tAvg">—</div><div class="sl">Class Avg</div></div>
+    <div class="sc2"><div class="sn2" id="tL4">0</div><div class="sl">At Level 4</div></div>
+  </div>
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="ct" style="margin-bottom:0;">Student Performance</div>
+      <button class="btn b-out b-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+    </div>
+    <div id="gTable"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No data yet.</div></div>
+  </div>
+  <div class="card">
+    <div class="ct">Recent Sessions</div>
+    <div id="sList"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No sessions yet.</div></div>
+  </div>
+</div>
+
+<!-- ===== MY LESSONS ===== -->
+<div class="page" id="pg-lessons">
+  <div class="ph"><h1>My <em>Lessons</em></h1><p>All generated lessons are saved here. Click to view or reuse.</p></div>
+  <div id="lessonsList"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No lessons saved yet. Generate your first lesson in Daily Workflow.</div></div>
+</div>
+
+</div><!-- end appScreen -->
+
+<script>
+// ============================================================
+// SUPABASE INIT
+// ============================================================
+const SUPABASE_URL = 'https://bbhhkyiyfybmlfkerfto.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGhreWl5ZnlibWxma2VyZnRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDgzODMsImV4cCI6MjA4OTc4NDM4M30.nLzOUCAa8XSD4BL0XIdPvwVNZy-5Rnp6NVLUTVjE-ZQ';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================================================
+// STATE
+// ============================================================
+let currentUser = null;
+let students = [], sessions = [], genC = {}, curSess = null, shareKey = '';
+const AVCOLORS = ['#4A7C59','#2A5FA5','#C47B2A','#B54B2A','#6B46C1','#0F766E','#7C4A6E','#4A6E7C'];
+const BLABELS = {lesson_plan:'📅 Lesson Plan',student_worksheet:'📝 Student Worksheet',reading_resource:'📄 Reading Resource',assessment_rubric:'📏 Assessment Rubric',differentiation_tips:'♿ Differentiation & Modified Expectations'};
+const SHAREABLE = ['student_worksheet','reading_resource','assessment_rubric'];
+let wsN = 0;
+
+// ============================================================
+// LOADING
+// ============================================================
+function showLoading(text='Loading...') { document.getElementById('loadingText').textContent=text; document.getElementById('loadingOverlay').classList.add('show'); }
+function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
+
+// ============================================================
+// AUTH
+// ============================================================
+function switchAuth(mode, el) {
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('loginForm').style.display = mode==='login'?'block':'none';
+  document.getElementById('signupForm').style.display = mode==='signup'?'block':'none';
+  document.getElementById('authErr').style.display='none';
+  document.getElementById('authMsg').style.display='none';
+}
+
+function showAuthErr(msg) { const e=document.getElementById('authErr'); e.textContent=msg; e.style.display='block'; }
+function showAuthMsg(msg) { const e=document.getElementById('authMsg'); e.textContent=msg; e.style.display='block'; }
+
+async function signIn() {
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  if(!email||!pass){showAuthErr('Please enter your email and password.');return;}
+  showLoading('Signing in...');
+  const {error}=await db.auth.signInWithPassword({email,password:pass});
+  hideLoading();
+  if(error){showAuthErr(error.message);return;}
+}
+
+async function signUp() {
+  const name=document.getElementById('signupName').value.trim();
+  const email=document.getElementById('signupEmail').value.trim();
+  const school=document.getElementById('signupSchool').value.trim();
+  const pass=document.getElementById('signupPass').value;
+  if(!email||!pass){showAuthErr('Please enter your email and password.');return;}
+  if(pass.length<6){showAuthErr('Password must be at least 6 characters.');return;}
+  showLoading('Creating account...');
+  const {data,error}=await db.auth.signUp({email,password:pass,options:{data:{full_name:name,school}}});
+  hideLoading();
+  if(error){showAuthErr(error.message);return;}
+  showAuthMsg('Account created! Check your email to confirm, then sign in.');
+}
+
+async function signOut() {
+  await db.auth.signOut();
+  currentUser=null; students=[]; sessions=[];
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('authScreen').style.display='flex';
+}
+
+// ============================================================
+// INIT — check session on load
+// ============================================================
+async function initApp() {
   showLoading('Loading TeacherAI...');
   const {data:{session}}=await db.auth.getSession();
   if(session) {
