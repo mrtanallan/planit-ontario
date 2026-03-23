@@ -300,43 +300,61 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
   <!-- Step 1 -->
   <div id="s1">
-    <div class="ban ban-a"><span>🍁</span><span>Aligned to the <strong>Ontario Curriculum</strong>. Supports up to 4-grade split/multi-grade SSC classes. Student names are anonymized before AI processing.</span></div>
+    <div class="ban ban-a"><span>🍁</span><span>Aligned to the <strong>Ontario Curriculum</strong>. SSC split-grade support available. Student names are anonymized before AI processing.</span></div>
     <div class="card">
       <div class="ct">📚 Class Setup</div>
       <div class="fg">
-        <div class="fi"><label>Grade A ✱</label>
-          <select id="gA"><option value="">Select...</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        <div class="fi">
+          <label>Grade ✱</label>
+          <select id="gA"><option value="">Select grade...</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
         </div>
-        <div class="fi"><label>Grade B</label>
-          <select id="gB"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+        <div class="fi">
+          <label>Subject</label>
+          <select id="subj" onchange="onSubjectChange()"><option>Language / Literacy</option><option>Mathematics</option><option>Science & Technology</option><option>Social Studies</option><option>Health & PE</option><option>The Arts</option></select>
         </div>
-        <div class="fi"><label>Grade C</label>
-          <select id="gC"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
-        </div>
-        <div class="fi"><label>Grade D</label>
-          <select id="gD"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
-        </div>
-        <div class="fi"><label>Subject</label>
-          <select id="subj"><option>Language / Literacy</option><option>Mathematics</option><option>Science & Technology</option><option>Social Studies</option><option>Health & PE</option><option>The Arts</option></select>
-        </div>
-        <div class="fi"><label>Duration</label>
-          <select id="dur"><option>Single lesson (1 day)</option><option>3-day mini unit</option><option>1 week (5 days)</option><option>2 weeks</option></select>
+        <div class="fi">
+          <label>Duration</label>
+          <select id="dur"><option>Single lesson (1 day)</option><option>3-day mini unit (3 days)</option><option>1 week (5 days)</option><option>2 weeks (10 days)</option></select>
         </div>
         <div class="fi s2"><label>Topic / Focus</label><input type="text" id="topic" placeholder="e.g. Inference, Narrative Writing, Fractions..."></div>
         <div class="fi full"><label>Class context (optional)</label><textarea id="ctx" placeholder="e.g. 28 students, 4 ELL, iPads available, strong oral communicators..."></textarea></div>
       </div>
-      <div class="ct" style="margin-bottom:9px;">📖 Literacy Strands</div>
-      <div class="chips">
-        <label class="chip"><input type="checkbox" id="ck-r" checked> 📖 Reading</label>
-        <label class="chip"><input type="checkbox" id="ck-w" checked> ✏️ Writing</label>
-        <label class="chip"><input type="checkbox" id="ck-o"> 🎤 Oral Communication</label>
-        <label class="chip"><input type="checkbox" id="ck-m"> 📱 Media Literacy</label>
+
+      <!-- Split grade toggle -->
+      <div id="splitGradeSection">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <label class="chip" style="cursor:pointer;" onclick="toggleSplitGrades()">
+            <input type="checkbox" id="splitToggle" style="width:12px;height:12px;accent-color:var(--sage);"> 🏫 Split/Multi-grade class (SSC)
+          </label>
+        </div>
+        <div id="extraGrades" style="display:none;">
+          <div class="fg" style="margin-bottom:4px;">
+            <div class="fi"><label>Grade B</label><select id="gB"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
+            <div class="fi"><label>Grade C</label><select id="gC"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
+            <div class="fi"><label>Grade D</label><select id="gD"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
+          </div>
+        </div>
       </div>
+
+      <!-- Literacy strands — only shown for Language/Literacy -->
+      <div id="strandSection">
+        <div class="ct" style="margin-bottom:9px;">📖 Literacy Strands</div>
+        <div class="chips">
+          <label class="chip"><input type="checkbox" id="ck-r" checked> 📖 Reading</label>
+          <label class="chip"><input type="checkbox" id="ck-w" checked> ✏️ Writing</label>
+          <label class="chip"><input type="checkbox" id="ck-o"> 🎤 Oral Communication</label>
+          <label class="chip"><input type="checkbox" id="ck-m"> 📱 Media Literacy</label>
+        </div>
+      </div>
+
+      <!-- Subject note for non-literacy subjects -->
+      <div id="subjectNote" style="display:none;"></div>
+
       <div class="ct" style="margin-bottom:9px;">📄 Generate</div>
       <div class="chips">
         <label class="chip"><input type="checkbox" id="ck-lp" checked> 🗓 Lesson Plan</label>
         <label class="chip"><input type="checkbox" id="ck-ws" checked> 📝 Student Worksheet</label>
-        <label class="chip"><input type="checkbox" id="ck-rr"> 📄 Reading Resource</label>
+        <label class="chip"><input type="checkbox" id="ck-rr" checked> 📄 Reading Resource</label>
         <label class="chip"><input type="checkbox" id="ck-rb" checked> 📏 Assessment Rubric</label>
         <label class="chip"><input type="checkbox" id="ck-dt"> ♿ Differentiation & Modified Expectations</label>
       </div>
@@ -634,7 +652,42 @@ async function loadUserData() {
 // ============================================================
 // TAB SWITCHING
 // ============================================================
-function switchToAssess() { document.getElementById('tr-assess').checked=true; renderTracker(); loadSubmissions(); }
+function toggleSplitGrades(){
+  const toggle=document.getElementById('splitToggle');
+  const extra=document.getElementById('extraGrades');
+  extra.style.display=toggle.checked?'block':'none';
+  if(!toggle.checked){
+    ['gB','gC','gD'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  }
+}
+
+function onSubjectChange(){
+  const subj=document.getElementById('subj').value;
+  const isLiteracy=subj==='Language / Literacy';
+  const strandSection=document.getElementById('strandSection');
+  const subjectNote=document.getElementById('subjectNote');
+  const rrChip=document.getElementById('ck-rr');
+
+  if(isLiteracy){
+    strandSection.style.display='block';
+    subjectNote.style.display='none';
+    rrChip.checked=true;
+  } else {
+    strandSection.style.display='none';
+    rrChip.checked=false;
+    const notes={
+      'Mathematics':'📐 Ontario Math curriculum (2020) — strands: Number, Algebra, Data, Spatial Sense, Financial Literacy.',
+      'Science & Technology':'🔬 Ontario Science curriculum — generating with strands from the 2022 curriculum.',
+      'Social Studies':'🌍 Ontario Social Studies/History/Geography curriculum.',
+      'Health & PE':'💪 Ontario Health & Physical Education curriculum.',
+      'The Arts':'🎨 Ontario The Arts curriculum — Visual Arts, Music, Drama, Dance.'
+    };
+    subjectNote.style.display='block';
+    subjectNote.innerHTML=`<div class="ban ban-b" style="margin-bottom:12px;font-size:.78rem;"><span>ℹ️</span><span>${notes[subj]||''} Content will be generated based on Claude\'s training knowledge of the Ontario curriculum.</span></div>`;
+  }
+}
+
+
 
 // ============================================================
 // WORKFLOW
