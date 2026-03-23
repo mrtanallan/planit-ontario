@@ -1236,9 +1236,16 @@ async function renderLessonsList(){
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;z-index:1;position:relative;">
         <button class="btn b-out b-sm" onclick="loadLesson(${i})">View →</button>
-        <button class="btn b-out b-sm" style="color:var(--rust);border-color:var(--rust);" onclick="confirmDeleteLesson(${JSON.stringify(l.id)},${JSON.stringify(l.topic)})">🗑 Delete</button>
+        <button class="btn b-out b-sm del-btn" style="color:var(--rust);border-color:var(--rust);" data-id="${l.id}" data-topic="${l.topic.replace(/"/g,'&quot;')}">🗑 Delete</button>
       </div>
     </div>`).join('');
+
+  // Attach delete listeners via JS — avoids quote-escaping issues with inline onclick
+  document.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      confirmDeleteLesson(this.dataset.id, this.dataset.topic);
+    });
+  });
 }
 
 function confirmDeleteLesson(id, topic) {
