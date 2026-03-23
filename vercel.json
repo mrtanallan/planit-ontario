@@ -5,6 +5,14 @@
       "dest": "/api/generate.js"
     },
     {
+      "src": "/api/worksheet",
+      "dest": "/api/worksheet.js"
+    },
+    {
+      "src": "/ws",
+      "dest": "/public/worksheet.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/public/index.html"
     }
