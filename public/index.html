@@ -903,6 +903,20 @@ async function renderAssGrid(){
   const g=document.getElementById('assGrid');
   if(!students.length){g.innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;padding:14px;">Add students in Class Roster first.</div>';return;}
 
+  // Pre-populate marks from existing session for this topic+date
+  if(!curSess.id){
+    const existing=sessions.find(sess=>sess.task===curSess.task&&sess.date===curSess.date);
+    if(existing){
+      curSess.id=existing.id;
+      // Load marks into curSess if not already set
+      Object.keys(existing.marks).forEach(sid=>{
+        if(!curSess.marks[sid]||!curSess.marks[sid].level){
+          curSess.marks[sid]=existing.marks[sid];
+        }
+      });
+    }
+  }
+
   // Fetch submissions for this lesson's worksheets
   let submissionsByStudent = {};
   try {
@@ -999,10 +1013,29 @@ async function renderAssGrid(){
     btn.addEventListener('click', function() {
       sl(this.dataset.sid, this.dataset.level, this);
     });
+    // Pre-select if already marked
+    const existingLevel=curSess.marks[btn.dataset.sid]?.level;
+    if(existingLevel&&btn.dataset.level===existingLevel){
+      btn.classList.add('sel');
+    }
   });
-  // Attach notes listeners
+  // Attach notes listeners and pre-fill notes
   document.querySelectorAll('.ni[data-sid]').forEach(inp => {
     inp.addEventListener('input', function() { sn(this.dataset.sid); });
+    const existingNotes=curSess.marks[inp.dataset.sid]?.notes;
+    if(existingNotes)inp.value=existingNotes;
+  });
+  // Pre-fill level display labels
+  students.forEach(s=>{
+    const m=curSess.marks[s.id];
+    if(m?.level){
+      const base=m.level.replace(/[+-]/g,'');
+      const num=base.replace('L','');
+      const sfx=m.level.includes('+')?'+':m.level.includes('-')?'−':'';
+      const cols={L1:'var(--rust)',L2:'var(--amber)',L3:'var(--blue)',L4:'var(--sage)'};
+      const d=document.getElementById('ld-'+s.id);
+      if(d){d.textContent='Level '+num+sfx+' ●';d.style.color=cols[base];}
+    }
   });
 }
 
@@ -1033,25 +1066,47 @@ async function saveAss(){
   if(!assessed.length){alert('Assess at least one student first.');return;}
   showLoading('Saving assessment...');
   try {
-    // Save session
-    const {data:sessData,error:sessErr}=await db.from('assessment_sessions').insert({
-      teacher_id:currentUser.id,
-      task:curSess.task, subject:curSess.subject,
-      strand:curSess.strand, grades:curSess.grades, date:curSess.date
-    }).select().single();
-    if(sessErr) throw sessErr;
-    curSess.id=sessData.id;
+    let sessId=curSess.id;
 
-    // Save marks
+    if(!sessId){
+      // Check if session already exists for this topic+date (avoid duplicates)
+      const {data:existing}=await db.from('assessment_sessions')
+        .select('id')
+        .eq('teacher_id',currentUser.id)
+        .eq('task',curSess.task)
+        .eq('date',curSess.date)
+        .maybeSingle();
+
+      if(existing){
+        sessId=existing.id;
+        curSess.id=sessId;
+        // Delete old marks so we can re-insert updated ones
+        await db.from('student_marks').delete().eq('session_id',sessId);
+      } else {
+        // Create new session
+        const {data:sessData,error:sessErr}=await db.from('assessment_sessions').insert({
+          teacher_id:currentUser.id,
+          task:curSess.task, subject:curSess.subject,
+          strand:curSess.strand, grades:curSess.grades, date:curSess.date
+        }).select().single();
+        if(sessErr) throw sessErr;
+        sessId=sessData.id;
+        curSess.id=sessId;
+      }
+    } else {
+      // Session already exists — delete old marks to re-insert
+      await db.from('student_marks').delete().eq('session_id',sessId);
+    }
+
+    // Insert current marks
     const marks=assessed.map(sid=>({
-      session_id:sessData.id,
+      session_id:sessId,
       student_id:sid,
       level:curSess.marks[sid].level,
       notes:curSess.marks[sid].notes||''
     }));
     await db.from('student_marks').insert(marks);
 
-    // Reload sessions
     await loadUserData();
     renderTracker();
     hideLoading();
