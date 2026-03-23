@@ -361,8 +361,8 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div class="ban ban-s"><span>✏️</span><span><strong>Review & Edit:</strong> Click "Edit" on any section to modify before sharing with students.</span></div>
     <div id="editBlocks"></div>
     <div class="brow">
-      <button class="btn b-ink" onclick="gs(3)">Continue to Share →</button>
       <button class="btn b-out" onclick="gs(1)">← Back to Plan</button>
+      <button class="btn b-ink" onclick="gs(3)">Continue to Share →</button>
     </div>
   </div>
 
@@ -371,8 +371,8 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div class="ban ban-b"><span>📤</span><span><strong>Share to Students:</strong> Opens Google Classroom pre-filled — you confirm before anything posts.</span></div>
     <div id="shareCards"></div>
     <div class="brow" style="margin-top:8px;">
-      <button class="btn b-ink" onclick="gs(4)">Continue to Assess →</button>
       <button class="btn b-out" onclick="gs(2)">← Back to Edit</button>
+      <button class="btn b-ink" onclick="gs(4)">Continue to Assess →</button>
     </div>
   </div>
 
@@ -697,7 +697,7 @@ Each value is a markdown string:
 - reading_resource: original 200-300 word passage for the grade(s)
 - assessment_rubric: Ontario Level 1/2/3/4 with specific success criteria${iepStudents.length?' plus modified criteria for IEP students':''}
 - differentiation_tips: per-grade and per-student strategies
-For split classes: clearly separate by grade. No text outside the JSON.`;
+For split classes: clearly separate by grade. IMPORTANT: Only include the exact keys requested: ${outputs.map(k=>'"'+k+'"').join(', ')}. Do not add any extra keys. No text outside the JSON.`;
 
   try {
     const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
@@ -754,7 +754,7 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic){
           <button class="btn b-out b-sm" onclick="toggleEdit('${k}')">✏️ Edit</button>
           <button class="btn b-out b-sm" onclick="resetBlock('${k}')">↩ Reset</button>
           <button class="btn b-out b-sm" onclick="copyBlock('${k}')">📋 Copy</button>
-          ${isSh?`<button class="btn b-blue b-sm" onclick="openShare('${k}')">📤 Share</button>`:''}
+          ${k!=='student_worksheet'?`<button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button>`:''}
           ${k==='student_worksheet'?`<button class="btn b-sage b-sm" onclick="getStudentLink('${k}')">🔗 Get Student Link</button>`:''}
         </div>
       </div>
@@ -780,7 +780,7 @@ function buildShareCards(outputs){
       <div><div style="font-weight:600;margin-bottom:2px;">${BLABELS[k]}</div><div style="font-size:.8rem;color:var(--muted);">Share to Google Classroom</div></div>
       <div class="brow">
         <button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit first</button>
-        <button class="btn b-blue b-sm" onclick="openShare('${k}')">📤 Share to Classroom</button>
+        <button class="btn b-sage b-sm" onclick="getStudentLink('student_worksheet')">🔗 Get Student Link</button>
       </div>
     </div>
   </div>`).join('');
@@ -956,6 +956,38 @@ function copyFb(sid){const el=document.getElementById('fbt-'+sid);if(!el)return;
 function regenFb(sid){const fb=document.getElementById('fb-'+sid);if(fb)fb.style.display='none';genFb(sid);}
 
 // ============================================================
+// PDF DOWNLOAD
+// ============================================================
+function downloadPDF(k) {
+  const txt = genC[k]?.cur || '';
+  const topic = curSess?.task || document.getElementById('topic')?.value || 'Document';
+  const label = BLABELS[k] || k;
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${topic} — ${label}</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:white;color:#16120E;padding:32px 40px;max-width:760px;margin:0 auto;}
+h1{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;border-bottom:3px solid #4A7C59;padding-bottom:12px;margin-bottom:20px;}
+h2{font-family:'Fraunces',serif;font-size:1rem;font-weight:600;margin:16px 0 6px;padding:7px 12px;background:#EAF0EA;border-left:3px solid #4A7C59;border-radius:0 5px 5px 0;}
+h3{font-size:.78rem;font-weight:600;color:#4A7C59;text-transform:uppercase;letter-spacing:.5px;margin:11px 0 4px;}
+p{margin:4px 0;line-height:1.7;}
+li{margin-bottom:3px;line-height:1.6;}
+ul{padding-left:18px;margin:5px 0;}
+strong{font-weight:600;}
+.meta{font-size:.75rem;color:#7A726A;margin-bottom:20px;}
+.print-btn{position:fixed;top:16px;right:16px;padding:8px 16px;background:#4A7C59;color:white;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;}
+@media print{.print-btn{display:none;}}
+</style></head><body>
+<button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+<h1>${topic}</h1>
+<div class="meta">${label} · ${new Date().toLocaleDateString('en-CA')}</div>
+${renderMD(txt)}
+</body></html>`);
+  w.document.close();
+}
+
+// ============================================================
 // STUDENT LINK
 // ============================================================
 async function getStudentLink(k) {
@@ -967,10 +999,16 @@ async function getStudentLink(k) {
     const subject = curSess?.subject || '';
     const topic = curSess?.task || document.getElementById('topic').value || 'Worksheet';
 
-    // Save worksheet to Supabase
+    // Save worksheet to Supabase — include roster names for fuzzy matching
+    const rosterNames = students.map(s => ({
+      id: s.id,
+      first: s.first,
+      last: s.last || ''
+    }));
     const { data, error } = await db.from('worksheets').insert({
       teacher_id: currentUser.id,
-      topic, grades, subject, content
+      topic, grades, subject, content,
+      roster: rosterNames
     }).select().single();
 
     if (error) throw error;
@@ -978,8 +1016,17 @@ async function getStudentLink(k) {
     // Generate the student link
     const link = `${window.location.origin}/ws?id=${data.id}`;
 
-    // Copy to clipboard
-    await navigator.clipboard.writeText(link);
+    // Copy to clipboard (with Safari fallback)
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch(clipErr) {
+      // Safari fallback
+      const ta = document.createElement('textarea');
+      ta.value = link; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
 
     // Show success
     btn.textContent = '✅ Link Copied!';
