@@ -461,6 +461,14 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div class="ct">Recent Sessions</div>
     <div id="sList"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No sessions yet.</div></div>
   </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="ct" style="margin-bottom:0;">📥 Student Worksheet Submissions</div>
+      <button class="btn b-out b-sm" onclick="loadSubmissions()">🔄 Refresh</button>
+    </div>
+    <div id="submissionsList"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No submissions yet. Share a student link to receive responses.</div></div>
+  </div>
 </div>
 
 <!-- ===== MY LESSONS ===== -->
@@ -488,6 +496,7 @@ let students = [], sessions = [], genC = {}, curSess = null, shareKey = '';
 const AVCOLORS = ['#4A7C59','#2A5FA5','#C47B2A','#B54B2A','#6B46C1','#0F766E','#7C4A6E','#4A6E7C'];
 const BLABELS = {lesson_plan:'📅 Lesson Plan',student_worksheet:'📝 Student Worksheet',reading_resource:'📄 Reading Resource',assessment_rubric:'📏 Assessment Rubric',differentiation_tips:'♿ Differentiation & Modified Expectations'};
 const SHAREABLE = ['student_worksheet','reading_resource','assessment_rubric'];
+const LINKABLE = ['student_worksheet'];
 let wsN = 0;
 
 // ============================================================
@@ -587,6 +596,7 @@ function showApp() {
   renderR();
   renderTracker();
   renderLessonsList();
+  loadSubmissions();
 }
 
 // ============================================================
@@ -609,7 +619,7 @@ async function loadUserData() {
 // ============================================================
 // TAB SWITCHING
 // ============================================================
-function switchToAssess() { document.getElementById('tr-assess').checked=true; renderTracker(); }
+function switchToAssess() { document.getElementById('tr-assess').checked=true; renderTracker(); loadSubmissions(); }
 
 // ============================================================
 // WORKFLOW
@@ -745,6 +755,7 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic){
           <button class="btn b-out b-sm" onclick="resetBlock('${k}')">↩ Reset</button>
           <button class="btn b-out b-sm" onclick="copyBlock('${k}')">📋 Copy</button>
           ${isSh?`<button class="btn b-blue b-sm" onclick="openShare('${k}')">📤 Share</button>`:''}
+          ${k==='student_worksheet'?`<button class="btn b-sage b-sm" onclick="getStudentLink('${k}')">🔗 Get Student Link</button>`:''}
         </div>
       </div>
       <div class="cbb" id="cbb-${k}" contenteditable="false">${rendered}</div>
@@ -945,6 +956,63 @@ function copyFb(sid){const el=document.getElementById('fbt-'+sid);if(!el)return;
 function regenFb(sid){const fb=document.getElementById('fb-'+sid);if(fb)fb.style.display='none';genFb(sid);}
 
 // ============================================================
+// STUDENT LINK
+// ============================================================
+async function getStudentLink(k) {
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ Saving...';
+  try {
+    const content = genC[k]?.cur || '';
+    const grades = curSess?.grades || [];
+    const subject = curSess?.subject || '';
+    const topic = curSess?.task || document.getElementById('topic').value || 'Worksheet';
+
+    // Save worksheet to Supabase
+    const { data, error } = await db.from('worksheets').insert({
+      teacher_id: currentUser.id,
+      topic, grades, subject, content
+    }).select().single();
+
+    if (error) throw error;
+
+    // Generate the student link
+    const link = `${window.location.origin}/ws?id=${data.id}`;
+
+    // Copy to clipboard
+    await navigator.clipboard.writeText(link);
+
+    // Show success
+    btn.textContent = '✅ Link Copied!';
+    btn.style.background = '#4A7C59';
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = '🔗 Get Student Link';
+      btn.style.background = '';
+    }, 3000);
+
+    // Show the link visually
+    const block = document.getElementById('cb-' + k);
+    let linkDiv = document.getElementById('studentLinkDiv');
+    if (linkDiv) linkDiv.remove();
+    const div = document.createElement('div');
+    div.id = 'studentLinkDiv';
+    div.style.cssText = 'padding:12px 16px;background:#EAF0EA;border-top:1px solid #A8C4AB;font-size:.82rem;';
+    div.innerHTML = `<div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:#4A7C59;margin-bottom:6px;">🔗 Student Link — copied to clipboard</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <input type="text" value="${link}" readonly style="flex:1;font-family:'DM Mono',monospace;font-size:.72rem;padding:6px 10px;border:1px solid #A8C4AB;border-radius:5px;background:white;outline:none;min-width:0;">
+        <button class="btn b-out b-sm" onclick="navigator.clipboard.writeText('${link}');event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='Copy',1500)">Copy</button>
+      </div>
+      <div style="margin-top:6px;font-size:.75rem;color:#2D5C38;">Paste this link into Google Classroom as an assignment. Students open it, fill in their answers, and click Submit.</div>`;
+    block.appendChild(div);
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '🔗 Get Student Link';
+    alert('Error: ' + e.message);
+  }
+}
+
+// ============================================================
 // ROSTER
 // ============================================================
 async function addStu(){
@@ -1105,11 +1173,10 @@ async function renderLessonsList(){
 }
 
 function loadLesson(idx){
-  console.log('loadLesson called with idx:', idx, 'savedLessons length:', savedLessons.length);
   const l = savedLessons[idx];
-  if(!l){alert('Lesson not found. savedLessons has '+savedLessons.length+' items.');return;}
+  if(!l){alert('Lesson not found.');return;}
   if(!l.content||!Object.keys(l.content).length){
-    alert('Lesson found but no content. Keys: '+JSON.stringify(Object.keys(l)));return;
+    alert('No content found for this lesson.');return;
   }
   genC={};
   const keys=Object.keys(l.content);
@@ -1204,6 +1271,72 @@ ${renderWS(txt)}
 <div class="footer">Generated with TeacherAI · teacherai.ca</div>
 </div></body></html>`);
   w.document.close();
+}
+
+// ============================================================
+// SUBMISSIONS
+// ============================================================
+async function loadSubmissions() {
+  const c = document.getElementById('submissionsList');
+  if (!c) return;
+  c.innerHTML = '<div style="color:var(--muted);font-size:.83rem;">Loading...</div>';
+
+  try {
+    // Get all teacher's worksheets
+    const { data: worksheets } = await db.from('worksheets')
+      .select('id, topic, grades, created_at')
+      .eq('teacher_id', currentUser.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (!worksheets || !worksheets.length) {
+      c.innerHTML = '<div style="color:var(--muted);font-size:.83rem;font-style:italic;">No worksheets shared yet.</div>';
+      return;
+    }
+
+    // Get submissions for each worksheet
+    const wsIds = worksheets.map(w => w.id);
+    const { data: submissions } = await db.from('worksheet_submissions')
+      .select('*')
+      .in('worksheet_id', wsIds)
+      .order('submitted_at', { ascending: false });
+
+    if (!submissions || !submissions.length) {
+      c.innerHTML = '<div style="color:var(--muted);font-size:.83rem;font-style:italic;">No student submissions yet. Students need to open the link and click Submit.</div>';
+      return;
+    }
+
+    // Group submissions by worksheet
+    const grouped = {};
+    worksheets.forEach(w => { grouped[w.id] = { ...w, submissions: [] }; });
+    submissions.forEach(s => { if (grouped[s.worksheet_id]) grouped[s.worksheet_id].submissions.push(s); });
+
+    c.innerHTML = Object.values(grouped).filter(g => g.submissions.length > 0).map(g => `
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px;">
+        <div style="padding:11px 14px;background:var(--cream);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-weight:600;font-size:.88rem;">${g.topic}</div>
+            <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);">${(g.grades||[]).join('/')} · ${g.submissions.length} submission${g.submissions.length!==1?'s':''}</div>
+          </div>
+          <span style="font-family:'DM Mono',monospace;font-size:.7rem;background:var(--sage-l);color:var(--sage);padding:3px 9px;border-radius:10px;">${g.submissions.length} submitted</span>
+        </div>
+        ${g.submissions.map(s => `
+          <div style="padding:12px 14px;border-bottom:1px solid var(--border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+              <div style="font-weight:600;font-size:.86rem;">👤 ${s.student_name||'Anonymous'}</div>
+              <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);">${new Date(s.submitted_at).toLocaleDateString('en-CA')} ${new Date(s.submitted_at).toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+            ${s.responses ? Object.entries(s.responses).map(([q,a]) => `
+              <div style="margin-bottom:6px;">
+                <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">${q}</div>
+                <div style="font-size:.84rem;padding:4px 8px;background:var(--cream);border-radius:4px;margin-top:2px;">${Array.isArray(a)?a.join(', '):a||'—'}</div>
+              </div>`).join('') : '<div style="color:var(--muted);font-size:.82rem;">No responses recorded.</div>'}
+          </div>`).join('')}
+      </div>`).join('') || '<div style="color:var(--muted);font-size:.83rem;font-style:italic;">No submissions yet.</div>';
+
+  } catch(e) {
+    c.innerHTML = '<div style="color:var(--rust);font-size:.83rem;">Error loading submissions: ' + e.message + '</div>';
+  }
 }
 
 // ============================================================
