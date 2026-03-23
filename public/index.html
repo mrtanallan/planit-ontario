@@ -1014,12 +1014,15 @@ function renderFbGrid(){
           <div class="av" style="background:${AVCOLORS[i%AVCOLORS.length]}">${s.first[0]}${(s.last||' ')[0]}</div>
           <div><div style="font-weight:600;">${s.first} ${s.last||''}</div><div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);">${s.grade} · Level ${num}${sfx}</div></div>
         </div>
-        <button class="btn b-ink b-sm" onclick="genFb(${JSON.stringify(s.id)})">✨ Generate Feedback</button>
+        <button class="btn b-ink b-sm genfb-btn" data-sid="${s.id}">✨ Generate Feedback</button>
       </div>
       ${m.notes?`<div style="font-size:.8rem;color:var(--muted);margin-bottom:7px;font-style:italic;">Notes: ${m.notes}</div>`:''}
       <div class="fb" id="fb-${s.id}"></div>
     </div>`;
   }).join('');
+  document.querySelectorAll('.genfb-btn').forEach(btn=>{
+    btn.addEventListener('click',function(){genFb(this.dataset.sid);});
+  });
 }
 
 async function genFb(sid){
@@ -1032,7 +1035,6 @@ async function genFb(sid){
   const base=m.level.replace(/[+-]/,'');
   const sfx=m.level.includes('+')?'(strong, approaching next level)':m.level.includes('-')?'(emerging, needs support)':'';
   const lvMap={L1:'Level 1 (50-59%)',L2:'Level 2 (60-69%)',L3:'Level 3 (70-79%)',L4:'Level 4 (80%+)'};
-  // Anonymize student name for Anthropic
   const prompt=`Write Ontario-style descriptive feedback. Warm, specific, professional, 3-4 sentences.
 Student grade: ${s.grade}
 Subject: ${curSess.subject} — ${curSess.strand}
@@ -1046,12 +1048,14 @@ Start with a specific strength. Describe achievement with evidence. Give one cle
     const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     const text=data.content?.map(i=>i.text||'').join('')||'Error generating.';
-    fbEl.innerHTML=`<div style="font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">✏️ Click to edit before copying</div>
-      <div class="fbe" contenteditable="true" id="fbt-${sid}">${text}</div>
-      <div class="brow" style="margin-top:7px;">
-        <button class="btn b-sage b-sm" onclick="copyFb(${JSON.stringify(sid)})">📋 Copy Feedback</button>
-        <button class="btn b-out b-sm" onclick="regenFb(${JSON.stringify(sid)})">🔄 Regenerate</button>
-      </div>`;
+    fbEl.innerHTML='<div style="font-family:\'DM Mono\',monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">✏️ Click to edit before copying</div>'
+      +'<div class="fbe" contenteditable="true" id="fbt-'+sid+'">'+text+'</div>'
+      +'<div class="brow" style="margin-top:7px;">'
+      +'<button class="btn b-sage b-sm copyfb-btn" data-sid="'+sid+'">📋 Copy Feedback</button>'
+      +'<button class="btn b-out b-sm regenfb-btn" data-sid="'+sid+'">🔄 Regenerate</button>'
+      +'</div>';
+    fbEl.querySelectorAll('.copyfb-btn').forEach(b=>b.addEventListener('click',function(){copyFb(this.dataset.sid);}));
+    fbEl.querySelectorAll('.regenfb-btn').forEach(b=>b.addEventListener('click',function(){regenFb(this.dataset.sid);}));
   }catch(e){fbEl.innerHTML='Error: '+e.message;}
 }
 
@@ -1284,30 +1288,49 @@ function renderTracker(){
   const ca=wd.length?wd.reduce((a,b)=>a+b.avg,0)/wd.length:null;
   document.getElementById('tAvg').textContent=ca?`L${Math.round(ca)}`:'—';
   document.getElementById('tL4').textContent=wd.filter(r=>r.avg>=3.5).length;
-  const lvColors={L1:'var(--rust)',L2:'var(--amber)',L3:'var(--blue)',L4:'var(--sage)'};
-  document.getElementById('gTable').innerHTML=`<table class="dt">
-    <thead><tr><th>Student</th><th>Grade</th><th>Sessions</th><th>Avg Level</th><th>Notes</th></tr></thead>
-    <tbody>${rows.map(r=>{
-      const stuSessions=sessions.filter(sess=>sess.marks[r.id]?.level).sort((a,b)=>new Date(b.date)-new Date(a.date));
-      const historyHtml=stuSessions.map(sess=>{
+
+  // Build student performance table safely (no nested template literals)
+  let tableHtml='<table class="dt"><thead><tr><th>Student</th><th>Grade</th><th>Sessions</th><th>Avg Level</th><th>Notes</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    const stuSessions=sessions.filter(sess=>sess.marks[r.id]?.level).sort((a,b)=>new Date(b.date)-new Date(a.date));
+    const hasHistory=stuSessions.length>0;
+    const avgLabel=r.avg!==null?'<span class="gp '+lvL(r.avg).c+'">'+lvL(r.avg).l+'</span>':'<span style="color:var(--muted)">—</span>';
+    tableHtml+='<tr class="stu-row" data-sid="'+r.id+'" style="cursor:'+(hasHistory?'pointer':'default')+';">';
+    tableHtml+='<td><strong>'+r.first+' '+(r.last||'')+'</strong>'+(hasHistory?' <span class="hist-arrow" style="font-size:.65rem;color:var(--muted);margin-left:4px;">▶</span>':'')+'</td>';
+    tableHtml+='<td>'+r.grade+'</td>';
+    tableHtml+='<td style="font-family:\'DM Mono\',monospace;">'+r.count+'</td>';
+    tableHtml+='<td>'+avgLabel+'</td>';
+    tableHtml+='<td style="color:var(--muted);font-size:.78rem;">'+(r.notes||'—')+'</td>';
+    tableHtml+='</tr>';
+    if(hasHistory){
+      tableHtml+='<tr id="hist-'+r.id+'" style="display:none;"><td colspan="5" style="padding:0;background:var(--blue-l);">';
+      tableHtml+='<table style="width:100%;border-collapse:collapse;">';
+      stuSessions.forEach(sess=>{
         const m=sess.marks[r.id];
-        const base=m.level.replace(/[+-]/,'');
-        return`<tr style="background:var(--blue-l);">
-          <td colspan="2" style="padding:6px 11px 6px 28px;font-size:.78rem;color:var(--muted);">${sess.date} · ${sess.task}</td>
-          <td style="font-family:'DM Mono',monospace;font-size:.72rem;">${sess.subject}</td>
-          <td><span class="gp ${lvN[m.level]>=3.5?'gp4':lvN[m.level]>=2.5?'gp3':lvN[m.level]>=1.5?'gp2':'gp1'}" style="font-size:.65rem;">${m.level}</span></td>
-          <td style="font-size:.75rem;color:var(--muted);">${m.notes||'—'}</td>
-        </tr>`;
-      }).join('');
-      return`<tr style="cursor:pointer;" onclick="const h=document.getElementById('hist-${r.id}');h.style.display=h.style.display==='none'?'table-row-group':'none';this.querySelector('.hist-arrow').textContent=h.style.display==='none'?'▶':'▼'">
-        <td><strong>${r.first} ${r.last||''}</strong> <span class="hist-arrow" style="font-size:.65rem;color:var(--muted);margin-left:4px;">${stuSessions.length?'▶':'—'}</span></td>
-        <td>${r.grade}</td>
-        <td style="font-family:'DM Mono',monospace;">${r.count}</td>
-        <td>${r.avg!==null?`<span class="gp ${lvL(r.avg).c}">${lvL(r.avg).l}</span>`:'<span style="color:var(--muted)">—</span>'}</td>
-        <td style="color:var(--muted);font-size:.78rem;">${r.notes||'—'}</td>
-      </tr>
-      <tbody id="hist-${r.id}" style="display:none;">${historyHtml}</tbody>`;
-    }).join('')}</tbody></table>`;
+        const gpClass=lvN[m.level]>=3.5?'gp4':lvN[m.level]>=2.5?'gp3':lvN[m.level]>=1.5?'gp2':'gp1';
+        tableHtml+='<tr>';
+        tableHtml+='<td style="padding:6px 11px 6px 28px;font-size:.78rem;color:var(--muted);width:35%;">'+sess.date+' · '+sess.task+'</td>';
+        tableHtml+='<td style="font-family:\'DM Mono\',monospace;font-size:.72rem;width:25%;">'+sess.subject+'</td>';
+        tableHtml+='<td style="width:20%;"><span class="gp '+gpClass+'" style="font-size:.65rem;">'+m.level+'</span></td>';
+        tableHtml+='<td style="font-size:.75rem;color:var(--muted);width:20%;">'+(m.notes||'—')+'</td>';
+        tableHtml+='</tr>';
+      });
+      tableHtml+='</table></td></tr>';
+    }
+  });
+  tableHtml+='</tbody></table>';
+  document.getElementById('gTable').innerHTML=tableHtml;
+
+  // Attach click listeners for history expand/collapse
+  document.querySelectorAll('.stu-row[data-sid]').forEach(row=>{
+    row.addEventListener('click',function(){
+      const hist=document.getElementById('hist-'+this.dataset.sid);
+      if(!hist)return;
+      const arrow=this.querySelector('.hist-arrow');
+      if(hist.style.display==='none'){hist.style.display='table-row';if(arrow)arrow.textContent='▼';}
+      else{hist.style.display='none';if(arrow)arrow.textContent='▶';}
+    });
+  });
   document.getElementById('sList').innerHTML=sessions.slice(0,10).map(sess=>{
     const cnt=Object.keys(sess.marks).filter(sid=>sess.marks[sid]?.level).length;
     const lvN={L1:1,'L1-':.7,'L1+':1.3,L2:2,'L2-':1.7,'L2+':2.3,L3:3,'L3-':2.7,'L3+':3.3,L4:4,'L4-':3.7,'L4+':4.3};
@@ -1356,6 +1379,7 @@ function renderTracker(){
       if (sel) updateMark(this.dataset.sessid, this.dataset.sid, sel.value, this);
     });
   });
+} // end renderTracker
 
 async function deleteSession(sessId) {
   if (!confirm('Delete this entire assessment session? All marks for this session will be removed. This cannot be undone.')) return;
