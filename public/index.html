@@ -1288,8 +1288,79 @@ function renderTracker(){
   document.getElementById('gTable').innerHTML=`<table class="dt"><thead><tr><th>Student</th><th>Grade</th><th>Sessions</th><th>Avg Level</th><th>Notes</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${r.first} ${r.last||''}</strong></td><td>${r.grade}</td><td style="font-family:'DM Mono',monospace;">${r.count}</td><td>${r.avg!==null?`<span class="gp ${lvL(r.avg).c}">${lvL(r.avg).l}</span>`:'<span style="color:var(--muted)">—</span>'}</td><td style="color:var(--muted);font-size:.78rem;">${r.notes||'—'}</td></tr>`).join('')}</tbody></table>`;
   document.getElementById('sList').innerHTML=sessions.slice(0,10).map(sess=>{
     const cnt=Object.keys(sess.marks).filter(sid=>sess.marks[sid]?.level).length;
-    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);"><div><div style="font-weight:500;font-size:.88rem;">${sess.task}</div><div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);">${sess.date} · ${sess.subject} · ${sess.strand}</div></div><div style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--sage);">${cnt} students</div></div>`;
+    const lvN={L1:1,'L1-':.7,'L1+':1.3,L2:2,'L2-':1.7,'L2+':2.3,L3:3,'L3-':2.7,'L3+':3.3,L4:4,'L4-':3.7,'L4+':4.3};
+    const lvColors={L1:'var(--rust)',L2:'var(--amber)',L3:'var(--blue)',L4:'var(--sage)'};
+    const LEVELS=['L1-','L1','L1+','L2-','L2','L2+','L3-','L3','L3+','L4-','L4','L4+'];
+    const markedStudents=students.filter(s=>sess.marks[s.id]?.level);
+    return`<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--cream);">
+        <div>
+          <div style="font-weight:500;font-size:.88rem;">${sess.task}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);">${sess.date} · ${sess.subject} · ${sess.strand} · ${cnt} students</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button class="btn b-out b-sm" style="font-size:.7rem;" onclick="this.closest('div').nextElementSibling.style.display=this.closest('div').nextElementSibling.style.display==='none'?'block':'none'">✏️ Edit marks</button>
+          <button class="btn b-out b-sm" style="color:var(--rust);border-color:var(--rust);font-size:.7rem;" data-sessid="${sess.id}" id="delsess-${sess.id}">🗑 Delete</button>
+        </div>
+      </div>
+      <div style="display:none;" id="sessmarks-${sess.id}">
+        ${markedStudents.map(s=>{
+          const m=sess.marks[s.id];
+          const base=m.level.replace(/[+-]/,'');
+          return`<div style="display:flex;align-items:center;gap:9px;padding:8px 14px;border-top:1px solid var(--border);flex-wrap:wrap;">
+            <div style="font-weight:500;font-size:.83rem;flex:1;min-width:120px;">${s.first} ${s.last||''} <span style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted);">${s.grade}</span></div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;">
+              <span style="font-family:'DM Mono',monospace;font-size:.72rem;font-weight:600;color:${lvColors[base]};margin-right:4px;">${m.level}</span>
+              <select class="mark-edit-sel" data-sessid="${sess.id}" data-sid="${s.id}" style="font-family:'DM Mono',monospace;font-size:.72rem;padding:3px 6px;border:1.5px solid var(--border);border-radius:5px;background:var(--cream);">
+                ${LEVELS.map(l=>`<option value="${l}"${l===m.level?' selected':''}>${l}</option>`).join('')}
+              </select>
+              <button class="btn b-sage b-sm mark-save-btn" data-sessid="${sess.id}" data-sid="${s.id}" style="font-size:.7rem;">Save</button>
+            </div>
+            ${m.notes?`<div style="font-size:.75rem;color:var(--muted);width:100%;font-style:italic;">📝 ${m.notes}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
   }).join('');
+
+  // Attach delete session listeners
+  document.querySelectorAll('[data-sessid][id^="delsess-"]').forEach(btn => {
+    btn.addEventListener('click', function() { deleteSession(this.dataset.sessid); });
+  });
+  // Attach mark save listeners
+  document.querySelectorAll('.mark-save-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const sel = document.querySelector(`.mark-edit-sel[data-sessid="${this.dataset.sessid}"][data-sid="${this.dataset.sid}"]`);
+      if (sel) updateMark(this.dataset.sessid, this.dataset.sid, sel.value, this);
+    });
+  });
+
+async function deleteSession(sessId) {
+  if (!confirm('Delete this entire assessment session? All marks for this session will be removed. This cannot be undone.')) return;
+  showLoading('Deleting session...');
+  await db.from('student_marks').delete().eq('session_id', sessId);
+  await db.from('assessment_sessions').delete().eq('id', sessId);
+  await loadUserData();
+  renderTracker();
+  hideLoading();
+}
+
+async function updateMark(sessId, stuId, newLevel, btn) {
+  btn.textContent = '⏳';
+  btn.disabled = true;
+  const { error } = await db.from('student_marks')
+    .update({ level: newLevel })
+    .eq('session_id', sessId)
+    .eq('student_id', stuId);
+  if (error) { alert('Error updating mark: ' + error.message); btn.textContent = 'Save'; btn.disabled = false; return; }
+  // Update local state
+  const sess = sessions.find(s => s.id === sessId);
+  if (sess && sess.marks[stuId]) sess.marks[stuId].level = newLevel;
+  btn.textContent = '✅';
+  setTimeout(async () => {
+    await loadUserData();
+    renderTracker();
+  }, 800);
 }
 
 function exportCSV(){
