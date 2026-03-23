@@ -300,12 +300,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
   <!-- Step 1 -->
   <div id="s1">
-    <div class="ban ban-a"><span>🍁</span><span>Aligned to the <strong>Ontario Curriculum</strong>. SSC split-grade support available. Student names are anonymized before AI processing.</span></div>
     <div class="card">
       <div class="ct">📚 Class Setup</div>
       <div class="fg">
         <div class="fi">
-          <label>Grade ✱</label>
+          <label>Grade A ✱</label>
           <select id="gA"><option value="">Select grade...</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
         </div>
         <div class="fi">
@@ -317,18 +316,17 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <select id="dur"><option>Single lesson (1 day)</option><option>3-day mini unit (3 days)</option><option>1 week (5 days)</option><option>2 weeks (10 days)</option></select>
         </div>
         <div class="fi s2"><label>Topic / Focus</label><input type="text" id="topic" placeholder="e.g. Inference, Narrative Writing, Fractions..."></div>
-        <div class="fi full"><label>Class context (optional)</label><textarea id="ctx" placeholder="e.g. 28 students, 4 ELL, iPads available, strong oral communicators..."></textarea></div>
       </div>
 
-      <!-- Split grade toggle -->
-      <div id="splitGradeSection">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <label class="chip" style="cursor:pointer;" onclick="toggleSplitGrades()">
-            <input type="checkbox" id="splitToggle" style="width:12px;height:12px;accent-color:var(--sage);"> 🏫 Split/Multi-grade class (SSC)
+      <!-- Split grade — default ON -->
+      <div style="margin-bottom:13px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
+          <label class="chip" style="cursor:pointer;">
+            <input type="checkbox" id="splitToggle" checked style="width:12px;height:12px;accent-color:var(--sage);" onchange="toggleSplitGrades()"> 🏫 Split/Multi-grade class (SSC)
           </label>
         </div>
-        <div id="extraGrades" style="display:none;">
-          <div class="fg" style="margin-bottom:4px;">
+        <div id="extraGrades">
+          <div class="fg" style="margin-bottom:0;">
             <div class="fi"><label>Grade B</label><select id="gB"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
             <div class="fi"><label>Grade C</label><select id="gC"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
             <div class="fi"><label>Grade D</label><select id="gD"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
@@ -359,6 +357,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <label class="chip"><input type="checkbox" id="ck-dt"> ♿ Differentiation & Modified Expectations</label>
       </div>
       <button class="btn b-ink b-full" id="genBtn" onclick="generate()">✨ Generate Lesson</button>
+      <div style="margin-top:13px;padding-top:11px;border-top:1px solid var(--border);font-size:.75rem;color:var(--muted);">🍁 Aligned to the <strong>Ontario Curriculum</strong> · Student names anonymized before AI processing · 🇨🇦 Data stored in Canada</div>
     </div>
   </div>
 
@@ -418,6 +417,14 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 <!-- ===== CLASS ROSTER ===== -->
 <div class="page" id="pg-roster">
   <div class="ph"><h1>Class <em>Roster</em></h1><p>Students are saved to your account and persist between sessions. Add Learning Profiles to differentiate AI-generated lessons.</p></div>
+  <div class="card">
+    <div class="ct">📝 Class Context</div>
+    <div class="fi" style="margin-bottom:8px;">
+      <label>Notes about your class (used when generating lessons)</label>
+      <textarea id="ctx" style="min-height:65px;" placeholder="e.g. 28 students, 4 ELL, iPads available, strong oral communicators, working on growth mindset..."></textarea>
+    </div>
+    <div style="font-size:.75rem;color:var(--muted);">This context is included in every lesson generation to help tailor content to your class.</div>
+  </div>
   <div class="card">
     <div class="ct">➕ Add Student</div>
     <div class="fg">
@@ -855,7 +862,7 @@ function buildShareCards(outputs){
       btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit first</button>
             <button class="btn b-sage b-sm" onclick="getStudentLink('student_worksheet')">🔗 Get Student Link</button>`;
     } else if(isReading){
-      desc='Teacher resource — download as PDF${hasReading&&outputs.includes("student_worksheet")?" or attach to worksheet":""}';
+      desc='Teacher resource — download as PDF'+(hasReading&&outputs.includes('student_worksheet')?' or attach to worksheet':'');
       btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit first</button>
             <button class="btn b-out b-sm" onclick="downloadPDF('reading_resource')">📄 Download PDF</button>`;
     } else if(isRubric){
@@ -1000,15 +1007,22 @@ async function renderAssGrid(){
 }
 
 function sl(sid,level,btn){
+  const already=btn.classList.contains('sel');
   document.getElementById('ar-'+sid).querySelectorAll('.lb').forEach(b=>b.classList.remove('sel'));
+  const d=document.getElementById('ld-'+sid);
+  if(already){
+    // Deselect — remove mark
+    if(curSess.marks[sid])delete curSess.marks[sid].level;
+    d.textContent='Not assessed'; d.style.color='var(--muted)';
+    return;
+  }
   btn.classList.add('sel');
   if(!curSess.marks[sid])curSess.marks[sid]={};
   curSess.marks[sid].level=level;
-  const base=level.replace(/[+-]/,'');
+  const base=level.replace(/[+-]/g,'');
   const num=base.replace('L','');
   const sfx=level.includes('+')?'+':level.includes('-')?'−':'';
   const cols={L1:'var(--rust)',L2:'var(--amber)',L3:'var(--blue)',L4:'var(--sage)'};
-  const d=document.getElementById('ld-'+sid);
   d.textContent='Level '+num+sfx+' ●'; d.style.color=cols[base];
 }
 
