@@ -1505,23 +1505,35 @@ Return ONLY valid JSON with keys: ${outputKeys.map(k=>'"'+k+'"').join(', ')}, "e
 Each value is a markdown string except "expectations" which is a JSON array:
 - Use ## major sections, ### subsections, **bold**, - bullets
 - lesson_plan: timing (0:00-0:10), Minds On/Action/Consolidation, materials
-- student_worksheet${isSplit?'_[A/B/C/D] (one per grade)':''}: ${wsFormatNote}
+${isSplit ? wsOutputKeys.map((k,i)=>`- ${k}: worksheet for ${grades[i]} ONLY — ${wsFormatNote}`).join('\n') : `- student_worksheet: ${wsFormatNote}`}
 - reading_resource: original 200-300 word passage appropriate for the grade(s)
-- assessment_rubric: Ontario Achievement Chart. Use ## for each category (e.g. "## Knowledge & Understanding", "## Communication", "## Application"). Under each category use ### Level 1, ### Level 2, ### Level 3, ### Level 4 with one sentence describing achievement at that level. Keep descriptions specific to the task and grade-appropriate.${iepStudents.length?' Include a modified criteria category for IEP students.':''}
+- assessment_rubric: Ontario Achievement Chart. Use ## for each category (e.g. "## Knowledge & Understanding", "## Communication", "## Application"). Under each category use ### Level 1, ### Level 2, ### Level 3, ### Level 4 with one sentence describing achievement at that level.${iepStudents.length?' Include a modified criteria category for IEP students.':''}
 - differentiation_tips: per-grade and per-student strategies
-- expectations: array of objects, each with "code" (e.g. "C2.3"), "desc" (full description), "overall" (overall expectation name), "strand" (A/B/C/D). Return 2-5 most relevant expectations actually addressed in this lesson. ${preMatchedExp.length?'Use the teacher-requested expectations above as your primary set, add others if relevant.':'Pick based on topic and grade.'}
-For split classes: clearly separate by grade. IMPORTANT: Only include the exact keys listed. No text outside the JSON.`;
+- expectations: array of objects with "code", "desc", "overall", "strand". Return 2-5 most relevant expectations. ${preMatchedExp.length?'Use teacher-requested expectations as primary set.':'Pick based on topic and grade.'}
+CRITICAL: Return ONLY a valid JSON object. No markdown fences. Each grade worksheet must be its own top-level key.`;
 
   try {
-    const res=await authFetch('/api/generate',{method:'POST',body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
+    const maxTok = grades.length >= 4 ? 6000 : isSplit && grades.length >= 2 ? 4000 : 2500;
+    const res=await authFetch('/api/generate',{method:'POST',body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTok,messages:[{role:'user',content:prompt}]})});
     if(!res.ok) throw new Error(`Server error ${res.status}`);
     const data=await res.json();
     if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
     const raw=data.content.map(i=>i.text||'').join('');
     let parsed;
     try{parsed=JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim());}
-    catch(e1){try{const s=raw.indexOf('{'),e=raw.lastIndexOf('}');parsed=JSON.parse(raw.slice(s,e+1));}
-    catch(e2){parsed={};outputKeys.forEach(k=>{const m=raw.match(new RegExp('"'+k+'"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"','s'));if(m)parsed[k]=m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"');else parsed[k]=raw;});}}
+    catch(e1){
+      try{const s=raw.indexOf('{'),e=raw.lastIndexOf('}');parsed=JSON.parse(raw.slice(s,e+1));}
+      catch(e2){
+        // Fallback: extract each key individually — never assign raw blob
+        parsed={};
+        outputKeys.forEach(k=>{
+          const m=raw.match(new RegExp('"'+k+'"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"','s'));
+          if(m) parsed[k]=m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"');
+          // If key not found, leave as empty string — don't assign raw JSON
+          else parsed[k]='';
+        });
+      }
+    }
 
     genC={};outputKeys.forEach(k=>{genC[k]={orig:parsed[k]||'',cur:parsed[k]||''};});
 
