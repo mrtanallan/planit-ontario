@@ -259,7 +259,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="fi" style="margin-bottom:20px;"><label>Password</label><input type="password" id="signupPass" placeholder="Min 6 characters"></div>
       <button class="btn b-ink b-full" onclick="signUp()">Create Account →</button>
     </div>
-    <div style="text-align:center;margin-top:16px;font-size:0.75rem;color:var(--muted);">🇨🇦 Data stored in Canada · Privacy-first design</div>
+    <div style="text-align:center;margin-top:16px;font-size:0.75rem;color:var(--muted);">🇨🇦 Data stored in Canada · No student data sent to AI · MFIPPA-conscious design</div>
   </div>
 </div>
 
@@ -288,6 +288,22 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
 <!-- ===== DAILY WORKFLOW ===== -->
 <div class="page" id="pg-plan">
+
+  <!-- First-run welcome — only shown when teacher has no lessons yet -->
+  <div id="welcomeBanner" style="display:none;background:linear-gradient(135deg,#1C3A2B,#2D5C38);border-radius:12px;padding:22px 24px;margin-bottom:20px;color:white;">
+    <div style="font-family:'Fraunces',serif;font-size:1.15rem;font-weight:600;margin-bottom:6px;">👋 Welcome to TeacherAI</div>
+    <div style="font-size:.86rem;opacity:.9;line-height:1.6;margin-bottom:14px;">Your Ontario SSC teaching assistant. Generate a complete lesson — plan, worksheet, rubric, and slides — in under a minute.</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;opacity:.8;">
+      <span>① Set your grade &amp; topic below</span>
+      <span>② Generate your lesson</span>
+      <span>③ Share worksheet link with students</span>
+      <span>④ Assess &amp; give feedback</span>
+    </div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);font-size:.75rem;opacity:.65;">
+      💡 Tip: Add your students in <strong>Class Roster</strong> first so worksheets can be linked to their names.
+    </div>
+  </div>
+
   <div class="wf">
     <div class="ws on" id="ws1" onclick="gs(1)"><div class="wn">1</div>📝 Plan</div>
     <span class="wa">›</span>
@@ -451,7 +467,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <textarea id="sI" style="min-height:80px;" placeholder="Optional — paste modified learning expectations here. Lessons will differentiate for this student.&#10;&#10;e.g.:&#10;- Reading: identify main idea at Grade 2 level with visual supports&#10;- Writing: compose 3-5 sentence paragraphs with graphic organizer&#10;&#10;Note: Do not paste full IEP documents. First name + modified expectations only."></textarea>
       </div>
     </div>
-    <div class="ban ban-a" style="margin-bottom:12px;font-size:.78rem;"><span>🔒</span><span>Learning profiles are stored securely in Canada 🇨🇦. When generating lessons, student names are never sent to AI — only their grade and learning needs are used to differentiate content.</span></div>
+    <div class="ban ban-a" style="margin-bottom:12px;font-size:.78rem;"><span>🔒</span><span><strong>Privacy notice:</strong> Student data is stored on Canadian servers (ca-central-1) 🇨🇦. Student names are <strong>never</strong> sent to AI — only grade level and anonymized learning needs. <strong>MFIPPA tip:</strong> Consider using first names only, or pseudonyms, until your board approves this tool. Do not paste full IEP documents — record your own professional notes only.</span></div>
     <div class="brow">
       <button class="btn b-sage" onclick="addStu()">➕ Add Student</button>
       <button class="btn b-out" onclick="loadSample()">📋 Load Sample Roster</button>
@@ -670,6 +686,16 @@ function showApp() {
   renderTracker();
   renderLessonsList();
   loadSubmissions();
+  // Show welcome banner only on first run (no lessons yet)
+  // Checked again after lessons load in renderLessonsList
+  updateWelcomeBanner();
+}
+
+function updateWelcomeBanner() {
+  const banner = document.getElementById('welcomeBanner');
+  if (!banner) return;
+  const done = savedLessons.length > 0 || students.length > 0;
+  banner.style.display = done ? 'none' : 'block';
 }
 
 // ============================================================
@@ -758,7 +784,7 @@ async function generate() {
   const gradeDesc=isSplit?grades.join(' / ')+' multi-grade split class':grades[0];
   const subj=document.getElementById('subj').value;
   const dur=document.getElementById('dur').value;
-  const ctx=document.getElementById('ctx').value;
+  const ctx=document.getElementById('ctx')?.value?.trim()||'';
 
   const strands=[];
   if(document.getElementById('ck-r').checked)strands.push('Reading');
@@ -1562,6 +1588,7 @@ async function addStu(){
   students.push({id:data.id,first:data.first_name,last:data.last_name||'',grade:data.grade,notes:data.notes||'',iep:data.learning_profile||'',dbId:data.id});
   document.getElementById('sF').value='';document.getElementById('sL').value='';document.getElementById('sN').value='';document.getElementById('sI').value='';
   renderR();
+  updateWelcomeBanner();
 }
 
 async function loadSample(){
@@ -1582,6 +1609,7 @@ async function loadSample(){
   if(error){alert('Error: '+error.message);return;}
   data.forEach(s=>students.push({id:s.id,first:s.first_name,last:s.last_name||'',grade:s.grade,notes:s.notes||'',iep:s.learning_profile||'',dbId:s.id}));
   renderR();
+  updateWelcomeBanner();
 }
 
 async function clearR(){
@@ -1805,10 +1833,13 @@ async function renderLessonsList(){
   const {data}=await db.from('lessons').select('*').order('created_at',{ascending:false}).limit(50);
   if(!data||!data.length){
     document.getElementById('lessonsList').innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;">No lessons saved yet. Generate your first lesson in Daily Workflow.</div>';
+    savedLessons = [];
+    updateWelcomeBanner();
     return;
   }
   savedLessons = data;
-  sortLessons(currentSort, null); // render with current sort
+  updateWelcomeBanner();
+  sortLessons(currentSort, null);
 }
 
 function confirmDeleteLesson(id, topic) {
