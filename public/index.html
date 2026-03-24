@@ -1334,11 +1334,11 @@ async function generate() {
   if(document.getElementById('ck-dt').checked)outputs.push('differentiation_tips');
   // Preferred display order: lesson plan → worksheet → reading → rubric → differentiation
   const ORDER = ['lesson_plan','student_worksheet','reading_resource','assessment_rubric','differentiation_tips'];
-  outputs.sort((a,b)=>{
-    const ai=ORDER.findIndex(k=>a.startsWith(k.replace('student_worksheet','student_worksheet')));
-    const bi=ORDER.findIndex(k=>b.startsWith(k.replace('student_worksheet','student_worksheet')));
-    return (ai===-1?99:ai)-(bi===-1?99:bi);
-  });
+  const getOrder = k => {
+    const idx = ORDER.findIndex(o => k === o || k.startsWith(o+'_'));
+    return idx === -1 ? 99 : idx;
+  };
+  outputs.sort((a,b) => getOrder(a) - getOrder(b));
   if(!outputs.length){alert('Select at least one output.');return;}
 
   // Worksheet type
@@ -1474,7 +1474,10 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic,expectations){
           <button class="btn b-out b-sm" onclick="copyBlock('${k}')">📋 Copy</button>
           ${!isWS?`<button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button>`:''}
           ${k==='lesson_plan'?`<button class="btn b-out b-sm" onclick="exportSlides()">📊 Slides</button>`:''}
-          ${isWS?`<button class="btn b-sage b-sm" onclick="getStudentLink('${k}')">🔗 Get Student Link</button>`:''}
+          ${isWS ? (k.match(/student_worksheet_[A-D]$/) ? `
+            <button class="btn b-sage b-sm" onclick="getStudentLink('${k}', true)">🔗 One link (all grades)</button>
+            <button class="btn b-out b-sm" onclick="getStudentLink('${k}', false)" style="font-size:.72rem;">🔗 This grade only</button>
+          ` : `<button class="btn b-sage b-sm" onclick="getStudentLink('${k}', false)">🔗 Get Student Link</button>`) : ''}
         </div>
       </div>
       <div class="cbb" id="cbb-${k}" contenteditable="false">${rendered}</div>
@@ -1504,7 +1507,7 @@ function buildShareCards(outputs){
     if(isWS){
       desc='Share directly to students via link';
       btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit first</button>
-            <button class="btn b-sage b-sm" onclick="getStudentLink('student_worksheet')">🔗 Get Student Link</button>`;
+            <button class="btn b-sage b-sm" onclick="getStudentLink('student_worksheet', false)">🔗 Get Student Link</button>`;
     } else if(isReading){
       desc='Teacher resource — download as PDF'+(hasReading&&outputs.includes('student_worksheet')?' or attach to worksheet':'');
       btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit first</button>
@@ -2444,25 +2447,44 @@ function buildSlideDeck(sd, topic, subject, gradeStr, wikiImg) {
 
   pres.writeFile({fileName:topic.replace(/[^a-z0-9]/gi,'_')+'_Slides.pptx'});
 }
-async function getStudentLink(k) {
+async function getStudentLink(k, allGrades) {
   const btn = event.target;
   btn.disabled = true; btn.textContent = '⏳ Saving...';
   try {
-    const wsContent = genC[k]?.cur || '';
-    const readingContent = genC['reading_resource']?.cur || '';
     const grades = curSess?.grades || [];
     const subject = curSess?.subject || '';
     const topic = curSess?.task || document.getElementById('topic').value || 'Worksheet';
+    const readingContent = genC['reading_resource']?.cur || '';
 
-    // Store both worksheet and reading resource as JSON so student page can access both
-    const contentPayload = JSON.stringify({
-      worksheet: wsContent,
-      reading: readingContent
-    });
+    const isSplitWS = k.match(/student_worksheet_[A-D]$/);
+    let contentPayload;
+
+    if (isSplitWS && allGrades) {
+      // Combined link — all grade worksheets in one, student picks grade
+      const gradesContent = {};
+      ['A','B','C','D'].forEach((letter, idx) => {
+        const wsKey = `student_worksheet_${letter}`;
+        if (genC[wsKey]?.cur && grades[idx]) {
+          gradesContent[grades[idx]] = genC[wsKey].cur;
+        }
+      });
+      contentPayload = JSON.stringify({
+        worksheet: genC[k]?.cur || '',
+        reading: readingContent,
+        grades_content: gradesContent
+      });
+    } else {
+      // Single grade link — just this worksheet
+      contentPayload = JSON.stringify({
+        worksheet: genC[k]?.cur || '',
+        reading: readingContent
+      });
+    }
 
     const rosterNames = students.map(s => ({
-      id: s.id, first: s.first, last: s.last || ''
+      id: s.id, first: s.first, last: s.last || '', grade: s.grade
     }));
+
     const { data, error } = await db.from('worksheets').insert({
       teacher_id: currentUser.id,
       topic, grades, subject,
@@ -2472,43 +2494,40 @@ async function getStudentLink(k) {
 
     if (error) throw error;
 
-    // Fix URL — /worksheet.html is the correct Vercel route
     const link = `${window.location.origin}/worksheet.html?id=${data.id}`;
 
-    // Insert link div immediately after the block header (cbh), not at the bottom
+    // Show link — use a single shared div regardless of which grade's button was clicked
     const block = document.getElementById('cb-' + k);
-    let linkDiv = document.getElementById('studentLinkDiv');
+    let linkDiv = document.getElementById('studentLinkDiv-' + k);
     if (linkDiv) linkDiv.remove();
     const div = document.createElement('div');
-    div.id = 'studentLinkDiv';
+    div.id = 'studentLinkDiv-' + k;
     div.style.cssText = 'padding:13px 16px;background:#EAF0EA;border-bottom:1px solid #A8C4AB;';
+    const splitNote = (isSplitWS && allGrades)
+      ? '<div style="font-size:.75rem;color:#2D5C38;margin-bottom:6px;">✨ One link for all grades — students pick their grade when they open it.</div>'
+      : isSplitWS
+      ? `<div style="font-size:.75rem;color:#2D5C38;margin-bottom:6px;">📌 This link is for ${grades[['A','B','C','D'].indexOf(k.slice(-1))]||'this grade'} students only.</div>`
+      : '';
     div.innerHTML = `
       <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:#4A7C59;margin-bottom:8px;">🔗 Student Link — paste into Google Classroom</div>
+      ${splitNote}
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-        <input type="text" id="studentLinkInput" value="${link}" readonly
+        <input type="text" id="studentLinkInput-${k}" value="${link}" readonly
           style="flex:1;font-family:'DM Mono',monospace;font-size:.78rem;padding:8px 12px;border:1.5px solid #A8C4AB;border-radius:7px;background:white;outline:none;min-width:0;cursor:text;"
           onclick="this.select()">
-        <button class="btn b-sage b-sm" id="copyLinkBtn" onclick="
-          const inp = document.getElementById('studentLinkInput');
+        <button class="btn b-sage b-sm" id="copyLinkBtn-${k}" onclick="
+          const inp=document.getElementById('studentLinkInput-${k}');
           inp.select();
-          try {
-            navigator.clipboard.writeText(inp.value).then(()=>{
-              document.getElementById('copyLinkBtn').textContent='✅ Copied!';
-              setTimeout(()=>document.getElementById('copyLinkBtn').textContent='📋 Copy',2000);
-            });
-          } catch(e) {
-            document.execCommand('copy');
-            document.getElementById('copyLinkBtn').textContent='✅ Copied!';
-            setTimeout(()=>document.getElementById('copyLinkBtn').textContent='📋 Copy',2000);
-          }
+          navigator.clipboard.writeText(inp.value).then(()=>{
+            document.getElementById('copyLinkBtn-${k}').textContent='✅ Copied!';
+            setTimeout(()=>document.getElementById('copyLinkBtn-${k}').textContent='📋 Copy',2000);
+          }).catch(()=>{document.execCommand('copy');});
         ">📋 Copy</button>
       </div>
-      <div style="font-size:.75rem;color:#2D5C38;line-height:1.5;">Paste this into Google Classroom as an assignment link. Students click it, fill in their answers, and submit. You'll see their responses in the Assessment tab.</div>`;
-    // Insert right after the header row, not at the bottom
+      <div style="font-size:.75rem;color:#2D5C38;line-height:1.5;">Paste into Google Classroom. Students open the link, enter their name, and submit. Responses appear in the Assessment tab.</div>`;
     const cbh = block.querySelector('.cbh');
     cbh.insertAdjacentElement('afterend', div);
 
-    // Update button to show success state
     btn.textContent = '✅ Link Ready';
     btn.style.background = '#4A7C59';
     btn.style.color = 'white';
@@ -2520,7 +2539,6 @@ async function getStudentLink(k) {
     alert('Error: ' + e.message);
   }
 }
-
 // ============================================================
 // ROSTER
 // ============================================================
@@ -3111,12 +3129,15 @@ function renderWS(text){
 function renderMD(text){
   if(!text)return'';
   return text
-    .replace(/^## (.+)$/gm,'<h2 style="font-family:Fraunces,serif;font-size:.96rem;font-weight:600;margin:13px 0 5px;padding-bottom:3px;border-bottom:1px solid var(--border);">$1</h2>')
-    .replace(/^### (.+)$/gm,'<h3 style="font-size:.75rem;font-weight:600;color:var(--sage);text-transform:uppercase;letter-spacing:.5px;margin:9px 0 3px;">$1</h3>')
+    .replace(/^# (.+)$/gm,'<h2 style="font-family:Fraunces,serif;font-size:1.05rem;font-weight:600;margin:16px 0 6px;padding:8px 12px;background:var(--sage-l);border-left:3px solid var(--sage);border-radius:0 5px 5px 0;">$1</h2>')
+    .replace(/^## (.+)$/gm,'<h2 style="font-family:Fraunces,serif;font-size:.96rem;font-weight:600;margin:14px 0 5px;padding:7px 12px;background:var(--sage-l);border-left:3px solid var(--sage);border-radius:0 5px 5px 0;">$1</h2>')
+    .replace(/^### (.+)$/gm,'<h3 style="font-size:.78rem;font-weight:600;color:var(--sage);text-transform:uppercase;letter-spacing:.5px;margin:10px 0 4px;">$1</h3>')
+    .replace(/^#### (.+)$/gm,'<h4 style="font-size:.82rem;font-weight:600;color:var(--ink);margin:8px 0 3px;">$1</h4>')
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/^- (.+)$/gm,'<li style="margin-bottom:2px;">$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm,'<div style="display:flex;gap:8px;margin-bottom:3px;"><span style="font-family:\'DM Mono\',monospace;font-size:.75rem;color:var(--sage);min-width:18px;">$1.</span><span>$2</span></div>')
+    .replace(/^- (.+)$/gm,'<li style="margin-bottom:3px;line-height:1.6;">$1</li>')
     .replace(/(<li[^>]*>.*?<\/li>\n?)+/gs,m=>`<ul style="padding-left:17px;margin:4px 0;">${m}</ul>`)
-    .replace(/\n\n/g,'<br><br>');
+    .replace(/\n\n/g,'<div style="height:6px;"></div>');
 }
 
 function previewWS(k){
