@@ -739,6 +739,7 @@ async function signUp() {
 
 async function signOut() {
   await db.auth.signOut();
+  localStorage.removeItem('teacherai_tab');
   currentUser=null; students=[]; sessions=[]; classes=[]; activeClassId=null;
   document.getElementById('appScreen').style.display='none';
   document.getElementById('authScreen').style.display='flex';
@@ -794,6 +795,16 @@ function showApp() {
   document.getElementById('authScreen').style.display='none';
   document.getElementById('appScreen').style.display='block';
   document.getElementById('navEmail').textContent=currentUser.email;
+  // Restore last active tab
+  const savedTab = localStorage.getItem('teacherai_tab') || 'tr-plan';
+  const tabEl = document.getElementById(savedTab);
+  if (tabEl) tabEl.checked = true;
+  // Save tab on change
+  document.querySelectorAll('.tab-r').forEach(r => {
+    r.addEventListener('change', function() {
+      if (this.checked) localStorage.setItem('teacherai_tab', this.id);
+    });
+  });
   renderClassTabs();
   renderClassSelector();
   renderAssessClassTabs();
@@ -841,7 +852,7 @@ async function loadUserData() {
   const stuQuery = db.from('students').select('*').order('created_at');
   if(activeClassId) stuQuery.eq('class_id', activeClassId);
   const {data:stuData} = await stuQuery;
-  if(stuData) students=stuData.map(s=>({id:s.id,first:s.first_name,last:s.last_name||'',grade:s.grade,notes:s.notes||'',iep:s.learning_profile||'',dbId:s.id,classId:s.class_id}));
+  if(stuData) students=stuData.map(s=>({id:s.id,first:s.first_name,last:s.last_name||'',grade:s.grade,notes:s.notes||'',iep:s.learning_profile||'',dbId:s.id,classId:s.class_id,createdAt:s.created_at}));
 
   // Load sessions — filtered by active class if one is set
   const sessQuery = db.from('assessment_sessions').select('*, student_marks(*)').order('created_at',{ascending:false});
@@ -1393,6 +1404,10 @@ async function renderAssGrid(){
 
   g.innerHTML=students.map((s,i)=>{
     const sub = submissionsByStudent[s.id];
+    // Check if student was added after this session's date
+    const sessionDate = curSess?.date ? new Date(curSess.date) : null;
+    const studentDate = s.createdAt ? new Date(s.createdAt) : null;
+    const joinedAfter = sessionDate && studentDate && studentDate > sessionDate;
     // Extract question labels from worksheet content for display alongside answers
     const wsKey = Object.keys(genC).find(k => k.startsWith('student_worksheet'));
     const wsQuestions = wsKey ? extractWSQuestions(genC[wsKey]?.cur || '') : {};
@@ -1424,6 +1439,7 @@ async function renderAssGrid(){
           ${s.first} ${s.last||''}
           <span class="atag">${s.grade}</span>${s.notes?`<span class="atag">${s.notes}</span>`:''}
           ${sub?'<span class="atag" style="background:var(--blue-l);border-color:#B0C8E8;color:var(--blue);">📥 submitted</span>':''}
+          ${joinedAfter?'<span class="atag" style="background:#FEF9C3;border-color:#E8C98A;color:#854D0E;" title="This student was added after this assessment was created">🆕 joined after</span>':''}
         </div>
         <div id="ld-${s.id}" style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);">Not assessed</div>
       </div>
@@ -2328,7 +2344,7 @@ async function addStu(){
   }).select().single();
   hideLoading();
   if(error){alert('Error: '+error.message);return;}
-  students.push({id:data.id,first:data.first_name,last:data.last_name||'',grade:data.grade,notes:data.notes||'',iep:data.learning_profile||'',dbId:data.id});
+  students.push({id:data.id,first:data.first_name,last:data.last_name||'',grade:data.grade,notes:data.notes||'',iep:data.learning_profile||'',dbId:data.id,classId:data.class_id});
   document.getElementById('sF').value='';document.getElementById('sL').value='';document.getElementById('sN').value='';document.getElementById('sI').value='';
   renderR();
   updateWelcomeBanner();
