@@ -46,7 +46,10 @@ nav {
 }
 .logo { font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 700; color: var(--cream); margin-right: 24px; flex-shrink: 0; }
 .logo span { color: var(--amber); }
-.nav-tabs { display: flex; gap: 2px; overflow-x: auto; flex: 1; }
+.nav-tabs { display: flex; gap: 2px; overflow-x: auto; flex: 1; scrollbar-width: none; -ms-overflow-style: none; }
+.nav-tabs::-webkit-scrollbar { display: none; }
+.tab-short { display: none; }
+@media(max-width:600px) { .tab-full { display: none; } .tab-short { display: inline; } }
 .tab { padding: 7px 13px; color: #9CA3AF; cursor: pointer; border-radius: 6px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; transition: all 0.15s; user-select: none; display: block; }
 .tab:hover { color: var(--cream); background: rgba(255,255,255,0.08); }
 #tr-plan:checked   ~ #appScreen nav .tab[for="tr-plan"],
@@ -227,7 +230,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 .ph h1 em { font-style: italic; color: var(--sage); }
 .ph p { color: var(--muted); margin-top: 5px; font-size: 0.86rem; }
 
-@media(max-width:600px) { .st{grid-template-columns:1fr 1fr;} nav{padding:0 12px;} .page{padding:14px 12px;} .auth-box{padding:28px 20px;} }
+@media(max-width:600px) { .st{grid-template-columns:1fr 1fr;} nav{padding:0 12px;} .page{padding:14px 12px;} .auth-box{padding:28px 20px;} .nav-email{display:none;} }
 @media(max-width:768px) { #pg-roster .roster-cols { grid-template-columns: 1fr !important; } }
 </style>
 </head>
@@ -277,11 +280,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 <nav>
   <div class="logo">Teacher<span>AI</span></div>
   <div class="nav-tabs">
-    <label class="tab" for="tr-plan">📅 Daily Workflow</label>
-    <label class="tab" for="tr-roster">👥 Class Roster</label>
-    <label class="tab" for="tr-assess">📊 Assessment</label>
-    <label class="tab" for="tr-lessons">📚 My Lessons</label>
-    <label class="tab" for="tr-rc">📝 Report Cards</label>
+    <label class="tab" for="tr-plan"><span class="tab-full">📅 Daily Workflow</span><span class="tab-short">📅 Plan</span></label>
+    <label class="tab" for="tr-roster"><span class="tab-full">👥 Class Roster</span><span class="tab-short">👥 Roster</span></label>
+    <label class="tab" for="tr-assess"><span class="tab-full">📊 Assessment</span><span class="tab-short">📊 Assess</span></label>
+    <label class="tab" for="tr-lessons"><span class="tab-full">📚 My Lessons</span><span class="tab-short">📚 Lessons</span></label>
+    <label class="tab" for="tr-rc"><span class="tab-full">📝 Report Cards</span><span class="tab-short">📝 Reports</span></label>
   </div>
   <div class="nav-user">
     <span class="nav-email" id="navEmail"></span>
@@ -2344,10 +2347,10 @@ async function loadSample(){
     {first_name:'Ethan',last_name:'P.',grade:'Grade 6',notes:null,learning_profile:null},
   ];
   showLoading('Adding sample students...');
-  const {data,error}=await db.from('students').insert(samples.map(s=>({...s,teacher_id:currentUser.id}))).select();
+  const {data,error}=await db.from('students').insert(samples.map(s=>({...s,teacher_id:currentUser.id,class_id:activeClassId||null}))).select();
   hideLoading();
   if(error){alert('Error: '+error.message);return;}
-  data.forEach(s=>students.push({id:s.id,first:s.first_name,last:s.last_name||'',grade:s.grade,notes:s.notes||'',iep:s.learning_profile||'',dbId:s.id}));
+  data.forEach(s=>students.push({id:s.id,first:s.first_name,last:s.last_name||'',grade:s.grade,notes:s.notes||'',iep:s.learning_profile||'',dbId:s.id,classId:s.class_id}));
   renderR();
   updateWelcomeBanner();
 }
@@ -2554,7 +2557,7 @@ function renderTracker(){
           <div style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);">${sess.date} · ${sess.subject} · ${sess.strand} · ${cnt} students</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center;">
-          <button class="btn b-out b-sm" style="font-size:.7rem;" onclick="this.closest('div').nextElementSibling.style.display=this.closest('div').nextElementSibling.style.display==='none'?'block':'none'">✏️ Edit marks</button>
+          <button class="btn b-out b-sm edit-marks-btn" style="font-size:.7rem;" data-sessid="${sess.id}">✏️ Edit marks</button>
           <button class="btn b-out b-sm" style="color:var(--rust);border-color:var(--rust);font-size:.7rem;" data-sessid="${sess.id}" id="delsess-${sess.id}">🗑 Delete</button>
         </div>
       </div>
@@ -2578,6 +2581,16 @@ function renderTracker(){
     </div>`;
   }).join('');
 
+  // Attach edit marks listeners
+  document.querySelectorAll('.edit-marks-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const panel = document.getElementById('sessmarks-' + this.dataset.sessid);
+      if (!panel) return;
+      const open = panel.style.display !== 'none';
+      panel.style.display = open ? 'none' : 'block';
+      this.textContent = open ? '✏️ Edit marks' : '▲ Hide marks';
+    });
+  });
   // Attach delete session listeners
   document.querySelectorAll('[data-sessid][id^="delsess-"]').forEach(btn => {
     btn.addEventListener('click', function() { deleteSession(this.dataset.sessid); });
