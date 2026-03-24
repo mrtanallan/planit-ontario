@@ -535,6 +535,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div id="sList"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No tasks yet.</div></div>
   </div>
 
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:16px;border-top:1px solid var(--border);font-size:.75rem;color:var(--muted);">
+    <span>🔒 Data stored securely in Canada · Never deleted automatically</span>
+    <button class="btn b-out b-sm" onclick="exportAllData()" style="font-size:.72rem;">⬇️ Export All Data</button>
+  </div>
+
 </div>
 
 <!-- ===== MY LESSONS ===== -->
@@ -2169,6 +2174,21 @@ async function assignStudentToClass(sid, classId) {
   renderR();
 }
 
+async function showAllStudents() {
+  // Temporarily load all students regardless of class filter
+  const {data:stuData} = await db.from('students').select('*').eq('teacher_id', currentUser.id).order('created_at');
+  if(stuData) students = stuData.map(s=>({id:s.id,first:s.first_name,last:s.last_name||'',grade:s.grade,notes:s.notes||'',iep:s.learning_profile||'',dbId:s.id,classId:s.class_id}));
+  renderR();
+  // Add a banner explaining we're showing all
+  const g = document.getElementById('rGrid');
+  if(g) {
+    const notice = document.createElement('div');
+    notice.style.cssText = 'grid-column:1/-1;background:var(--amber-l);border:1px solid #E8C98A;border-radius:7px;padding:9px 13px;font-size:.78rem;color:#7A5020;margin-bottom:4px;';
+    notice.innerHTML = '⚠️ Showing all students across all classes. Use the dropdown to assign each student to a class. <span style="text-decoration:underline;cursor:pointer;" onclick="switchClass(\''+activeClassId+'\')">Go back to active class view</span>';
+    g.insertBefore(notice, g.firstChild);
+  }
+}
+
 function toggleIEP(sid){const el=document.getElementById('iep-'+sid);el.style.display=el.style.display==='block'?'none':'block';}
 
 async function saveIEP(sid){
@@ -2184,7 +2204,17 @@ function renderR(){
   document.getElementById('rCount').textContent=`(${students.length})`;
   const g=document.getElementById('rGrid');
   if(!students.length){
-    g.innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;grid-column:1/-1;">No students yet. Add students above.</div>';
+    // Count unassigned students across all classes
+    const unassignedCount = activeClassId
+      ? 0 // We're in a class context, students just aren't in this class
+      : 0;
+    const msg = activeClassId
+      ? `<div style="grid-column:1/-1;">
+          <div style="color:var(--muted);font-size:.83rem;font-style:italic;margin-bottom:8px;">No students in this class yet. Add students above.</div>
+          <div style="font-size:.78rem;color:var(--muted);">Students added here will be linked to <strong>${classes.find(c=>c.id===activeClassId)?.name||'this class'}</strong>. Your other classes and their students are unaffected. <span style="color:var(--sage);cursor:pointer;text-decoration:underline;" onclick="showAllStudents()">View all students →</span></div>
+        </div>`
+      : '<div style="color:var(--muted);font-size:.83rem;font-style:italic;grid-column:1/-1;">No students yet. Add students above.</div>';
+    g.innerHTML = msg;
     return;
   }
   const hasClasses = classes.length > 0;
@@ -2385,6 +2415,35 @@ async function updateMark(sessId, stuId, newLevel, btn) {
     await loadUserData();
     renderTracker();
   }, 800);
+}
+
+function exportAllData() {
+  // Export students
+  const stuRows = [['STUDENTS'],['First Name','Last Name','Grade','Notes','Class','Learning Profile']];
+  students.forEach(s => {
+    const cls = classes.find(c => c.id === s.classId);
+    stuRows.push([s.first, s.last||'', s.grade, s.notes||'', cls?.name||'Unassigned', s.iep||'']);
+  });
+
+  // Export assessment marks
+  const lvN={L1:1,'L1-':.7,'L1+':1.3,L2:2,'L2-':1.7,'L2+':2.3,L3:3,'L3-':2.7,'L3+':3.3,L4:4,'L4-':3.7,'L4+':4.3};
+  const markRows = [[''],['ASSESSMENT MARKS'],['Student','Grade','Date','Task','Subject','Level','Notes']];
+  sessions.forEach(sess => {
+    students.forEach(s => {
+      const m = sess.marks[s.id];
+      if (m?.level) markRows.push([
+        `${s.first} ${s.last||''}`, s.grade, sess.date, sess.task, sess.subject, m.level, m.notes||''
+      ]);
+    });
+  });
+
+  // Combine and download
+  const allRows = [...stuRows, ...markRows];
+  const csv = allRows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `TeacherAI_AllData_${new Date().toLocaleDateString('en-CA')}.csv`;
+  a.click();
 }
 
 function exportCSV(){
