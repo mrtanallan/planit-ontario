@@ -336,14 +336,14 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <div class="fi s2"><label>Topic / Focus</label><input type="text" id="topic" placeholder="e.g. Inference, Narrative Writing, Fractions..."></div>
       </div>
 
-      <!-- Split grade — default ON -->
+      <!-- Split grade — default OFF, cleaner initial state -->
       <div style="margin-bottom:13px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
           <label class="chip" style="cursor:pointer;">
-            <input type="checkbox" id="splitToggle" checked style="width:12px;height:12px;accent-color:var(--sage);" onchange="toggleSplitGrades()"> 🏫 Split/Multi-grade class (SSC)
+            <input type="checkbox" id="splitToggle" style="width:12px;height:12px;accent-color:var(--sage);" onchange="toggleSplitGrades()"> 🏫 Split/Multi-grade class (SSC)
           </label>
         </div>
-        <div id="extraGrades">
+        <div id="extraGrades" style="display:none;">
           <div class="fg" style="margin-bottom:0;">
             <div class="fi"><label>Grade B</label><select id="gB"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
             <div class="fi"><label>Grade C</label><select id="gC"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
@@ -373,16 +373,6 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <label class="chip"><input type="checkbox" id="ck-rr" checked> 📄 Reading Resource</label>
         <label class="chip"><input type="checkbox" id="ck-rb" checked> 📏 Assessment Rubric</label>
         <label class="chip"><input type="checkbox" id="ck-dt"> ♿ Differentiation & Modified Expectations</label>
-      </div>
-      <div id="wsTypeRow" style="margin-bottom:13px;">
-        <div class="ct" style="margin-bottom:7px;">📝 Worksheet Type</div>
-        <div class="chips">
-          <label class="chip"><input type="radio" name="wsType" value="questions" checked> ❓ Questions & Activities</label>
-          <label class="chip"><input type="radio" name="wsType" value="writing"> ✍️ Writing Draft</label>
-          <label class="chip"><input type="radio" name="wsType" value="math"> 🔢 Math Practice</label>
-          <label class="chip"><input type="radio" name="wsType" value="research"> 🔍 Research Organizer</label>
-          <label class="chip"><input type="radio" name="wsType" value="experiment"> 🔬 Experiment Record</label>
-        </div>
       </div>
       <button class="btn b-ink b-full" id="genBtn" onclick="generate()">✨ Generate Lesson</button>
       <div style="margin-top:13px;padding-top:11px;border-top:1px solid var(--border);font-size:.75rem;color:var(--muted);">🍁 Aligned to the <strong>Ontario Curriculum</strong> · Student names anonymized before AI processing · 🇨🇦 Data stored in Canada</div>
@@ -562,8 +552,10 @@ let currentUser = null;
 let students = [], sessions = [], genC = {}, curSess = null, shareKey = '';
 const AVCOLORS = ['#4A7C59','#2A5FA5','#C47B2A','#B54B2A','#6B46C1','#0F766E','#7C4A6E','#4A6E7C'];
 const BLABELS = {lesson_plan:'📅 Lesson Plan',student_worksheet:'📝 Student Worksheet',reading_resource:'📄 Reading Resource',assessment_rubric:'📏 Assessment Rubric',differentiation_tips:'♿ Differentiation & Modified Expectations'};
-const SHAREABLE = ['student_worksheet','reading_resource','assessment_rubric'];
-const LINKABLE = ['student_worksheet'];
+// Per-grade worksheet labels added dynamically
+['A','B','C','D'].forEach(g=>{ BLABELS['student_worksheet_'+g]='📝 Student Worksheet — Grade '+g; });
+const SHAREABLE = ['student_worksheet','reading_resource','assessment_rubric','student_worksheet_A','student_worksheet_B','student_worksheet_C','student_worksheet_D'];
+const LINKABLE = ['student_worksheet','student_worksheet_A','student_worksheet_B','student_worksheet_C','student_worksheet_D'];
 let wsN = 0;
 
 // ============================================================
@@ -801,16 +793,6 @@ async function generate() {
   if(!outputs.length){alert('Select at least one output.');return;}
 
   // Worksheet type
-  const wsTypeEl = document.querySelector('input[name="wsType"]:checked');
-  const wsType = wsTypeEl ? wsTypeEl.value : 'questions';
-  const wsTypeInstructions = {
-    questions: 'Use [TEXT BOX] short answer, [LARGE BOX] paragraph, [CIRCLE ONE: A / B / C] multiple choice, [CHECK ALL THAT APPLY: A / B / C] checkboxes, [WORD BANK: w1, w2, w3]. Use emoji headers. 4-6 varied activities covering comprehension, analysis, and application.',
-    writing: 'Format as a WRITING DRAFT worksheet. Include: a graphic organizer section (use [LARGE BOX] for each part: Topic Sentence, Supporting Details x2, Conclusion), a vocabulary/word bank [WORD BANK: w1,w2,w3], and a full draft section [LARGE BOX] with lined space. Emoji headers for each section. No multiple choice.',
-    math: 'Format as MATH PRACTICE. Include: 1-2 worked examples shown step by step, then 4-6 practice problems using [TEXT BOX] for numeric answers and [LARGE BOX] for show-your-work problems. Include a word problem section. Use [CIRCLE ONE: A / B / C] for multiple choice where appropriate.',
-    research: 'Format as a RESEARCH ORGANIZER. Include sections: My Question [TEXT BOX], What I Already Know [LARGE BOX], Key Facts I Found (3x [TEXT BOX]), Source/Evidence [TEXT BOX], Conclusion/Answer [LARGE BOX], New Questions I Have [TEXT BOX]. Emoji headers for each section.',
-    experiment: 'Format as an EXPERIMENT RECORD SHEET. Include sections: Question/Hypothesis [LARGE BOX], Materials (checklist with [CHECK ALL THAT APPLY]), Procedure (numbered steps with [TEXT BOX] for observations), Results/Data [LARGE BOX], Conclusion [LARGE BOX], What I Would Change [TEXT BOX]. Emoji headers.'
-  };
-
   const btn=document.getElementById('genBtn');
   btn.disabled=true; btn.textContent='⏳ Generating...';
 
@@ -824,6 +806,27 @@ async function generate() {
 
   const splitNote=isSplit?`IMPORTANT: MULTI-GRADE SPLIT CLASS: ${grades.join(', ')}. Clearly differentiate content per grade.`:'';
 
+  // For split classes, generate one worksheet per grade group
+  const wsOutputKeys = outputs.includes('student_worksheet') && isSplit
+    ? grades.map((_,i) => `student_worksheet_${String.fromCharCode(65+i)}`)
+    : outputs.includes('student_worksheet') ? ['student_worksheet'] : [];
+  const wsKeyNote = isSplit && wsOutputKeys.length > 1
+    ? `For student worksheets, generate one per grade group: ${wsOutputKeys.map((k,i)=>`"${k}" for ${grades[i]}`).join(', ')}.`
+    : '';
+
+  const outputKeys = [
+    ...outputs.filter(k=>k!=='student_worksheet'),
+    ...wsOutputKeys
+  ];
+
+  const wsFormatNote = `Choose the most appropriate worksheet FORMAT based on the topic and subject:
+- Questions & Activities: comprehension questions, short answer, multiple choice — for most literacy/social studies lessons
+- Writing Draft: graphic organizer + draft space — for essay, narrative, or persuasive writing topics
+- Math Practice: worked examples + practice problems — for math topics
+- Research Organizer: inquiry sections (question, facts, conclusion) — for research or inquiry topics
+- Experiment Record: hypothesis, materials, procedure, results — for science experiments
+Use [TEXT BOX] short answer, [LARGE BOX] paragraph/draft, [CIRCLE ONE: A / B / C] multiple choice, [CHECK ALL THAT APPLY: A / B / C] checkboxes, [WORD BANK: w1,w2,w3]. Use emoji headers. 4-6 varied activities. NEVER use underscores for blanks.`;
+
   const prompt=`You are an expert Ontario elementary SSC teacher. Generate a classroom-ready lesson package.
 Grade(s): ${gradeDesc}
 Subject: ${subj}
@@ -832,17 +835,18 @@ Duration: ${dur}
 Strands: ${strands.join(', ')||'General'}
 Context: ${ctx||'Standard Ontario classroom.'}
 ${splitNote}
+${wsKeyNote}
 ${anonIEP}
 Align to Ontario Ministry of Education curriculum expectations.
-Return ONLY valid JSON with keys: ${outputs.map(k=>'"'+k+'"').join(', ')}.
+Return ONLY valid JSON with keys: ${outputKeys.map(k=>'"'+k+'"').join(', ')}.
 Each value is a markdown string:
 - Use ## major sections, ### subsections, **bold**, - bullets
 - lesson_plan: timing (0:00-0:10), Minds On/Action/Consolidation, materials
-- student_worksheet: NEVER use underscores. ${wsTypeInstructions[wsType] || wsTypeInstructions.questions}
-- reading_resource: original 200-300 word passage for the grade(s)
+- student_worksheet${isSplit?'_[A/B/C/D] (one per grade)':''}: ${wsFormatNote}
+- reading_resource: original 200-300 word passage appropriate for the grade(s)
 - assessment_rubric: Ontario Level 1/2/3/4 with specific success criteria${iepStudents.length?' plus modified criteria for IEP students':''}
 - differentiation_tips: per-grade and per-student strategies
-For split classes: clearly separate by grade. IMPORTANT: Only include the exact keys requested: ${outputs.map(k=>'"'+k+'"').join(', ')}. Do not add any extra keys. No text outside the JSON.`;
+For split classes: clearly separate by grade. IMPORTANT: Only include the exact keys: ${outputKeys.map(k=>'"'+k+'"').join(', ')}. No extra keys. No text outside the JSON.`;
 
   try {
     const res=await authFetch('/api/generate',{method:'POST',body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
@@ -853,11 +857,11 @@ For split classes: clearly separate by grade. IMPORTANT: Only include the exact 
     let parsed;
     try{parsed=JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim());}
     catch(e1){try{const s=raw.indexOf('{'),e=raw.lastIndexOf('}');parsed=JSON.parse(raw.slice(s,e+1));}
-    catch(e2){parsed={};outputs.forEach(k=>{const m=raw.match(new RegExp('"'+k+'"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"','s'));if(m)parsed[k]=m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"');else parsed[k]=raw;});}}
+    catch(e2){parsed={};outputKeys.forEach(k=>{const m=raw.match(new RegExp('"'+k+'"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"','s'));if(m)parsed[k]=m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"');else parsed[k]=raw;});}}
 
-    genC={};outputs.forEach(k=>{genC[k]={orig:parsed[k]||'',cur:parsed[k]||''};});
-    buildEditBlocks(outputs,gradeDesc,subj,topic);
-    buildShareCards(outputs);
+    genC={};outputKeys.forEach(k=>{genC[k]={orig:parsed[k]||'',cur:parsed[k]||''};});
+    buildEditBlocks(outputKeys,gradeDesc,subj,topic);
+    buildShareCards(outputKeys);
     unlock(); gs(2);
 
     // Save lesson to Supabase
@@ -886,22 +890,22 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic){
     <span style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);">${subj} · ${topic}</span>
   </div>`;
   outputs.forEach(k=>{
-    const isWS=k==='student_worksheet';
-    const isSh=SHAREABLE.includes(k);
-    const rendered=isWS?renderWS(genC[k].cur):renderMD(genC[k].cur);
+    const isWS = k==='student_worksheet' || k.startsWith('student_worksheet_');
+    const isSh = SHAREABLE.includes(k);
+    const rendered = isWS ? renderWS(genC[k].cur) : renderMD(genC[k].cur);
     c.innerHTML+=`<div class="cb" id="cb-${k}">
       <div class="cbh">
         <div style="display:flex;align-items:center;gap:7px;">
-          <span class="cbl">${BLABELS[k]}</span>
+          <span class="cbl">${BLABELS[k]||k}</span>
           ${isWS?'<span style="font-family:\'DM Mono\',monospace;font-size:.55rem;color:var(--blue);background:var(--blue-l);padding:1px 6px;border-radius:3px;">📱 Interactive</span>':''}
         </div>
         <div class="cba">
           <button class="btn b-out b-sm" onclick="toggleEdit('${k}')">✏️ Edit</button>
           <button class="btn b-out b-sm" onclick="resetBlock('${k}')">↩ Reset</button>
           <button class="btn b-out b-sm" onclick="copyBlock('${k}')">📋 Copy</button>
-          ${k!=='student_worksheet'?`<button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button>`:''}
+          ${!isWS?`<button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button>`:''}
           ${k==='lesson_plan'?`<button class="btn b-out b-sm" onclick="exportSlides()">📊 Slides</button>`:''}
-          ${k==='student_worksheet'?`<button class="btn b-sage b-sm" onclick="getStudentLink('${k}')">🔗 Get Student Link</button>`:''}
+          ${isWS?`<button class="btn b-sage b-sm" onclick="getStudentLink('${k}')">🔗 Get Student Link</button>`:''}
         </div>
       </div>
       <div class="cbb" id="cbb-${k}" contenteditable="false">${rendered}</div>
@@ -911,7 +915,7 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic){
 }
 
 function toggleEdit(k){const el=document.getElementById('cbb-'+k);if(el.contentEditable==='true'){el.contentEditable='false';genC[k].cur=el.innerText;}else{el.contentEditable='true';el.focus();}}
-function resetBlock(k){if(!confirm('Reset to original?'))return;const el=document.getElementById('cbb-'+k);el.contentEditable='false';genC[k].cur=genC[k].orig;el.innerHTML=k==='student_worksheet'?renderWS(genC[k].orig):renderMD(genC[k].orig);}
+function resetBlock(k){if(!confirm('Reset to original?'))return;const el=document.getElementById('cbb-'+k);el.contentEditable='false';genC[k].cur=genC[k].orig;const isWS=k==='student_worksheet'||k.startsWith('student_worksheet_');el.innerHTML=isWS?renderWS(genC[k].orig):renderMD(genC[k].orig);}
 function copyBlock(k){navigator.clipboard.writeText(document.getElementById('cbb-'+k).innerText);event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='📋 Copy',1500);}
 
 // ============================================================
