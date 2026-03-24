@@ -94,13 +94,15 @@ strong { font-weight: 600; }
         <button class="sug-no" onclick="declineSuggestion()">Keep my name</button>
       </div>
     </div>
-    <div id="readingPanel" style="display:none;margin-bottom:18px;">
-      <button onclick="toggleReading()" id="readingToggleBtn"
-        style="width:100%;padding:12px 16px;background:#E8EFF9;border:1.5px solid #B0C8E8;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;color:#2A5FA5;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">
-        <span>📖 Read the Passage</span>
-        <span id="readingArrow" style="font-size:.75rem;">▼ Show</span>
-      </button>
-      <div id="readingContent" style="display:none;background:#E8EFF9;border:1.5px solid #B0C8E8;border-top:none;border-radius:0 0 8px 8px;padding:18px 20px;font-size:.92rem;line-height:1.8;color:#16120E;"></div>
+    <div id="readingPanel" style="display:none;margin-bottom:22px;">
+      <div style="background:#E8EFF9;border:1.5px solid #B0C8E8;border-radius:10px;overflow:hidden;">
+        <button onclick="toggleReading()" id="readingToggleBtn"
+          style="width:100%;padding:12px 16px;background:#2A5FA5;border:none;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:600;color:white;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;">
+          <span>📖 Reading Passage — read this first</span>
+          <span id="readingArrow" style="font-size:.75rem;opacity:.8;">▲ Hide</span>
+        </button>
+        <div id="readingContent" style="padding:18px 20px;font-size:.92rem;line-height:1.8;color:#16120E;"></div>
+      </div>
     </div>
     <div id="wsContent"></div>
     <div class="submit-section">
@@ -147,15 +149,12 @@ async function loadWorksheet(){
 function toggleReading(){
   const content=document.getElementById('readingContent');
   const arrow=document.getElementById('readingArrow');
-  const btn=document.getElementById('readingToggleBtn');
   if(content.style.display==='none'){
     content.style.display='block';
     arrow.textContent='▲ Hide';
-    btn.style.borderRadius='8px 8px 0 0';
   } else {
     content.style.display='none';
     arrow.textContent='▼ Show';
-    btn.style.borderRadius='8px';
   }
 }
 
