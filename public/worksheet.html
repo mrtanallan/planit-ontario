@@ -129,12 +129,21 @@ async function loadWorksheet(){
     const data=await res.json();
     if(!data||!data.content){showError();return;}
     roster=data.roster||[];
+
+    // Check for split-grade worksheet (grades_content map)
+    const gradesContent = data.grades_content;
+    if(gradesContent && Object.keys(gradesContent).length > 1){
+      // Show grade picker first
+      document.getElementById('loadingScreen').style.display='none';
+      showGradePicker(data, gradesContent);
+      return;
+    }
+
     document.getElementById('wsTitle').textContent='📝 '+data.topic;
     document.getElementById('wsMeta').textContent=(data.grades||[]).join(' / ')+(data.subject?' · '+data.subject:'');
     document.getElementById('wsDate').value=new Date().toLocaleDateString('en-CA');
     document.getElementById('wsContent').innerHTML=renderWS(data.content);
 
-    // Show reading passage button if reading resource exists
     if(data.reading_resource && data.reading_resource.trim()) {
       document.getElementById('readingPanel').style.display='block';
       document.getElementById('readingContent').innerHTML=renderPassage(data.reading_resource);
@@ -144,6 +153,42 @@ async function loadWorksheet(){
     document.getElementById('worksheetScreen').style.display='block';
     setTimeout(()=>document.getElementById('studentName').focus(),100);
   }catch(e){showError();}
+}
+
+function showGradePicker(data, gradesContent){
+  const grades = Object.keys(gradesContent);
+  const picker = document.createElement('div');
+  picker.style.cssText='text-align:center;padding:60px 24px;';
+  picker.innerHTML=`
+    <div style="font-family:\'Fraunces\',serif;font-size:1.4rem;font-weight:600;margin-bottom:8px;">📝 ${data.topic}</div>
+    <div style="color:#7A726A;font-size:.9rem;margin-bottom:32px;">Select your grade to open your worksheet</div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      ${grades.map(g=>`
+        <button onclick="loadGradeWorksheet('${g}')" style="padding:18px 32px;background:#4A7C59;color:white;border:none;border-radius:10px;font-family:\'Fraunces\',serif;font-size:1.1rem;font-weight:600;cursor:pointer;min-width:140px;">
+          ${g}
+        </button>`).join('')}
+    </div>`;
+  document.querySelector('.pg').appendChild(picker);
+  // Store data globally for grade selection
+  window._wsData = data;
+  window._wsGradesContent = gradesContent;
+}
+
+function loadGradeWorksheet(grade){
+  const data = window._wsData;
+  const gradesContent = window._wsGradesContent;
+  const wsContent = gradesContent[grade];
+  document.querySelector('.pg').querySelector('div[style*="text-align:center"]')?.remove();
+  document.getElementById('wsTitle').textContent='📝 '+data.topic;
+  document.getElementById('wsMeta').textContent=grade+(data.subject?' · '+data.subject:'');
+  document.getElementById('wsDate').value=new Date().toLocaleDateString('en-CA');
+  document.getElementById('wsContent').innerHTML=renderWS(wsContent);
+  if(data.reading_resource && data.reading_resource.trim()){
+    document.getElementById('readingPanel').style.display='block';
+    document.getElementById('readingContent').innerHTML=renderPassage(data.reading_resource);
+  }
+  document.getElementById('worksheetScreen').style.display='block';
+  setTimeout(()=>document.getElementById('studentName').focus(),100);
 }
 
 function toggleReading(){
