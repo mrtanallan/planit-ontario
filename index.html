@@ -965,20 +965,22 @@ function showApp() {
   const savedTab = localStorage.getItem('teacherai_tab') || 'tr-plan';
   const tabEl = document.getElementById(savedTab);
   if (tabEl) tabEl.checked = true;
-  // Save tab on change
+  // Save tab on change + refresh data when switching tabs
   document.querySelectorAll('.tab-r').forEach(r => {
     r.addEventListener('change', function() {
-      if (this.checked) localStorage.setItem('teacherai_tab', this.id);
+      if (!this.checked) return;
+      localStorage.setItem('teacherai_tab', this.id);
+      // Refresh relevant data when switching to each tab
+      if (this.id === 'tr-assess') { renderTracker(); loadSubmissions(); renderAssessClassTabs(); }
+      if (this.id === 'tr-roster') { renderClassTabs(); renderR(); }
+      if (this.id === 'tr-lessons') { renderLessonsList(); }
+      if (this.id === 'tr-rc') { /* report cards — no refresh needed */ }
+      if (this.id === 'tr-exp') { renderExpectationsTracker(); }
     });
   });
   renderClassTabs();
   renderClassSelector();
   renderAssessClassTabs();
-  // Auto-fill grades from active class
-  const activeClass = classes.find(c => c.id === activeClassId);
-  if (activeClass && activeClass.grades && activeClass.grades.length > 0) {
-    setTimeout(() => autoFillGradesFromClass(activeClass.grades), 100);
-  }
   renderR();
   renderTracker();
   renderLessonsList();
@@ -1201,6 +1203,10 @@ function renderClassSelector() {
     classes.map(c =>
       `<option value="${c.id}" ${c.id === activeClassId ? 'selected' : ''}>${c.name}${c.subject_focus?' · '+c.subject_focus:''}</option>`
     ).join('');
+  // Auto-fill grades from students in active class
+  if (activeClassId) {
+    autoFillGradesFromClass();
+  }
 }
 
 function onClassSelect() {
@@ -1218,15 +1224,28 @@ function onClassSelect() {
     return;
   }
   switchClass(selectedId);
-  const cls = classes.find(c => c.id === selectedId);
-  if (cls && cls.grades && cls.grades.length > 0) {
-    autoFillGradesFromClass(cls.grades);
-  }
+  // autoFill will run via renderClassSelector after switchClass loads students
 }
 
-function autoFillGradesFromClass(grades) {
+function autoFillGradesFromClass(gradesHint) {
+  // Derive grades from actual students in the active class
+  const classStudents = activeClassId
+    ? students.filter(s => s.classId === activeClassId)
+    : students;
+
+  // Get unique grades in Ontario order
+  const gradeOrder = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
+  const uniqueGrades = [...new Set(classStudents.map(s => s.grade))]
+    .filter(g => g)
+    .sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b));
+
+  // Fall back to hint (from class definition) if no students yet
+  const gradesToFill = uniqueGrades.length > 0 ? uniqueGrades : (gradesHint || []);
+  if (!gradesToFill.length) return;
+
   const gradeIds = ['gA','gB','gC','gD','gE','gF'];
   const letterIds = ['A','B','C','D','E','F'];
+
   // Reset all
   gradeIds.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   ['B','C','D','E','F'].forEach(l => {
@@ -1234,29 +1253,28 @@ function autoFillGradesFromClass(grades) {
     if(f) f.style.display = 'none';
   });
 
-  if (grades.length === 0) return;
-
   // Set Grade A
   const gAel = document.getElementById('gA');
-  if (gAel) gAel.value = grades[0] || '';
+  if (gAel) gAel.value = gradesToFill[0] || '';
 
-  if (grades.length > 1) {
-    // Enable split toggle
+  if (gradesToFill.length > 1) {
     const toggle = document.getElementById('splitToggle');
     if (toggle && !toggle.checked) { toggle.checked = true; toggleSplitGrades(); }
-    // Fill remaining grades
-    grades.slice(1).forEach((g, i) => {
+    gradesToFill.slice(1).forEach((g, i) => {
       const letter = letterIds[i+1];
       const fieldEl = document.getElementById('gradeField_'+letter);
       const selEl = document.getElementById('g'+letter);
       if (fieldEl) fieldEl.style.display = '';
       if (selEl) selEl.value = g;
     });
-    // Show auto-fill note
     const note = document.getElementById('classAutoFillNote');
-    if (note) note.style.display = 'block';
+    if (note) {
+      note.style.display = 'block';
+      note.textContent = uniqueGrades.length > 0
+        ? `✓ Grades filled from your ${classStudents.length} students — adjust if needed`
+        : '✓ Grades filled from class definition — adjust if needed';
+    }
   } else {
-    // Single grade — uncheck split if checked
     const toggle = document.getElementById('splitToggle');
     if (toggle && toggle.checked) { toggle.checked = false; toggleSplitGrades(); }
     const note = document.getElementById('classAutoFillNote');
