@@ -443,9 +443,13 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div class="ct">📝 Class Context</div>
     <div class="fi" style="margin-bottom:8px;">
       <label>Notes about your class (used when generating lessons)</label>
-      <textarea id="ctx" style="min-height:65px;" placeholder="e.g. 28 students, 4 ELL, iPads available, strong oral communicators, working on growth mindset..."></textarea>
+      <textarea id="ctx" style="min-height:65px;" placeholder="e.g. 28 students, 4 ELL, iPads available, strong oral communicators, working on growth mindset..."
+        oninput="scheduleCtxSave()"></textarea>
     </div>
-    <div style="font-size:.75rem;color:var(--muted);">This context is included in every lesson generation to help tailor content to your class.</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:.75rem;color:var(--muted);">Saved to your account — included in every lesson generation.</div>
+      <div id="ctxSaveStatus" style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);"></div>
+    </div>
   </div>
   <div class="card">
     <div class="ct">➕ Add Student</div>
@@ -461,7 +465,6 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <textarea id="sI" style="min-height:80px;" placeholder="Optional — paste modified learning expectations here. Lessons will differentiate for this student.&#10;&#10;e.g.:&#10;- Reading: identify main idea at Grade 2 level with visual supports&#10;- Writing: compose 3-5 sentence paragraphs with graphic organizer&#10;&#10;Note: Do not paste full IEP documents. First name + modified expectations only."></textarea>
       </div>
     </div>
-    <div class="ban ban-a" style="margin-bottom:12px;font-size:.78rem;"><span>🔒</span><span><strong>Privacy notice:</strong> Student data is stored on Canadian servers (ca-central-1) 🇨🇦. Student names are <strong>never</strong> sent to AI — only grade level and anonymized learning needs. <strong>MFIPPA tip:</strong> Consider using first names only, or pseudonyms, until your board approves this tool. Do not paste full IEP documents — record your own professional notes only.</span></div>
     <div class="brow">
       <button class="btn b-sage" onclick="addStu()">➕ Add Student</button>
       <button class="btn b-out" onclick="loadSample()">📋 Load Sample Roster</button>
@@ -474,6 +477,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     </div>
     <div class="rg" id="rGrid"><div style="color:var(--muted);font-size:.83rem;font-style:italic;grid-column:1/-1;">No students yet. Add students above.</div></div>
   </div>
+  <div class="ban ban-a" style="font-size:.75rem;margin-top:4px;"><span>🔒</span><span><strong>Privacy notice:</strong> Student data is stored on Canadian servers (ca-central-1) 🇨🇦. Student names are <strong>never</strong> sent to AI — only grade level and anonymized learning needs. <strong>MFIPPA tip:</strong> Consider using first names only, or pseudonyms, until your board approves this tool. Do not paste full IEP documents — record your own professional notes only.</span></div>
 </div>
 
 <!-- ===== ASSESSMENT ===== -->
@@ -750,11 +754,44 @@ async function loadUserData() {
     grades:sess.grades, task:sess.task,
     marks:Object.fromEntries((sess.student_marks||[]).map(m=>[m.student_id,{level:m.level,notes:m.notes}]))
   }));
+
+  // Load class context from profile
+  try {
+    const {data:profile}=await db.from('profiles').select('class_context').eq('id',currentUser.id).single();
+    if(profile?.class_context) {
+      const el=document.getElementById('ctx');
+      if(el) el.value=profile.class_context;
+    }
+  } catch(e) { /* profiles may not have class_context column yet — silent fail */ }
 }
 
 // ============================================================
 // TAB SWITCHING
 // ============================================================
+function switchToAssess() { document.getElementById('tr-assess').checked=true; renderTracker(); loadSubmissions(); }
+
+// ============================================================
+// CLASS CONTEXT — auto-save with debounce
+// ============================================================
+let _ctxSaveTimer = null;
+function scheduleCtxSave() {
+  const status = document.getElementById('ctxSaveStatus');
+  if(status) status.textContent = 'Unsaved...';
+  clearTimeout(_ctxSaveTimer);
+  _ctxSaveTimer = setTimeout(saveCtx, 1200);
+}
+
+async function saveCtx() {
+  const val = document.getElementById('ctx')?.value?.trim() || '';
+  const status = document.getElementById('ctxSaveStatus');
+  try {
+    await db.from('profiles').update({class_context: val}).eq('id', currentUser.id);
+    if(status) { status.textContent = '✓ Saved'; setTimeout(()=>{ if(status) status.textContent=''; }, 2000); }
+  } catch(e) {
+    if(status) status.textContent = 'Save failed';
+  }
+}
+
 function toggleSplitGrades(){
   const toggle=document.getElementById('splitToggle');
   const extra=document.getElementById('extraGrades');
@@ -1989,19 +2026,33 @@ function renderR(){
           <div class="sm">${s.grade}${s.notes?' · '+s.notes:''}</div>
         </div>
         <div style="display:flex;gap:3px;">
-          <button class="btn b-out b-sm" style="padding:2px 6px;" onclick="toggleIEP(${JSON.stringify(s.id)})">✏️</button>
-          <button class="btn b-out b-sm" style="padding:2px 6px;color:var(--rust);border-color:var(--rust);" onclick="removeStu(${JSON.stringify(s.id)})">✕</button>
+          <button class="btn b-out b-sm roster-edit-btn" style="padding:2px 6px;" data-sid="${s.id}">✏️</button>
+          <button class="btn b-out b-sm roster-del-btn" style="padding:2px 6px;color:var(--rust);border-color:var(--rust);" data-sid="${s.id}">✕</button>
         </div>
       </div>
       <div class="sie" id="iep-${s.id}">
         <label style="font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin:7px 0 3px;">Learning Profile & Modified Expectations</label>
         <textarea class="sit" id="iept-${s.id}" placeholder="Paste modified expectations...">${s.iep||''}</textarea>
         <div class="brow" style="margin-top:5px;">
-          <button class="btn b-amber b-sm" onclick="saveIEP(${JSON.stringify(s.id)})">💾 Save</button>
-          <button class="btn b-out b-sm" onclick="toggleIEP(${JSON.stringify(s.id)})">Cancel</button>
+          <button class="btn b-amber b-sm roster-save-btn" data-sid="${s.id}">💾 Save</button>
+          <button class="btn b-out b-sm roster-cancel-btn" data-sid="${s.id}">Cancel</button>
         </div>
       </div>
     </div>`).join('');
+
+  // Attach all roster button listeners via JS — no inline UUID onclicks
+  document.querySelectorAll('.roster-edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() { toggleIEP(this.dataset.sid); });
+  });
+  document.querySelectorAll('.roster-del-btn').forEach(btn => {
+    btn.addEventListener('click', function() { removeStu(this.dataset.sid); });
+  });
+  document.querySelectorAll('.roster-save-btn').forEach(btn => {
+    btn.addEventListener('click', function() { saveIEP(this.dataset.sid); });
+  });
+  document.querySelectorAll('.roster-cancel-btn').forEach(btn => {
+    btn.addEventListener('click', function() { toggleIEP(this.dataset.sid); });
+  });
 }
 
 // ============================================================
