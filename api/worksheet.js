@@ -5,91 +5,114 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY
 );
 
+// Validate UUID format
+function isValidUUID(str) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
 export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
+  // ── GET: fetch worksheet for student ──────────────────────────
   if (req.method === 'GET') {
     const { id } = req.query;
-    if (!id) { res.status(400).json({ error: 'Missing id' }); return; }
 
-    // Basic UUID format check — prevents trivially malformed requests
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(id)) { res.status(400).json({ error: 'Invalid worksheet ID' }); return; }
-
-    const { data, error } = await supabase
-      .from('worksheets')
-      .select('id, topic, grades, subject, content, roster')
-      .eq('id', id)
-      .single();
-    if (error || !data) { res.status(404).json({ error: 'Not found' }); return; }
-
-    // Parse content — may be JSON {worksheet, reading} or legacy plain text
-    let worksheetContent = data.content;
-    let readingContent = '';
-    try {
-      const parsed = JSON.parse(data.content);
-      if (parsed && typeof parsed === 'object' && parsed.worksheet) {
-        worksheetContent = parsed.worksheet;
-        readingContent = parsed.reading || '';
-      }
-    } catch(e) {
-      // Legacy plain text — use as-is
+    if (!id || !isValidUUID(id)) {
+      return res.status(400).json({ error: 'Invalid worksheet ID' });
     }
 
-    res.status(200).json({
-      ...data,
-      content: worksheetContent,
-      reading_resource: readingContent
-    });
-    return;
+    const { data: worksheet, error } = await supabase
+      .from('worksheets')
+      .select('id, topic, grades, subject, content, roster, created_at')
+      .eq('id', id)
+      .single();
+
+    if (error || !worksheet) {
+      return res.status(404).json({ error: 'Worksheet not found' });
+    }
+
+    // Parse content JSON — handles both legacy plain text and new JSON format
+    let wsContent = '';
+    let readingContent = '';
+    let gradesContent = null;
+
+    try {
+      const parsed = JSON.parse(worksheet.content);
+      wsContent = parsed.worksheet || '';
+      readingContent = parsed.reading || '';
+      // Pass through grades_content for split-grade worksheets
+      if (parsed.grades_content && Object.keys(parsed.grades_content).length > 0) {
+        gradesContent = parsed.grades_content;
+      }
+    } catch (e) {
+      // Legacy: plain text content
+      wsContent = worksheet.content || '';
+    }
+
+    const response = {
+      topic: worksheet.topic,
+      grades: worksheet.grades,
+      subject: worksheet.subject,
+      content: wsContent,
+      reading_resource: readingContent,
+      roster: worksheet.roster || [],
+    };
+
+    // Include grades_content if present (split-grade worksheets)
+    if (gradesContent) {
+      response.grades_content = gradesContent;
+    }
+
+    return res.status(200).json(response);
   }
 
+  // ── POST: save student submission ─────────────────────────────
   if (req.method === 'POST') {
     const { worksheet_id, student_name, student_id, responses } = req.body;
 
-    // Validate required fields
-    if (!worksheet_id) { res.status(400).json({ error: 'Missing worksheet_id' }); return; }
-    if (!student_name || typeof student_name !== 'string' || student_name.trim().length === 0) {
-      res.status(400).json({ error: 'Missing student name' }); return;
+    // Validate inputs
+    if (!worksheet_id || !isValidUUID(worksheet_id)) {
+      return res.status(400).json({ error: 'Invalid worksheet ID' });
+    }
+    if (!student_name || typeof student_name !== 'string') {
+      return res.status(400).json({ error: 'Student name required' });
     }
 
-    // UUID format check
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(worksheet_id)) { res.status(400).json({ error: 'Invalid worksheet ID' }); return; }
-
-    // IDOR check — verify the worksheet actually exists before accepting submission
+    // IDOR check — verify worksheet exists
     const { data: ws, error: wsErr } = await supabase
       .from('worksheets')
       .select('id')
       .eq('id', worksheet_id)
       .single();
+
     if (wsErr || !ws) {
-      res.status(404).json({ error: 'Worksheet not found' }); return;
+      return res.status(404).json({ error: 'Worksheet not found' });
     }
 
-    // Sanitize student_id — must be a valid UUID or null
-    const safeStudentId = (student_id && uuidRegex.test(student_id)) ? student_id : null;
+    // Sanitize inputs
+    const safeName = student_name.trim().substring(0, 100);
+    const safeStudentId = (student_id && isValidUUID(student_id)) ? student_id : null;
+    const safeResponses = responses && typeof responses === 'object' ? responses : {};
 
-    const { error } = await supabase
+    const { error: insertError } = await supabase
       .from('worksheet_submissions')
       .insert({
         worksheet_id,
-        student_name: student_name.trim().substring(0, 100), // cap length
+        student_name: safeName,
         student_id: safeStudentId,
-        responses
+        responses: safeResponses,
       });
 
-    if (error) {
-      console.error('Supabase POST error:', JSON.stringify(error));
-      res.status(500).json({ error: error.message, code: error.code });
-      return;
+    if (insertError) {
+      return res.status(500).json({ error: 'Failed to save submission' });
     }
-    res.status(200).json({ success: true });
-    return;
+
+    return res.status(200).json({ success: true });
   }
 
-  res.status(405).json({ error: 'Method not allowed' });
+  return res.status(405).json({ error: 'Method not allowed' });
 }
