@@ -556,6 +556,20 @@ let wsN = 0;
 function showLoading(text='Loading...') { document.getElementById('loadingText').textContent=text; document.getElementById('loadingOverlay').classList.add('show'); }
 function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
 
+// Authenticated fetch — attaches Supabase JWT so generate.js can verify the caller
+async function authFetch(url, options={}) {
+  const { data: { session } } = await db.auth.getSession();
+  const token = session?.access_token || '';
+  return fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+      ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+    }
+  });
+}
+
 // ============================================================
 // AUTH
 // ============================================================
@@ -805,7 +819,7 @@ Each value is a markdown string:
 For split classes: clearly separate by grade. IMPORTANT: Only include the exact keys requested: ${outputs.map(k=>'"'+k+'"').join(', ')}. Do not add any extra keys. No text outside the JSON.`;
 
   try {
-    const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
+    const res=await authFetch('/api/generate',{method:'POST',body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})});
     if(!res.ok) throw new Error(`Server error ${res.status}`);
     const data=await res.json();
     if(data.error) throw new Error(data.error.message||JSON.stringify(data.error));
@@ -1198,7 +1212,7 @@ Accommodations: ${s.notes||'None'}
 ${s.iep?'Modified expectations: '+s.iep:''}
 Start with a specific strength. Describe achievement with evidence. Give one clear next step. Use Ontario growth mindset language. Address student directly ("you"). Never say "good", "nice", or "great". Write only the feedback, no preamble.`;
   try{
-    const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
+    const res=await authFetch('/api/generate',{method:'POST',body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
     const data=await res.json();
     const text=data.content?.map(i=>i.text||'').join('')||'Error generating.';
     fbEl.innerHTML='<div style="font-family:\'DM Mono\',monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">✏️ Click to edit before copying</div>'
@@ -1296,8 +1310,8 @@ async function exportSlides() {
       'Age-appropriate for grade ' + gradeLabel + '. Pure JSON only, no markdown.'
     ];
     const prompt = promptLines.filter(l => l !== null).join('\n');
-    const res = await fetch('/api/generate', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
+    const res = await authFetch('/api/generate', {
+      method: 'POST',
       body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]})
     });
     const data = await res.json();
