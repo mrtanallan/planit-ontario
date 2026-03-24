@@ -6,6 +6,7 @@
 <title>TeacherAI — Ontario's AI Teaching Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/libs/pptxgen.bundle.js"></script>
 <style>
 :root {
   --ink: #16120E; --cream: #F8F4EE; --paper: #fff;
@@ -830,6 +831,7 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic){
           <button class="btn b-out b-sm" onclick="resetBlock('${k}')">↩ Reset</button>
           <button class="btn b-out b-sm" onclick="copyBlock('${k}')">📋 Copy</button>
           ${k!=='student_worksheet'?`<button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button>`:''}
+          ${k==='lesson_plan'?`<button class="btn b-out b-sm" onclick="exportSlides()">📊 Slides</button>`:''}
           ${k==='student_worksheet'?`<button class="btn b-sage b-sm" onclick="getStudentLink('${k}')">🔗 Get Student Link</button>`:''}
         </div>
       </div>
@@ -1217,8 +1219,246 @@ ${renderMD(txt)}
 }
 
 // ============================================================
-// STUDENT LINK
+// EXPORT TO SLIDES (PptxGenJS)
 // ============================================================
+function exportSlides() {
+  const topic = curSess?.task || document.getElementById('topic')?.value || 'Lesson';
+  const subject = curSess?.subject || '';
+  const grades = curSess?.grades || [];
+  const gradeStr = grades.join(' / ') || '';
+
+  // Parse lesson plan content into sections
+  const lpText = genC['lesson_plan']?.cur || '';
+  const wsText = genC['student_worksheet']?.cur || '';
+  const rubricText = genC['assessment_rubric']?.cur || '';
+
+  // Parse sections from markdown
+  function parseSections(text) {
+    const sections = [];
+    let current = null;
+    text.split('\n').forEach(line => {
+      if (line.startsWith('## ')) {
+        if (current) sections.push(current);
+        current = { title: line.slice(3).trim(), bullets: [] };
+      } else if (line.startsWith('### ')) {
+        if (current) current.bullets.push({ text: line.slice(4).trim(), bold: true });
+      } else if (line.match(/^[-*] /) && current) {
+        current.bullets.push({ text: line.slice(2).trim(), bold: false });
+      } else if (line.match(/^\d+\. /) && current) {
+        current.bullets.push({ text: line.replace(/^\d+\.\s*/, '').trim(), bold: false });
+      } else if (line.trim() && current && !line.startsWith('#')) {
+        // Non-empty plain lines
+        const clean = line.replace(/\*\*(.+?)\*\*/g, '$1').trim();
+        if (clean) current.bullets.push({ text: clean, bold: false });
+      }
+    });
+    if (current) sections.push(current);
+    return sections;
+  }
+
+  const pres = new PptxGenJS();
+  pres.layout = 'LAYOUT_16x9';
+  pres.title = topic;
+
+  // Color palette — Forest & Moss themed (matches TeacherAI sage)
+  const C = {
+    dark: '1C3A2B',    // dark green
+    sage: '4A7C59',    // TeacherAI sage
+    sageMid: '6A9E7A', // mid sage
+    sageLight: 'EAF0EA',
+    cream: 'F8F4EE',
+    white: 'FFFFFF',
+    ink: '16120E',
+    muted: '7A726A',
+    amber: 'C47B2A',
+    amberLight: 'FDF4E3',
+  };
+
+  // ── Slide 1: Title ──────────────────────────────────────────
+  const s1 = pres.addSlide();
+  s1.background = { color: C.dark };
+  // Left accent bar
+  s1.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 0.18, h: 5.625, fill: { color: C.sage }, line: { color: C.sage } });
+  // Title
+  s1.addText(topic, {
+    x: 0.45, y: 1.6, w: 8.5, h: 1.4,
+    fontSize: 40, fontFace: 'Georgia', bold: true,
+    color: C.white, align: 'left', valign: 'middle', margin: 0
+  });
+  // Subject + grade tag
+  s1.addText(`${subject}${gradeStr ? '  ·  ' + gradeStr : ''}`, {
+    x: 0.45, y: 3.1, w: 8, h: 0.45,
+    fontSize: 14, fontFace: 'Calibri', color: C.sageMid, align: 'left', margin: 0
+  });
+  // Date
+  s1.addText(new Date().toLocaleDateString('en-CA'), {
+    x: 0.45, y: 3.6, w: 8, h: 0.35,
+    fontSize: 11, fontFace: 'Calibri', color: C.muted, align: 'left', margin: 0
+  });
+  // TeacherAI watermark
+  s1.addText('TeacherAI · teacherai.ca', {
+    x: 0.45, y: 5.1, w: 9, h: 0.3,
+    fontSize: 9, fontFace: 'Calibri', color: C.muted, align: 'left', margin: 0
+  });
+
+  // ── Lesson Plan sections ────────────────────────────────────
+  const sections = parseSections(lpText);
+  sections.slice(0, 8).forEach((sec, idx) => {
+    const slide = pres.addSlide();
+    slide.background = { color: C.cream };
+    // Top bar
+    slide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.75, fill: { color: C.sage }, line: { color: C.sage } });
+    slide.addText(sec.title, {
+      x: 0.4, y: 0, w: 9.2, h: 0.75,
+      fontSize: 20, fontFace: 'Georgia', bold: true,
+      color: C.white, valign: 'middle', align: 'left', margin: 0
+    });
+    // Topic label top right
+    slide.addText(topic, {
+      x: 7, y: 0, w: 2.8, h: 0.75,
+      fontSize: 9, fontFace: 'Calibri', color: 'CDECD5',
+      align: 'right', valign: 'middle', margin: 0
+    });
+
+    // Bullet content
+    const bullets = sec.bullets.slice(0, 10);
+    if (bullets.length) {
+      const richText = [];
+      bullets.forEach((b, bi) => {
+        richText.push({
+          text: b.text,
+          options: {
+            bullet: true,
+            bold: b.bold,
+            fontSize: b.bold ? 13 : 12,
+            fontFace: 'Calibri',
+            color: b.bold ? C.sage : C.ink,
+            paraSpaceAfter: b.bold ? 4 : 2,
+            breakLine: bi < bullets.length - 1
+          }
+        });
+      });
+      slide.addText(richText, {
+        x: 0.4, y: 0.95, w: 9.2, h: 4.4,
+        valign: 'top', margin: [0, 0, 0, 0]
+      });
+    }
+
+    // Slide number
+    slide.addText(`${idx + 2}`, {
+      x: 9.3, y: 5.2, w: 0.5, h: 0.3,
+      fontSize: 9, fontFace: 'Calibri', color: C.muted, align: 'right', margin: 0
+    });
+  });
+
+  // ── Slide: Worksheet Summary (if exists) ───────────────────
+  if (wsText) {
+    const wsSlide = pres.addSlide();
+    wsSlide.background = { color: C.amberLight };
+    wsSlide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.75, fill: { color: C.amber }, line: { color: C.amber } });
+    wsSlide.addText('📝 Student Worksheet', {
+      x: 0.4, y: 0, w: 9.2, h: 0.75,
+      fontSize: 20, fontFace: 'Georgia', bold: true,
+      color: C.white, valign: 'middle', align: 'left', margin: 0
+    });
+    wsSlide.addText('Share the student worksheet link via Google Classroom.\nStudents complete it on their devices and submit directly.', {
+      x: 0.5, y: 1.1, w: 9, h: 1.2,
+      fontSize: 14, fontFace: 'Calibri', color: C.ink,
+      align: 'left', valign: 'top'
+    });
+    // Show first few activities
+    const wsSections = parseSections(wsText);
+    if (wsSections.length) {
+      const richText = [];
+      wsSections.slice(0, 5).forEach((sec, i) => {
+        richText.push({
+          text: sec.title,
+          options: { bold: true, fontSize: 12, fontFace: 'Calibri', color: C.sage, bullet: true, paraSpaceAfter: 3, breakLine: true }
+        });
+      });
+      wsSlide.addText(richText, {
+        x: 0.5, y: 2.6, w: 9, h: 2.7, valign: 'top', margin: 0
+      });
+    }
+  }
+
+  // ── Slide: Assessment Rubric summary (if exists) ───────────
+  if (rubricText) {
+    const rubSlide = pres.addSlide();
+    rubSlide.background = { color: C.cream };
+    rubSlide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.75, fill: { color: '2A5FA5' }, line: { color: '2A5FA5' } });
+    rubSlide.addText('📏 Assessment — Ontario Levels', {
+      x: 0.4, y: 0, w: 9.2, h: 0.75,
+      fontSize: 20, fontFace: 'Georgia', bold: true,
+      color: C.white, valign: 'middle', align: 'left', margin: 0
+    });
+    // Level summary boxes
+    const levels = [
+      { label: 'Level 1', range: '50–59%', color: 'FECDD3', text: 'EE3333' },
+      { label: 'Level 2', range: '60–69%', color: 'FEF9C3', text: '854D0E' },
+      { label: 'Level 3', range: '70–79%', color: 'DBEAFE', text: '1E40AF' },
+      { label: 'Level 4', range: '80%+',   color: 'DCFCE7', text: '166534' },
+    ];
+    levels.forEach((lv, i) => {
+      const x = 0.4 + i * 2.3;
+      rubSlide.addShape(pres.shapes.RECTANGLE, {
+        x, y: 1.0, w: 2.1, h: 1.4,
+        fill: { color: lv.color }, line: { color: lv.text, width: 1 }
+      });
+      rubSlide.addText(lv.label, {
+        x, y: 1.0, w: 2.1, h: 0.55,
+        fontSize: 15, fontFace: 'Georgia', bold: true,
+        color: lv.text, align: 'center', valign: 'middle', margin: 0
+      });
+      rubSlide.addText(lv.range, {
+        x, y: 1.55, w: 2.1, h: 0.45,
+        fontSize: 11, fontFace: 'Calibri',
+        color: lv.text, align: 'center', valign: 'middle', margin: 0
+      });
+    });
+    // Rubric bullets
+    const rubSections = parseSections(rubricText);
+    if (rubSections.length) {
+      const richText = [];
+      rubSections.slice(0, 4).forEach((sec, i) => {
+        richText.push({
+          text: sec.title,
+          options: { bold: true, fontSize: 11, fontFace: 'Calibri', color: '2A5FA5', bullet: true, paraSpaceAfter: 2, breakLine: true }
+        });
+        sec.bullets.slice(0, 2).forEach((b, bi) => {
+          richText.push({
+            text: b.text,
+            options: { fontSize: 10, fontFace: 'Calibri', color: C.ink, bullet: true, indentLevel: 1, paraSpaceAfter: 1, breakLine: true }
+          });
+        });
+      });
+      if (richText.length) {
+        richText[richText.length - 1].options.breakLine = false;
+        rubSlide.addText(richText, { x: 0.4, y: 2.6, w: 9.2, h: 2.7, valign: 'top', margin: 0 });
+      }
+    }
+  }
+
+  // ── Final slide ─────────────────────────────────────────────
+  const lastSlide = pres.addSlide();
+  lastSlide.background = { color: C.dark };
+  lastSlide.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 0.18, h: 5.625, fill: { color: C.sage }, line: { color: C.sage } });
+  lastSlide.addText('Questions?', {
+    x: 0.45, y: 1.8, w: 9, h: 1.2,
+    fontSize: 40, fontFace: 'Georgia', bold: true,
+    color: C.white, align: 'left', margin: 0
+  });
+  lastSlide.addText(topic + (gradeStr ? '  ·  ' + gradeStr : '') + '  ·  ' + subject, {
+    x: 0.45, y: 3.2, w: 9, h: 0.4,
+    fontSize: 13, fontFace: 'Calibri', color: C.sageMid, align: 'left', margin: 0
+  });
+  lastSlide.addText('Generated with TeacherAI · teacherai.ca', {
+    x: 0.45, y: 5.1, w: 9, h: 0.3,
+    fontSize: 9, fontFace: 'Calibri', color: C.muted, align: 'left', margin: 0
+  });
+
+  pres.writeFile({ fileName: `${topic.replace(/[^a-z0-9]/gi,'_')}_Lesson.pptx` });
+}
 async function getStudentLink(k) {
   const btn = event.target;
   btn.disabled = true; btn.textContent = '⏳ Saving...';
