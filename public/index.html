@@ -1568,15 +1568,26 @@ CRITICAL: Return ONLY a valid JSON object. No markdown fences. Each grade worksh
 // ============================================================
 function buildEditBlocks(outputs,gradeDesc,subj,topic,expectations){
   const c=document.getElementById('editBlocks');
+  const strandNames = {A:'Literacy Connections',B:'Foundations',C:'Comprehension',D:'Composition'};
+  const strandColors = {A:'var(--blue)',B:'var(--amber)',C:'var(--sage)',D:'var(--rust)'};
+  const strandBgs = {A:'var(--blue-l)',B:'var(--amber-l)',C:'var(--sage-l)',D:'var(--rust-l)'};
   const expHtml = expectations && expectations.length ? `
     <div style="background:var(--sage-l);border:1px solid #A8C4AB;border-radius:8px;padding:11px 14px;margin-bottom:14px;">
       <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--sage);margin-bottom:8px;">🎯 Ontario 2023 Expectations Covered</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        ${expectations.map(e=>`
-          <div style="background:white;border:1px solid #A8C4AB;border-radius:6px;padding:5px 10px;">
-            <span style="font-family:'DM Mono',monospace;font-size:.65rem;font-weight:600;color:var(--sage);">${e.code}</span>
-            <span style="font-size:.75rem;color:#2A2520;margin-left:5px;">${e.desc}</span>
-          </div>`).join('')}
+      <div style="display:flex;flex-wrap:wrap;gap:7px;">
+        ${expectations.map(e=>{
+          const s = e.strand || (e.code && e.code[0]) || '';
+          const sName = strandNames[s] || ('Strand '+s);
+          const sColor = strandColors[s] || 'var(--sage)';
+          const sBg = strandBgs[s] || 'var(--sage-l)';
+          return `<div style="background:white;border:1px solid #A8C4AB;border-radius:6px;padding:6px 10px;max-width:100%;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+              <span style="font-family:'DM Mono',monospace;font-size:.65rem;font-weight:600;color:${sColor};background:${sBg};padding:1px 6px;border-radius:3px;">${e.code}</span>
+              <span style="font-family:'DM Mono',monospace;font-size:.55rem;color:var(--muted);">Strand ${s} · ${sName} · ${e.overall||''}</span>
+            </div>
+            <div style="font-size:.78rem;color:#2A2520;">${e.desc}</div>
+          </div>`;
+        }).join('')}
       </div>
     </div>` : '';
   c.innerHTML=`<div style="display:flex;align-items:center;gap:9px;margin-bottom:14px;flex-wrap:wrap;">
