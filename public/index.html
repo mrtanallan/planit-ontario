@@ -361,19 +361,23 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <div class="fi s2"><label>Topic / Focus</label><input type="text" id="topic" placeholder="e.g. Making Inferences, Narrative Writing, Text Features..."></div>
       </div>
 
-      <!-- Split grade — default OFF, cleaner initial state -->
+      <!-- Split grade section — auto-filled from class, expandable -->
       <div style="margin-bottom:13px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap;">
           <label class="chip" style="cursor:pointer;">
             <input type="checkbox" id="splitToggle" style="width:12px;height:12px;accent-color:var(--sage);" onchange="toggleSplitGrades()"> 🏫 Split/Multi-grade class (SSC)
           </label>
+          <button type="button" id="addGradeBtn" class="btn b-out b-sm" style="display:none;font-size:.72rem;" onclick="addExtraGrade()">+ Add grade</button>
         </div>
         <div id="extraGrades" style="display:none;">
-          <div class="fg" style="margin-bottom:0;">
-            <div class="fi"><label>Grade B</label><select id="gB"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
-            <div class="fi"><label>Grade C</label><select id="gC"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
-            <div class="fi"><label>Grade D</label><select id="gD"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
+          <div class="fg" style="margin-bottom:6px;" id="extraGradeFields">
+            <div class="fi" id="gradeField_B"><label>Grade B</label><select id="gB"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
+            <div class="fi" id="gradeField_C"><label>Grade C</label><select id="gC"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
+            <div class="fi" id="gradeField_D"><label>Grade D</label><select id="gD"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
+            <div class="fi" id="gradeField_E" style="display:none;"><label>Grade E</label><select id="gE"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
+            <div class="fi" id="gradeField_F" style="display:none;"><label>Grade F</label><select id="gF"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
           </div>
+          <div id="classAutoFillNote" style="display:none;font-size:.75rem;color:var(--sage);margin-bottom:4px;">✓ Grades auto-filled from your class — adjust if needed</div>
         </div>
       </div>
 
@@ -640,7 +644,8 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   🇨🇦 Data stored in Canada &nbsp;·&nbsp;
   <a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> &nbsp;·&nbsp;
   <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a> &nbsp;·&nbsp;
-  <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a>
+  <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
+  <span style="font-family:'DM Mono',monospace;font-size:.65rem;">v2.1 · Mar 24 2026</span>
 </div>
 
 </div><!-- end appScreen -->
@@ -961,10 +966,17 @@ function showApp() {
   const savedTab = localStorage.getItem('teacherai_tab') || 'tr-plan';
   const tabEl = document.getElementById(savedTab);
   if (tabEl) tabEl.checked = true;
-  // Save tab on change
+  // Save tab on change + refresh data when switching tabs
   document.querySelectorAll('.tab-r').forEach(r => {
     r.addEventListener('change', function() {
-      if (this.checked) localStorage.setItem('teacherai_tab', this.id);
+      if (!this.checked) return;
+      localStorage.setItem('teacherai_tab', this.id);
+      // Refresh relevant data when switching to each tab
+      if (this.id === 'tr-assess') { renderTracker(); loadSubmissions(); renderAssessClassTabs(); }
+      if (this.id === 'tr-roster') { renderClassTabs(); renderR(); }
+      if (this.id === 'tr-lessons') { renderLessonsList(); }
+      if (this.id === 'tr-rc') { /* report cards — no refresh needed */ }
+      if (this.id === 'tr-exp') { renderExpectationsTracker(); }
     });
   });
   renderClassTabs();
@@ -1035,6 +1047,11 @@ async function loadUserData() {
       if(el && !el.value) el.value=profile.class_context;
     }
   } catch(e) { /* silent */ }
+
+  // Auto-fill grades from students now that students array is populated
+  if(activeClassId && students.length > 0) {
+    autoFillGradesFromClass();
+  }
 }
 
 // ============================================================
@@ -1188,14 +1205,104 @@ function renderClassSelector() {
   if (!sel || !row) return;
   if (!classes.length) { row.style.display = 'none'; return; }
   row.style.display = 'block';
-  sel.innerHTML = classes.map(c =>
-    `<option value="${c.id}" ${c.id===activeClassId?'selected':''}>${c.name}${c.subject_focus?' · '+c.subject_focus:''}</option>`
-  ).join('');
+  sel.innerHTML = `<option value="">✏️ Custom / no class</option>` +
+    classes.map(c =>
+      `<option value="${c.id}" ${c.id === activeClassId ? 'selected' : ''}>${c.name}${c.subject_focus?' · '+c.subject_focus:''}</option>`
+    ).join('');
+  // Auto-fill grades from students in active class
+  if (activeClassId) {
+    autoFillGradesFromClass();
+  }
 }
 
 function onClassSelect() {
   const sel = document.getElementById('classSelector');
-  if (sel) switchClass(sel.value);
+  if (!sel) return;
+  const selectedId = sel.value;
+  if (!selectedId) {
+    // Custom / no class — clear grades, let teacher set manually
+    activeClassId = null;
+    ['gA','gB','gC','gD','gE','gF'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    const toggle=document.getElementById('splitToggle');
+    if(toggle&&toggle.checked){toggle.checked=false;toggleSplitGrades();}
+    const note=document.getElementById('classAutoFillNote');
+    if(note)note.style.display='none';
+    return;
+  }
+  switchClass(selectedId);
+  // autoFill will run via renderClassSelector after switchClass loads students
+}
+
+function autoFillGradesFromClass(gradesHint) {
+  // Derive grades from actual students in the active class
+  const classStudents = activeClassId
+    ? students.filter(s => s.classId === activeClassId)
+    : students;
+
+  // Get unique grades in Ontario order
+  const gradeOrder = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
+  const uniqueGrades = [...new Set(classStudents.map(s => s.grade))]
+    .filter(g => g)
+    .sort((a, b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b));
+
+  // Fall back to hint (from class definition) if no students yet
+  const gradesToFill = uniqueGrades.length > 0 ? uniqueGrades : (gradesHint || []);
+  if (!gradesToFill.length) return;
+
+  const gradeIds = ['gA','gB','gC','gD','gE','gF'];
+  const letterIds = ['A','B','C','D','E','F'];
+
+  // Reset all
+  gradeIds.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['B','C','D','E','F'].forEach(l => {
+    const f = document.getElementById('gradeField_'+l);
+    if(f) f.style.display = 'none';
+  });
+
+  // Set Grade A
+  const gAel = document.getElementById('gA');
+  if (gAel) gAel.value = gradesToFill[0] || '';
+
+  if (gradesToFill.length > 1) {
+    const toggle = document.getElementById('splitToggle');
+    if (toggle && !toggle.checked) { toggle.checked = true; toggleSplitGrades(); }
+    gradesToFill.slice(1).forEach((g, i) => {
+      const letter = letterIds[i+1];
+      const fieldEl = document.getElementById('gradeField_'+letter);
+      const selEl = document.getElementById('g'+letter);
+      if (fieldEl) fieldEl.style.display = '';
+      if (selEl) selEl.value = g;
+    });
+    const note = document.getElementById('classAutoFillNote');
+    if (note) {
+      note.style.display = 'block';
+      note.textContent = uniqueGrades.length > 0
+        ? `✓ Grades filled from your ${classStudents.length} students — adjust if needed`
+        : '✓ Grades filled from class definition — adjust if needed';
+    }
+  } else {
+    const toggle = document.getElementById('splitToggle');
+    if (toggle && toggle.checked) { toggle.checked = false; toggleSplitGrades(); }
+    const note = document.getElementById('classAutoFillNote');
+    if (note) note.style.display = 'none';
+  }
+}
+
+let _extraGradeCount = 4; // tracks how many grade slots are visible (A=1 + B,C,D = 4 default)
+
+function addExtraGrade() {
+  const letters = ['E','F'];
+  for (const l of letters) {
+    const field = document.getElementById('gradeField_'+l);
+    if (field && field.style.display === 'none') {
+      field.style.display = '';
+      _extraGradeCount++;
+      if (_extraGradeCount >= 6) {
+        document.getElementById('addGradeBtn').style.display = 'none';
+      }
+      return;
+    }
+  }
 }
 
 // ============================================================
@@ -1247,9 +1354,15 @@ async function saveCtx() {
 function toggleSplitGrades(){
   const toggle=document.getElementById('splitToggle');
   const extra=document.getElementById('extraGrades');
+  const addBtn=document.getElementById('addGradeBtn');
   extra.style.display=toggle.checked?'block':'none';
+  if(addBtn) addBtn.style.display=toggle.checked?'inline-flex':'none';
   if(!toggle.checked){
-    ['gB','gC','gD'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['gB','gC','gD','gE','gF'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    ['E','F'].forEach(l=>{const f=document.getElementById('gradeField_'+l);if(f)f.style.display='none';});
+    const note=document.getElementById('classAutoFillNote');
+    if(note)note.style.display='none';
+    _extraGradeCount=4;
   }
 }
 
@@ -1305,7 +1418,7 @@ async function generate() {
   const gA=document.getElementById('gA').value;
   const topic=document.getElementById('topic').value.trim();
   if(!gA||!topic){alert('Select Grade A and enter a topic.');return;}
-  const grades=['gA','gB','gC','gD'].map(id=>document.getElementById(id).value).filter(g=>g&&g!=='');
+  const grades=['gA','gB','gC','gD','gE','gF'].map(id=>document.getElementById(id)?.value||'').filter(g=>g&&g!=='');
   const isSplit=grades.length>1;
   const gradeDesc=isSplit?grades.join(' / ')+' multi-grade split class':grades[0];
   const subj=document.getElementById('subj').value;
