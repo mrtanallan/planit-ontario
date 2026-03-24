@@ -539,6 +539,13 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 <!-- ===== ASSESSMENT ===== -->
 <div class="page" id="pg-assess">
   <div class="ph"><h1>Grade <em>Tracker</em></h1><p>All assessment tasks are saved automatically.</p></div>
+  <!-- Class selector for assessment -->
+  <div id="assessClassSelector" style="display:none;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div style="font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Viewing class:</div>
+      <div id="assessClassTabs" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
   <div class="st">
     <div class="sc2"><div class="sn2" id="tStu">0</div><div class="sl">Students</div></div>
     <div class="sc2"><div class="sn2" id="tSess">0</div><div class="sl">Tasks</div></div>
@@ -786,12 +793,11 @@ function showApp() {
   document.getElementById('navEmail').textContent=currentUser.email;
   renderClassTabs();
   renderClassSelector();
+  renderAssessClassTabs();
   renderR();
   renderTracker();
   renderLessonsList();
   loadSubmissions();
-  // Show welcome banner only on first run (no lessons yet)
-  // Checked again after lessons load in renderLessonsList
   updateWelcomeBanner();
 }
 
@@ -952,7 +958,12 @@ function renderClassTabs() {
   const el = document.getElementById('classTabs');
   if (!el) return;
   if (!classes.length) {
-    el.innerHTML = '<div style="color:var(--muted);font-size:.83rem;font-style:italic;">No classes yet — create one above to organize your students.</div>';
+    el.innerHTML = `<div style="text-align:center;padding:12px 8px;">
+      <div style="font-size:1.5rem;margin-bottom:6px;">🏫</div>
+      <div style="font-weight:600;font-size:.9rem;margin-bottom:4px;">Start by creating a class</div>
+      <div style="color:var(--muted);font-size:.8rem;margin-bottom:12px;">Each class has its own roster, lessons, and assessment data.</div>
+      <button class="btn b-sage" onclick="toggleNewClassForm()" style="font-size:.85rem;">+ Create Your First Class</button>
+    </div>`;
     return;
   }
   el.innerHTML = classes.map(c => {
@@ -1007,7 +1018,31 @@ function onClassSelect() {
 // ============================================================
 // TAB SWITCHING
 // ============================================================
-function switchToAssess() { document.getElementById('tr-assess').checked=true; renderTracker(); loadSubmissions(); }
+function switchToAssess() { document.getElementById('tr-assess').checked=true; renderTracker(); loadSubmissions(); renderAssessClassTabs(); }
+
+function renderAssessClassTabs() {
+  const wrap = document.getElementById('assessClassSelector');
+  const tabs = document.getElementById('assessClassTabs');
+  if (!wrap || !tabs) return;
+  if (classes.length < 2) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  tabs.innerHTML = classes.map(c =>
+    `<button class="btn b-sm ${c.id===activeClassId?'b-sage':'b-out'} assess-class-btn" data-cid="${c.id}" style="font-size:.75rem;">
+      ${c.name}${c.subject_focus?' · '+c.subject_focus:''} ${c.id===activeClassId?'✓':''}
+    </button>`
+  ).join('');
+  document.querySelectorAll('.assess-class-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      activeClassId = this.dataset.cid;
+      showLoading('Switching class...');
+      await loadUserData();
+      hideLoading();
+      renderAssessClassTabs();
+      renderTracker();
+      loadSubmissions();
+    });
+  });
+}
 
 // ============================================================
 // CLASS CONTEXT — now per-class, saved via saveClassEdit()
@@ -1107,6 +1142,13 @@ async function generate() {
   if(document.getElementById('ck-rr').checked)outputs.push('reading_resource');
   if(document.getElementById('ck-rb').checked)outputs.push('assessment_rubric');
   if(document.getElementById('ck-dt').checked)outputs.push('differentiation_tips');
+  // Preferred display order: lesson plan → worksheet → reading → rubric → differentiation
+  const ORDER = ['lesson_plan','student_worksheet','reading_resource','assessment_rubric','differentiation_tips'];
+  outputs.sort((a,b)=>{
+    const ai=ORDER.findIndex(k=>a.startsWith(k.replace('student_worksheet','student_worksheet')));
+    const bi=ORDER.findIndex(k=>b.startsWith(k.replace('student_worksheet','student_worksheet')));
+    return (ai===-1?99:ai)-(bi===-1?99:bi);
+  });
   if(!outputs.length){alert('Select at least one output.');return;}
 
   // Worksheet type
@@ -1161,7 +1203,7 @@ Each value is a markdown string:
 - lesson_plan: timing (0:00-0:10), Minds On/Action/Consolidation, materials
 - student_worksheet${isSplit?'_[A/B/C/D] (one per grade)':''}: ${wsFormatNote}
 - reading_resource: original 200-300 word passage appropriate for the grade(s)
-- assessment_rubric: Ontario Level 1/2/3/4 with specific success criteria${iepStudents.length?' plus modified criteria for IEP students':''}
+- assessment_rubric: Ontario Achievement Chart. Use ## for each category (e.g. "## Knowledge & Understanding", "## Communication", "## Application"). Under each category use ### Level 1, ### Level 2, ### Level 3, ### Level 4 with one sentence describing achievement at that level. Keep descriptions specific to the task and grade-appropriate.${iepStudents.length?' Include a modified criteria category for IEP students.':''}
 - differentiation_tips: per-grade and per-student strategies
 For split classes: clearly separate by grade. IMPORTANT: Only include the exact keys: ${outputKeys.map(k=>'"'+k+'"').join(', ')}. No extra keys. No text outside the JSON.`;
 
@@ -1208,8 +1250,9 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic){
   </div>`;
   outputs.forEach(k=>{
     const isWS = k==='student_worksheet' || k.startsWith('student_worksheet_');
+    const isRubric = k==='assessment_rubric';
     const isSh = SHAREABLE.includes(k);
-    const rendered = isWS ? renderWS(genC[k].cur) : renderMD(genC[k].cur);
+    const rendered = isWS ? renderWS(genC[k].cur) : isRubric ? renderRubric(genC[k].cur) : renderMD(genC[k].cur);
     c.innerHTML+=`<div class="cb" id="cb-${k}">
       <div class="cbh">
         <div style="display:flex;align-items:center;gap:7px;">
@@ -1232,7 +1275,7 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic){
 }
 
 function toggleEdit(k){const el=document.getElementById('cbb-'+k);if(el.contentEditable==='true'){el.contentEditable='false';genC[k].cur=el.innerText;}else{el.contentEditable='true';el.focus();}}
-function resetBlock(k){if(!confirm('Reset to original?'))return;const el=document.getElementById('cbb-'+k);el.contentEditable='false';genC[k].cur=genC[k].orig;const isWS=k==='student_worksheet'||k.startsWith('student_worksheet_');el.innerHTML=isWS?renderWS(genC[k].orig):renderMD(genC[k].orig);}
+function resetBlock(k){if(!confirm('Reset to original?'))return;const el=document.getElementById('cbb-'+k);el.contentEditable='false';genC[k].cur=genC[k].orig;const isWS=k==='student_worksheet'||k.startsWith('student_worksheet_');const isRubric=k==='assessment_rubric';el.innerHTML=isWS?renderWS(genC[k].orig):isRubric?renderRubric(genC[k].orig):renderMD(genC[k].orig);}
 function copyBlock(k){navigator.clipboard.writeText(document.getElementById('cbb-'+k).innerText);event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='📋 Copy',1500);}
 
 // ============================================================
@@ -1347,16 +1390,26 @@ async function renderAssGrid(){
 
   g.innerHTML=students.map((s,i)=>{
     const sub = submissionsByStudent[s.id];
+    // Extract question labels from worksheet content for display alongside answers
+    const wsKey = Object.keys(genC).find(k => k.startsWith('student_worksheet'));
+    const wsQuestions = wsKey ? extractWSQuestions(genC[wsKey]?.cur || '') : {};
+    const rubricText = genC['assessment_rubric']?.cur || '';
+
     const subHtml = sub ? `
       <div style="margin-top:10px;">
-        <button class="btn b-out b-sm" style="font-size:.7rem;margin-bottom:7px;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent.includes('▼')?'▶ Hide submitted work':'▼ View submitted work'">▼ View submitted work</button>
-        <div style="background:var(--blue-l);border:1px solid #B0C8E8;border-radius:7px;padding:11px 13px;font-size:.82rem;">
-          <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📥 Submitted ${new Date(sub.submitted_at).toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})} · ${new Date(sub.submitted_at).toLocaleDateString('en-CA')}</div>
-          ${sub.responses ? Object.entries(sub.responses).filter(([,v])=>v&&v!=='—').map(([q,a])=>`
-            <div style="margin-bottom:6px;">
-              <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">${q}</div>
-              <div style="padding:4px 8px;background:white;border-radius:4px;margin-top:2px;line-height:1.5;">${Array.isArray(a)?a.join(', '):a}</div>
-            </div>`).join('') : '<div style="color:var(--muted);">No responses recorded.</div>'}
+        <button class="btn b-out b-sm sub-toggle-btn" style="font-size:.7rem;margin-bottom:7px;">▼ View submitted work</button>
+        <div class="sub-content" style="display:none;">
+          <div style="background:var(--blue-l);border:1px solid #B0C8E8;border-radius:7px;padding:11px 13px;font-size:.82rem;margin-bottom:6px;">
+            <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📥 Submitted ${new Date(sub.submitted_at).toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})} · ${new Date(sub.submitted_at).toLocaleDateString('en-CA')}</div>
+            ${sub.responses ? Object.entries(sub.responses).filter(([,v])=>v&&(Array.isArray(v)?v.length>0:v!=='—'&&v!=='')).map(([q,a])=>`
+              <div style="margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid #B0C8E8;">
+                ${wsQuestions[q] ? `<div style="font-size:.8rem;font-weight:600;color:#1E3A6E;margin-bottom:3px;">${wsQuestions[q]}</div>` : ''}
+                <div style="font-family:'DM Mono',monospace;font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">${q}</div>
+                <div style="padding:5px 8px;background:white;border-radius:4px;line-height:1.5;">${Array.isArray(a)?a.join(', '):a}</div>
+              </div>`).join('') : '<div style="color:var(--muted);">No responses recorded.</div>'}
+          </div>
+          ${rubricText ? `<button class="btn b-out b-sm rubric-toggle-btn" style="font-size:.7rem;margin-bottom:6px;">📏 View Rubric</button>
+          <div class="rubric-content" style="display:none;margin-bottom:6px;">${renderRubric(rubricText)}</div>` : ''}
         </div>
       </div>` : `<div style="margin-top:8px;font-size:.78rem;color:var(--muted);font-style:italic;">No submission yet for this lesson.</div>`;
 
@@ -1428,6 +1481,24 @@ async function renderAssGrid(){
       const d=document.getElementById('ld-'+s.id);
       if(d){d.textContent='Level '+num+sfx+' ●';d.style.color=cols[base];}
     }
+  });
+  // Attach submission toggle listeners
+  document.querySelectorAll('.sub-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const content = this.nextElementSibling;
+      const open = content.style.display !== 'none';
+      content.style.display = open ? 'none' : 'block';
+      this.textContent = open ? '▼ View submitted work' : '▶ Hide submitted work';
+    });
+  });
+  // Attach rubric toggle listeners
+  document.querySelectorAll('.rubric-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const content = this.nextElementSibling;
+      const open = content.style.display !== 'none';
+      content.style.display = open ? 'none' : 'block';
+      this.textContent = open ? '📏 View Rubric' : '📏 Hide Rubric';
+    });
   });
 }
 
@@ -1627,8 +1698,8 @@ async function exportSlides() {
   if(!topic) { alert('Generate a lesson first.'); return; }
   const lpText = genC['lesson_plan']?.cur || '';
   const btn = event?.target;
-  if(btn) { btn.disabled = true; btn.textContent = '\u23F3 Generating...'; }
-  showLoading('Generating teaching slides + fetching image...');
+  if(btn) { btn.disabled = true; btn.textContent = '⏳ Generating slides...'; }
+  // Non-blocking — don't show full loading overlay for slides
   try {
     const iepCount = students.filter(s=>s.iep&&s.iep.trim()).length;
     const gradeLabel = gradeStr || (grades[0] || 'Elementary');
@@ -1668,36 +1739,43 @@ async function exportSlides() {
     let sd;
     try { sd = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
     catch(e) { const s=raw.indexOf('{'),en=raw.lastIndexOf('}'); sd=JSON.parse(raw.slice(s,en+1)); }
-    hideLoading();
-    // Fetch Wikipedia image in parallel (non-blocking — slides still generate if it fails)
+    // Fetch Wikipedia image
     let wikiImg = null;
     try { wikiImg = await fetchWikiImage(topic); } catch(e) { /* silent — image is optional */ }
     buildSlideDeck(sd, topic, subject, gradeStr, wikiImg);
   } catch(e) {
-    hideLoading();
     alert('Error generating slides: ' + e.message);
   } finally {
-    if(btn) { btn.disabled = false; btn.textContent = '\uD83D\uDCCA Slides'; }
+    if(btn) { btn.disabled = false; btn.textContent = '📊 Slides'; }
   }
 }
 
 async function fetchWikiImage(topic) {
-  // Try Wikimedia REST API — returns thumbnail for topic
-  const query = encodeURIComponent(topic.split(' ').slice(0, 3).join(' '));
-  const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${query}`);
+  // Wikimedia REST API — supports CORS
+  const query = encodeURIComponent(topic.split(' ').slice(0, 4).join(' '));
+  const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${query}`, {
+    headers: {'Accept': 'application/json'}
+  });
   if (!res.ok) return null;
   const data = await res.json();
-  const imgUrl = data?.thumbnail?.source || data?.originalimage?.source;
+  // Prefer smaller thumbnail (faster) over original
+  const imgUrl = data?.thumbnail?.source;
   if (!imgUrl) return null;
-  // Convert to base64 for PptxGenJS
-  const imgRes = await fetch(imgUrl);
-  if (!imgRes.ok) return null;
-  const blob = await imgRes.blob();
+  // Fetch image and convert to base64 via canvas (avoids CORS issues with PptxGenJS)
   return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result); // data:image/...;base64,...
-    reader.onerror = () => resolve(null);
-    reader.readAsDataURL(blob);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      } catch(e) { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = imgUrl;
   });
 }
 
@@ -2679,6 +2757,93 @@ function loadLesson(idx){
     if(tf) tf.value=l.topic||'';
     window.scrollTo(0,0);
   },150);
+}
+
+// ============================================================
+// WORKSHEET QUESTION EXTRACTOR — maps q1/q2/etc to question text
+// ============================================================
+function extractWSQuestions(text) {
+  if (!text) return {};
+  const questions = {};
+  let qCount = 0;
+  text.split('\n').forEach(line => {
+    const hasField = line.includes('[TEXT BOX]') || line.includes('[LARGE BOX]') ||
+                     line.includes('[CIRCLE ONE:') || line.includes('[CHECK ALL THAT APPLY:');
+    if (hasField) {
+      qCount++;
+      // Extract the question text — strip the marker and numbering
+      const q = line
+        .replace(/\[TEXT BOX\]|\[LARGE BOX\]|\[CIRCLE ONE:[^\]]*\]|\[CHECK ALL THAT APPLY:[^\]]*\]/g, '')
+        .replace(/^[-*\d.]+\s*/, '')
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .trim();
+      if (q) questions['q' + qCount] = q;
+    }
+  });
+  return questions;
+}
+
+// ============================================================
+// RUBRIC RENDERER — Ontario Achievement Chart table
+// ============================================================
+function renderRubric(text) {
+  if (!text) return '';
+  // Parse sections from markdown — each ## heading is a category
+  // Each category has level descriptors under ### Level 1/2/3/4
+  const lines = text.split('\n');
+  const categories = [];
+  let currentCat = null;
+  let currentLevel = null;
+
+  lines.forEach(line => {
+    if (line.startsWith('## ')) {
+      currentCat = { name: line.slice(3).trim(), levels: { L1:'', L2:'', L3:'', L4:'' } };
+      categories.push(currentCat);
+      currentLevel = null;
+    } else if (line.startsWith('### ')) {
+      const h = line.slice(4).toLowerCase();
+      if (h.includes('level 1') || h.includes('l1') || h.match(/^1[\s\-:]/)) currentLevel = 'L1';
+      else if (h.includes('level 2') || h.includes('l2') || h.match(/^2[\s\-:]/)) currentLevel = 'L2';
+      else if (h.includes('level 3') || h.includes('l3') || h.match(/^3[\s\-:]/)) currentLevel = 'L3';
+      else if (h.includes('level 4') || h.includes('l4') || h.match(/^4[\s\-:]/)) currentLevel = 'L4';
+    } else if (currentCat && currentLevel && line.trim()) {
+      const clean = line.replace(/^[-*]\s*/, '').replace(/\*\*(.+?)\*\*/g, '$1').trim();
+      if (clean) currentCat.levels[currentLevel] += (currentCat.levels[currentLevel] ? ' ' : '') + clean;
+    }
+  });
+
+  // If we couldn't parse into categories, fall back to markdown
+  if (!categories.length) return renderMD(text);
+
+  const lvlColors = { L1:'#FEE2E2', L2:'#FEF9C3', L3:'#DBEAFE', L4:'#DCFCE7' };
+  const lvlText   = { L1:'#991B1B', L2:'#854D0E', L3:'#1E40AF', L4:'#166534' };
+  const lvlBorder = { L1:'#FECACA', L2:'#FDE68A', L3:'#BFDBFE', L4:'#BBF7D0' };
+
+  let html = `<div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+    <thead>
+      <tr>
+        <th style="padding:8px 10px;background:var(--ink);color:var(--cream);font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1px;text-align:left;width:22%;">CATEGORY</th>
+        ${['L1','L2','L3','L4'].map(l=>`
+        <th style="padding:8px 10px;background:${lvlColors[l]};color:${lvlText[l]};font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1px;text-align:center;border-bottom:2px solid ${lvlBorder[l]};">
+          LEVEL ${l.slice(1)}<br><span style="font-size:.55rem;font-weight:400;">${l==='L1'?'50–59%':l==='L2'?'60–69%':l==='L3'?'70–79%':'80–100%'}</span>
+        </th>`).join('')}
+      </tr>
+    </thead>
+    <tbody>
+      ${categories.map((cat,i)=>`
+      <tr style="background:${i%2===0?'var(--paper)':'var(--cream)'};">
+        <td style="padding:9px 10px;font-weight:600;font-size:.8rem;border-bottom:1px solid var(--border);vertical-align:top;">${cat.name}</td>
+        ${['L1','L2','L3','L4'].map(l=>`
+        <td style="padding:9px 10px;border-bottom:1px solid var(--border);border-left:1px solid var(--border);vertical-align:top;color:#2A2520;line-height:1.5;">
+          ${cat.levels[l] || '<span style="color:var(--muted);font-style:italic;">—</span>'}
+        </td>`).join('')}
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  </div>`;
+
+  return html;
 }
 
 // ============================================================
