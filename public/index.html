@@ -2161,6 +2161,14 @@ async function removeStu(sid){
   renderR();
 }
 
+async function assignStudentToClass(sid, classId) {
+  const cid = classId || null;
+  await db.from('students').update({class_id: cid}).eq('id', sid);
+  const s = students.find(x => x.id === sid);
+  if (s) s.classId = cid;
+  renderR();
+}
+
 function toggleIEP(sid){const el=document.getElementById('iep-'+sid);el.style.display=el.style.display==='block'?'none':'block';}
 
 async function saveIEP(sid){
@@ -2175,13 +2183,30 @@ async function saveIEP(sid){
 function renderR(){
   document.getElementById('rCount').textContent=`(${students.length})`;
   const g=document.getElementById('rGrid');
-  if(!students.length){g.innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;grid-column:1/-1;">No students yet. Add students above.</div>';return;}
-  g.innerHTML=students.map((s,i)=>`
-    <div class="sc ${s.iep?'iep':''}" id="sc-${s.id}">
+  if(!students.length){
+    g.innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;grid-column:1/-1;">No students yet. Add students above.</div>';
+    return;
+  }
+  const hasClasses = classes.length > 0;
+  g.innerHTML=students.map((s,i)=>{
+    const isUnassigned = hasClasses && !s.classId;
+    const assignedClass = classes.find(c => c.id === s.classId);
+    const classTag = isUnassigned
+      ? '<span style="font-family:\'DM Mono\',monospace;font-size:.52rem;background:#FEF9C3;color:#854D0E;padding:1px 5px;border-radius:3px;border:1px solid #E8C98A;">Unassigned</span>'
+      : (assignedClass && hasClasses ? `<span style="font-family:'DM Mono',monospace;font-size:.52rem;background:var(--sage-l);color:var(--sage);padding:1px 5px;border-radius:3px;border:1px solid #A8C4AB;">${assignedClass.name}</span>` : '');
+    const assignSelect = hasClasses ? `
+      <div style="margin-top:7px;">
+        <select class="roster-assign-sel" data-sid="${s.id}" style="font-family:'DM Sans',sans-serif;font-size:.78rem;padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;background:var(--cream);width:100%;">
+          <option value="">— Move to class —</option>
+          ${classes.map(c=>`<option value="${c.id}" ${c.id===s.classId?'selected':''}>${c.name}</option>`).join('')}
+        </select>
+      </div>` : '';
+    return`
+    <div class="sc ${s.iep?'iep':''} ${isUnassigned?'unassigned':''}" id="sc-${s.id}" style="${isUnassigned?'border-color:#E8C98A;':''}" >
       <div class="sct">
         <div class="av" style="background:${AVCOLORS[i%AVCOLORS.length]}">${s.first[0]}${(s.last||' ')[0]}</div>
         <div style="flex:1;min-width:0;">
-          <div class="sn">${s.first} ${s.last||''} ${s.iep?'<span class="ib">Profile</span>':''}</div>
+          <div class="sn">${s.first} ${s.last||''} ${s.iep?'<span class="ib">Profile</span>':''} ${classTag}</div>
           <div class="sm">${s.grade}${s.notes?' · '+s.notes:''}</div>
         </div>
         <div style="display:flex;gap:3px;">
@@ -2189,6 +2214,7 @@ function renderR(){
           <button class="btn b-out b-sm roster-del-btn" style="padding:2px 6px;color:var(--rust);border-color:var(--rust);" data-sid="${s.id}">✕</button>
         </div>
       </div>
+      ${assignSelect}
       <div class="sie" id="iep-${s.id}">
         <label style="font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin:7px 0 3px;">Learning Profile & Modified Expectations</label>
         <textarea class="sit" id="iept-${s.id}" placeholder="Paste modified expectations...">${s.iep||''}</textarea>
@@ -2197,9 +2223,10 @@ function renderR(){
           <button class="btn b-out b-sm roster-cancel-btn" data-sid="${s.id}">Cancel</button>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
-  // Attach all roster button listeners via JS — no inline UUID onclicks
+  // Attach listeners
   document.querySelectorAll('.roster-edit-btn').forEach(btn => {
     btn.addEventListener('click', function() { toggleIEP(this.dataset.sid); });
   });
@@ -2211,6 +2238,9 @@ function renderR(){
   });
   document.querySelectorAll('.roster-cancel-btn').forEach(btn => {
     btn.addEventListener('click', function() { toggleIEP(this.dataset.sid); });
+  });
+  document.querySelectorAll('.roster-assign-sel').forEach(sel => {
+    sel.addEventListener('change', function() { assignStudentToClass(this.dataset.sid, this.value); });
   });
 }
 
