@@ -2047,15 +2047,20 @@ CRITICAL: Return ONLY a valid JSON object. No markdown fences. Each grade worksh
 
     // Save lesson to Supabase
     if(currentUser) {
-      await db.from('lessons').insert({
+      const { error: insertErr } = await db.from('lessons').insert({
         teacher_id:currentUser.id,
         topic,grades,subject:subj,
         content:parsed,
         expectations: lessonExpectations,
         class_id: activeClassId || null
       });
-      renderLessonsList();
-      showToast('✅ Lesson saved to My Lessons');
+      if (insertErr) {
+        console.error('Lesson save error:', insertErr);
+        showToast('⚠️ Lesson generated but not saved — ' + insertErr.message, 5000);
+      } else {
+        renderLessonsList();
+        showToast('✅ Lesson saved to My Lessons');
+      }
     }
   } catch(e) {
     clearInterval(progInterval);
@@ -4007,7 +4012,8 @@ function exportCSV(){
 let savedLessons = [];
 
 async function renderLessonsList(){
-  const {data}=await db.from('lessons').select('*').order('created_at',{ascending:false}).limit(50);
+  if(!currentUser) return;
+  const {data}=await db.from('lessons').select('*').eq('teacher_id',currentUser.id).order('created_at',{ascending:false}).limit(50);
   if(!data||!data.length){
     document.getElementById('lessonsList').innerHTML='<div style="text-align:center;padding:32px 16px;color:var(--muted);"><div style="font-size:2rem;margin-bottom:10px;">📚</div><div style="font-size:.92rem;font-weight:600;color:var(--ink);margin-bottom:6px;">No lessons yet</div><div style="font-size:.82rem;margin-bottom:16px;">Every lesson you generate is saved here for reuse.</div><label for="tr-plan" class="btn b-sage b-sm" style="cursor:pointer;display:inline-block;">✨ Generate your first lesson →</label></div>';
     savedLessons = [];
