@@ -650,7 +650,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> &nbsp;·&nbsp;
   <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a> &nbsp;·&nbsp;
   <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
-  <span style="font-family:'DM Mono',monospace;font-size:.65rem;">v2.1 · Mar 24 2026</span>
+  <span style="font-family:'DM Mono',monospace;font-size:.65rem;">v2.2 · Mar 25 2026</span>
 </div>
 
 </div><!-- end appScreen -->
@@ -1512,6 +1512,19 @@ async function generate() {
 - Experiment Record: hypothesis, materials, procedure, results — for science experiments
 Use [TEXT BOX] short answer, [LARGE BOX] paragraph/draft, [CIRCLE ONE: A / B / C] multiple choice, [CHECK ALL THAT APPLY: A / B / C] checkboxes, [WORD BANK: w1,w2,w3]. Use emoji headers. 4-6 varied activities. NEVER use underscores for blanks.`;
 
+  // Build worksheet lines and answer key lines outside the template literal to avoid nested backtick issues
+  const wsLines = isSplit
+    ? wsOutputKeys.map((k,i) => '- ' + k + ': worksheet for ' + grades[i] + ' ONLY — ' + wsFormatNote).join('\n')
+    : '- student_worksheet: ' + wsFormatNote;
+  const akLines = isSplit
+    ? answerKeyKeys.map((k,i) => '- ' + k + ': answer key for ' + grades[i] + ' worksheet ONLY. For each question provide the ideal answer. Format: "Q1: [question] -> [ideal answer/acceptable responses]". For multiple choice state the correct letter. For open-ended give key points expected.').join('\n')
+    : hasWorksheet
+      ? '- answer_key: answer key for the student worksheet. For each question provide the ideal answer. Format: "Q1: [question] -> [ideal answer/acceptable responses]". For multiple choice state the correct letter. For open-ended give 2-3 key points expected at Level 3.'
+      : '';
+  const splitExpNote = isSplit
+    ? 'For split classes ALSO include "grade" field (e.g. "Grade 4") to indicate which grade each expectation applies to. Return 1-2 expectations per grade.'
+    : 'Return 2-5 most relevant expectations.';
+
   const prompt=`You are an expert Ontario elementary SSC teacher. Generate a classroom-ready lesson package.
 Grade(s): ${gradeDesc}
 Subject: ${subj}
@@ -1528,12 +1541,12 @@ Return ONLY valid JSON with keys: ${allOutputKeys.map(k=>'"'+k+'"').join(', ')},
 Each value is a markdown string except "expectations" which is a JSON array:
 - Use ## major sections, ### subsections, **bold**, - bullets
 - lesson_plan: timing (0:00-0:10), Minds On/Action/Consolidation, materials
-${isSplit ? wsOutputKeys.map((k,i)=>`- ${k}: worksheet for ${grades[i]} ONLY — ${wsFormatNote}`).join('\n') : `- student_worksheet: ${wsFormatNote}`}
+${wsLines}
 - reading_resource: original 200-300 word passage appropriate for the grade(s)
 - assessment_rubric: Ontario Achievement Chart. Use ## for each category (e.g. "## Knowledge & Understanding", "## Communication", "## Application"). Under each category use ### Level 1, ### Level 2, ### Level 3, ### Level 4 with one sentence describing achievement at that level.${iepStudents.length?' Include a modified criteria category for IEP students.':''}
 - differentiation_tips: per-grade and per-student strategies
-${isSplit ? answerKeyKeys.map((k,i)=>`- ${k}: answer key for ${grades[i]} worksheet ONLY. For each question in that worksheet, provide the ideal answer. Format as: "Q1: [question text] → [ideal answer/acceptable responses]" on separate lines. For multiple choice, state the correct letter. For open-ended, give key points expected.`).join('\n') : hasWorksheet ? `- answer_key: answer key for the student worksheet. For each question, provide the ideal answer. Format as: "Q1: [question text] → [ideal answer/acceptable responses]" on separate lines. For multiple choice, state the correct letter. For open-ended, give 2-3 key points expected at Level 3.` : ''}
-- expectations: JSON array of expectation objects. Use Ontario 2023 Language curriculum ONLY. Codes use strand-letter format: C2.3, D1.1, B3.2 — NEVER grade-prefixed (not 4.R1.2). Each object must have: "code" (e.g. "C2.3"), "desc" (specific expectation text for the grade), "strand" (single letter A/B/C/D), "band" (grade band: "1-3", "4-6", or "7-8"). ${isSplit ? `For split classes ALSO include "grade" field (e.g. "Grade 4") to indicate which grade each expectation applies to. Return 1-2 expectations per grade.` : 'Return 2-5 most relevant expectations.'} ${preMatchedExp.length?'Prioritise teacher-requested expectations.':''}
+${akLines}
+- expectations: JSON array of expectation objects. Use Ontario 2023 Language curriculum ONLY. Codes use strand-letter format: C2.3, D1.1, B3.2 — NEVER grade-prefixed (not 4.R1.2). Each object must have: "code" (e.g. "C2.3"), "desc" (specific expectation text for the grade), "strand" (single letter A/B/C/D), "band" (grade band: "1-3", "4-6", or "7-8"). ${splitExpNote} ${preMatchedExp.length?'Prioritise teacher-requested expectations.':''}
 CRITICAL: Return ONLY a valid JSON object. No markdown fences. Each grade worksheet must be its own top-level key.`;
 
   try {
