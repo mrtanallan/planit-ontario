@@ -488,10 +488,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <div style="display:flex;align-items:center;gap:10px;margin-top:7px;flex-wrap:wrap;">
             <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.78rem;color:var(--ink);">
               <input type="checkbox" id="expPinOnly" style="accent-color:var(--sage);width:13px;height:13px;">
-              <span><strong>Pin only these</strong> — lesson is built around exactly these expectations, no others added</span>
+              <span><strong>Focus lesson on these expectations only</strong> — AI won't add others</span>
             </label>
           </div>
-          <div style="font-size:.72rem;color:var(--muted);margin-top:5px;">Leave blank and AI picks the best fit. Specify codes to guarantee coverage — useful when finishing report card expectations.</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:5px;">Leave blank to let AI choose. Enter specific codes (e.g. C1.3, D2.1) to guarantee they're covered — helpful when finishing expectations before report cards.</div>
         </div>
       </div>
       <button class="btn b-ink b-full" id="genBtn" onclick="generate()">✨ Generate Lesson</button>
