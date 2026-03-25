@@ -440,7 +440,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
   <!-- Step 3 -->
   <div id="s3" style="display:none;">
-    <div class="ban ban-b"><span>📤</span><span><strong>Share to Students:</strong> Opens Google Classroom pre-filled — you confirm before anything posts.</span></div>
+
     <div id="shareCards"></div>
     <div class="brow" style="margin-top:8px;">
       <button class="btn b-out" onclick="gs(2)">← Back to Edit</button>
@@ -496,7 +496,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="fg" style="margin-bottom:10px;">
         <div class="fi s2"><label>Class Name</label><input type="text" id="newClassName" placeholder="e.g. Grade 6/7 Morning, French Period 2..."></div>
         <div class="fi"><label>Subject Focus (optional)</label><input type="text" id="newClassSubject" placeholder="e.g. Language, Math, French..."></div>
-        <div class="fi full"><label>Class Context — notes for AI lesson generation</label>
+        <div class="fi full"><label>Class Context <span style="font-weight:400;color:var(--muted);">(optional)</span> — notes for AI lesson generation</label>
           <textarea id="newClassContext" style="min-height:60px;" placeholder="e.g. 24 students, 4 ELL, Chromebooks available, strong oral communicators..."></textarea>
         </div>
       </div>
@@ -510,7 +510,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="fg" style="margin-bottom:10px;">
         <div class="fi s2"><label>Class Name</label><input type="text" id="editClassName" placeholder="Class name"></div>
         <div class="fi"><label>Subject Focus</label><input type="text" id="editClassSubject" placeholder="e.g. Language, Math..."></div>
-        <div class="fi full"><label>Class Context — notes for AI lesson generation</label>
+        <div class="fi full"><label>Class Context <span style="font-weight:400;color:var(--muted);">(optional)</span> — notes for AI lesson generation</label>
           <textarea id="editClassContext" style="min-height:60px;" placeholder="e.g. 24 students, 4 ELL, Chromebooks available..."></textarea>
         </div>
       </div>
@@ -665,7 +665,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> &nbsp;·&nbsp;
   <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a> &nbsp;·&nbsp;
   <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
-  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v2.6 · Mar 25 2026</span>
+  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v2.8 · Mar 25 2026</span>
 </div>
 
 </div><!-- end appScreen -->
@@ -1070,13 +1070,17 @@ function dismissWelcomeBanner() {
 // ============================================================
 // LOAD USER DATA FROM SUPABASE
 // ============================================================
+let _classIdInitialized = false; // track if user has explicitly chosen a class
 async function loadUserData() {
   // Load classes first
   const {data:classData} = await db.from('classes').select('*').order('created_at');
   if(classData) {
     classes = classData;
-    // Set active class to first class if none selected yet
-    if(!activeClassId && classes.length > 0) activeClassId = classes[0].id;
+    // Only auto-select first class on very first load, not when user chose "All Classes"
+    if(!_classIdInitialized && classes.length > 0) {
+      activeClassId = classes[0].id;
+      _classIdInitialized = true;
+    }
   }
 
   // Load students — filtered by active class if one is set
@@ -1413,6 +1417,7 @@ function renderAssessClassTabs() {
       const cid = this.dataset.cid;
       if (cid === activeClassId || (!cid && !activeClassId)) return; // no change
       activeClassId = cid || null;
+      _classIdInitialized = true; // user explicitly chose, don't auto-override
       showLoading('Switching class...');
       await loadUserData();
       hideLoading();
@@ -1553,7 +1558,7 @@ async function generate() {
   if(document.getElementById('ck-rb').checked)outputs.push('assessment_rubric');
   if(document.getElementById('ck-dt').checked)outputs.push('differentiation_tips');
   // Preferred display order: lesson plan → worksheet → reading → rubric → differentiation
-  const ORDER = ['lesson_plan','student_worksheet','reading_resource','assessment_rubric','differentiation_tips'];
+  const ORDER = ['lesson_plan','reading_resource','student_worksheet','assessment_rubric','differentiation_tips'];
   const getOrder = k => {
     const idx = ORDER.findIndex(o => k === o || k.startsWith(o+'_'));
     return idx === -1 ? 99 : idx;
@@ -1591,7 +1596,7 @@ async function generate() {
     ...wsOutputKeys
   ];
   // Re-sort so worksheets appear after lesson plan but before rubric/reading
-  const EDIT_ORDER = ['lesson_plan','student_worksheet','answer_key','reading_resource','differentiation_tips','assessment_rubric'];
+  const EDIT_ORDER = ['lesson_plan','reading_resource','student_worksheet','answer_key','differentiation_tips','assessment_rubric'];
   outputKeys.sort((a,b) => {
     const ai = EDIT_ORDER.findIndex(o => a===o || a.startsWith(o+'_'));
     const bi = EDIT_ORDER.findIndex(o => b===o || b.startsWith(o+'_'));
@@ -1819,36 +1824,46 @@ function buildShareCards(outputs){
   const sh=outputs.filter(k=>SHAREABLE.includes(k));
   if(!sh.length){c.innerHTML='<div style="color:var(--muted);font-style:italic;">No shareable content selected.</div>';return;}
   const hasReading=outputs.includes('reading_resource');
+  const isSplitWS=outputs.some(k=>k.match(/student_worksheet_[A-D]$/));
   c.innerHTML=sh.map(k=>{
     const isWS=k==='student_worksheet';
+    const isSplitWSKey=k.match(/student_worksheet_[A-D]$/);
     const isRubric=k==='assessment_rubric';
     const isReading=k==='reading_resource';
     let desc='';
     let btns='';
     if(isWS){
-      desc='Share directly to students via link';
-      btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit first</button>
-            <button class="btn b-sage b-sm" onclick="getStudentLink('student_worksheet', false)">🔗 Get Student Link</button>`;
+      desc='Students open the link, enter their name, and submit';
+      btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit</button>
+            <button class="btn b-out b-sm" onclick="downloadPDF('student_worksheet')">📄 PDF</button>
+            <button class="btn b-sage b-sm" onclick="getStudentLink('student_worksheet', false)">🔗 Get Link</button>`;
+    } else if(isSplitWSKey){
+      const gradeLetters=['A','B','C','D'];
+      const letter=k.slice(-1);
+      const gradeIdx=gradeLetters.indexOf(letter);
+      const gradeName=(curSess?.grades||[])[gradeIdx]||('Grade '+(gradeIdx+1));
+      desc='Students open the link, enter their name, and submit';
+      btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit</button>
+            <button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button>
+            <button class="btn b-sage b-sm" onclick="getStudentLink('${k}', true)">🔗 One link (all grades)</button>
+            <button class="btn b-out b-sm" onclick="getStudentLink('${k}', false)" style="font-size:.72rem;">🔗 ${gradeName} only</button>`;
     } else if(isReading){
-      desc='Teacher resource — download as PDF'+(hasReading&&outputs.includes('student_worksheet')?' or attach to worksheet':'');
-      btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit first</button>
-            <button class="btn b-out b-sm" onclick="downloadPDF('reading_resource')">📄 Download PDF</button>`;
+      desc='Teacher resource — print or attach alongside the worksheet';
+      btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit</button>
+            <button class="btn b-out b-sm" onclick="downloadPDF('reading_resource')">📄 PDF</button>`;
     } else if(isRubric){
-      desc='Teacher resource — download as PDF for your records';
-      btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit first</button>
-            <button class="btn b-out b-sm" onclick="downloadPDF('assessment_rubric')">📄 Download PDF</button>`;
+      desc='Teacher resource — download for your records';
+      btns=`<button class="btn b-out b-sm" onclick="gs(2)">✏️ Edit</button>
+            <button class="btn b-out b-sm" onclick="downloadPDF('assessment_rubric')">📄 PDF</button>`;
     }
     return`<div class="card" style="margin-bottom:10px;">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;">
         <div><div style="font-weight:600;margin-bottom:2px;">${BLABELS[k]}</div><div style="font-size:.8rem;color:var(--muted);">${desc}</div></div>
-        <div class="brow">${btns}</div>
+        <div class="brow" id="share-btns-${k}">${btns}</div>
       </div>
+      <div id="studentLinkDiv-share-${k}"></div>
     </div>`;
   }).join('');
-  // If both worksheet and reading resource exist, add a tip
-  if(outputs.includes('student_worksheet')&&outputs.includes('reading_resource')){
-    c.innerHTML+=`<div class="ban ban-b" style="margin-top:4px;font-size:.78rem;"><span>💡</span><span>Tip: The <strong>Reading Resource</strong> pairs with the Student Worksheet. Print or PDF it and hand it out alongside the student link — or paste it into Google Classroom as an attachment.</span></div>`;
-  }
 }
 
 function openShare(k){shareKey=k;document.getElementById('shareTitle').value=BLABELS[k].replace(/^[^\s]+\s/,'');document.getElementById('shareModal').classList.add('open');}
@@ -1889,10 +1904,14 @@ async function renderAssGrid(){
   let submissionsByStudent = {};
   let wsContentByGrade = {}; // grade -> worksheet text, for question label extraction
   try {
+    // Only fetch worksheets created on or after the current session date
+    // This prevents stale submissions from previous lessons with the same topic name
+    const sessionDate = curSess.date || new Date().toLocaleDateString('en-CA');
     const { data: worksheets } = await db.from('worksheets')
-      .select('id, content, grades')
+      .select('id, content, grades, created_at')
       .eq('teacher_id', currentUser.id)
-      .eq('topic', curSess.task);
+      .eq('topic', curSess.task)
+      .gte('created_at', sessionDate);
     if (worksheets && worksheets.length) {
       // Parse worksheet content to extract question text per grade
       worksheets.forEach(ws => {
@@ -2488,13 +2507,19 @@ async function exportSlides() {
     const prompt = promptLines.filter(l => l !== null).join('\n');
     const res = await authFetch('/api/generate', {
       method: 'POST',
-      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2500,messages:[{role:'user',content:prompt}]})
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3500,messages:[{role:'user',content:prompt}]})
     });
     const data = await res.json();
     const raw = data.content?.map(i=>i.text||'').join('')||'';
     let sd;
     try { sd = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
-    catch(e) { const s=raw.indexOf('{'),en=raw.lastIndexOf('}'); sd=JSON.parse(raw.slice(s,en+1)); }
+    catch(e) {
+      try { const s=raw.indexOf('{'),en=raw.lastIndexOf('}'); sd=JSON.parse(raw.slice(s,en+1)); }
+      catch(e2) {
+        if (!raw || raw.trim().length < 10) throw new Error('JSON Parse error: Empty response — the AI service may be busy. Please try again.');
+        throw new Error('JSON Parse error: The slide content was too long. Try a shorter topic or fewer grades.');
+      }
+    }
     // Fetch Wikipedia image
     let wikiImg = null;
     try { wikiImg = await fetchSlideImage(topic); } catch(e) { /* silent — image is optional */ }
@@ -3143,7 +3168,7 @@ async function getStudentLink(k, allGrades) {
       ? `<div style="font-size:.75rem;color:#2D5C38;margin-bottom:6px;">📌 This link is for ${grades[['A','B','C','D'].indexOf(k.slice(-1))]||'this grade'} students only.</div>`
       : '';
     div.innerHTML = `
-      <div style="font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:#4A7C59;margin-bottom:8px;">🔗 Student Link — paste into Google Classroom</div>
+      <div style="font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:#4A7C59;margin-bottom:8px;">🔗 Student Link</div>
       ${splitNote}
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
         <input type="text" id="studentLinkInput-${k}" value="${link}" readonly
@@ -3158,9 +3183,19 @@ async function getStudentLink(k, allGrades) {
           }).catch(()=>{document.execCommand('copy');});
         ">📋 Copy</button>
       </div>
-      <div style="font-size:.75rem;color:#2D5C38;line-height:1.5;">Paste into Google Classroom. Students open the link, enter their name, and submit. Responses appear in the Assessment tab.</div>`;
-    const cbh = block.querySelector('.cbh');
-    cbh.insertAdjacentElement('afterend', div);
+      <div style="font-size:.75rem;color:#2D5C38;line-height:1.5;">Share this link with students. They open it, enter their name, and submit. Responses appear in the Assessment tab.</div>`;
+    // Show in edit block (Step 2)
+    if (block) {
+      const cbh = block.querySelector('.cbh');
+      if (cbh) cbh.insertAdjacentElement('afterend', div);
+    }
+
+    // Also show in share card (Step 3) — clone the div
+    const shareDiv = document.getElementById('studentLinkDiv-share-' + k);
+    if (shareDiv) {
+      shareDiv.innerHTML = div.innerHTML;
+      shareDiv.style.cssText = 'padding:12px 14px;background:#EAF0EA;border-radius:0 0 8px 8px;border-top:1px solid #A8C4AB;margin-top:10px;';
+    }
 
     btn.textContent = '✅ Link Ready';
     btn.style.background = '#4A7C59';
