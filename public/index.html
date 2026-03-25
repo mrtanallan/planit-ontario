@@ -1087,8 +1087,19 @@ function hideLoading() {
 
 // Authenticated fetch — attaches Supabase JWT so generate.js can verify the caller
 async function authFetch(url, options={}) {
-  const { data: { session } } = await db.auth.getSession();
+  // Try to get a fresh session — refreshes token if expired
+  let session = null;
+  try {
+    const { data } = await db.auth.getSession();
+    session = data?.session;
+    // If token is expiring soon (within 60s) or missing, force refresh
+    if (!session || (session.expires_at && session.expires_at - Math.floor(Date.now()/1000) < 60)) {
+      const { data: refreshed } = await db.auth.refreshSession();
+      if (refreshed?.session) session = refreshed.session;
+    }
+  } catch(e) { /* use whatever session we have */ }
   const token = session?.access_token || '';
+  if (!token) console.warn('authFetch: no token available');
   return fetch(url, {
     ...options,
     headers: {
