@@ -2058,18 +2058,30 @@ CRITICAL: Return ONLY a valid JSON object. No markdown fences. Each grade worksh
 
     // Save lesson to Supabase
     if(currentUser) {
-      const { error: insertErr } = await db.from('lessons').insert({
+      const { data: insertData, error: insertErr } = await db.from('lessons').insert({
         teacher_id:currentUser.id,
         topic,grades,subject:subj,
         content:parsed,
         expectations: lessonExpectations,
         class_id: activeClassId || null
-      });
+      }).select();
       if (insertErr) {
         console.error('Lesson save error:', insertErr);
-        showToast('⚠️ Lesson generated but not saved — ' + insertErr.message, 5000);
+        // Try without class_id in case column doesn't exist yet
+        const { error: insertErr2 } = await db.from('lessons').insert({
+          teacher_id:currentUser.id,
+          topic,grades,subject:subj,
+          content:parsed,
+          expectations: lessonExpectations
+        });
+        if (insertErr2) {
+          showToast('⚠️ Lesson not saved — ' + insertErr2.message, 6000);
+        } else {
+          await renderLessonsList();
+          showToast('✅ Lesson saved to My Lessons');
+        }
       } else {
-        renderLessonsList();
+        await renderLessonsList();
         showToast('✅ Lesson saved to My Lessons');
       }
     }
