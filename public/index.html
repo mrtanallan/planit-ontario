@@ -163,6 +163,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 .lb.L2.sel { background: #FEF9C3; border-color: #EAB308; color: #854D0E; }
 .lb.L3.sel { background: #DBEAFE; border-color: #3B82F6; color: #1E40AF; }
 .lb.L4.sel { background: #DCFCE7; border-color: #22C55E; color: #166534; }
+.lb.am-suggest { border-style: dashed; border-width: 2px; opacity: 0.9; }
+.lb.L1.am-suggest { background: #FEE2E2; border-color: #EF4444; color: #991B1B; }
+.lb.L2.am-suggest { background: #FEF9C3; border-color: #EAB308; color: #854D0E; }
+.lb.L3.am-suggest { background: #DBEAFE; border-color: #3B82F6; color: #1E40AF; }
+.lb.L4.am-suggest { background: #DCFCE7; border-color: #22C55E; color: #166534; }
 .ni { flex: 1; padding: 6px 9px; font-size: 0.8rem; border: 1.5px solid var(--border); border-radius: 6px; background: var(--cream); font-family: 'DM Sans', sans-serif; outline: none; }
 .ni:focus { border-color: var(--sage); }
 .fb { margin-top: 9px; padding: 11px 13px; background: var(--blue-l); border: 1px solid #B0C8E8; border-radius: 6px; font-size: 0.83rem; line-height: 1.65; color: #1E3A6E; display: none; }
@@ -1492,6 +1497,13 @@ async function generate() {
     ...wsOutputKeys
   ];
 
+  // Always generate answer key when a worksheet is being generated (internal, not shown to students)
+  const hasWorksheet = wsOutputKeys.length > 0;
+  const answerKeyKeys = hasWorksheet
+    ? (isSplit ? wsOutputKeys.map(k => k.replace('student_worksheet_','answer_key_')) : ['answer_key'])
+    : [];
+  const allOutputKeys = [...outputKeys, ...answerKeyKeys];
+
   const wsFormatNote = `Choose the most appropriate worksheet FORMAT based on the topic and subject:
 - Questions & Activities: comprehension questions, short answer, multiple choice — for most literacy/social studies lessons
 - Writing Draft: graphic organizer + draft space — for essay, narrative, or persuasive writing topics
@@ -1512,7 +1524,7 @@ ${wsKeyNote}
 ${anonIEP}
 ${expHint}
 Align to Ontario Ministry of Education 2023 curriculum expectations.
-Return ONLY valid JSON with keys: ${outputKeys.map(k=>'"'+k+'"').join(', ')}, "expectations".
+Return ONLY valid JSON with keys: ${allOutputKeys.map(k=>'"'+k+'"').join(', ')}, "expectations".
 Each value is a markdown string except "expectations" which is a JSON array:
 - Use ## major sections, ### subsections, **bold**, - bullets
 - lesson_plan: timing (0:00-0:10), Minds On/Action/Consolidation, materials
@@ -1520,11 +1532,12 @@ ${isSplit ? wsOutputKeys.map((k,i)=>`- ${k}: worksheet for ${grades[i]} ONLY —
 - reading_resource: original 200-300 word passage appropriate for the grade(s)
 - assessment_rubric: Ontario Achievement Chart. Use ## for each category (e.g. "## Knowledge & Understanding", "## Communication", "## Application"). Under each category use ### Level 1, ### Level 2, ### Level 3, ### Level 4 with one sentence describing achievement at that level.${iepStudents.length?' Include a modified criteria category for IEP students.':''}
 - differentiation_tips: per-grade and per-student strategies
+${isSplit ? answerKeyKeys.map((k,i)=>`- ${k}: answer key for ${grades[i]} worksheet ONLY. For each question in that worksheet, provide the ideal answer. Format as: "Q1: [question text] → [ideal answer/acceptable responses]" on separate lines. For multiple choice, state the correct letter. For open-ended, give key points expected.`).join('\n') : hasWorksheet ? `- answer_key: answer key for the student worksheet. For each question, provide the ideal answer. Format as: "Q1: [question text] → [ideal answer/acceptable responses]" on separate lines. For multiple choice, state the correct letter. For open-ended, give 2-3 key points expected at Level 3.` : ''}
 - expectations: JSON array of expectation objects. Use Ontario 2023 Language curriculum ONLY. Codes use strand-letter format: C2.3, D1.1, B3.2 — NEVER grade-prefixed (not 4.R1.2). Each object must have: "code" (e.g. "C2.3"), "desc" (specific expectation text for the grade), "strand" (single letter A/B/C/D), "band" (grade band: "1-3", "4-6", or "7-8"). ${isSplit ? `For split classes ALSO include "grade" field (e.g. "Grade 4") to indicate which grade each expectation applies to. Return 1-2 expectations per grade.` : 'Return 2-5 most relevant expectations.'} ${preMatchedExp.length?'Prioritise teacher-requested expectations.':''}
 CRITICAL: Return ONLY a valid JSON object. No markdown fences. Each grade worksheet must be its own top-level key.`;
 
   try {
-    const maxTok = grades.length >= 4 ? 6000 : isSplit && grades.length >= 2 ? 4000 : 2500;
+    const maxTok = grades.length >= 4 ? 7000 : isSplit && grades.length >= 2 ? 5000 : 3200;
     const res=await authFetch('/api/generate',{method:'POST',body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTok,messages:[{role:'user',content:prompt}]})});
     if(!res.ok) throw new Error(`Server error ${res.status}`);
     const data=await res.json();
@@ -1537,7 +1550,7 @@ CRITICAL: Return ONLY a valid JSON object. No markdown fences. Each grade worksh
       catch(e2){
         // Fallback: extract each key individually — never assign raw blob
         parsed={};
-        outputKeys.forEach(k=>{
+        allOutputKeys.forEach(k=>{
           const m=raw.match(new RegExp('"'+k+'"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"','s'));
           if(m) parsed[k]=m[1].replace(/\\n/g,'\n').replace(/\\"/g,'"');
           // If key not found, leave as empty string — don't assign raw JSON
@@ -1547,6 +1560,11 @@ CRITICAL: Return ONLY a valid JSON object. No markdown fences. Each grade worksh
     }
 
     genC={};outputKeys.forEach(k=>{genC[k]={orig:parsed[k]||'',cur:parsed[k]||''};});
+
+    // Store answer keys in genC (internal, not displayed in edit blocks)
+    answerKeyKeys.forEach(k=>{
+      if(parsed[k]) genC[k]={orig:parsed[k],cur:parsed[k]};
+    });
 
     // Store expectations in genC for display
     const lessonExpectations = parsed.expectations || preMatchedExp || [];
@@ -1773,10 +1791,18 @@ async function renderAssGrid(){
       : (Object.keys(genC).find(k => k.startsWith('student_worksheet')) || '');
     const wsQuestions = wsKey && genC[wsKey] ? extractWSQuestions(genC[wsKey]?.cur || '') : {};
     const rubricText = genC['assessment_rubric']?.cur || '';
+    // Find answer key for this student's grade
+    const akKey = gradeIndex >= 0 ? ('answer_key_'+gradeLetters[gradeIndex]) : 'answer_key';
+    const answerKeyText = genC[akKey]?.cur || genC['answer_key']?.cur || '';
+    const canAutoMark = !!(sub && sub.responses && Object.keys(sub.responses).length > 0 && answerKeyText);
 
     const subHtml = sub ? `
       <div style="margin-top:10px;">
-        <button class="btn b-out b-sm sub-toggle-btn" style="font-size:.7rem;margin-bottom:7px;">▼ View submitted work</button>
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:7px;">
+          <button class="btn b-out b-sm sub-toggle-btn" style="font-size:.7rem;">▼ View submitted work</button>
+          ${canAutoMark ? `<button class="btn b-sm automark-btn" data-sid="${s.id}" style="font-size:.7rem;background:#4A7C59;color:white;border:none;display:flex;align-items:center;gap:4px;">🤖 Auto-mark</button>` : ''}
+        </div>
+        <div id="am-result-${s.id}" style="display:none;"></div>
         <div class="sub-content" style="display:none;">
           <div style="background:var(--blue-l);border:1px solid #B0C8E8;border-radius:7px;padding:11px 13px;font-size:.82rem;margin-bottom:6px;">
             <div style="font-family:'DM Mono',monospace;font-size:.58rem;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">📥 Submitted ${new Date(sub.submitted_at).toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'})} · ${new Date(sub.submitted_at).toLocaleDateString('en-CA')}</div>
@@ -1881,11 +1907,28 @@ async function renderAssGrid(){
       this.textContent = open ? '📏 View Rubric' : '📏 Hide Rubric';
     });
   });
+  // Attach auto-mark button listeners
+  document.querySelectorAll('.automark-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      const sid = this.dataset.sid;
+      const studentObj = students.find(s => s.id === sid);
+      if (!studentObj) return;
+      const gradeLetters = ['A','B','C','D','E','F'];
+      const gradeIndex = (curSess?.grades||[]).indexOf(studentObj.grade);
+      const akKey = gradeIndex >= 0 ? ('answer_key_'+gradeLetters[gradeIndex]) : 'answer_key';
+      const answerKey = genC[akKey]?.cur || genC['answer_key']?.cur || '';
+      const rubric = genC['assessment_rubric']?.cur || '';
+      // Find the submission for this student from the in-memory map
+      const sub = submissionsByStudent[sid];
+      if (!sub) return;
+      await autoMarkStudent(sid, studentObj, sub.responses, answerKey, rubric, this);
+    });
+  });
 }
 
 function sl(sid,level,btn){
   const already=btn.classList.contains('sel');
-  document.getElementById('ar-'+sid).querySelectorAll('.lb').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('ar-'+sid).querySelectorAll('.lb').forEach(b=>b.classList.remove('sel','am-suggest'));
   const d=document.getElementById('ld-'+sid);
   if(already){
     // Deselect — remove mark
@@ -1904,6 +1947,122 @@ function sl(sid,level,btn){
 }
 
 function sn(sid){if(!curSess.marks[sid])curSess.marks[sid]={};curSess.marks[sid].notes=document.getElementById('nt-'+sid)?.value||'';}
+
+// ============================================================
+// AUTO-MARK — AI-suggested level from student responses
+// ============================================================
+async function autoMarkStudent(sid, studentObj, responses, answerKey, rubric, btn) {
+  const resultDiv = document.getElementById('am-result-'+sid);
+  if (!resultDiv) return;
+
+  btn.disabled = true;
+  btn.textContent = '🤖 Marking...';
+
+  // Build a readable responses string
+  const responsesText = Object.entries(responses)
+    .filter(([,v]) => v && (Array.isArray(v) ? v.length > 0 : v !== '—' && v !== ''))
+    .map(([q,a]) => `${q}: ${Array.isArray(a) ? a.join(', ') : a}`)
+    .join('
+');
+
+  const prompt = `You are an Ontario elementary teacher marking a student worksheet. Use the Ontario Achievement Chart levels (Level 1–4).
+
+ANSWER KEY:
+${answerKey}
+
+${rubric ? `RUBRIC:
+${rubric}
+` : ''}
+STUDENT RESPONSES:
+${responsesText}
+
+Evaluate the student's responses against the answer key and rubric. Respond ONLY with valid JSON in this exact format:
+{
+  "suggested_level": "L3",
+  "level_label": "Level 3",
+  "rationale": "2-3 sentence overall rationale for this level",
+  "per_question": [
+    {"question": "q1", "feedback": "Brief feedback on this response", "score": "✓" }
+  ]
+}
+For suggested_level use exactly: L1, L1+, L2, L2+, L3, L3+, or L4.
+For per_question score use: ✓ (correct/strong), ~ (partial), or ✗ (incorrect/missing).
+Keep rationale concise — 2-3 sentences max. Keep per_question feedback to one short sentence each.
+Return ONLY valid JSON. No markdown fences.`;
+
+  try {
+    const res = await authFetch('/api/generate', {
+      method: 'POST',
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        messages: [{role:'user', content: prompt}]
+      })
+    });
+    if (!res.ok) throw new Error('Server error');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+    const raw = data.content.map(i=>i.text||'').join('');
+    let result;
+    try { result = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
+    catch(e) { const s=raw.indexOf('{'),e2=raw.lastIndexOf('}'); result=JSON.parse(raw.slice(s,e2+1)); }
+
+    const level = result.suggested_level || 'L3';
+    const label = result.level_label || level;
+    const rationale = result.rationale || '';
+    const perQ = result.per_question || [];
+
+    // Level colour mapping
+    const base = level.replace(/[+-]/g,'');
+    const lvlCols = {L1:'var(--rust)',L2:'var(--amber)',L3:'var(--blue)',L4:'var(--sage)'};
+    const lvlBgs  = {L1:'var(--rust-l)',L2:'var(--amber-l)',L3:'var(--blue-l)',L4:'var(--sage-l)'};
+    const col = lvlCols[base] || 'var(--muted)';
+    const bg  = lvlBgs[base]  || 'var(--cream)';
+
+    // Show result panel
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+      <div style="background:${bg};border:1.5px dashed ${col};border-radius:8px;padding:11px 13px;margin-bottom:8px;font-size:.82rem;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap;">
+          <span style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:${col};">🤖 AI Suggestion</span>
+          <span style="font-family:'DM Mono',monospace;font-size:.8rem;font-weight:600;color:${col};background:white;padding:2px 9px;border-radius:6px;border:1.5px solid ${col};">${label}</span>
+          <span style="font-size:.72rem;color:var(--muted);">Review & adjust below</span>
+        </div>
+        ${rationale ? `<div style="color:var(--ink);margin-bottom:${perQ.length?'8px':'0'};line-height:1.5;">${rationale}</div>` : ''}
+        ${perQ.length ? `<div style="display:flex;flex-direction:column;gap:4px;">${perQ.map(q=>`
+          <div style="display:flex;gap:6px;align-items:baseline;font-size:.78rem;">
+            <span style="font-family:'DM Mono',monospace;min-width:20px;text-align:center;font-size:.85rem;">${q.score||'~'}</span>
+            <span style="color:var(--muted);font-family:'DM Mono',monospace;min-width:28px;">${q.question}</span>
+            <span>${q.feedback||''}</span>
+          </div>`).join('')}</div>` : ''}
+        <button onclick="document.getElementById('am-result-${sid}').style.display='none'" style="margin-top:9px;font-size:.7rem;background:none;border:none;cursor:pointer;color:var(--muted);padding:0;">✕ Dismiss</button>
+      </div>`;
+
+    // Pre-fill the level button (dashed outline = AI suggestion, not yet confirmed)
+    const levelBtns = document.getElementById('ar-'+sid)?.querySelectorAll('.lb');
+    if (levelBtns) {
+      levelBtns.forEach(b => b.classList.remove('sel','am-suggest'));
+      const matchBtn = [...levelBtns].find(b => b.dataset.level === level);
+      if (matchBtn) {
+        matchBtn.classList.add('am-suggest');
+        // Pre-fill curSess mark so teacher can just hit Save
+        if (!curSess.marks[sid]) curSess.marks[sid] = {};
+        curSess.marks[sid].level = level;
+        const d = document.getElementById('ld-'+sid);
+        const num = base.replace('L','');
+        const sfx = level.includes('+') ? '+' : level.includes('-') ? '−' : '';
+        if (d) { d.textContent = 'Level '+num+sfx+' ● (AI)'; d.style.color = col; }
+      }
+    }
+
+    btn.textContent = '🤖 Re-mark';
+  } catch(e) {
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `<div style="color:var(--rust);font-size:.78rem;padding:8px 0;">Auto-mark failed: ${e.message}. Please mark manually.</div>`;
+    btn.textContent = '🤖 Auto-mark';
+  }
+  btn.disabled = false;
+}
 
 async function saveAss(){
   const assessed=Object.keys(curSess.marks).filter(sid=>curSess.marks[sid].level);
@@ -2626,22 +2785,29 @@ async function getStudentLink(k, allGrades) {
     if (isSplitWS && allGrades) {
       // Combined link — all grade worksheets in one, student picks grade
       const gradesContent = {};
+      const answerKeysContent = {};
       ['A','B','C','D'].forEach((letter, idx) => {
         const wsKey = `student_worksheet_${letter}`;
+        const akKey = `answer_key_${letter}`;
         if (genC[wsKey]?.cur && grades[idx]) {
           gradesContent[grades[idx]] = genC[wsKey].cur;
+        }
+        if (genC[akKey]?.cur && grades[idx]) {
+          answerKeysContent[grades[idx]] = genC[akKey].cur;
         }
       });
       contentPayload = JSON.stringify({
         worksheet: genC[k]?.cur || '',
         reading: readingContent,
-        grades_content: gradesContent
+        grades_content: gradesContent,
+        answer_keys: answerKeysContent
       });
     } else {
       // Single grade link — just this worksheet
       contentPayload = JSON.stringify({
         worksheet: genC[k]?.cur || '',
-        reading: readingContent
+        reading: readingContent,
+        answer_key: genC['answer_key']?.cur || ''
       });
     }
 
