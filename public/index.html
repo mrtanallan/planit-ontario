@@ -1308,7 +1308,7 @@ function handleOAuthRedirect() {
       const accountTab = document.getElementById('tr-account');
       if (accountTab) { accountTab.checked = true; loadAccountPage(); }
       window.history.replaceState({}, '', window.location.pathname);
-    }, 800);
+    }, 1500);
   }
 }
 
@@ -4856,30 +4856,35 @@ async function checkGoogleConnection() {
   if (!statusEl) return;
 
   try {
-    const { data, error } = await db.auth.getUserIdentities();
-    if (error) throw error;
-    const identities = data?.identities || [];
+    // Re-fetch fresh user to get latest identities after OAuth redirect
+    const { data: { user: freshUser } } = await db.auth.getUser();
+    const user = freshUser || currentUser;
+    if (user) currentUser = user;
+
+    // Check identities array directly on user object (available on all Supabase plans)
+    const identities = user?.identities || [];
     const googleIdentity = identities.find(i => i.provider === 'google');
 
-    if (googleIdentity) {
-      const googleEmail = googleIdentity?.identity_data?.email || '';
-      statusEl.innerHTML = '<span style="color:var(--sage);">✅ Connected</span>' +
-        (googleEmail ? ' · <span style="color:var(--muted);">' + googleEmail + '</span>' : '');
-      if (btn) { btn.textContent = '✓ Google Connected'; btn.disabled = true; btn.style.opacity = '.6'; }
-    } else {
-      // Check if signed in via Google (identity in user metadata)
-      const isGoogleUser = currentUser?.app_metadata?.provider === 'google';
-      if (isGoogleUser) {
-        statusEl.innerHTML = '<span style="color:var(--sage);">✅ Signed in with Google</span>';
-        if (btn) { btn.textContent = '✓ Google Connected'; btn.disabled = true; btn.style.opacity = '.6'; }
-      } else {
-        statusEl.textContent = 'Not connected — link Google to export slides directly to Drive.';
-        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+    // Also check app_metadata for Google sign-in users
+    const isGoogleProvider = user?.app_metadata?.provider === 'google' ||
+      (user?.app_metadata?.providers || []).includes('google');
+
+    if (googleIdentity || isGoogleProvider) {
+      const googleEmail = googleIdentity?.identity_data?.email ||
+        user?.user_metadata?.email || '';
+      statusEl.innerHTML = '<span style="color:var(--sage);">✅ Google connected</span>' +
+        (googleEmail ? ' · <span style="color:var(--muted);font-size:.75rem;">' + googleEmail + '</span>' : '');
+      if (btn) {
+        btn.innerHTML = '✓ Google Connected';
+        btn.disabled = true;
+        btn.style.opacity = '.6';
       }
+    } else {
+      statusEl.textContent = 'Not connected — link Google to export slides directly to Drive.';
+      if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
     }
   } catch(e) {
-    // getUserIdentities may not be available on all Supabase plans — degrade gracefully
-    statusEl.textContent = 'Connect Google to export slides directly to Drive.';
+    statusEl.textContent = 'Connect Google to export slides to Drive.';
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
   }
 }
