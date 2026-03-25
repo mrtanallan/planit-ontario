@@ -336,12 +336,12 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 <nav>
   <div class="logo">Teacher<span>AI</span></div>
   <div class="nav-tabs">
-    <label class="tab" for="tr-plan"><span class="tab-full">📅 Plan & Teach</span><span class="tab-short">📅 Plan</span></label>
     <label class="tab" for="tr-roster"><span class="tab-full">👥 Class Roster</span><span class="tab-short">👥 Roster</span></label>
-    <label class="tab" for="tr-assess"><span class="tab-full">📊 Assessment</span><span class="tab-short">📊 Assess</span></label>
+    <label class="tab" for="tr-plan"><span class="tab-full">✨ Generate</span><span class="tab-short">✨ Generate</span></label>
     <label class="tab" for="tr-lessons"><span class="tab-full">📚 My Lessons</span><span class="tab-short">📚 Lessons</span></label>
-    <label class="tab" for="tr-rc"><span class="tab-full">📝 Report Cards</span><span class="tab-short">📝 Reports</span></label>
+    <label class="tab" for="tr-assess"><span class="tab-full">📊 Assessment</span><span class="tab-short">📊 Assess</span></label>
     <label class="tab" for="tr-exp"><span class="tab-full">🎯 Expectations</span><span class="tab-short">🎯 Exp.</span></label>
+    <label class="tab" for="tr-rc"><span class="tab-full">📝 Report Cards</span><span class="tab-short">📝 Reports</span></label>
   </div>
   <div class="nav-user">
     <span class="nav-email" id="navEmail"></span>
@@ -770,6 +770,12 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 <!-- ===== EXPECTATIONS TRACKER ===== -->
 <div class="page" id="pg-exp">
   <div class="ph"><h1>Expectations <em>Tracker</em></h1><p>Ontario 2023 Language curriculum coverage across your lessons this term. Generated automatically when you create lessons.</p></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+    <label style="font-size:.82rem;font-weight:500;color:var(--ink);">Filter by class:</label>
+    <select id="expClassFilter" onchange="renderExpectationsTracker()" style="font-family:'DM Sans',sans-serif;font-size:.82rem;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--paper);">
+      <option value="">All classes</option>
+    </select>
+  </div>
   <div id="expTrackerContent"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">Generate lessons to start tracking expectations coverage.</div></div>
 </div>
 
@@ -2067,7 +2073,8 @@ CRITICAL: Return ONLY a valid JSON object. No markdown fences. Each grade worksh
         teacher_id:currentUser.id,
         topic,grades,subject:subj,
         content:parsed,
-        expectations: lessonExpectations
+        expectations: lessonExpectations,
+        class_id: activeClassId || null
       });
       renderLessonsList();
     }
@@ -4737,9 +4744,26 @@ function renderExpectationsTracker() {
   const el = document.getElementById('expTrackerContent');
   if (!el) return;
 
-  // Collect all expectations from saved lessons
+  // Populate class filter dropdown
+  const filterEl = document.getElementById('expClassFilter');
+  if (filterEl && classes.length > 0) {
+    const currentVal = filterEl.value;
+    filterEl.innerHTML = '<option value="">All classes</option>' +
+      classes.map(c => `<option value="${c.id}" ${c.id === currentVal ? 'selected' : ''}>${c.name}</option>`).join('');
+  }
+
+  // Get selected class filter
+  const selectedClassId = filterEl?.value || '';
+
+  // Filter lessons by class if selected
+  // Lessons store class_id — match against selected class
+  const filteredLessons = selectedClassId
+    ? (savedLessons || []).filter(l => l.class_id === selectedClassId)
+    : (savedLessons || []);
+
+  // Collect all expectations from filtered lessons
   const allCovered = {}; // code → {exp, lessonCount, lessons:[]}
-  (savedLessons || []).forEach(l => {
+  filteredLessons.forEach(l => {
     if (!l.expectations || !Array.isArray(l.expectations)) return;
     l.expectations.forEach(e => {
       if (!allCovered[e.code]) allCovered[e.code] = {exp:e, count:0, lessons:[]};
@@ -4756,6 +4780,7 @@ function renderExpectationsTracker() {
   // Stats
   const total = Object.keys(allCovered).length;
   const covered1 = Object.values(allCovered).filter(e => e.count >= 1).length;
+  const lessonLabel = selectedClassId ? (classes.find(c=>c.id===selectedClassId)?.name||'Selected class') : 'All classes';
 
   // Group by strand
   const strands = {A:'Literacy Connections',B:'Foundations of Language',C:'Comprehension',D:'Composition'};
@@ -4772,7 +4797,7 @@ function renderExpectationsTracker() {
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
       <div class="sc2"><div class="sn2" style="color:var(--sage);">${covered1}</div><div class="sl">Expectations covered</div></div>
-      <div class="sc2"><div class="sn2">${(savedLessons||[]).length}</div><div class="sl">Lessons generated</div></div>
+      <div class="sc2"><div class="sn2">${filteredLessons.length}</div><div class="sl">${lessonLabel}</div></div>
       <div class="sc2"><div class="sn2" style="color:var(--muted);">${Object.keys(strands).length}</div><div class="sl">Strands</div></div>
     </div>
     <div class="ban ban-b" style="margin-bottom:16px;font-size:.78rem;">
