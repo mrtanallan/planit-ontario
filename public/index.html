@@ -661,7 +661,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
   <div class="card" style="margin-bottom:16px;">
     <div class="ct">⚙️ Settings</div>
-    <div class="fg" style="margin-bottom:14px;">
+    <div class="fg" style="margin-bottom:16px;">
       <div class="fi">
         <label>Reporting Period</label>
         <select id="rc-term">
@@ -677,35 +677,46 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         </select>
       </div>
       <div class="fi">
-        <label>Character limit <span style="font-weight:400;color:var(--muted);">— typically 500–750; check your board's PowerSchool</span></label>
+        <label>Character limit <span style="font-weight:400;color:var(--muted);">— check your board's PowerSchool (typically 500–750)</span></label>
         <input type="number" id="rc-charlimit" value="500" min="100" max="2000" style="width:100%;">
       </div>
     </div>
-    <!-- Scope filters -->
-    <div class="fg" style="margin-bottom:14px;">
-      <div class="fi">
-        <label>Class <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
-        <select id="rc-class" onchange="updateRCStudentFilter()">
-          <option value="">All classes</option>
-        </select>
+
+    <div style="background:var(--cream);border:1.5px solid var(--border);border-radius:9px;padding:14px 16px;margin-bottom:14px;">
+      <div style="font-family:DM Mono,monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">📋 Choose Who to Generate For</div>
+      <div class="fg" style="margin-bottom:12px;">
+        <div class="fi">
+          <label>Class <span style="color:var(--rust);font-size:.8rem;">✱</span></label>
+          <select id="rc-class" onchange="updateRCStudentFilter()">
+            <option value="">— Select a class —</option>
+          </select>
+        </div>
+        <div class="fi">
+          <label>Grade <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
+          <select id="rc-grade" onchange="updateRCStudentFilter()" disabled>
+            <option value="">All grades</option>
+          </select>
+        </div>
       </div>
-      <div class="fi">
-        <label>Grade <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
-        <select id="rc-grade" onchange="updateRCStudentFilter()">
-          <option value="">All grades</option>
-        </select>
+      <div id="rc-student-area" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+          <label style="font-size:.78rem;font-weight:500;color:var(--ink);">Students</label>
+          <div style="display:flex;gap:8px;">
+            <button type="button" onclick="rcSelectAll(true)" style="font-size:.7rem;background:none;border:none;cursor:pointer;color:var(--sage);text-decoration:underline;">All</button>
+            <button type="button" onclick="rcSelectAll(false)" style="font-size:.7rem;background:none;border:none;cursor:pointer;color:var(--muted);text-decoration:underline;">None</button>
+          </div>
+        </div>
+        <div id="rc-student-checkboxes" style="display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto;"></div>
       </div>
-      <div class="fi s2">
-        <label>Students <span style="font-weight:400;color:var(--muted);">(leave blank for all)</span></label>
-        <div id="rc-student-checkboxes" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 0;max-height:120px;overflow-y:auto;"></div>
-      </div>
+      <div id="rc-no-class-msg" style="font-size:.82rem;color:var(--muted);font-style:italic;text-align:center;padding:8px 0;">Select a class to see students.</div>
     </div>
-    <div id="rc-scope-summary" style="font-size:.78rem;color:var(--sage);margin-bottom:10px;font-weight:500;"></div>
+
+    <div id="rc-scope-summary" style="font-size:.82rem;color:var(--sage);margin-bottom:10px;font-weight:600;"></div>
     <div class="ban ban-b" style="margin-bottom:12px;font-size:.78rem;">
       <span>💡</span>
-      <span>Comments use your <strong>assessment task history</strong> from the Grade Tracker. The more tasks you've assessed, the better the comments. Students sorted A–Z by last name to match PowerSchool order.</span>
+      <span>Comments use your <strong>assessment task history</strong> from the Grade Tracker. The more tasks you've assessed, the better the comments. Students sorted A–Z by last name.</span>
     </div>
-    <button class="btn b-ink b-full" id="rcGenBtn" onclick="generateReportCards()">📝 Generate Comments</button>
+    <button class="btn b-ink b-full" id="rcGenBtn" onclick="generateReportCards()" disabled style="opacity:.5;">📝 Generate Comments</button>
   </div>
 
   <div id="rcResults"></div>
@@ -4152,37 +4163,82 @@ async function loadSubmissions() {
 // ============================================================
 // REPORT CARDS
 // ============================================================
-function populateRCFilters() {
-  // Class dropdown
+let _rcAllStudents = []; // all students across all classes, loaded for RC tab
+
+async function populateRCFilters() {
   const classEl = document.getElementById('rc-class');
   if (!classEl) return;
+
+  // Load ALL students (not filtered by activeClassId)
+  const {data:allStu} = await db.from('students').select('*').eq('teacher_id', currentUser.id).order('last_name');
+  _rcAllStudents = (allStu||[]).map(s => ({
+    id:s.id, first:s.first_name, last:s.last_name||'', grade:s.grade,
+    notes:s.notes||'', classId:s.class_id
+  }));
+
+  // Populate class dropdown
   const prevClass = classEl.value;
-  classEl.innerHTML = '<option value="">All classes</option>' +
+  classEl.innerHTML = '<option value="">— Select a class —</option>' +
     classes.map(c => '<option value="' + c.id + '">' + c.name + (c.subject_focus ? ' · ' + c.subject_focus : '') + '</option>').join('');
-  if (prevClass) classEl.value = prevClass;
-  // If only one class, pre-select it
-  if (classes.length === 1) classEl.value = classes[0].id;
+
+  // Auto-select if only one class
+  if (classes.length === 1) {
+    classEl.value = classes[0].id;
+  } else if (prevClass) {
+    classEl.value = prevClass;
+  }
+
   updateRCStudentFilter();
+}
+
+function rcSelectAll(checked) {
+  document.querySelectorAll('.rc-stu-cb').forEach(cb => { cb.checked = checked; });
+  updateRCSummary();
+}
+
+function updateRCSummary() {
+  const checked = document.querySelectorAll('.rc-stu-cb:checked').length;
+  const summary = document.getElementById('rc-scope-summary');
+  const btn = document.getElementById('rcGenBtn');
+  if (summary) summary.textContent = checked > 0 ? '→ ' + checked + ' student' + (checked !== 1 ? 's' : '') + ' selected' : '';
+  if (btn) { btn.disabled = checked === 0; btn.style.opacity = checked === 0 ? '.5' : '1'; }
 }
 
 function updateRCStudentFilter() {
   const classId = document.getElementById('rc-class')?.value || '';
-  const gradeVal = document.getElementById('rc-grade')?.value || '';
-
-  // Filter students
-  let filtered = [...students];
-  if (classId) filtered = filtered.filter(s => s.classId === classId);
-
-  // Populate grade dropdown from filtered students
   const gradeEl = document.getElementById('rc-grade');
+  const studentArea = document.getElementById('rc-student-area');
+  const noClassMsg = document.getElementById('rc-no-class-msg');
+  const btn = document.getElementById('rcGenBtn');
+
+  if (!classId) {
+    // No class selected — show prompt, disable generate
+    if (studentArea) studentArea.style.display = 'none';
+    if (noClassMsg) noClassMsg.style.display = 'block';
+    if (gradeEl) { gradeEl.disabled = true; gradeEl.innerHTML = '<option value="">All grades</option>'; }
+    if (btn) { btn.disabled = true; btn.style.opacity = '.5'; }
+    const summary = document.getElementById('rc-scope-summary');
+    if (summary) summary.textContent = '';
+    return;
+  }
+
+  if (noClassMsg) noClassMsg.style.display = 'none';
+  if (studentArea) studentArea.style.display = 'block';
+
+  // Filter students by class
+  let filtered = _rcAllStudents.filter(s => s.classId === classId);
+
+  // Populate grade dropdown
+  const prevGrade = gradeEl?.value || '';
+  const gradeOptions = [...new Set(filtered.map(s => s.grade))].filter(Boolean).sort();
   if (gradeEl) {
-    const prevGrade = gradeEl.value;
-    const grades = [...new Set(filtered.map(s => s.grade))].filter(Boolean).sort();
+    gradeEl.disabled = false;
     gradeEl.innerHTML = '<option value="">All grades</option>' +
-      grades.map(g => '<option value="' + g + '"' + (prevGrade===g?' selected':'') + '>' + g + '</option>').join('');
+      gradeOptions.map(g => '<option value="' + g + '"' + (prevGrade===g?' selected':'') + '>' + g + '</option>').join('');
   }
 
   // Apply grade filter
+  const gradeVal = gradeEl?.value || '';
   if (gradeVal) filtered = filtered.filter(s => s.grade === gradeVal);
 
   // Sort A-Z by last name
@@ -4192,22 +4248,20 @@ function updateRCStudentFilter() {
   const cbContainer = document.getElementById('rc-student-checkboxes');
   if (cbContainer) {
     cbContainer.innerHTML = filtered.length === 0
-      ? '<span style="color:var(--muted);font-size:.78rem;font-style:italic;">No students match filters.</span>'
+      ? '<div style="color:var(--muted);font-size:.78rem;font-style:italic;">No students in this class.</div>'
       : filtered.map(s =>
-          '<label style="display:flex;align-items:center;gap:5px;font-size:.78rem;cursor:pointer;padding:3px 7px;border:1px solid var(--border);border-radius:5px;background:var(--paper);">' +
-          '<input type="checkbox" class="rc-stu-cb" data-sid="' + s.id + '" checked style="accent-color:var(--sage);"> ' +
-          (s.last ? s.last + ', ' + s.first : s.first) +
-          ' <span style="font-family:DM Mono,monospace;font-size:.6rem;color:var(--muted);">' + s.grade + '</span>' +
+          '<label style="display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer;padding:5px 9px;border:1px solid var(--border);border-radius:6px;background:var(--paper);">' +
+          '<input type="checkbox" class="rc-stu-cb" data-sid="' + s.id + '" checked style="accent-color:var(--sage);width:14px;height:14px;"> ' +
+          '<span style="flex:1;">' + (s.last ? s.last + ', ' + s.first : s.first) + '</span>' +
+          '<span style="font-family:DM Mono,monospace;font-size:.62rem;color:var(--muted);">' + s.grade + '</span>' +
           '</label>'
         ).join('');
+    cbContainer.querySelectorAll('.rc-stu-cb').forEach(cb => {
+      cb.addEventListener('change', updateRCSummary);
+    });
   }
 
-  // Summary
-  const summary = document.getElementById('rc-scope-summary');
-  if (summary) {
-    const checkedCount = filtered.length;
-    summary.textContent = checkedCount > 0 ? '→ Generating for ' + checkedCount + ' student' + (checkedCount !== 1 ? 's' : '') : '';
-  }
+  updateRCSummary();
 }
 
 async function generateReportCards() {
@@ -4232,18 +4286,17 @@ async function generateReportCards() {
   const lvN = {L1:1,'L1-':.7,'L1+':1.3,L2:2,'L2-':1.7,'L2+':2.3,L3:3,'L3-':2.7,'L3+':3.3,L4:4,'L4-':3.7,'L4+':4.3};
   const lvLabel = {L1:'Level 1',L2:'Level 2',L3:'Level 3',L4:'Level 4'};
 
-  // Get selected students from checkboxes (fall back to all students if none checked)
+  // Get checked students from RC checkboxes
   const checkedSids = new Set(
     [...document.querySelectorAll('.rc-stu-cb:checked')].map(cb => cb.dataset.sid)
   );
-  const scope = checkedSids.size > 0
-    ? students.filter(s => checkedSids.has(s.id))
-    : [...students];
+  const pool = _rcAllStudents.length ? _rcAllStudents : students;
+  const scope = pool.filter(s => checkedSids.has(s.id));
 
-  if (!scope.length) { alert('No students selected.'); btn.disabled=false; btn.textContent='📝 Generate Comments'; return; }
+  if (!scope.length) { alert('Select at least one student.'); btn.disabled=false; btn.textContent='📝 Generate Comments'; return; }
 
   // Sort A-Z by last name (PowerSchool order)
-  const sorted = scope.sort((a,b) => {
+  const sorted = [...scope].sort((a,b) => {
     const la = (a.last||a.first).toLowerCase();
     const lb = (b.last||b.first).toLowerCase();
     return la.localeCompare(lb);
