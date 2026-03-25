@@ -4783,12 +4783,16 @@ function renderExpectationsTracker() {
 // ACCOUNT PAGE
 // ============================================================
 async function loadAccountPage() {
-  // Fill email
-  const emailEl = document.getElementById('acct-email');
-  if (emailEl && currentUser) emailEl.value = currentUser.email || '';
+  // Ensure we have current user — re-fetch if needed
+  if (!currentUser) {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) currentUser = user;
+  }
+  if (!currentUser) return;
 
-  // Check Google connection status
-  checkGoogleConnection();
+  // Fill email (always available)
+  const emailEl = document.getElementById('acct-email');
+  if (emailEl) emailEl.value = currentUser.email || '';
 
   // Fill name from profile
   try {
@@ -4801,18 +4805,28 @@ async function loadAccountPage() {
   const usageEl = document.getElementById('acct-usage');
   if (usageEl) {
     try {
-      const {count:lessonCount} = await db.from('lessons').select('*', {count:'exact',head:true}).eq('teacher_id', currentUser.id);
-      const {count:sessionCount} = await db.from('assessment_sessions').select('*', {count:'exact',head:true}).eq('teacher_id', currentUser.id);
-      const {count:studentCount} = await db.from('students').select('*', {count:'exact',head:true}).eq('teacher_id', currentUser.id);
+      const [
+        {count:lessonCount},
+        {count:sessionCount},
+        {count:studentCount}
+      ] = await Promise.all([
+        db.from('lessons').select('*', {count:'exact',head:true}).eq('teacher_id', currentUser.id),
+        db.from('assessment_sessions').select('*', {count:'exact',head:true}).eq('teacher_id', currentUser.id),
+        db.from('students').select('*', {count:'exact',head:true}).eq('teacher_id', currentUser.id)
+      ]);
+      const since = currentUser.created_at ? new Date(currentUser.created_at).toLocaleDateString('en-CA') : '—';
       usageEl.innerHTML =
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">' +
         '<div class="sc2"><div class="sn2">' + (lessonCount||0) + '</div><div class="sl">Lessons</div></div>' +
         '<div class="sc2"><div class="sn2">' + (sessionCount||0) + '</div><div class="sl">Assessments</div></div>' +
         '<div class="sc2"><div class="sn2">' + (studentCount||0) + '</div><div class="sl">Students</div></div>' +
         '</div>' +
-        '<div style="font-size:.72rem;color:var(--muted);margin-top:10px;">Member since ' + new Date(currentUser.created_at).toLocaleDateString('en-CA') + ' · Account: Free Beta</div>';
+        '<div style="font-size:.72rem;color:var(--muted);margin-top:10px;">Member since ' + since + ' · Account: Free Beta</div>';
     } catch(e) { usageEl.textContent = 'Could not load usage data.'; }
   }
+
+  // Check Google connection — handle gracefully for email/password users
+  checkGoogleConnection();
 }
 
 async function saveProfile() {
@@ -4839,24 +4853,33 @@ async function changePassword() {
 async function checkGoogleConnection() {
   const statusEl = document.getElementById('acct-google-status');
   const btn = document.getElementById('acct-google-btn');
-  if (!statusEl || !currentUser) return;
+  if (!statusEl) return;
 
-  // Check if user has a Google identity linked
-  const { data: { identities } } = await db.auth.getUserIdentities();
-  const googleLinked = identities?.some(i => i.provider === 'google');
-
-  if (googleLinked) {
+  try {
+    const { data, error } = await db.auth.getUserIdentities();
+    if (error) throw error;
+    const identities = data?.identities || [];
     const googleIdentity = identities.find(i => i.provider === 'google');
-    const googleEmail = googleIdentity?.identity_data?.email || '';
-    statusEl.innerHTML = '<span style="color:var(--sage);">✅ Connected</span>' +
-      (googleEmail ? ' · <span style="color:var(--muted);">' + googleEmail + '</span>' : '');
-    if (btn) {
-      btn.textContent = '✓ Google Connected';
-      btn.disabled = true;
-      btn.style.opacity = '.6';
+
+    if (googleIdentity) {
+      const googleEmail = googleIdentity?.identity_data?.email || '';
+      statusEl.innerHTML = '<span style="color:var(--sage);">✅ Connected</span>' +
+        (googleEmail ? ' · <span style="color:var(--muted);">' + googleEmail + '</span>' : '');
+      if (btn) { btn.textContent = '✓ Google Connected'; btn.disabled = true; btn.style.opacity = '.6'; }
+    } else {
+      // Check if signed in via Google (identity in user metadata)
+      const isGoogleUser = currentUser?.app_metadata?.provider === 'google';
+      if (isGoogleUser) {
+        statusEl.innerHTML = '<span style="color:var(--sage);">✅ Signed in with Google</span>';
+        if (btn) { btn.textContent = '✓ Google Connected'; btn.disabled = true; btn.style.opacity = '.6'; }
+      } else {
+        statusEl.textContent = 'Not connected — link Google to export slides directly to Drive.';
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+      }
     }
-  } else {
-    statusEl.textContent = 'Not connected — link your Google account to export slides to Drive.';
+  } catch(e) {
+    // getUserIdentities may not be available on all Supabase plans — degrade gracefully
+    statusEl.textContent = 'Connect Google to export slides directly to Drive.';
     if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
   }
 }
