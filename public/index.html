@@ -370,7 +370,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px;" id="onboardingSteps">
-      <div class="card onboard-step" id="ostep1" style="border-left:3px solid var(--sage);cursor:pointer;" onclick="document.getElementById('tr-roster').checked=true;dismissWelcomeBanner();">
+      <div class="card onboard-step" id="ostep1" style="border-left:3px solid var(--sage);cursor:pointer;" onclick="document.getElementById('tr-roster').checked=true;">
         <div style="font-size:1.4rem;margin-bottom:6px;">👥</div>
         <div style="font-weight:600;font-size:.88rem;margin-bottom:3px;">Step 1 — Add Students</div>
         <div style="font-size:.78rem;color:var(--muted);line-height:1.5;">Go to Class Roster and add your students. Worksheets will link to their names automatically.</div>
@@ -396,7 +396,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <span class="wa">›</span>
     <div class="ws locked" id="ws2" onclick="gs(2)"><div class="wn">2</div>✏️ Review & Edit</div>
     <span class="wa">›</span>
-    <div class="ws locked" id="ws3" onclick="gs(3)"><div class="wn">3</div>📤 Share</div>
+    <div class="ws locked" id="ws3" onclick="gs(3)"><div class="wn">3</div>📦 Resources</div>
     <span class="wa">›</span>
     <div class="ws locked" id="ws4" onclick="gs(4)"><div class="wn">4</div>📊 Assess</div>
     <span class="wa">›</span>
@@ -503,16 +503,19 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div id="editBlocks"></div>
     <div class="brow">
       <button class="btn b-out" onclick="gs(1)">← Back to Plan</button>
-      <button class="btn b-ink" onclick="gs(3)">Continue to Share →</button>
+      <button class="btn b-ink" onclick="gs(3)">Resources →</button>
     </div>
   </div>
 
   <!-- Step 3 -->
   <div id="s3" style="display:none;">
-
+    <div class="ban ban-b" style="margin-bottom:14px;">
+      <span>📦</span>
+      <span><strong>Resources</strong> — Quick access to all shareable content from this lesson. Student worksheet links, PDFs for printing, and rubrics. Bookmark this step when resharing an old lesson.</span>
+    </div>
     <div id="shareCards"></div>
     <div class="brow" style="margin-top:8px;">
-      <button class="btn b-out" onclick="gs(2)">← Back to Edit</button>
+      <button class="btn b-out" onclick="gs(2)">← Back to Review</button>
       <button class="btn b-ink" onclick="gs(4)">Continue to Assess →</button>
     </div>
   </div>
@@ -535,7 +538,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div id="assGrid"><div style="color:var(--muted);font-size:.83rem;font-style:italic;padding:14px;">Add students in Class Roster first.</div></div>
     <div class="brow" style="margin-top:14px;">
       <button class="btn b-sage" onclick="saveAss()">💾 Save Assessment</button>
-      <button class="btn b-out" onclick="gs(3)">← Back to Share</button>
+      <button class="btn b-out" onclick="gs(3)">← Back to Resources</button>
     </div>
   </div>
 
@@ -774,7 +777,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> &nbsp;·&nbsp;
   <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a> &nbsp;·&nbsp;
   <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
-  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v3.4 · Mar 25 2026</span>
+  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v3.5 · Mar 25 2026</span>
 </div>
 
 <!-- ===== ACCOUNT ===== -->
@@ -851,7 +854,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
 <div class="mbg" id="shareModal">
   <div class="modal">
-    <h3>📤 Share to Google Classroom</h3>
+    <h3>📦 Resources</h3>
     <p>Opens Google Classroom pre-filled — you review and post from there.</p>
     <div class="fi" style="margin-bottom:10px;"><label>Post title</label><input type="text" id="shareTitle"></div>
     <div class="fi" style="margin-bottom:16px;"><label>Instructions for students</label><textarea id="shareInst" style="min-height:60px;">Please complete the activities below. Do your best work!</textarea></div>
@@ -1216,7 +1219,7 @@ function showApp() {
       if (!this.checked) return;
       localStorage.setItem('teacherai_tab', this.id);
       // Refresh relevant data when switching to each tab
-      if (this.id === 'tr-plan') { renderClassSelector(); }
+      if (this.id === 'tr-plan') { renderClassSelector(); updateWelcomeBanner(); }
       if (this.id === 'tr-assess') { renderTracker(); loadSubmissions(); renderAssessClassTabs(); }
       if (this.id === 'tr-rc') { populateRCFilters(); }
       if (this.id === 'tr-account') { loadAccountPage(); }
@@ -1928,7 +1931,7 @@ async function generate() {
     ...wsOutputKeys
   ];
   // Re-sort so worksheets appear after lesson plan but before rubric/reading
-  const EDIT_ORDER = ['lesson_plan','reading_resource','student_worksheet','answer_key','differentiation_tips','assessment_rubric'];
+  const EDIT_ORDER = ['lesson_plan','reading_resource','student_worksheet','assessment_rubric','answer_key','differentiation_tips'];
   outputKeys.sort((a,b) => {
     const ai = EDIT_ORDER.findIndex(o => a===o || a.startsWith(o+'_'));
     const bi = EDIT_ORDER.findIndex(o => b===o || b.startsWith(o+'_'));
@@ -2133,6 +2136,7 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic,expectations){
         <div style="display:flex;align-items:center;gap:7px;">
           <span class="cbl">${BLABELS[k]||k}</span>
           ${isWS?'<span style="font-family:\'DM Mono\',monospace;font-size:.55rem;color:var(--blue);background:var(--blue-l);padding:1px 6px;border-radius:3px;">📱 Interactive</span>':''}
+          ${isWS && k==='student_worksheet'?`<span style="font-family:'DM Mono',monospace;font-size:.55rem;color:var(--amber);background:var(--amber-l);padding:1px 6px;border-radius:3px;">${gradeDesc}</span>`:''}
         </div>
         <div class="cba">
           <button class="btn b-out b-sm" onclick="toggleEdit('${k}')">✏️ Edit</button>
