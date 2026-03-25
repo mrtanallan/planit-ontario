@@ -373,6 +373,8 @@ async function submitWorksheet(){
       body:JSON.stringify({worksheet_id:worksheetId,student_name:name,student_id:matchedStudent?.id||null,responses:collectResponses()})
     });
     if(!res.ok)throw new Error('Submit failed');
+    // Hide grade picker if visible (split-grade link)
+    document.querySelector('.pg > div[style*="text-align:center"]')?.remove();
     document.getElementById('worksheetScreen').style.display='none';
     document.getElementById('successScreen').style.display='block';
   }catch(e){btn.disabled=false;btn.textContent='✅ Submit Worksheet';alert('Something went wrong. Please try again.');}
