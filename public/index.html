@@ -482,17 +482,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <textarea id="targetExp" style="min-height:52px;" placeholder='Type expectation codes or plain words — e.g. "making inferences, C1.2, writing paragraphs". Leave blank and AI picks the best ones.'></textarea>
         </div>
       </div>
-      <div id="usageMeter" style="display:none;margin-bottom:10px;padding:9px 13px;background:var(--cream);border:1px solid var(--border);border-radius:7px;font-size:.78rem;color:var(--muted);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-          <span>📊 Lessons this month</span>
-          <span id="usageCount" style="font-family:DM Mono,monospace;font-weight:600;color:var(--ink);">—</span>
-        </div>
-        <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
-          <div id="usageBar" style="height:100%;background:var(--sage);border-radius:2px;width:0%;transition:width .4s;"></div>
-        </div>
-        <div id="usageNote" style="margin-top:4px;font-size:.72rem;"></div>
-      </div>
       <button class="btn b-ink b-full" id="genBtn" onclick="generate()">✨ Generate Lesson</button>
+      <div id="usageMeter" style="display:none;text-align:center;margin-top:8px;">
+        <span style="font-size:.72rem;color:var(--muted);">📊 <span id="usageCount">—</span> &nbsp;·&nbsp; <span id="usageNote" style="color:var(--sage);"></span></span>
+        <div id="usageBar" style="display:none;"></div>
+      </div>
       <div style="margin-top:13px;padding-top:11px;border-top:1px solid var(--border);font-size:.75rem;color:var(--muted);">🍁 Aligned to the <strong>Ontario Curriculum</strong> · Student names anonymized before AI processing · 🇨🇦 Data stored in Canada</div>
     </div>
   </div>
@@ -1789,58 +1783,22 @@ async function loadUsageMeter() {
   try {
     const meter = document.getElementById('usageMeter');
     const countEl = document.getElementById('usageCount');
-    const barEl = document.getElementById('usageBar');
     const noteEl = document.getElementById('usageNote');
     if (!meter || !countEl) return;
 
-    // Get plan
-    const { data: plan } = await db.from('user_plans')
-      .select('plan, monthly_limit, sub_status')
-      .eq('user_id', currentUser.id)
-      .single();
-
-    const limit = plan?.monthly_limit ?? 0;
-    const planName = plan?.plan ?? 'free';
-
-    // Count lessons this month
+    // Count lessons this month from lessons table (usage_log not yet set up)
     const startOfMonth = new Date();
     startOfMonth.setDate(1); startOfMonth.setHours(0,0,0,0);
-    const { count } = await db.from('usage_log')
+    const { count } = await db.from('lessons')
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', currentUser.id)
-      .eq('call_type', 'lesson')
+      .eq('teacher_id', currentUser.id)
       .gte('created_at', startOfMonth.toISOString());
 
     const used = count || 0;
     meter.style.display = 'block';
-
-    if (limit === 0) {
-      // Unlimited (free beta or admin)
-      countEl.textContent = used + ' generated';
-      if (barEl) barEl.style.width = '0%';
-      if (noteEl) noteEl.textContent = 'Unlimited — beta access';
-      if (noteEl) noteEl.style.color = 'var(--sage)';
-    } else {
-      const pct = Math.min(100, Math.round(used / limit * 100));
-      countEl.textContent = used + ' / ' + limit;
-      if (barEl) {
-        barEl.style.width = pct + '%';
-        barEl.style.background = pct >= 90 ? 'var(--rust)' : pct >= 70 ? 'var(--amber)' : 'var(--sage)';
-      }
-      if (noteEl) {
-        if (pct >= 100) {
-          noteEl.textContent = 'Limit reached — upgrade to Pro for unlimited access';
-          noteEl.style.color = 'var(--rust)';
-        } else if (pct >= 80) {
-          noteEl.textContent = (limit - used) + ' lessons remaining this month';
-          noteEl.style.color = 'var(--amber)';
-        } else {
-          noteEl.textContent = planName === 'pro' ? '✓ Pro plan' : 'Free beta';
-          noteEl.style.color = 'var(--muted)';
-        }
-      }
-    }
-  } catch(e) { /* silent — usage meter is non-critical */ }
+    countEl.textContent = used + ' lesson' + (used !== 1 ? 's' : '') + ' this month';
+    if (noteEl) { noteEl.textContent = 'Unlimited — beta access'; noteEl.style.color = 'var(--sage)'; }
+  } catch(e) { /* silent */ }
 }
 
 // ============================================================
