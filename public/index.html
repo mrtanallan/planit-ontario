@@ -665,7 +665,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> &nbsp;·&nbsp;
   <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a> &nbsp;·&nbsp;
   <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
-  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v2.9 · Mar 25 2026</span>
+  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v3.0 · Mar 25 2026</span>
 </div>
 
 </div><!-- end appScreen -->
@@ -3725,17 +3725,25 @@ function extractWSQuestions(text) {
   if (!text) return {};
   const questions = {};
   let qCount = 0;
-  text.split('\n').forEach(line => {
+  const lines = text.split('\n');
+  lines.forEach((line, idx) => {
     const hasField = line.includes('[TEXT BOX]') || line.includes('[LARGE BOX]') ||
                      line.includes('[CIRCLE ONE:') || line.includes('[CHECK ALL THAT APPLY:');
     if (hasField) {
       qCount++;
-      // Extract the question text — strip the marker and numbering
-      const q = line
+      // Extract question text from this line (strip the marker)
+      let q = line
         .replace(/\[TEXT BOX\]|\[LARGE BOX\]|\[CIRCLE ONE:[^\]]*\]|\[CHECK ALL THAT APPLY:[^\]]*\]/g, '')
         .replace(/^[-*\d.]+\s*/, '')
         .replace(/\*\*(.+?)\*\*/g, '$1')
         .trim();
+      // If no text on this line, look back at previous non-empty line for context
+      if (!q) {
+        for (let i = idx - 1; i >= Math.max(0, idx - 3); i--) {
+          const prev = lines[i].replace(/^[-*\d.]+\s*/, '').replace(/\*\*(.+?)\*\*/g, '$1').trim();
+          if (prev && !prev.includes('[') && prev.length > 3) { q = prev; break; }
+        }
+      }
       if (q) questions['q' + qCount] = q;
     }
   });
@@ -3814,7 +3822,7 @@ function renderWS(text){
   text.split('\n').forEach(line=>{
     if(line.startsWith('## ')){h+=`<h2>${line.slice(3)}</h2>`;return;}
     if(line.startsWith('### ')){h+=`<h3>${line.slice(4)}</h3>`;return;}
-    if(line.includes('[TEXT BOX]')){const l=line.replace('[TEXT BOX]','').replace(/^[-*\d.]+\s*/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim();wsN++;h+=`${l?`<div style="font-size:.86rem;margin-bottom:2px;">${l}</div>`:''}<input class="wsi" type="text" placeholder="Write your answer here...">`;return;}
+    if(/\[TEXT BOX\]/i.test(line)){const l=line.replace(/\[TEXT BOX\]/gi,'').replace(/^[-*\d.]+\s*/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\[[^\]]*\]/g,'').trim();wsN++;h+=`${l?`<div style="font-size:.86rem;margin-bottom:2px;">${l}</div>`:''}<input class="wsi" type="text" placeholder="Write your answer here...">`;return;}
     if(line.includes('[LARGE BOX]')){const l=line.replace('[LARGE BOX]','').replace(/^[-*\d.]+\s*/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim();wsN++;h+=`${l?`<div style="font-size:.86rem;margin-bottom:2px;">${l}</div>`:''}<textarea class="wst" placeholder="Write your answer here..."></textarea>`;return;}
     if(line.includes('[CIRCLE ONE:')){const m=line.match(/\[CIRCLE ONE: (.+?)\]/);const pre=line.split('[CIRCLE ONE:')[0].replace(/^[-*\d.]+\s*/,'').trim();if(m){wsN++;const nm='r'+wsN;h+=`${pre?`<div style="font-size:.86rem;margin-bottom:4px;">${pre}</div>`:''}<div class="wsc">${m[1].split('/').map(o=>`<label class="wscho"><input type="radio" name="${nm}"> ${o.trim()}</label>`).join('')}</div>`;return;}}
     if(line.includes('[CHECK ALL THAT APPLY:')){const m=line.match(/\[CHECK ALL THAT APPLY: (.+?)\]/);const pre=line.split('[CHECK ALL THAT APPLY:')[0].replace(/^[-*\d.]+\s*/,'').trim();if(m){wsN++;h+=`${pre?`<div style="font-size:.86rem;margin-bottom:4px;">${pre}</div>`:''}<div class="wsc">${m[1].split('/').map((o,oi)=>`<label class="wscho"><input type="checkbox" id="wc${wsN}-${oi}"> ${o.trim()}</label>`).join('')}</div>`;return;}}
