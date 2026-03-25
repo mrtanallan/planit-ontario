@@ -286,7 +286,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 <div id="authScreen">
   <div class="auth-box">
     <div class="auth-logo">Teacher<span>AI</span></div>
-    <div class="auth-tagline">Ontario's AI teaching platform for SSC & split-grade classrooms</div>
+    <div class="auth-tagline">Stop spending evenings planning. AI lesson plans, auto-marking &amp; report card comments — built for Ontario teachers.</div>
     <div class="auth-tabs">
       <div class="auth-tab on" onclick="switchAuth('login',this)">Sign In</div>
       <div class="auth-tab" onclick="switchAuth('signup',this)">Create Account</div>
@@ -360,9 +360,12 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
         <div style="flex:1;">
           <div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;margin-bottom:4px;">👋 Welcome to TeacherAI</div>
-          <div style="font-size:.86rem;opacity:.85;line-height:1.6;">Ontario's AI teaching platform for SSC &amp; split-grade classrooms. Let's get you set up in 3 quick steps.</div>
+          <div style="font-size:.86rem;opacity:.85;line-height:1.6;">Stop spending evenings planning. AI lesson plans, auto-marking &amp; report card comments — built for Ontario teachers. Let's get you set up in 3 quick steps.</div>
         </div>
-        <button onclick="dismissWelcomeBanner()" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.1rem;flex-shrink:0;padding:0;" title="Dismiss">✕</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+          <button onclick="dismissWelcomeBanner()" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.1rem;padding:0;line-height:1;" title="Dismiss">✕</button>
+          <button onclick="dismissWelcomeBanner()" style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:.72rem;padding:0;white-space:nowrap;text-decoration:underline;">Skip for now</button>
+        </div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:4px;" id="onboardingSteps">
@@ -722,7 +725,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
     <div style="background:var(--cream);border:1.5px solid var(--border);border-radius:9px;padding:14px 16px;margin-bottom:14px;">
       <div style="font-family:DM Mono,monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">📋 Choose Who to Generate For</div>
-      <div class="fg" style="margin-bottom:12px;">
+      <div class="fg" style="margin-bottom:12px;align-items:end;">
         <div class="fi">
           <label>Class <span style="color:var(--rust);font-size:.8rem;">✱</span></label>
           <select id="rc-class" onchange="updateRCStudentFilter()">
@@ -770,7 +773,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> &nbsp;·&nbsp;
   <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a> &nbsp;·&nbsp;
   <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
-  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v3.3 · Mar 25 2026</span>
+  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v3.4 · Mar 25 2026</span>
 </div>
 
 <!-- ===== ACCOUNT ===== -->
@@ -811,6 +814,16 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <div class="card" style="margin-bottom:14px;">
     <div class="ct">📊 Usage</div>
     <div id="acct-usage" style="color:var(--muted);font-size:.83rem;">Loading...</div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px;">
+    <div class="ct">🔗 Connected Accounts</div>
+    <div id="acct-google-status" style="font-size:.83rem;color:var(--muted);margin-bottom:12px;">Checking Google connection...</div>
+    <button id="acct-google-btn" onclick="connectGoogleDrive()" class="btn b-out b-sm" style="display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 48 48" style="flex-shrink:0;"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Connect Google Drive
+    </button>
+    <div style="font-size:.72rem;color:var(--muted);margin-top:8px;line-height:1.5;">Connect your Google account to export slides directly to Google Drive — even if you signed up with email and password.</div>
   </div>
 
   <div class="card" style="border:1.5px solid var(--rust);">
@@ -1153,7 +1166,7 @@ async function initApp() {
     appLoaded = true;
     currentUser = user;
     showLoading('Loading your data...');
-    try { await loadUserData(); } catch(e){ console.error(e); }
+    try { await loadUserData(); handleOAuthRedirect(); } catch(e){ console.error(e); }
     loadUsageMeter();
     hideLoading();
     showApp();
@@ -1223,15 +1236,56 @@ function showApp() {
 function updateWelcomeBanner() {
   const banner = document.getElementById('welcomeBanner');
   if (!banner) return;
-  // Once dismissed or teacher has ever had students/lessons across any class, never show again
   if (localStorage.getItem('teacherai_welcomed')) { banner.style.display = 'none'; return; }
-  // Check across ALL students and lessons (not filtered by class)
-  const hasAnyData = savedLessons.length > 0;
-  if (hasAnyData) { dismissWelcomeBanner(); return; }
-  // Also check if teacher has students in any class
+
+  const hasLessons = savedLessons.length > 0;
+
   db.from('students').select('id').eq('teacher_id', currentUser.id).limit(1).then(({data}) => {
-    if (data && data.length > 0) { dismissWelcomeBanner(); return; }
+    const hasStudents = data && data.length > 0;
+
+    // Auto-dismiss only when teacher has done both steps
+    if (hasStudents && hasLessons) { dismissWelcomeBanner(); return; }
+
     banner.style.display = 'block';
+
+    // Update step cards to show progress
+    const step1 = document.getElementById('ostep1');
+    const step2 = document.getElementById('ostep2');
+    const step3 = document.getElementById('ostep3');
+
+    if (step1) {
+      if (hasStudents) {
+        step1.style.borderLeftColor = '#4A7C59';
+        step1.style.background = '#EAF0EA';
+        step1.querySelector('div:last-child').textContent = '✅ Done';
+        step1.style.cursor = 'default';
+        step1.onclick = null;
+      }
+    }
+    if (step2) {
+      if (!hasStudents) {
+        step2.style.opacity = '.5';
+        step2.style.cursor = 'not-allowed';
+      } else if (hasLessons) {
+        step2.style.borderLeftColor = '#4A7C59';
+        step2.style.background = '#EAF0EA';
+        step2.style.opacity = '1';
+        step2.querySelector('div:last-child').textContent = '✅ Done';
+      } else {
+        step2.style.opacity = '1';
+        step2.style.cursor = 'default';
+        step2.querySelector('div:last-child').innerHTML = '<span style="color:var(--amber);">👇 Do this next</span>';
+      }
+    }
+    if (step3) {
+      if (!hasLessons) {
+        step3.style.opacity = '.5';
+        step3.style.cursor = 'not-allowed';
+      } else {
+        step3.style.opacity = '1';
+        step3.querySelector('div:last-child').innerHTML = '<span style="color:var(--blue);">👇 Do this next</span>';
+      }
+    }
   });
 }
 
@@ -1245,6 +1299,19 @@ function dismissWelcomeBanner() {
 // LOAD USER DATA FROM SUPABASE
 // ============================================================
 let _classIdInitialized = false; // track if user has explicitly chosen a class
+// Handle OAuth redirect back to app (Google Drive connect, password reset)
+function handleOAuthRedirect() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('account') === '1') {
+    // Returning from Google Drive connect — go to account tab
+    setTimeout(() => {
+      const accountTab = document.getElementById('tr-account');
+      if (accountTab) { accountTab.checked = true; loadAccountPage(); }
+      window.history.replaceState({}, '', window.location.pathname);
+    }, 800);
+  }
+}
+
 async function loadUserData() {
   // Load classes first
   const {data:classData} = await db.from('classes').select('*').order('created_at');
@@ -4720,6 +4787,9 @@ async function loadAccountPage() {
   const emailEl = document.getElementById('acct-email');
   if (emailEl && currentUser) emailEl.value = currentUser.email || '';
 
+  // Check Google connection status
+  checkGoogleConnection();
+
   // Fill name from profile
   try {
     const {data:profile} = await db.from('profiles').select('full_name').eq('id', currentUser.id).single();
@@ -4764,6 +4834,45 @@ async function changePassword() {
   showPassMsg('✅ Password updated successfully!', 'var(--sage)');
   document.getElementById('acct-newpass').value = '';
   document.getElementById('acct-confirmpass').value = '';
+}
+
+async function checkGoogleConnection() {
+  const statusEl = document.getElementById('acct-google-status');
+  const btn = document.getElementById('acct-google-btn');
+  if (!statusEl || !currentUser) return;
+
+  // Check if user has a Google identity linked
+  const { data: { identities } } = await db.auth.getUserIdentities();
+  const googleLinked = identities?.some(i => i.provider === 'google');
+
+  if (googleLinked) {
+    const googleIdentity = identities.find(i => i.provider === 'google');
+    const googleEmail = googleIdentity?.identity_data?.email || '';
+    statusEl.innerHTML = '<span style="color:var(--sage);">✅ Connected</span>' +
+      (googleEmail ? ' · <span style="color:var(--muted);">' + googleEmail + '</span>' : '');
+    if (btn) {
+      btn.textContent = '✓ Google Connected';
+      btn.disabled = true;
+      btn.style.opacity = '.6';
+    }
+  } else {
+    statusEl.textContent = 'Not connected — link your Google account to export slides to Drive.';
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+async function connectGoogleDrive() {
+  const btn = document.getElementById('acct-google-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Connecting...'; }
+  const { error } = await db.auth.linkIdentity({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + '/?account=1' }
+  });
+  if (error) {
+    alert('Could not connect Google: ' + error.message);
+    if (btn) { btn.disabled = false; btn.textContent = 'Connect Google Drive'; }
+  }
+  // On success, Google redirects back and Supabase links the identity automatically
 }
 
 function showPassMsg(text, color) {
