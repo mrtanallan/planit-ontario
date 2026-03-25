@@ -1216,12 +1216,12 @@ function showApp() {
       if (!this.checked) return;
       localStorage.setItem('teacherai_tab', this.id);
       // Refresh relevant data when switching to each tab
+      if (this.id === 'tr-plan') { renderClassSelector(); }
       if (this.id === 'tr-assess') { renderTracker(); loadSubmissions(); renderAssessClassTabs(); }
       if (this.id === 'tr-rc') { populateRCFilters(); }
       if (this.id === 'tr-account') { loadAccountPage(); }
       if (this.id === 'tr-roster') { renderClassTabs(); renderR(); }
       if (this.id === 'tr-lessons') { renderLessonsList(); }
-      if (this.id === 'tr-rc') { /* report cards — no refresh needed */ }
       if (this.id === 'tr-exp') { renderExpectationsTracker(); }
     });
   });
@@ -1515,7 +1515,28 @@ function renderClassSelector() {
     ).join('');
   // Auto-fill grades from students in active class
   if (activeClassId) {
-    autoFillGradesFromClass();
+    if (students.length > 0) {
+      // Students already loaded — fill immediately
+      autoFillGradesFromClass();
+    } else {
+      // Students not yet loaded — fetch then fill
+      db.from('students').select('*').eq('teacher_id', currentUser.id).eq('class_id', activeClassId)
+        .then(({data}) => {
+          if (data && data.length > 0) {
+            // Merge into students array if not already there
+            data.forEach(s => {
+              if (!students.find(x => x.id === s.id)) {
+                students.push({
+                  id: s.id, first: s.first_name, last: s.last_name||'',
+                  grade: s.grade, notes: s.notes||'', iep: s.learning_profile||'',
+                  dbId: s.id, classId: s.class_id
+                });
+              }
+            });
+            autoFillGradesFromClass();
+          }
+        });
+    }
   }
 }
 
