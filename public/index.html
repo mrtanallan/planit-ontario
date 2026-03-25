@@ -1224,7 +1224,7 @@ function showApp() {
       // Refresh relevant data when switching to each tab
       if (this.id === 'tr-plan') { renderClassSelector(); updateWelcomeBanner(); }
       if (this.id === 'tr-assess') { renderTracker(); loadSubmissions(); renderAssessClassTabs(); }
-      if (this.id === 'tr-rc') { populateRCFilters(); loadSavedRCPage(); }
+      if (this.id === 'tr-rc') { populateRCFilters().then(() => loadSavedRCPage()); }
       if (this.id === 'tr-account') { loadAccountPage(); }
       if (this.id === 'tr-roster') { renderClassTabs(); renderR(); }
       if (this.id === 'tr-lessons') { renderLessonsList(); }
@@ -4756,8 +4756,7 @@ function renderCommentCard(sid, comment, charLimit) {
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div id="rc-counter-${sid}" style="font-family:DM Mono,monospace;font-size:.65rem;color:${counterColor};">${counterLabel}</div>
       <div style="display:flex;gap:6px;align-items:center;">
-        <span id="rc-save-status-${sid}" style="font-size:.68rem;color:var(--muted);"></span>
-        <button class="btn b-out b-sm rc-save-btn" data-sid="${sid}" data-charlimit="${charLimit}" style="font-size:.75rem;">💾 Save</button>
+        <span id="rc-save-status-${sid}" style="font-size:.68rem;color:var(--sage);"></span>
         <button class="btn b-sage b-sm rc-copy-btn" data-sid="${sid}" style="font-size:.75rem;">📋 Copy</button>
       </div>
     </div>`;
@@ -4770,13 +4769,7 @@ function renderCommentCard(sid, comment, charLimit) {
       setTimeout(() => this.textContent = '📋 Copy', 2000);
     });
   });
-  el.querySelector('.rc-save-btn').addEventListener('click', async function() {
-    const btn = this;
-    btn.textContent = '⏳';
-    await saveOneRCComment(this.dataset.sid, parseInt(this.dataset.charlimit));
-    btn.textContent = '✅';
-    setTimeout(() => btn.textContent = '💾 Save', 1500);
-  });
+
 }
 
 function updateCharCount(sid, charLimit) {
@@ -4807,10 +4800,11 @@ async function saveOneRCComment(sid, charLimit) {
       char_limit: charLimit || 500,
       updated_at: new Date().toISOString()
     }, { onConflict: 'teacher_id,student_id,term,subject' });
-    if (statusEl) { statusEl.textContent = '✓ Saved'; setTimeout(() => { statusEl.textContent = ''; }, 2000); }
-  } catch(e) {
-    if (statusEl) { statusEl.textContent = 'Save failed'; statusEl.style.color = 'var(--rust)'; }
-  }
+    if (statusEl) {
+      statusEl.textContent = '✓ Auto-saved';
+      setTimeout(() => { statusEl.textContent = ''; }, 2500);
+    }
+  } catch(e) { /* silent — non-critical */ }
 }
 
 async function loadSavedRCComments(studentIds, term, subj) {
