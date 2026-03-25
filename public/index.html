@@ -759,6 +759,9 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   </div>
 
   <div id="rcResults"></div>
+  <div id="rcCopyAllBar" style="display:none;margin-top:12px;text-align:right;">
+    <button id="rcCopyAllBtn" class="btn b-out b-sm" onclick="copyAllRCComments()" style="font-size:.78rem;">📋 Copy All</button>
+  </div>
 </div>
 
 <!-- ===== EXPECTATIONS TRACKER ===== -->
@@ -777,7 +780,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> &nbsp;·&nbsp;
   <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a> &nbsp;·&nbsp;
   <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
-  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v3.5 · Mar 25 2026</span>
+  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v3.6 · Mar 25 2026</span>
 </div>
 
 <!-- ===== ACCOUNT ===== -->
@@ -1221,7 +1224,7 @@ function showApp() {
       // Refresh relevant data when switching to each tab
       if (this.id === 'tr-plan') { renderClassSelector(); updateWelcomeBanner(); }
       if (this.id === 'tr-assess') { renderTracker(); loadSubmissions(); renderAssessClassTabs(); }
-      if (this.id === 'tr-rc') { populateRCFilters(); }
+      if (this.id === 'tr-rc') { populateRCFilters(); loadSavedRCPage(); }
       if (this.id === 'tr-account') { loadAccountPage(); }
       if (this.id === 'tr-roster') { renderClassTabs(); renderR(); }
       if (this.id === 'tr-lessons') { renderLessonsList(); }
@@ -1245,14 +1248,18 @@ function updateWelcomeBanner() {
 
   const hasLessons = savedLessons.length > 0;
 
+  // Hide until DB check resolves to prevent flash
+  banner.style.display = 'none';
   db.from('students').select('id').eq('teacher_id', currentUser.id).limit(1).then(({data}) => {
     const hasStudents = data && data.length > 0;
 
     // Permanently dismiss only once teacher has done both steps
     if (hasStudents && hasLessons) { dismissWelcomeBanner(true); return; }
 
-    // If teacher manually skipped but hasn't completed setup, show again
-    // (remove the localStorage gate so banner persists until genuinely done)
+    // Only show if we're currently on the Plan tab
+    const planTab = document.getElementById('tr-plan');
+    if (!planTab || !planTab.checked) return;
+
     banner.style.display = 'block';
 
     // Update step cards to show progress
@@ -4496,6 +4503,82 @@ function updateRCStudentFilter() {
   updateRCSummary();
 }
 
+async function loadSavedRCPage() {
+  // When RC tab opens, load previously saved comments for current term/subject
+  // Only shows if teacher has already generated comments before
+  const term = document.getElementById('rc-term')?.value || 'progress';
+  const subj = document.getElementById('rc-subj')?.value || 'Language / Literacy';
+  if (!currentUser) return;
+  try {
+    const { data } = await db.from('report_card_comments')
+      .select('student_id, comment, char_limit, updated_at')
+      .eq('teacher_id', currentUser.id)
+      .eq('term', term)
+      .eq('subject', subj)
+      .order('updated_at', { ascending: false });
+    if (!data || !data.length) return;
+
+    // Load student names for saved comments
+    const sids = data.map(r => r.student_id);
+    const { data: stuData } = await db.from('students')
+      .select('id, first_name, last_name, grade')
+      .in('id', sids);
+    const stuMap = {};
+    (stuData || []).forEach(s => { stuMap[s.id] = s; });
+
+    const results = document.getElementById('rcResults');
+    const copyBar = document.getElementById('rcCopyAllBar');
+    const AVCOLORS_RC = ['#4A7C59','#2A5FA5','#C47B2A','#B54B2A','#6B4A7C','#2A7C7A'];
+    results.innerHTML = '<div style="font-family:DM Mono,monospace;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">📂 Previously saved — ' + term.replace('progress','Progress Report').replace('term1','Term 1').replace('term2','Term 2') + ' · ' + subj + '</div>' +
+      data.map((r, i) => {
+        const s = stuMap[r.student_id];
+        if (!s) return '';
+        const name = s.last_name ? s.last_name + ', ' + s.first_name : s.first_name;
+        const initials = s.first_name[0] + (s.last_name?.[0] || '');
+        const charLimit = r.char_limit || 500;
+        const len = r.comment.length;
+        const pct = len / charLimit;
+        const counterColor = pct > 1 ? 'var(--rust)' : pct > 0.9 ? 'var(--amber)' : 'var(--sage)';
+        return `<div class="card" id="rc-card-${r.student_id}" style="margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+            <div class="av" style="background:${AVCOLORS_RC[i%AVCOLORS_RC.length]};width:30px;height:30px;font-size:.8rem;">${initials}</div>
+            <div>
+              <div style="font-weight:600;font-size:.9rem;">${name}</div>
+              <div style="font-family:DM Mono,monospace;font-size:.6rem;color:var(--muted);">${s.grade} · Saved ${new Date(r.updated_at).toLocaleDateString('en-CA')}</div>
+            </div>
+            <div style="margin-left:auto;"><button class="btn b-out b-sm rc-regen-btn" data-sid="${r.student_id}" style="font-size:.7rem;">🔄 Regenerate</button></div>
+          </div>
+          <div id="rc-comment-${r.student_id}"></div>
+        </div>`;
+      }).join('');
+
+    // Render comment cards
+    data.forEach(r => { if (stuMap[r.student_id]) renderCommentCard(r.student_id, r.comment, r.char_limit || 500); });
+    if (copyBar) copyBar.style.display = 'block';
+
+    // Regen listeners
+    document.querySelectorAll('.rc-regen-btn').forEach(b => {
+      b.addEventListener('click', async function() {
+        const sid = this.dataset.sid;
+        const s = stuMap[sid];
+        if (!s) return;
+        const term = document.getElementById('rc-term')?.value || 'progress';
+        const subj = document.getElementById('rc-subj')?.value || 'Language / Literacy';
+        const charLimit = parseInt(document.getElementById('rc-charlimit')?.value) || 500;
+        const termLabels = {
+          progress:'Progress Report (November) — observational language, learning skills, no grade references.',
+          term1:'Term 1 (February) — achievement language, expectations met, strengths + next step.',
+          term2:'Term 2 (June) — summative, year-in-review, readiness for next grade.'
+        };
+        const lvN = {L1:1,'L1-':.7,'L1+':1.3,L2:2,'L2-':1.7,'L2+':2.3,L3:3,'L3-':2.7,'L3+':3.3,L4:4,'L4-':3.7,'L4+':4.3};
+        const lvLabel = {L1:'Level 1',L2:'Level 2',L3:'Level 3',L4:'Level 4'};
+        const { data: sessData } = await db.from('assessment_sessions').select('*').eq('teacher_id', currentUser.id);
+        await generateOneComment({id:sid,first:s.first_name,last:s.last_name||'',grade:s.grade}, term, subj, charLimit, sessData||[], lvN, lvLabel, termLabels);
+      });
+    });
+  } catch(e) { /* silent */ }
+}
+
 async function generateReportCards() {
   if (!students.length) {
     alert('Add students to your Class Roster first.');
@@ -4641,6 +4724,11 @@ Write ONLY the comment text. No preamble, no quotes, no explanation. Just the co
     loadEl.style.display = 'none';
     commentEl.style.display = 'block';
     renderCommentCard(s.id, comment, charLimit2);
+    // Auto-save to Supabase immediately after generation
+    saveOneRCComment(s.id, charLimit2);
+    // Show Copy All button
+    const copyBar = document.getElementById('rcCopyAllBar');
+    if (copyBar) copyBar.style.display = 'block';
   } catch(e) {
     loadEl.style.display = 'none';
     commentEl.style.display = 'block';
@@ -4662,23 +4750,32 @@ function renderCommentCard(sid, comment, charLimit) {
         style="min-height:80px;padding:10px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:.86rem;line-height:1.65;color:var(--ink);background:var(--cream);outline:none;"
         oninput="updateCharCount('${sid}', ${charLimit})"
         onfocus="this.style.borderColor='var(--sage)'"
-        onblur="this.style.borderColor='var(--border)'"
+        onblur="this.style.borderColor='var(--border)';saveOneRCComment('${sid}', ${charLimit})"
       >${comment}</div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div id="rc-counter-${sid}" style="font-family:DM Mono,monospace;font-size:.65rem;color:${counterColor};">${counterLabel}</div>
-      <div style="display:flex;gap:6px;">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span id="rc-save-status-${sid}" style="font-size:.68rem;color:var(--muted);"></span>
+        <button class="btn b-out b-sm rc-save-btn" data-sid="${sid}" data-charlimit="${charLimit}" style="font-size:.75rem;">💾 Save</button>
         <button class="btn b-sage b-sm rc-copy-btn" data-sid="${sid}" style="font-size:.75rem;">📋 Copy</button>
       </div>
     </div>`;
 
-  // Attach copy listener
+  // Attach listeners
   el.querySelector('.rc-copy-btn').addEventListener('click', function() {
     const text = document.getElementById('rc-text-'+this.dataset.sid)?.innerText?.trim() || '';
     navigator.clipboard.writeText(text).then(() => {
       this.textContent = '✅ Copied!';
       setTimeout(() => this.textContent = '📋 Copy', 2000);
     });
+  });
+  el.querySelector('.rc-save-btn').addEventListener('click', async function() {
+    const btn = this;
+    btn.textContent = '⏳';
+    await saveOneRCComment(this.dataset.sid, parseInt(this.dataset.charlimit));
+    btn.textContent = '✅';
+    setTimeout(() => btn.textContent = '💾 Save', 1500);
   });
 }
 
@@ -4690,6 +4787,62 @@ function updateCharCount(sid, charLimit) {
   if (!el) return;
   el.style.color = pct > 1 ? 'var(--rust)' : pct > 0.9 ? 'var(--amber)' : 'var(--sage)';
   el.textContent = pct > 1 ? `⚠️ ${len}/${charLimit} — over limit` : `${len}/${charLimit}`;
+}
+
+// ============================================================
+// REPORT CARD COMMENT PERSISTENCE
+// ============================================================
+async function saveOneRCComment(sid, charLimit) {
+  const text = document.getElementById('rc-text-'+sid)?.innerText?.trim();
+  if (!text || !currentUser) return;
+  const term = document.getElementById('rc-term')?.value || 'progress';
+  const subj = document.getElementById('rc-subj')?.value || 'Language / Literacy';
+  const statusEl = document.getElementById('rc-save-status-'+sid);
+  try {
+    await db.from('report_card_comments').upsert({
+      teacher_id: currentUser.id,
+      student_id: sid,
+      term, subject: subj,
+      comment: text,
+      char_limit: charLimit || 500,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'teacher_id,student_id,term,subject' });
+    if (statusEl) { statusEl.textContent = '✓ Saved'; setTimeout(() => { statusEl.textContent = ''; }, 2000); }
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = 'Save failed'; statusEl.style.color = 'var(--rust)'; }
+  }
+}
+
+async function loadSavedRCComments(studentIds, term, subj) {
+  if (!currentUser || !studentIds.length) return {};
+  try {
+    const { data } = await db.from('report_card_comments')
+      .select('student_id, comment, updated_at')
+      .eq('teacher_id', currentUser.id)
+      .eq('term', term)
+      .eq('subject', subj)
+      .in('student_id', studentIds);
+    const map = {};
+    (data || []).forEach(r => { map[r.student_id] = r; });
+    return map;
+  } catch(e) { return {}; }
+}
+
+async function copyAllRCComments() {
+  const cards = document.querySelectorAll('[id^="rc-text-"]');
+  if (!cards.length) { alert('No comments generated yet.'); return; }
+  const lines = [];
+  cards.forEach(el => {
+    const card = el.closest('.card');
+    const name = card?.querySelector('[style*="font-weight:600"]')?.textContent?.trim() || '';
+    const text = el.innerText?.trim() || '';
+    if (text) lines.push((name ? name + ':\n' : '') + text);
+  });
+  if (!lines.length) { alert('No comments to copy.'); return; }
+  navigator.clipboard.writeText(lines.join('\n\n')).then(() => {
+    const btn = document.getElementById('rcCopyAllBtn');
+    if (btn) { btn.textContent = '✅ All Copied!'; setTimeout(() => btn.textContent = '📋 Copy All', 2000); }
+  });
 }
 
 // ============================================================
