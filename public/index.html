@@ -528,7 +528,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
               <textarea id="targetExp" style="min-height:52px;" placeholder='e.g. C1.3, D2.1 or "making inferences, writing paragraphs"'></textarea>
               <div style="display:flex;align-items:center;gap:10px;margin-top:7px;flex-wrap:wrap;">
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.78rem;color:var(--ink);">
-                  <input type="checkbox" id="expPinOnly" style="accent-color:var(--sage);width:13px;height:13px;">
+                  <input type="checkbox" id="expPinOnly" checked style="accent-color:var(--sage);width:13px;height:13px;">
                   <span><strong>Focus lesson on these expectations only</strong> — AI won't add others</span>
                 </label>
               </div>
@@ -724,11 +724,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <button class="btn b-out b-sm" onclick="exportAllData()" style="font-size:.72rem;">⬇️ Export All Data</button>
   </div>
 
-</div>
+  <div id="expInAssessWrap" style="margin-top:28px;padding-top:24px;border-top:2px solid var(--border);">
+    <div class="ph" style="margin-bottom:12px;"><h2 style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600;">Expectations <em>Tracker</em></h2><p style="color:var(--muted);font-size:.83rem;">Curriculum expectations covered across all saved lessons.</p></div>
+    <div id="expInAssess"></div>
+  </div>
 
-<div id="expInAssessWrap" style="margin-top:24px;">
-  <div class="ph" style="margin-bottom:12px;"><h2 style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600;">Expectations <em>Tracker</em></h2><p style="color:var(--muted);font-size:.83rem;">Curriculum expectations covered across all saved lessons.</p></div>
-  <div id="expInAssess"></div>
 </div>
 
 <!-- ===== MY LESSONS ===== -->
@@ -786,7 +786,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="fg" style="margin-bottom:12px;align-items:end;">
         <div class="fi">
           <label>Class <span style="color:var(--rust);font-size:.8rem;">✱</span></label>
-          <select id="rc-class" onchange="updateRCStudentFilter()">
+          <select id="rc-class" onchange="updateRCStudentFilter(); loadSavedRCPage();">
             <option value="">— Select a class —</option>
           </select>
         </div>
@@ -4687,11 +4687,19 @@ function updateRCStudentFilter() {
 }
 
 async function loadSavedRCPage() {
-  // When RC tab opens, load previously saved comments for current term/subject
+  // When RC tab opens, load previously saved comments for current term/subject/class
   // Only shows if teacher has already generated comments before
   const term = document.getElementById('rc-term')?.value || 'progress';
   const subj = document.getElementById('rc-subj')?.value || 'Language / Literacy';
+  const classId = document.getElementById('rc-class')?.value || '';
   if (!currentUser) return;
+
+  // Always clear results first — prevents stale comments from previous class showing
+  const resultsEl = document.getElementById('rcResults');
+  if (resultsEl) resultsEl.innerHTML = '';
+  const copyBarEl = document.getElementById('rcCopyAllBar');
+  if (copyBarEl) copyBarEl.style.display = 'none';
+
   try {
     const { data } = await db.from('report_card_comments')
       .select('student_id, comment, char_limit, updated_at')
@@ -4701,13 +4709,16 @@ async function loadSavedRCPage() {
       .order('updated_at', { ascending: false });
     if (!data || !data.length) return;
 
-    // Load student names for saved comments
+    // Load student names for saved comments — filter to selected class
     const sids = data.map(r => r.student_id);
     const { data: stuData } = await db.from('students')
-      .select('id, first_name, last_name, grade')
+      .select('id, first_name, last_name, grade, class_id')
       .in('id', sids);
     const stuMap = {};
-    (stuData || []).forEach(s => { stuMap[s.id] = s; });
+    (stuData || []).forEach(s => {
+      // Only include students from the selected class (if one is selected)
+      if (!classId || s.class_id === classId) stuMap[s.id] = s;
+    });
 
     const results = document.getElementById('rcResults');
     const copyBar = document.getElementById('rcCopyAllBar');
