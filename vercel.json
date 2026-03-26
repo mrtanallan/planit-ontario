@@ -13,11 +13,7 @@
       "dest": "/public/worksheet.html"
     },
     {
-      "src": "/v2$",
-      "dest": "/public/index-v2.html"
-    },
-    {
-      "src": "/v2/",
+      "src": "/v2",
       "dest": "/public/index-v2.html"
     },
     {
