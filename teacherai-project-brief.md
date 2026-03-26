@@ -1,238 +1,115 @@
-# TeacherAI — Ontario SSC Teacher OS
-## Project Brief & Build Continuity Document
-*Last updated: March 25, 2026 — end of day*
+# TeacherAI — Project Brief v3.8
+*Last updated: March 26, 2026*
 
----
+## QUICK START FOR NEW SESSION
+Upload this file + index.html to Claude. Say: "Continue building TeacherAI. Read the brief first."
 
-## PRODUCT OVERVIEW
+## CRITICAL OPEN BUG — FIX THIS FIRST
+**Class switching broken** — switching classes in Class Roster and Generate tab doesn't update students/grades.
 
-**Product name:** TeacherAI
-**Tagline:** "Stop spending evenings planning. AI lesson plans, auto-marking & report card comments — built for Ontario teachers."
-**Domain:** teacherai.ca (live)
-**GitHub repo:** github.com/mrtanallan/TeacherAI
-**Built by:** Allan (Ontario teacher, Toronto)
-**Current version:** v3.5 · Mar 25 2026 (shown in footer after login)
-
-**What TeacherAI is:**
-An AI-powered teaching OS for Ontario elementary teachers. Full loop: lesson planning → student worksheet → submission → AI auto-marking → assessment → report card comments. Built for split-grade and SSC classrooms with Ontario 2023 curriculum alignment.
-
----
-
-## TECH STACK
-
-| Component | Technology |
-|---|---|
-| Frontend | HTML/CSS/JS — single file public/index.html (~230KB) |
-| Backend | Vercel Serverless — api/generate.js (Anthropic proxy) |
-| Student worksheets | Vercel Serverless — api/worksheet.js |
-| AI | claude-sonnet-4-20250514 |
-| Hosting | Vercel — teacherai.ca |
-| Database | Supabase — ca-central-1 (Canadian) |
-| Auth | Supabase Auth — email/password + Google OAuth |
-
-**IMPORTANT — index.html is too large for GitHub web editor.**
-GitHub → public/ → Add file → Upload files. Other files use pencil editor.
-
-**Vercel env vars:** ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY
-**Supabase:** bbhhkyiyfybmlfkerfto.supabase.co
-
----
-
-## DATABASE SCHEMA
-
-```sql
-profiles              -- teacher accounts, auto-created on signup
-students              -- id, teacher_id, class_id, first_name, last_name, grade, notes, learning_profile
-classes               -- id, teacher_id, name, subject_focus, context
-lessons               -- id, teacher_id, topic, grades[], subject, content(jsonb), expectations(jsonb), class_id
-worksheets            -- id, teacher_id, lesson_id, topic, grades[], content(text JSON), roster(jsonb), class_id
-worksheet_submissions -- id, worksheet_id, student_name, student_id, responses(jsonb), submitted_at
-assessment_sessions   -- id, teacher_id, task, subject, strand, grades[], date, class_id, expectations(jsonb)
-student_marks         -- id, session_id, student_id, level, notes
+Root cause: Supabase query builder chaining. This pattern is WRONG:
+```js
+const q = db.from('students').select('*')
+if (activeClassId) q.eq('class_id', activeClassId)  // doesn't mutate q!
+await q  // fetches without filter
+```
+Must be:
+```js
+let q = db.from('students').select('*')
+if (activeClassId) q = q.eq('class_id', activeClassId)  // reassign
+await q
 ```
 
-RLS on all tables. Students submit publicly (no accounts). lessons.class_id added Mar 25 for expectations filtering.
+Fix applied to `loadUserData()` and `switchClass()` but bug persists. Debug logging added to `switchClass()`. Next step: deploy, open browser console (F12), click between classes, read what's logged.
 
 ---
 
-## CURRENT FEATURES (v3.5)
+## PRODUCT
+**TeacherAI** — AI teaching OS for Ontario SSC/split-grade teachers
+**Live:** teacherai.ca | 
+**GitHub:** github.com/mrtanallan/TeacherAI
+**Version:** v3.8 · Mar 26 2026 (check footer after login to confirm deploy)
 
-### Auth
-- Email/password signup + login
-- Google OAuth ("Continue with Google") — wired to Supabase
-- Password reset — "Forgot password?" link → Supabase sends email
-- Bearer JWT on all API calls
-- Google Cloud OAuth: authorized origins teacherai.ca + www.teacherai.ca
-- Supabase redirect URLs: teacherai.ca + www.teacherai.ca
+## STACK
+- Frontend: single HTML file `public/index.html` (~290KB) — **too large for GitHub web editor, must use file upload**
+- Backend: Vercel serverless `api/generate.js` + `api/worksheet.js`
+- DB: Supabase (bbhhkyiyfybmlfkerfto.supabase.co, Canada Central)
+- Auth: Supabase (email/password + Google OAuth)
+- AI: claude-sonnet-4-20250514
 
-### Navigation Tabs (in order)
-`👥 Class Roster | ✨ Generate | 📚 My Lessons | 📊 Assessment | 🎯 Expectations | 📝 Report Cards | 👤 Account`
+## vercel.json
+```json
+{
+  "routes": [
+    { "src": "/api/generate", "dest": "/api/generate.js" },
+    { "src": "/api/worksheet", "dest": "/api/worksheet.js" },
+    { "src": "/ws", "dest": "/public/worksheet.html" },
+    { "src": "/(.*)", "dest": "/public/index.html" }
+  ]
+}
+```
 
-### Account Page (👤 icon in nav)
-- Edit display name, change password
-- Usage stats (lessons / assessments / students / member since)
-- Connect Google Drive — links Google identity for email/password users (needs "Allow manual linking" in Supabase)
-- Account deletion request
+## DATABASE TABLES
+- `profiles` — teacher accounts
+- `classes` — (id, teacher_id, name, subject_focus, context)
+- `students` — (id, teacher_id, class_id, first_name, last_name, grade, notes, learning_profile, previous_class_name)
+- `lessons` — (id, teacher_id, topic, grades[], subject, content jsonb, expectations jsonb, class_id)
+- `worksheets` — (id, teacher_id, lesson_id, topic, grades[], content, roster jsonb, class_id)
+- `worksheet_submissions` — (id, worksheet_id, student_name, student_id, responses jsonb, submitted_at)
+- `assessment_sessions` — (id, teacher_id, task, subject, strand, grades[], date, class_id, expectations jsonb)
+- `student_marks` — (id, session_id, student_id, level, notes)
+- `report_card_comments` — (id, teacher_id, student_id, term, subject, comment, char_limit, updated_at) UNIQUE(teacher_id, student_id, term, subject)
 
-### Onboarding (new teachers)
-- 3-step banner: Add Students → Generate → Share
-- Steps update live: ✅ Done / 👇 Next / greyed
-- Persists until teacher has students AND lessons
-- Skip hides for session only; permanently gone only when both steps complete
-- Re-checks on Plan tab visit and every login
+**SQL migrations (run in Supabase SQL editor if not done):**
+- `add-class-id-to-lessons.sql`
+- `create-report-card-comments-table.sql`
 
-### Generate Tab (formerly Plan & Teach)
-- Class selector → auto-fills grades from students (works on first load, no refresh)
-- Up to 6 grades (split/multi-grade SSC)
-- Literacy strands: Reading / Writing / Oral / Media — selected strands passed explicitly to expectations prompt
-- Outputs: Lesson Plan, Student Worksheet, Reading Resource, Assessment Rubric, Differentiation (opt-in), Answer Key (silent)
-- Progress bar with dynamic stage labels
-- 529 retry: 3 retries at 3s/6s/12s, teacher-friendly messages
-- Usage meter below Generate button (reads from lessons table)
+## CURRENT UI (v3.8 Generate form)
+1. Class · Subject · Duration — compact top row
+2. Grade pills — K · Gr.1–Gr.8, tap multiple for split class
+3. "What are you teaching?" — big hero input
+4. What to Generate — chip checkboxes
+5. ⚙️ More options — collapsible, localStorage state, contains Strands (A→B→C→D, all unchecked) + Target Expectations
 
-### Output Order
-Lesson Plan → Reading Resource → Student Worksheet(s) → Assessment Rubric → Answer Key → Differentiation
+## KEY GOTCHAS
+- Supabase query builder: MUST reassign `q = q.eq(...)` not `q.eq(...)`
+- `authFetch()` refreshes JWT if expiring within 60s
+- Duration labels: "1 lesson" / "3 lessons" / "5 lessons" → normalised in prompt
+- Strands use Ontario 2023 names: A=Literacy Connections, B=Foundations of Language, C=Comprehension, D=Composition
+- Student names anonymized before Anthropic API (never sends real names)
+- `teacherai_moreopts` localStorage for More Options state
+- `teacherai_welcomed` localStorage for onboarding dismissed state
+- Footer version number confirms correct deploy
 
-### Workflow Steps
-1. **Plan** — class, grades, topic, strands, outputs
-2. **Review & Edit** — all content editable, Reset to original, grade label on worksheets
-3. **📦 Resources** (renamed from Share) — quick access links + PDFs for resharing
-4. **Assess** — level buttons, notes, per-student 💾 Save, 🤖 Auto-mark
-5. **Feedback** — Ontario descriptive feedback (different from auto-mark note)
+## DEPLOYMENT
+1. Download index.html from Claude outputs
+2. GitHub → public/ → Add file → Upload files
+3. Wait for green checkmark (~30-45s)
+4. Hard refresh (Cmd+Shift+R)
+5. Check footer shows v3.8
 
-### Worksheet Markers (case-insensitive matching)
-`[TEXT BOX]` `[LARGE BOX]` `[CIRCLE ONE: A/B/C]` `[CHECK ALL THAT APPLY: A/B]` `[WORD BANK: w1,w2]` `[DIAGRAM: desc]`
+## FEATURES LIVE
+- Full lesson generation (lesson plan, worksheet, reading resource, rubric, differentiation)
+- Grade pills for single/split grade selection
+- Ontario 2023 curriculum expectations (96 embedded, strands A/B/C/D)
+- Target expectations: hard requirement + "focus only" mode
+- Student worksheet delivery (combined link for split, per-grade links)
+- Fuzzy name matching on worksheet submission
+- Auto-marking of submitted worksheets
+- Assessment tab: Level 1-4 per student, observation notes
+- Grade tracker with CSV export
+- Expectations tracker
+- Report Cards: AI-generated Ontario-style comments, auto-save to Supabase, Copy All
+- My Lessons: search, bulk delete, reload past lesson
+- Google OAuth login
+- Password reset
+- Account page
+- Toast notifications (lesson saved, assessment saved)
+- Onboarding banner (2 steps, dismisses after students + first lesson)
 
-### Student Worksheet (worksheet.html)
-- Fuzzy name match (Dice coefficient), unmatched still saves
-- 🖨️ Print button with comprehensive print CSS
-- Submissions filtered by worksheet created_at >= sessionDate
-
-### AI Auto-Marking
-- Answer key generated silently with every lesson
-- 🤖 button appears when student submitted + answer key exists
-- Prompt includes total Q count vs answered count (prevents "attempted all" hallucination)
-- Returns: suggested level + per-question ✓/~/✗ inline
-- Observation note auto-saves, addressed by student first name
-- Re-mark available; per-student 💾 Save button
-
-### Expectations — Strand-Aware
-- Selected strands explicitly passed to AI: forces cross-strand connections
-- Writing topic + Reading checked → gets both D (Composition) and C (Comprehension) expectations
-- Media Literacy → Strand A expectation connecting media to topic
-- 96 Ontario 2023 expectations embedded
-- Tracker filters by class (class filter dropdown)
-- Clickable coverage badge shows which lessons covered each expectation
-- Lessons save class_id for filtering
-
-### My Lessons
-- Search by topic/subject/grade (live)
-- Sort: date / subject / grade / A-Z
-- ☑️ Bulk select + delete
-- Load past lesson → restores into Generate (including answer keys)
-
-### Report Cards
-- Class required (Generate button disabled until class selected)
-- Loads ALL students from DB (not filtered by activeClassId)
-- Grade filter chains from class; student checkboxes (all checked by default)
-- Scope summary: "→ 4 students selected"
-- Reporting period changes generated language:
-  - Progress → observational, learning skills, no grade refs
-  - Term 1 → achievement language, expectations met, next step
-  - Term 2 → summative, year-in-review, readiness for next grade
-- Sorted A-Z by last name (PowerSchool order)
-
-### Slides
-- Full deck with Anchor Chart slide
-- Pixabay API for images → Picsum fallback
-- Download as .pptx (open in Google Slides via File → Import)
-
-### Grade Tracker
-- Class tabs: All Classes + per-class
-- Per-student history, averages, drill-down
-- Sessions: edit + delete (instant local update)
-- CSV export, Export All Data
-
----
-
-## PRIVACY
-- Student names anonymized (Student A, B, C) before every Anthropic call
-- Responses + assessment data → Supabase only, never Anthropic
-- Canada servers (ca-central-1)
-- No student accounts; no TeacherAI branding on worksheet page
-- "Learning Profile" not "IEP upload"
-
----
-
-## GOOGLE OAUTH (configured)
-- Google Cloud client: TeacherAI Web
-- JS origins: https://teacherai.ca, https://www.teacherai.ca
-- Redirect URI: https://bbhhkyiyfybmlfkerfto.supabase.co/auth/v1/callback
-- Supabase Site URL: https://teacherai.ca
-- Still shows Supabase URL in Google consent screen (cosmetic — needs custom auth domain to fix, not worth it for beta)
-
----
-
-## EMAIL TEMPLATES (paste into Supabase → Authentication → Email)
-- Confirm signup → subject: "Welcome to TeacherAI — confirm your email"
-- Reset password → subject: "Reset your TeacherAI password"
-- Both use {{ .ConfirmationURL }}
-- HTML files in project outputs folder
-
----
-
-## PENDING BEFORE WIDER SHARING
-- [ ] Enable "Allow manual linking" in Supabase (Authentication → Sign In / Providers)
-- [ ] Paste email templates into Supabase
-- [ ] Delete skyland/skylandreal@gmail.com from Supabase users
-- [ ] Mobile test on phone (student worksheet especially)
-- [ ] Commit this project brief to GitHub repo
-
-## PHASE 2 (after coworker feedback)
-- [ ] Stripe subscription ($9.99-14.99/month)
-- [ ] usage_log table + per-user monthly caps
-- [ ] Prompt caching (90% cheaper input tokens)
-- [ ] Haiku for slides (faster, cheaper)
-- [ ] Custom SMTP via Resend.com (noreply@teacherai.ca)
-- [ ] Math/Science curriculum
-
-## PHASE 3
-- [ ] School board vendor package
-- [ ] Google Slides direct export (Drive API)
-- [ ] React rewrite
-
----
-
-## KEY DECISIONS
-
-- Vercel (never sleeps) + Supabase (Canadian, RLS, auth)
-- Student names anonymized before every API call
-- "Learning Profile" not "IEP" — MFIPPA-defensible
-- No student accounts — link-based only
-- Fuzzy name match (Dice) — unmatched submissions still save
-- Answer key in worksheet content JSON (not separate table)
-- Auto-mark prompt includes total Q count vs answered
-- 529 retry: retryAuthFetch, 3/6/12s backoff
-- _combinedLinkCache: prevents duplicate DB records for split "one link"
-- _classIdInitialized: prevents All Classes being overridden
-- _rcAllStudents: loads all students for report cards
-- progInterval hoisted before try block
-- Loading overlay z-index 9999
-- Tab order: Roster → Generate → My Lessons → Assessment → Expectations → Report Cards
-- Step 3 renamed from "Share" to "📦 Resources"
-- Onboarding: skip = session only, permanent = only when both steps done
-- Grade auto-fill: fetches from DB if students not in memory
-- Usage meter: reads lessons table until usage_log set up with Stripe
-- Slides images: Pixabay → Picsum fallback
-- Strand-aware expectations: strands array passed to AI prompt explicitly
-- class_id saved on lessons (for expectations tracker filter)
-- index.html ~230KB — GitHub file upload only
-
----
-
-## HOW TO USE IN A NEW CLAUDE SESSION
-
-Upload this file and say:
-*"Here is the full brief for TeacherAI. Read it carefully then [your request]."*
-
-Always upload the most recent version at the start of each session.
+## WHAT'S NOT BUILT YET
+- Stripe subscription/payments
+- Mobile-first polish
+- React rewrite
+- Math/Science curriculum
+- Unit plan generation (duration beyond 5 lessons)
