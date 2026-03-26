@@ -685,44 +685,56 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
 <!-- ===== ASSESSMENT ===== -->
 <div class="page" id="pg-assess">
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-    <div class="ph" style="margin-bottom:0;"><h1>Grade <em>Tracker</em></h1><p>All assessment tasks are saved automatically.</p></div>
+
+  <!-- Tracker toggle -->
+  <div style="display:flex;gap:6px;margin-bottom:20px;">
+    <button id="trackerToggleGrade" onclick="switchTrackerView('grade')"
+      style="flex:1;padding:10px 16px;border-radius:8px;border:2px solid var(--sage);background:var(--sage);color:white;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .15s;">
+      📊 Grade Tracker
+    </button>
+    <button id="trackerToggleExp" onclick="switchTrackerView('exp')"
+      style="flex:1;padding:10px 16px;border-radius:8px;border:2px solid var(--border);background:var(--paper);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .15s;">
+      🎯 Expectations Tracker
+    </button>
   </div>
-  <!-- Class tabs for assessment — prominent tab bar -->
-  <div id="assessClassSelector" style="display:none;margin-bottom:18px;">
-    <div id="assessClassTabs" style="display:flex;gap:0;flex-wrap:wrap;border-bottom:2px solid var(--border);"></div>
-  </div>
-  <!-- Active class label when only 1 class -->
-  <div id="assessSingleClass" style="display:none;margin-bottom:14px;">
-    <span style="font-family:DM Mono,monospace;font-size:.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Class: </span>
-    <span id="assessSingleClassName" style="font-size:.82rem;font-weight:600;color:var(--ink);"></span>
-  </div>
-  <div id="trackerClassLabel" style="display:none;font-family:DM Mono,monospace;font-size:.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:4px 10px;background:var(--sage-l);border-radius:5px;border:1px solid #A8C4AB;width:fit-content;"></div>
-  <div class="st">
-    <div class="sc2"><div class="sn2" id="tStu">0</div><div class="sl">Students</div></div>
-    <div class="sc2"><div class="sn2" id="tSess">0</div><div class="sl">Tasks</div></div>
-    <div class="sc2"><div class="sn2" id="tAvg">—</div><div class="sl">Class Avg</div></div>
-    <div class="sc2"><div class="sn2" id="tL4">0</div><div class="sl">At Level 4</div></div>
-  </div>
-  <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div class="ct" style="margin-bottom:0;">Student Performance</div>
-      <button class="btn b-out b-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+
+  <!-- Grade Tracker view -->
+  <div id="gradeTrackerView">
+    <!-- Class tabs for assessment — prominent tab bar -->
+    <div id="assessClassSelector" style="display:none;margin-bottom:18px;">
+      <div id="assessClassTabs" style="display:flex;gap:0;flex-wrap:wrap;border-bottom:2px solid var(--border);"></div>
     </div>
-    <div id="gTable"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No data yet.</div></div>
-  </div>
-  <div class="card">
-    <div class="ct">Recent Tasks</div>
-    <div id="sList"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No tasks yet.</div></div>
+    <!-- Active class label when only 1 class -->
+    <div id="assessSingleClass" style="display:none;margin-bottom:14px;">
+      <span style="font-family:DM Mono,monospace;font-size:.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Class: </span>
+      <span id="assessSingleClassName" style="font-size:.82rem;font-weight:600;color:var(--ink);"></span>
+    </div>
+    <div id="trackerClassLabel" style="display:none;font-family:DM Mono,monospace;font-size:.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding:4px 10px;background:var(--sage-l);border-radius:5px;border:1px solid #A8C4AB;width:fit-content;"></div>
+    <div class="st">
+      <div class="sc2"><div class="sn2" id="tStu">0</div><div class="sl">Students</div></div>
+      <div class="sc2"><div class="sn2" id="tSess">0</div><div class="sl">Tasks</div></div>
+      <div class="sc2"><div class="sn2" id="tAvg">—</div><div class="sl">Class Avg</div></div>
+      <div class="sc2"><div class="sn2" id="tL4">0</div><div class="sl">At Level 4</div></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div class="ct" style="margin-bottom:0;">Student Performance</div>
+        <button class="btn b-out b-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+      </div>
+      <div id="gTable"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No data yet.</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">Recent Tasks</div>
+      <div id="sList"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No tasks yet.</div></div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:16px;border-top:1px solid var(--border);font-size:.75rem;color:var(--muted);">
+      <span>🔒 Data stored securely in Canada · Never deleted automatically</span>
+      <button class="btn b-out b-sm" onclick="exportAllData()" style="font-size:.72rem;">⬇️ Export All Data</button>
+    </div>
   </div>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:16px;border-top:1px solid var(--border);font-size:.75rem;color:var(--muted);">
-    <span>🔒 Data stored securely in Canada · Never deleted automatically</span>
-    <button class="btn b-out b-sm" onclick="exportAllData()" style="font-size:.72rem;">⬇️ Export All Data</button>
-  </div>
-
-  <div id="expInAssessWrap" style="margin-top:28px;padding-top:24px;border-top:2px solid var(--border);">
-    <div class="ph" style="margin-bottom:12px;"><h2 style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600;">Expectations <em>Tracker</em></h2><p style="color:var(--muted);font-size:.83rem;">Curriculum expectations covered across all saved lessons.</p></div>
+  <!-- Expectations Tracker view -->
+  <div id="expTrackerView" style="display:none;">
     <div id="expInAssess"></div>
   </div>
 
@@ -1302,7 +1314,7 @@ function showApp() {
       localStorage.setItem('teacherai_tab', this.id);
       // Refresh relevant data when switching to each tab
       if (this.id === 'tr-plan') { renderClassSelector(); updateWelcomeBanner(); resetWorkflow(); }
-      if (this.id === 'tr-assess') { loadUserData().then(() => { renderTracker(); loadSubmissions(); renderAssessClassTabs(); renderExpInAssess(); }); }
+      if (this.id === 'tr-assess') { loadUserData().then(() => { renderTracker(); loadSubmissions(); renderAssessClassTabs(); const lastView = localStorage.getItem('teacherai_tracker_view') || 'grade'; switchTrackerView(lastView); }); }
       if (this.id === 'tr-rc') { populateRCFilters().then(() => loadSavedRCPage()); }
       if (this.id === 'tr-account') { loadAccountPage(); }
       if (this.id === 'tr-roster') { renderClassTabs(); renderR(); }
@@ -1319,7 +1331,7 @@ function showApp() {
   renderTracker();
   renderLessonsList();
   renderExpectationsTracker();
-  renderExpInAssess();
+  switchTrackerView(localStorage.getItem('teacherai_tracker_view') || 'grade');
   loadSubmissions();
   updateWelcomeBanner();
 }
@@ -5052,6 +5064,25 @@ async function copyAllRCComments() {
 // ============================================================
 // EXPECTATIONS TRACKER
 // ============================================================
+function switchTrackerView(view) {
+  const gradeView = document.getElementById('gradeTrackerView');
+  const expView = document.getElementById('expTrackerView');
+  const gradeBtn = document.getElementById('trackerToggleGrade');
+  const expBtn = document.getElementById('trackerToggleExp');
+  const isGrade = view === 'grade';
+  gradeView.style.display = isGrade ? 'block' : 'none';
+  expView.style.display = isGrade ? 'none' : 'block';
+  // Active button = sage filled, inactive = outlined muted
+  gradeBtn.style.background = isGrade ? 'var(--sage)' : 'var(--paper)';
+  gradeBtn.style.color = isGrade ? 'white' : 'var(--muted)';
+  gradeBtn.style.borderColor = isGrade ? 'var(--sage)' : 'var(--border)';
+  expBtn.style.background = isGrade ? 'var(--paper)' : 'var(--sage)';
+  expBtn.style.color = isGrade ? 'var(--muted)' : 'white';
+  expBtn.style.borderColor = isGrade ? 'var(--border)' : 'var(--sage)';
+  if (!isGrade) renderExpInAssess();
+  localStorage.setItem('teacherai_tracker_view', view);
+}
+
 function renderExpInAssess() {
   // Render expectations tracker directly into the Trackers tab container
   const wrap = document.getElementById('expInAssess');
