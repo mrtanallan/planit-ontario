@@ -358,10 +358,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <div class="logo">Teacher<span>AI</span></div>
   <div class="nav-tabs">
     <label class="tab" for="tr-roster"><span class="tab-full">👥 Class Roster</span><span class="tab-short">👥 Roster</span></label>
-    <label class="tab" for="tr-plan"><span class="tab-full">✨ Generate</span><span class="tab-short">✨ Generate</span></label>
+    <label class="tab" for="tr-plan"><span class="tab-full">✨ Plan</span><span class="tab-short">✨ Plan</span></label>
     <label class="tab" for="tr-lessons"><span class="tab-full">📚 My Lessons</span><span class="tab-short">📚 Lessons</span></label>
-    <label class="tab" for="tr-assess"><span class="tab-full">📊 Assessment</span><span class="tab-short">📊 Assess</span></label>
-    <label class="tab" for="tr-exp"><span class="tab-full">🎯 Expectations</span><span class="tab-short">🎯 Exp.</span></label>
+    <label class="tab" for="tr-assess"><span class="tab-full">📊 Trackers</span><span class="tab-short">📊 Track</span></label>
+    <label class="tab" for="tr-exp" style="display:none;"><span class="tab-full">🎯 Expectations</span><span class="tab-short">🎯 Exp.</span></label>
     <label class="tab" for="tr-rc"><span class="tab-full">📝 Report Cards</span><span class="tab-short">📝 Reports</span></label>
   </div>
   <div class="nav-user">
@@ -724,6 +724,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <button class="btn b-out b-sm" onclick="exportAllData()" style="font-size:.72rem;">⬇️ Export All Data</button>
   </div>
 
+</div>
+
+<div id="expInAssessWrap" style="margin-top:24px;">
+  <div class="ph" style="margin-bottom:12px;"><h2 style="font-family:Fraunces,serif;font-size:1.2rem;font-weight:600;">Expectations <em>Tracker</em></h2><p style="color:var(--muted);font-size:.83rem;">Curriculum expectations covered across all saved lessons.</p></div>
+  <div id="expInAssess"></div>
 </div>
 
 <!-- ===== MY LESSONS ===== -->
@@ -1299,8 +1304,8 @@ function showApp() {
       if (!this.checked) return;
       localStorage.setItem('teacherai_tab', this.id);
       // Refresh relevant data when switching to each tab
-      if (this.id === 'tr-plan') { renderClassSelector(); updateWelcomeBanner(); }
-      if (this.id === 'tr-assess') { renderTracker(); loadSubmissions(); renderAssessClassTabs(); }
+      if (this.id === 'tr-plan') { renderClassSelector(); updateWelcomeBanner(); resetWorkflow(); }
+      if (this.id === 'tr-assess') { loadUserData().then(() => { renderTracker(); loadSubmissions(); renderAssessClassTabs(); renderExpInAssess(); }); }
       if (this.id === 'tr-rc') { populateRCFilters().then(() => loadSavedRCPage()); }
       if (this.id === 'tr-account') { loadAccountPage(); }
       if (this.id === 'tr-roster') { renderClassTabs(); renderR(); }
@@ -1308,6 +1313,7 @@ function showApp() {
       if (this.id === 'tr-exp') { renderExpectationsTracker(); }
     });
   });
+  resetWorkflow();
   renderClassTabs();
   renderClassSelector();
   renderAssessClassTabs();
@@ -1316,6 +1322,7 @@ function showApp() {
   renderTracker();
   renderLessonsList();
   renderExpectationsTracker();
+  renderExpInAssess();
   loadSubmissions();
   updateWelcomeBanner();
 }
@@ -1892,6 +1899,15 @@ function gs(n) {
 }
 
 function unlock(){for(let i=2;i<=5;i++){const e=document.getElementById('ws'+i);e.classList.remove('locked');e.classList.add('done');}}
+function resetWorkflow(){
+  // Reset to step 1, lock steps 2-5, clear generated content
+  for(let i=1;i<=5;i++){
+    const s=document.getElementById('s'+i);
+    const w=document.getElementById('ws'+i);
+    if(s) s.style.display = i===1?'block':'none';
+    if(w){ w.classList.remove('on','done'); if(i>1)w.classList.add('locked'); else { w.classList.remove('locked'); w.classList.add('on'); } }
+  }
+}
 
 // ============================================================
 // USAGE METER
@@ -2235,7 +2251,8 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic,expectations){
     const isWS = k==='student_worksheet' || k.startsWith('student_worksheet_');
     const isRubric = k==='assessment_rubric';
     const isSh = SHAREABLE.includes(k);
-    const rendered = isWS ? renderWS(genC[k].cur) : isRubric ? renderRubric(genC[k].cur) : renderMD(genC[k].cur);
+    const isAK = k === 'answer_key' || k.startsWith('answer_key_');
+    const rendered = isWS ? renderWS(genC[k].cur) : isRubric ? renderRubric(genC[k].cur) : isAK ? renderAnswerKey(genC[k].cur) : renderMD(genC[k].cur);
     c.innerHTML+=`<div class="cb" id="cb-${k}">
       <div class="cbh">
         <div style="display:flex;align-items:center;gap:7px;">
@@ -2545,6 +2562,7 @@ async function renderAssGrid(){
   // Attach per-student save listeners
   document.querySelectorAll('.save-one-btn').forEach(btn => {
     btn.addEventListener('click', async function() {
+      this.showAlert = true;
       await saveOneStu(this.dataset.sid, this);
     });
   });
@@ -2773,7 +2791,7 @@ async function autoMarkStudent(sid, studentObj, responses, answerKey, rubric, bt
 }
 
 async function saveOneStu(sid, btn) {
-  if (!curSess.marks[sid]?.level) { alert('Select a level for this student first.'); return; }
+  if (!curSess?.marks[sid]?.level) { if(btn?.showAlert) alert('Select a level for this student first.'); return; }
   const origText = btn.textContent;
   btn.disabled = true; btn.textContent = '⏳';
   try {
@@ -4425,6 +4443,28 @@ function renderWS(text){
   return h+'</div>';
 }
 
+function renderAnswerKey(text){
+  if(!text) return '';
+  const lines = text.split('\n').filter(l => l.trim());
+  let html = '<div style="display:flex;flex-direction:column;gap:6px;">';
+  lines.forEach(line => {
+    const m = line.match(/^(Q\d+[a-z]?):(.+?)\s*->\s*(.+)$/i);
+    if(m){
+      html += '<div style="display:grid;grid-template-columns:3rem 1fr 1fr;gap:8px;align-items:start;padding:7px 10px;background:var(--cream);border-radius:6px;border-left:3px solid var(--sage);">'
+        + '<span style="font-family:DM Mono,monospace;font-size:.72rem;font-weight:600;color:var(--sage);padding-top:1px;">' + m[1].trim() + '</span>'
+        + '<span style="font-size:.82rem;color:var(--muted);">' + m[2].trim() + '</span>'
+        + '<span style="font-size:.82rem;font-weight:500;color:var(--ink);">' + m[3].trim() + '</span>'
+        + '</div>';
+    } else if(line.match(/^#{1,3}\s/)){
+      html += '<div style="font-family:Fraunces,serif;font-size:.88rem;font-weight:600;color:var(--sage);margin-top:8px;margin-bottom:2px;">' + line.replace(/^#+\s/,'') + '</div>';
+    } else {
+      html += '<div style="font-size:.82rem;color:var(--muted);padding:2px 4px;">' + line + '</div>';
+    }
+  });
+  html += '</div>';
+  return html;
+}
+
 function renderMD(text){
   if(!text)return'';
   return text
@@ -4992,6 +5032,33 @@ async function copyAllRCComments() {
 // ============================================================
 // EXPECTATIONS TRACKER
 // ============================================================
+function renderExpInAssess() {
+  // Mirror expectations tracker content into the merged Trackers tab
+  const wrap = document.getElementById('expInAssess');
+  if (!wrap) return;
+  // Sync the class filter with activeClassId
+  const expFilter = document.getElementById('expClassFilter');
+  if (expFilter && activeClassId) {
+    expFilter.value = activeClassId;
+  }
+  renderExpectationsTracker(); // reuses existing logic which populates expGrid
+  // Clone expGrid content into expInAssess
+  const expGrid = document.getElementById('expGrid');
+  const expClassSel = document.getElementById('expClassFilter');
+  if (expGrid) {
+    // Build a self-contained version
+    let classOptions = '<option value="">All Classes</option>';
+    classes.forEach(c => { classOptions += `<option value="${c.id}" ${c.id===activeClassId?'selected':''}>${c.name}</option>`; });
+    wrap.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+        <select id="expInAssessFilter" style="font-family:'DM Sans',sans-serif;font-size:.82rem;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--paper);" onchange="document.getElementById('expClassFilter').value=this.value;renderExpectationsTracker();this.closest('#expInAssessWrap').querySelector('#expInAssessBody').innerHTML=document.getElementById('expGrid').innerHTML;">
+          ${classOptions}
+        </select>
+      </div>
+      <div id="expInAssessBody">${expGrid.innerHTML}</div>`;
+  }
+}
+
 function renderExpectationsTracker() {
   const el = document.getElementById('expTrackerContent');
   if (!el) return;
