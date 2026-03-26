@@ -1423,8 +1423,8 @@ async function loadUserData() {
     }
   }
 
-  // Load students — filtered by active class if one is set
-  let stuQuery = db.from('students').select('*').order('created_at');
+  // Load students — always filter by teacher_id, optionally by class
+  let stuQuery = db.from('students').select('*').eq('teacher_id', currentUser.id).order('created_at');
   if(activeClassId) stuQuery = stuQuery.eq('class_id', activeClassId);
   const {data:stuData} = await stuQuery;
   if(stuData) students=stuData.map(s=>({id:s.id,first:s.first_name,last:s.last_name||'',grade:s.grade,notes:s.notes||'',iep:s.learning_profile||'',dbId:s.id,classId:s.class_id,createdAt:s.created_at,prevClassName:s.previous_class_name||null}));
@@ -1522,20 +1522,19 @@ async function createClass() {
 }
 
 async function switchClass(classId) {
-  console.log('[switchClass] called with classId:', classId);
-  activeClassId = classId;
-  // Reload students for the new class — build query correctly
-  let stuQ = db.from('students').select('*').order('created_at');
+  // Normalize: empty string from dataset.cid → null (means "all classes")
+  activeClassId = classId || null;
+  // Reload students — always filter by teacher_id for safety, optionally by class
+  let stuQ = db.from('students').select('*').eq('teacher_id', currentUser.id).order('created_at');
   if (activeClassId) stuQ = stuQ.eq('class_id', activeClassId);
   const {data:stuData, error:stuErr} = await stuQ;
-  console.log('[switchClass] students fetched:', stuData?.length, 'error:', stuErr, 'filter classId:', activeClassId);
+  if (stuErr) console.error('[switchClass] student fetch error:', stuErr);
   if (stuData) students = stuData.map(s=>({
     id:s.id, first:s.first_name, last:s.last_name||'', grade:s.grade,
     notes:s.notes||'', iep:s.learning_profile||'', dbId:s.id,
     classId:s.class_id, createdAt:s.created_at, prevClassName:s.previous_class_name||null
   }));
-  console.log('[switchClass] students mapped:', students.map(s=>s.first+' classId:'+s.classId));
-  // Reload sessions for the new class
+  // Reload sessions
   let sessQ = db.from('assessment_sessions').select('*, student_marks(*)').order('created_at',{ascending:false});
   if (activeClassId) sessQ = sessQ.eq('class_id', activeClassId);
   const {data:sessData} = await sessQ;
@@ -1545,8 +1544,8 @@ async function switchClass(classId) {
     marks:Object.fromEntries((sess.student_marks||[]).map(m=>[m.student_id,{level:m.level,notes:m.notes}]))
   }));
   renderClassTabs();
-  renderClassSelector();  // students array is already populated — no async fetch will run
-  autoFillGradesFromClass();  // explicitly fill grades now that students are loaded
+  renderClassSelector();  // students array is populated — safe, no async fetch
+  autoFillGradesFromClass();  // fill grade pills now that students are loaded
   renderR();
   renderTracker();
   updateWelcomeBanner();
@@ -1557,15 +1556,29 @@ async function deleteClass(classId) {
   if (!confirm(`Delete class "${cls?.name}"? Students will become unassigned. Assessment data will be removed.`)) return;
   showLoading('Deleting class...');
   const clsName = cls?.name || 'deleted class';
-  // Write previous_class_name to all students in this class before deleting
-  const affectedIds = students.filter(s => s.classId === classId).map(s => s.id);
-  if (affectedIds.length) {
-    await db.from('students').update({previous_class_name: clsName}).in('id', affectedIds);
+  try {
+    // Fetch actual students for this class from DB (local array may be filtered to a different class)
+    const {data: clsStudents} = await db.from('students').select('id').eq('class_id', classId);
+    const affectedIds = (clsStudents || []).map(s => s.id);
+    if (affectedIds.length) {
+      await db.from('students').update({previous_class_name: clsName, class_id: null}).in('id', affectedIds);
+    }
+    // Delete assessment sessions first to avoid FK constraint blocking class delete
+    const {data: classSessions} = await db.from('assessment_sessions').select('id').eq('class_id', classId);
+    const sessIds = (classSessions || []).map(s => s.id);
+    if (sessIds.length) {
+      await db.from('student_marks').delete().in('session_id', sessIds);
+      await db.from('assessment_sessions').delete().eq('class_id', classId);
+    }
+    // Now safe to delete the class
+    const {error} = await db.from('classes').delete().eq('id', classId);
+    if (error) { alert('Error deleting class: ' + error.message); hideLoading(); return; }
+    classes = classes.filter(c => c.id !== classId);
+    activeClassId = classes.length > 0 ? classes[0].id : null;
+    await loadUserData();
+  } catch(e) {
+    alert('Error: ' + e.message);
   }
-  await db.from('classes').delete().eq('id', classId);
-  classes = classes.filter(c => c.id !== classId);
-  if (activeClassId === classId) activeClassId = classes.length > 0 ? classes[0].id : null;
-  await loadUserData();
   hideLoading();
   renderClassTabs();
   renderClassSelector();
