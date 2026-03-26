@@ -49,6 +49,22 @@ nav {
 .nav-tabs { display: flex; gap: 2px; overflow-x: auto; flex: 1; scrollbar-width: none; -ms-overflow-style: none; }
 .nav-tabs::-webkit-scrollbar { display: none; }
 .tab-short { display: none; }
+.grade-pill-btn {
+  padding:5px 11px;
+  border:1.5px solid var(--border);
+  border-radius:20px;
+  font-size:.78rem;
+  font-weight:500;
+  cursor:pointer;
+  background:white;
+  color:var(--muted);
+  font-family:'DM Sans',sans-serif;
+  transition:all .12s;
+  white-space:nowrap;
+}
+.grade-pill-btn:hover { border-color:var(--sage); color:var(--sage); }
+.grade-pill-btn.selected { background:var(--sage); border-color:var(--sage); color:white; }
+
 @media(max-width:600px) { .tab-full { display: none; } .tab-short { display: inline; } }
 .tab { padding: 7px 13px; color: #9CA3AF; cursor: pointer; border-radius: 6px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; transition: all 0.15s; user-select: none; display: block; }
 .tab:hover { color: var(--cream); background: rgba(255,255,255,0.08); }
@@ -419,11 +435,41 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <select id="classSelector" onchange="onClassSelect()"></select>
         </div>
       </div>
-      <div class="fg">
-        <div class="fi">
-          <label>Grade <span style="color:var(--rust);">✱</span></label>
-          <select id="gA"><option value="">Select grade...</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+      <!-- Grade pills — tap one or multiple for split/SSC -->
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <label style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Grade <span style="color:var(--rust);">✱</span></label>
+          <span id="gradeSelectionNote" style="font-size:.72rem;color:var(--sage);display:none;">✓ Multiple grades selected — split class lesson</span>
         </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;" id="gradePillContainer">
+          <button type="button" class="grade-pill-btn" data-grade="Kindergarten" onclick="toggleGradePill(this)">K</button>
+          <button type="button" class="grade-pill-btn" data-grade="Grade 1" onclick="toggleGradePill(this)">Gr. 1</button>
+          <button type="button" class="grade-pill-btn" data-grade="Grade 2" onclick="toggleGradePill(this)">Gr. 2</button>
+          <button type="button" class="grade-pill-btn" data-grade="Grade 3" onclick="toggleGradePill(this)">Gr. 3</button>
+          <button type="button" class="grade-pill-btn" data-grade="Grade 4" onclick="toggleGradePill(this)">Gr. 4</button>
+          <button type="button" class="grade-pill-btn" data-grade="Grade 5" onclick="toggleGradePill(this)">Gr. 5</button>
+          <button type="button" class="grade-pill-btn" data-grade="Grade 6" onclick="toggleGradePill(this)">Gr. 6</button>
+          <button type="button" class="grade-pill-btn" data-grade="Grade 7" onclick="toggleGradePill(this)">Gr. 7</button>
+          <button type="button" class="grade-pill-btn" data-grade="Grade 8" onclick="toggleGradePill(this)">Gr. 8</button>
+        </div>
+        <div id="classAutoFillNote" style="display:none;font-size:.75rem;color:var(--sage);margin-top:6px;">✓ Grades auto-filled from your class — adjust if needed</div>
+      </div>
+      <!-- Hidden selects for JS compatibility -->
+      <select id="gA" style="display:none;"><option value="">Select grade...</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+      <select id="gB" style="display:none;"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+      <select id="gC" style="display:none;"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+      <select id="gD" style="display:none;"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+      <select id="gE" style="display:none;"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+      <select id="gF" style="display:none;"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
+      <div id="gradeField_B" style="display:none;"></div>
+      <div id="gradeField_C" style="display:none;"></div>
+      <div id="gradeField_D" style="display:none;"></div>
+      <div id="gradeField_E" style="display:none;"></div>
+      <div id="gradeField_F" style="display:none;"></div>
+      <input type="checkbox" id="splitToggle" style="display:none;">
+      <button id="addGradeBtn" style="display:none;"></button>
+
+      <div class="fg">
         <div class="fi">
           <label>Subject</label>
           <select id="subj" onchange="onSubjectChange()"><option>Language / Literacy</option></select>
@@ -435,34 +481,14 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <div class="fi s2"><label>Topic / Focus</label><input type="text" id="topic" placeholder="e.g. Making Inferences, Persuasive Writing, Text Features..."></div>
       </div>
 
-      <!-- Split grade section — auto-filled from class, expandable -->
-      <div style="margin-bottom:13px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap;">
-          <label class="chip" style="cursor:pointer;">
-            <input type="checkbox" id="splitToggle" style="width:12px;height:12px;accent-color:var(--sage);" onchange="toggleSplitGrades()"> 🏫 Split/Multi-grade class (SSC)
-          </label>
-          <button type="button" id="addGradeBtn" class="btn b-out b-sm" style="display:none;font-size:.72rem;" onclick="addExtraGrade()">+ Add grade</button>
-        </div>
-        <div id="extraGrades" style="display:none;">
-          <div class="fg" style="margin-bottom:6px;" id="extraGradeFields">
-            <div class="fi" id="gradeField_B"><label>2nd Grade</label><select id="gB"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
-            <div class="fi" id="gradeField_C"><label>3rd Grade</label><select id="gC"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
-            <div class="fi" id="gradeField_D"><label>4th Grade</label><select id="gD"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
-            <div class="fi" id="gradeField_E" style="display:none;"><label>5th Grade</label><select id="gE"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
-            <div class="fi" id="gradeField_F" style="display:none;"><label>6th Grade</label><select id="gF"><option value="">— None —</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select></div>
-          </div>
-          <div id="classAutoFillNote" style="display:none;font-size:.75rem;color:var(--sage);margin-bottom:4px;">✓ Grades auto-filled from your class — adjust if needed</div>
-        </div>
-      </div>
-
       <!-- Literacy strands — only shown for Language/Literacy -->
       <div id="strandSection">
         <div class="ct" style="margin-bottom:9px;">📖 Literacy Strands</div>
         <div class="chips">
-          <label class="chip"><input type="checkbox" id="ck-r" checked> 📖 Reading</label>
-          <label class="chip"><input type="checkbox" id="ck-w" checked> ✏️ Writing</label>
-          <label class="chip"><input type="checkbox" id="ck-o"> 🎤 Oral Communication</label>
-          <label class="chip"><input type="checkbox" id="ck-m"> 📱 Media Literacy</label>
+          <label class="chip"><input type="checkbox" id="ck-r" checked> 📖 Comprehension (Strand C)</label>
+          <label class="chip"><input type="checkbox" id="ck-w" checked> ✏️ Composition (Strand D)</label>
+          <label class="chip"><input type="checkbox" id="ck-o"> 🎤 Literacy Connections (Strand A)</label>
+          <label class="chip"><input type="checkbox" id="ck-m"> 📚 Foundations of Language (Strand B)</label>
         </div>
       </div>
 
@@ -792,7 +818,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> &nbsp;·&nbsp;
   <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a> &nbsp;·&nbsp;
   <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
-  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v3.6 · Mar 25 2026</span>
+  <span style="font-family:DM Mono,monospace;font-size:.65rem;">v3.7 · Mar 25 2026</span>
 </div>
 
 <!-- ===== ACCOUNT ===== -->
@@ -1655,6 +1681,8 @@ function autoFillGradesFromClass(gradesHint) {
     const note = document.getElementById('classAutoFillNote');
     if (note) note.style.display = 'none';
   }
+  // Sync grade pills to reflect auto-filled values
+  syncSelectsToGradePills();
 }
 
 let _extraGradeCount = 4; // tracks how many grade slots are visible (A=1 + B,C,D = 4 default)
@@ -5131,6 +5159,45 @@ function requestAccountDeletion() {
   const email = currentUser.email;
   window.open('mailto:teacheraicanada@gmail.com?subject=Account%20Deletion%20Request&body=Please%20delete%20my%20TeacherAI%20account.%0A%0AEmail%3A%20' + encodeURIComponent(email) + '%0AUser%20ID%3A%20' + currentUser.id, '_blank');
   alert('A deletion request email has been opened. Send it to confirm. We will remove your account and all data within 30 days.');
+}
+
+// ── Grade Pills ────────────────────────────────────────────────
+function toggleGradePill(btn) {
+  btn.classList.toggle('selected');
+  syncGradePillsToSelects();
+}
+
+function syncGradePillsToSelects() {
+  const selected = [...document.querySelectorAll('.grade-pill-btn.selected')]
+    .map(b => b.dataset.grade);
+  const gradeIds = ['gA','gB','gC','gD','gE','gF'];
+  gradeIds.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) el.value = selected[i] || '';
+  });
+  // Auto-set split toggle
+  const splitToggle = document.getElementById('splitToggle');
+  if (splitToggle) {
+    const wasChecked = splitToggle.checked;
+    splitToggle.checked = selected.length > 1;
+    if (splitToggle.checked !== wasChecked) toggleSplitGrades();
+  }
+  // Show/hide split note
+  const note = document.getElementById('gradeSelectionNote');
+  if (note) note.style.display = selected.length > 1 ? 'inline' : 'none';
+}
+
+function syncSelectsToGradePills() {
+  // Reverse sync — when class auto-fills selects, update the pills
+  const gradeIds = ['gA','gB','gC','gD','gE','gF'];
+  const selectedGrades = gradeIds
+    .map(id => document.getElementById(id)?.value)
+    .filter(v => v && v !== '— None —' && v !== '');
+  document.querySelectorAll('.grade-pill-btn').forEach(btn => {
+    btn.classList.toggle('selected', selectedGrades.includes(btn.dataset.grade));
+  });
+  const note = document.getElementById('gradeSelectionNote');
+  if (note) note.style.display = selectedGrades.length > 1 ? 'inline' : 'none';
 }
 
 function toggleExpLessons(codeKey) {
