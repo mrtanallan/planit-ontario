@@ -200,7 +200,8 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
 /* ROSTER */
 .rg { display: flex; flex-direction: column; gap: 8px; }
-.sc { border: 1.5px solid var(--border); border-radius: 8px; padding: 11px 13px; background: var(--paper); }
+.sc { border: 1.5px solid var(--border); border-radius: 8px; padding: 11px 13px; background: var(--paper); transition: border-color .15s, box-shadow .15s; cursor:pointer; }
+.sc:hover { border-color: var(--sage); box-shadow: 0 2px 8px rgba(74,124,89,.1); }
 .sc.iep { border-color: var(--amber); }
 .sct { display: flex; align-items: center; gap: 9px; }
 .av { width: 30px; height: 30px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 0.85rem; font-weight: 600; flex-shrink: 0; }
@@ -482,7 +483,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <!-- Row 3: Topic — big hero input -->
       <div style="margin-bottom:18px;">
         <label style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px;">What are you teaching? <span style="color:var(--rust);">✱</span></label>
-        <input type="text" id="topic" placeholder="e.g. Making Inferences, Persuasive Writing, Text Features..."
+        <input type="text" id="topic" placeholder="e.g. Making Inferences, Persuasive Writing, Text Features..." autocapitalize="sentences"
           style="width:100%;font-family:'DM Sans',sans-serif;font-size:1rem;padding:13px 16px;border:2px solid var(--border);border-radius:10px;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;"
           onfocus="this.style.borderColor='var(--sage)'" onblur="this.style.borderColor='var(--border)'">
       </div>
@@ -615,7 +616,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div id="classTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;"></div>
     <div id="newClassForm" style="display:none;border-top:1px solid var(--border);padding-top:12px;margin-top:8px;">
       <div class="fg" style="margin-bottom:10px;">
-        <div class="fi s2"><label>Class Name</label><input type="text" id="newClassName" placeholder="e.g. Grade 6/7 Morning, French Period 2..."></div>
+        <div class="fi s2"><label>Class Name</label><input type="text" id="newClassName" placeholder="e.g. Grade 6/7 Morning, French Period 2..." autocapitalize="words" oninput="this.value=this.value.replace(/(?:^|\s)\S/g,c=>c.toUpperCase())"></div>
         <div class="fi"><label>Subject Focus (optional)</label><input type="text" id="newClassSubject" placeholder="e.g. Language, Math, French..."></div>
         <div class="fi full"><label>Class Context <span style="font-weight:400;color:var(--muted);">(optional)</span> — notes for AI lesson generation</label>
           <textarea id="newClassContext" style="min-height:60px;" placeholder="e.g. 24 students, 4 ELL, Chromebooks available, strong oral communicators..."></textarea>
@@ -654,12 +655,12 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         </div>
         <div id="addStuForm" style="margin-top:12px;">
           <div class="fg">
-            <div class="fi"><label>First Name</label><input type="text" id="sF" placeholder="First"></div>
-            <div class="fi"><label>Last Name (optional)</label><input type="text" id="sL" placeholder="Last"></div>
+            <div class="fi"><label>First Name</label><input type="text" id="sF" placeholder="First" autocapitalize="words" oninput="this.value=this.value.replace(/^(.)/, c=>c.toUpperCase())"></div>
+            <div class="fi"><label>Last Name (optional)</label><input type="text" id="sL" placeholder="Last" autocapitalize="words" oninput="this.value=this.value.replace(/^(.)/, c=>c.toUpperCase())"></div>
             <div class="fi"><label>Grade</label>
               <select id="sG"><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
             </div>
-            <div class="fi"><label>Accommodation / Notes</label><input type="text" id="sN" placeholder="e.g. ELL, Gifted..."></div>
+            <div class="fi"><label>Accommodation / Notes</label><input type="text" id="sN" placeholder="e.g. ELL, Gifted..." autocapitalize="words"></div>
             <div class="fi full">
               <label>Learning Profile — modified expectations</label>
               <textarea id="sI" style="min-height:70px;" placeholder="Optional — teacher notes on modified expectations. Do not paste full IEP documents."></textarea>
@@ -676,14 +677,32 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
     <!-- Right: Student list -->
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
         <div class="ct" style="margin-bottom:0;">👥 Students <span id="rCount" style="color:var(--muted);">(0)</span></div>
-        <button class="btn b-out b-sm" style="color:var(--rust);border-color:var(--rust);font-size:.7rem;" onclick="clearR()">Clear All</button>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <select id="rosterSort" onchange="renderR()" title="Sort students" style="font-family:'DM Sans',sans-serif;font-size:.75rem;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--paper);color:var(--muted);">
+            <option value="added">Order added</option>
+            <option value="first">First name A–Z</option>
+            <option value="last">Last name A–Z</option>
+            <option value="grade">Grade</option>
+          </select>
+          <button class="btn b-out b-sm" style="color:var(--rust);border-color:var(--rust);font-size:.7rem;" onclick="clearR()">Clear All</button>
+        </div>
       </div>
       <div id="rGrid"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No students yet.</div></div>
     </div>
 
   </div>
+
+  <!-- "What's next" nudge — shown once students exist -->
+  <div id="rosterNextStep" style="display:none;margin-top:4px;background:var(--sage-l);border:1.5px solid #A8C4AB;border-radius:var(--r);padding:16px 20px;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div>
+      <div style="font-weight:600;font-size:.9rem;margin-bottom:3px;">✅ Class is ready — generate your first lesson</div>
+      <div style="font-size:.8rem;color:var(--muted);">Your students are set up. Head to Plan to generate a lesson tailored to your class.</div>
+    </div>
+    <label for="tr-plan" class="btn b-sage" style="cursor:pointer;">✨ Go to Plan →</label>
+  </div>
+
 </div>
 
 <!-- ===== ASSESSMENT ===== -->
@@ -789,7 +808,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       </div>
       <div class="fi">
         <label>Character limit <span style="font-weight:400;color:var(--muted);">— check your board's PowerSchool (typically 500–750)</span></label>
-        <input type="number" id="rc-charlimit" value="500" min="100" max="2000" style="width:100%;">
+        <input type="text" inputmode="numeric" id="rc-charlimit" value="500" placeholder="e.g. 500" style="width:100%;font-size:1.1rem;font-weight:600;letter-spacing:.02em;text-align:center;" oninput="this.value=this.value.replace(/[^0-9]/,'')">
       </div>
     </div>
 
@@ -4023,6 +4042,8 @@ async function saveIEP(sid){
 
 function renderR(){
   document.getElementById('rCount').textContent=`(${students.length})`;
+  const nextStep = document.getElementById('rosterNextStep');
+  if (nextStep) nextStep.style.display = students.length >= 2 ? 'flex' : 'none';  // show after 2+ students added
   const g=document.getElementById('rGrid');
 
   if(!students.length){
@@ -4040,7 +4061,15 @@ function renderR(){
     return;
   }
   const hasClasses = classes.length > 0;
-  g.innerHTML=students.map((s,i)=>{
+  const sortVal = document.getElementById('rosterSort')?.value || 'added';
+  const gradeOrder = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
+  const sorted = [...students].sort((a,b) => {
+    if (sortVal === 'first') return a.first.localeCompare(b.first);
+    if (sortVal === 'last') return (a.last||a.first).localeCompare(b.last||b.first);
+    if (sortVal === 'grade') return gradeOrder.indexOf(a.grade) - gradeOrder.indexOf(b.grade);
+    return 0; // 'added' = original order
+  });
+  g.innerHTML=sorted.map((s,i)=>{
     const isUnassigned = hasClasses && !s.classId;
     const assignedClass = classes.find(c => c.id === s.classId);
     const classTag = isUnassigned
@@ -4066,20 +4095,20 @@ function renderR(){
       </div>` : '';
     return`
     <div class="sc ${s.iep?'iep':''} ${isUnassigned?'unassigned':''}" id="sc-${s.id}" style="${isUnassigned?'border-color:#E8C98A;':''}" >
-      <div class="sct">
+      <div class="sct roster-edit-btn" data-sid="${s.id}" style="cursor:pointer;" title="Click to edit student">
         <div class="av" style="background:${AVCOLORS[i%AVCOLORS.length]}">${s.first[0]}${(s.last||' ')[0]}</div>
         <div style="flex:1;min-width:0;">
           <div class="sn">${s.first} ${s.last||''} ${s.iep?'<span class="ib">Profile</span>':''} ${classTag}</div>
           <div class="sm">${s.grade}${s.notes?' · '+s.notes:''}</div>
         </div>
-        <div style="display:flex;gap:3px;">
-          <button class="btn b-out b-sm roster-edit-btn" style="padding:2px 6px;" data-sid="${s.id}">✏️</button>
+        <div style="display:flex;gap:3px;" onclick="event.stopPropagation()">
           <button class="btn b-out b-sm roster-del-btn" style="padding:2px 6px;color:var(--rust);border-color:var(--rust);" data-sid="${s.id}">✕</button>
         </div>
       </div>
       ${assignSelect}
       <div class="sie" id="iep-${s.id}">
-        <label style="font-family:DM Mono,monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin:7px 0 3px;">Learning Profile & Modified Expectations</label>
+        <div style="font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:var(--sage);font-weight:600;padding:8px 14px 4px;border-top:1px solid var(--border);">✏️ Edit Student</div>
+        <label style="font-family:DM Mono,monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin:7px 0 3px;padding:0 14px;">Learning Profile & Modified Expectations</label>
         <textarea class="sit" id="iept-${s.id}" placeholder="Paste modified expectations...">${s.iep||''}</textarea>
         ${assignInEdit}
         <div class="brow" style="margin-top:5px;">
