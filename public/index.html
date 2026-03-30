@@ -217,6 +217,8 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 .rg { display: flex; flex-direction: column; gap: 8px; }
 .sc { border: 1.5px solid var(--border); border-radius: 8px; padding: 11px 13px; background: var(--paper); transition: border-color .15s, box-shadow .15s; cursor:pointer; }
 .sc:hover { border-color: var(--sage); box-shadow: 0 2px 8px rgba(74,124,89,.1); }
+.task-row:has(.task-row-header:hover) { border-color: var(--sage); }
+.task-row-header:hover { background: var(--sage-l) !important; }
 .sc.iep { border-color: var(--amber); }
 .sct { display: flex; align-items: center; gap: 9px; }
 .av { width: 30px; height: 30px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-family: 'Fraunces', serif; font-size: 0.85rem; font-weight: 600; flex-shrink: 0; }
@@ -821,12 +823,13 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
 <!-- ===== REPORT CARDS ===== -->
 <div class="page" id="pg-rc">
-  <div class="ph"><h1>Report <em>Cards</em></h1><p>Generate Ontario-style comments ready to paste into PowerSchool. Sorted alphabetically to match your class list.</p></div>
+  <div class="ph"><h1>Report <em>Cards</em></h1><p>Ontario-style comments ready to paste into PowerSchool.</p></div>
 
   <div class="card" style="margin-bottom:16px;">
-    <div class="ct">⚙️ Settings</div>
-    <div class="fg" style="margin-bottom:16px;">
-      <div class="fi">
+
+    <!-- Row 1: Period + Subject + Char limit — compact single row -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div class="fi" style="flex:2;min-width:150px;">
         <label>Reporting Period</label>
         <select id="rc-term">
           <option value="progress">Progress Report (November)</option>
@@ -834,53 +837,58 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <option value="term2">Term 2 (June)</option>
         </select>
       </div>
-      <div class="fi">
+      <div class="fi" style="flex:2;min-width:150px;">
         <label>Subject</label>
         <select id="rc-subj">
           <option>Language / Literacy</option>
         </select>
       </div>
-      <div class="fi">
-        <label>Character limit <span style="font-weight:400;color:var(--muted);">— check your board's PowerSchool (typically 500–750)</span></label>
-        <input type="text" inputmode="numeric" id="rc-charlimit" value="500" placeholder="e.g. 500" style="width:100%;font-size:1.1rem;font-weight:600;letter-spacing:.02em;text-align:center;" oninput="this.value=this.value.replace(/[^0-9]/,'')">
+      <div class="fi" style="flex:1;min-width:100px;">
+        <label style="white-space:nowrap;">Char limit <span style="font-weight:400;color:var(--muted);font-size:.72rem;">(PowerSchool)</span></label>
+        <input type="text" inputmode="numeric" id="rc-charlimit" value="500" placeholder="500"
+          style="font-size:.9rem;font-weight:600;text-align:center;padding:8px;"
+          oninput="this.value=this.value.replace(/[^0-9]/,'')">
       </div>
     </div>
 
-    <div style="background:var(--cream);border:1.5px solid var(--border);border-radius:9px;padding:14px 16px;margin-bottom:14px;">
-      <div style="font-family:DM Mono,monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">📋 Choose Who to Generate For</div>
-      <div class="fg" style="margin-bottom:12px;align-items:end;">
-        <div class="fi">
-          <label>Class <span style="color:var(--rust);font-size:.8rem;">✱</span></label>
-          <select id="rc-class" onchange="updateRCStudentFilter(); loadSavedRCPage();">
-            <option value="">— Select a class —</option>
-          </select>
-        </div>
-        <div class="fi">
-          <label>Grade <span style="font-weight:400;color:var(--muted);">(optional)</span></label>
-          <select id="rc-grade" onchange="updateRCStudentFilter()" disabled>
-            <option value="">All grades</option>
-          </select>
+    <!-- Row 2: Class + Grade + Students -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;">
+      <div class="fi" style="flex:2;min-width:160px;">
+        <label>Class <span style="color:var(--rust);">✱</span></label>
+        <select id="rc-class" onchange="updateRCStudentFilter(); loadSavedRCPage();">
+          <option value="">— Select a class —</option>
+        </select>
+      </div>
+      <div class="fi" style="flex:1;min-width:120px;">
+        <label>Grade <span style="font-weight:400;color:var(--muted);font-size:.72rem;">(optional)</span></label>
+        <select id="rc-grade" onchange="updateRCStudentFilter()" disabled>
+          <option value="">All grades</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Student list — only when class selected -->
+    <div id="rc-no-class-msg" style="font-size:.82rem;color:var(--muted);font-style:italic;padding:4px 0 10px;">Select a class to see students.</div>
+    <div id="rc-student-area" style="display:none;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+        <label style="font-size:.78rem;font-weight:600;color:var(--ink);">Students</label>
+        <div style="display:flex;gap:10px;">
+          <button type="button" onclick="rcSelectAll(true)" style="font-size:.72rem;background:none;border:none;cursor:pointer;color:var(--sage);">Select all</button>
+          <button type="button" onclick="rcSelectAll(false)" style="font-size:.72rem;background:none;border:none;cursor:pointer;color:var(--muted);">None</button>
         </div>
       </div>
-      <div id="rc-student-area" style="display:none;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
-          <label style="font-size:.78rem;font-weight:500;color:var(--ink);">Students</label>
-          <div style="display:flex;gap:8px;">
-            <button type="button" onclick="rcSelectAll(true)" style="font-size:.7rem;background:none;border:none;cursor:pointer;color:var(--sage);text-decoration:underline;">All</button>
-            <button type="button" onclick="rcSelectAll(false)" style="font-size:.7rem;background:none;border:none;cursor:pointer;color:var(--muted);text-decoration:underline;">None</button>
-          </div>
-        </div>
-        <div id="rc-student-checkboxes" style="display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto;"></div>
-      </div>
-      <div id="rc-no-class-msg" style="font-size:.82rem;color:var(--muted);font-style:italic;text-align:center;padding:8px 0;">Select a class to see students.</div>
+      <div id="rc-student-checkboxes" style="display:flex;flex-direction:column;gap:5px;max-height:180px;overflow-y:auto;"></div>
     </div>
 
     <div id="rc-scope-summary" style="font-size:.82rem;color:var(--sage);margin-bottom:10px;font-weight:600;"></div>
-    <div class="ban ban-b" style="margin-bottom:12px;font-size:.78rem;">
-      <span>💡</span>
-      <span>Comments use your <strong>assessment task history</strong> from the Grade Tracker. The more tasks you've assessed, the better the comments. Students sorted A–Z by last name.</span>
+
+    <!-- Generate button — prominent -->
+    <button class="btn b-ink b-full" id="rcGenBtn" onclick="generateReportCards()" disabled style="opacity:.5;font-size:.95rem;padding:13px;">📝 Generate Comments</button>
+
+    <!-- Subtle hint below button -->
+    <div style="text-align:center;margin-top:8px;font-size:.72rem;color:var(--muted);">
+      Uses your assessment history from the Grade Tracker · sorted A–Z by last name
     </div>
-    <button class="btn b-ink b-full" id="rcGenBtn" onclick="generateReportCards()" disabled style="opacity:.5;">📝 Generate Comments</button>
   </div>
 
   <div id="rcResults"></div>
@@ -1509,7 +1517,7 @@ async function loadUserData() {
   const {data:sessData} = await sessQuery;
   if(sessData) sessions=sessData.map(sess=>({
     id:sess.id, date:sess.date, subject:sess.subject, strand:sess.strand,
-    grades:sess.grades, task:sess.task,
+    grades:sess.grades, task:sess.task, classId:sess.class_id||null,
     marks:Object.fromEntries((sess.student_marks||[]).map(m=>[m.student_id,{level:m.level,notes:m.notes}]))
   }));
 
@@ -1630,7 +1638,7 @@ async function switchClass(classId) {
   const {data:sessData} = await sessQ;
   if (sessData) sessions = sessData.map(sess=>({
     id:sess.id, date:sess.date, subject:sess.subject, strand:sess.strand,
-    grades:sess.grades, task:sess.task,
+    grades:sess.grades, task:sess.task, classId:sess.class_id||null,
     marks:Object.fromEntries((sess.student_marks||[]).map(m=>[m.student_id,{level:m.level,notes:m.notes}]))
   }));
   renderClassTabs();
@@ -4306,15 +4314,15 @@ function renderTracker(){
     const lvColors={L1:'var(--rust)',L2:'var(--amber)',L3:'var(--blue)',L4:'var(--sage)'};
     const LEVELS=['L1-','L1','L1+','L2-','L2','L2+','L3-','L3','L3+','L4-','L4','L4+'];
     const markedStudents=students.filter(s=>sess.marks[s.id]?.level);
-    return`<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:10px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--cream);">
+    return`<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:10px;transition:border-color .15s;" class="task-row" data-sessid="${sess.id}">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--cream);cursor:pointer;" class="task-row-header" data-sessid="${sess.id}" title="Click to open in Assess">
         <div>
-          <div style="font-weight:500;font-size:.88rem;">${sess.task}</div>
-          <div style="font-family:DM Mono,monospace;font-size:.6rem;color:var(--muted);">${sess.date} · ${sess.subject} · ${sess.strand} · ${cnt} students</div>
+          <div style="font-weight:600;font-size:.88rem;">${sess.task} <span style="font-size:.65rem;font-weight:400;color:var(--sage);margin-left:4px;">→ open</span></div>
+          <div style="font-family:DM Mono,monospace;font-size:.6rem;color:var(--muted);">${sess.date} · ${sess.subject} · ${sess.strand} · ${cnt} students${!activeClassId && sess.classId ? ' · <span style="color:var(--sage);font-weight:600;">' + (classes.find(c=>c.id===sess.classId)?.name||'') + '</span>' : ''}</div>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button class="btn b-out b-sm edit-marks-btn" style="font-size:.7rem;" data-sessid="${sess.id}">✏️ Edit marks</button>
-          <button class="btn b-out b-sm" style="color:var(--rust);border-color:var(--rust);font-size:.7rem;" data-sessid="${sess.id}" id="delsess-${sess.id}">🗑 Delete</button>
+        <div style="display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
+          <button class="btn b-out b-sm edit-marks-btn" style="font-size:.7rem;" data-sessid="${sess.id}">✏️ Quick edit</button>
+          <button class="btn b-out b-sm" style="color:var(--rust);border-color:var(--rust);font-size:.7rem;" data-sessid="${sess.id}" id="delsess-${sess.id}">🗑</button>
         </div>
       </div>
       <div style="display:none;" id="sessmarks-${sess.id}">
@@ -4336,6 +4344,46 @@ function renderTracker(){
       </div>
     </div>`;
   }).join('');
+
+  // Click task row header → load session into Assess step
+  document.querySelectorAll('.task-row-header').forEach(el => {
+    el.addEventListener('click', function() {
+      const sessId = this.dataset.sessid;
+      const sess = sessions.find(s => s.id === sessId);
+      if (!sess) return;
+      // Load this session into curSess
+      curSess = {
+        id: sess.id,
+        task: sess.task,
+        subject: sess.subject,
+        strand: sess.strand,
+        grades: sess.grades || [],
+        date: sess.date,
+        marks: { ...sess.marks }
+      };
+      window._curSessGrades = sess.grades || [];
+      // Switch to Plan tab → Step 3 Assess
+      document.getElementById('tr-plan').checked = true;
+      setTimeout(() => {
+        for(let i=1;i<=5;i++){
+          const s=document.getElementById('s'+i);
+          const w=document.getElementById('ws'+i);
+          if(s) s.style.display='none';
+          if(w){ w.classList.remove('on','done','locked'); if(i>1) w.classList.add('locked'); }
+        }
+        unlock();
+        const s4 = document.getElementById('s4');
+        if (s4) s4.style.display = 'block';
+        for(let i=1;i<=5;i++) document.getElementById('ws'+i)?.classList.remove('on');
+        document.getElementById('ws4')?.classList.add('on');
+        renderAssGrid();
+        window.scrollTo(0, 0);
+        // Update topic field so context is visible
+        const tf = document.getElementById('topic');
+        if (tf) tf.value = sess.task;
+      }, 80);
+    });
+  });
 
   // Attach edit marks listeners
   document.querySelectorAll('.edit-marks-btn').forEach(btn => {
@@ -5420,9 +5468,13 @@ function renderExpInAssess() {
     byStrand[s].push(item);
   });
 
-  let html = `<div style="margin-bottom:10px;"><select id="expInAssessFilter" style="font-family:'DM Sans',sans-serif;font-size:.82rem;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--paper);" onchange="renderExpInAssess()">
-    ${classOptions.replace(`value="${selectedClass}"`, `value="${selectedClass}" selected`)}
-  </select></div>`;
+  let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+    <span style="font-family:DM Mono,monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap;">Filter by class</span>
+    <select id="expInAssessFilter" style="font-family:'DM Sans',sans-serif;font-size:.82rem;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--paper);" onchange="renderExpInAssess()">
+      ${classOptions.replace(`value="${selectedClass}"`, `value="${selectedClass}" selected`)}
+    </select>
+    <span style="font-size:.78rem;color:var(--muted);">${filteredLessons.length} lesson${filteredLessons.length!==1?'s':''} · ${Object.keys(allCovered).length} expectation${Object.keys(allCovered).length!==1?'s':''} covered</span>
+  </div>`;
 
   if (!Object.keys(byStrand).length) {
     html += '<div style="color:var(--muted);font-size:.83rem;font-style:italic;">No expectations tracked for this class yet.</div>';
