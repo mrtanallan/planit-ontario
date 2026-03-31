@@ -355,10 +355,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 </head>
 <body>
 
-<!-- ── Toast ── -->
+<!-- -- Toast -- -->
 <div class="toast" id="appToast"></div>
 
-<!-- ── Loading overlay ── -->
+<!-- -- Loading overlay -- -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="dots"><span></span><span></span><span></span></div>
   <div class="loading-text" id="loadingText">Loading...</div>
@@ -366,7 +366,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <div class="loading-stage" id="loadingStage"></div>
 </div>
 
-<!-- ── Tour overlay ── -->
+<!-- -- Tour overlay -- -->
 <div id="tourOverlay" class="tour-overlay" style="display:none;" onclick="if(event.target===this)skipTour()">
   <div class="tour-box">
     <span id="tourEmoji" class="tour-emoji">👋</span>
@@ -381,7 +381,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   </div>
 </div>
 
-<!-- ── Add student modal ── -->
+<!-- -- Add student modal -- -->
 <div class="mbg" id="addStudentModal" onclick="if(event.target===this)closeAddStudentModal()">
   <div class="modal" style="max-width:500px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
@@ -524,7 +524,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div class="ws locked" id="ws4" onclick="gs(4)"><div class="wn">3</div>📊 Assess</div>
   </div>
 
-  <!-- ── Step 1: Generate ── -->
+  <!-- -- Step 1: Generate -- -->
   <div id="s1">
     <div class="card">
       <!-- Hidden grade selects for JS compatibility -->
@@ -656,7 +656,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     </div>
   </div>
 
-  <!-- ── Step 2: Review & Edit ── -->
+  <!-- -- Step 2: Review & Edit -- -->
   <div id="s2" style="display:none;">
     <div class="ban ban-s" style="margin-bottom:10px;"><span>✏️</span><span><strong>Review &amp; Edit:</strong> Click "Edit" on any section to modify before sharing with students.</span></div>
     <!-- Floating section nav -->
@@ -670,7 +670,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     </div>
   </div>
 
-  <!-- ── Step 3: Share (resources) ── -->
+  <!-- -- Step 3: Share (resources) -- -->
   <div id="s3" style="display:none;">
     <div class="ban ban-b" style="margin-bottom:14px;"><span>📦</span><span><strong>Resources</strong> — Quick access to all shareable content from this lesson.</span></div>
     <div id="shareCards"></div>
@@ -680,7 +680,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     </div>
   </div>
 
-  <!-- ── Step 4: Assess ── -->
+  <!-- -- Step 4: Assess -- -->
   <div id="s4" style="display:none;">
     <div class="ban ban-a"><span>📊</span><span><strong>Quick Assessment:</strong> Tap a level for each student. Add notes while circulating.</span></div>
     <div class="card" style="margin-bottom:14px;">
@@ -1127,7 +1127,7 @@ const EXPECTATIONS = {
 // Backward-compat alias used throughout existing code
 const ONTARIO_EXPECTATIONS = EXPECTATIONS.language;
 
-// ── Unified expectations lookup ──────────────────────────────
+// -- Unified expectations lookup ------------------------------
 function getExpectations(subject, grades, strands) {
   const subjectKey = subject === 'Language / Literacy' ? 'language'
     : subject === 'Mathematics' ? 'math'
@@ -1945,7 +1945,7 @@ async function generate() {
     : [];
   const allOutputKeys = [...outputKeys, ...answerKeyKeys];
 
-  // ── Worksheet format rules — laptop/Chromebook safe ──────────
+  // -- Worksheet format rules — laptop/Chromebook safe ----------
   const isMath = subj === 'Mathematics';
   const wsFormatNote = isMath
     ? `Math worksheet FORMAT RULES — Chromebook/laptop only, students cannot show handwritten work:
@@ -2814,7 +2814,7 @@ function openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg) {
     #fsb{border-radius:8px!important;width:auto!important;padding:.3rem .85rem!important;font-size:.7rem!important;letter-spacing:.5px;font-family:'DM Mono',monospace}
   `;
 
-  // ── FIX: JS defers show(0) until DOMContentLoaded instead of running inline ──
+  // -- FIX: JS defers show(0) until DOMContentLoaded instead of running inline --
   const JS = `
     var c=0,t=${total};
     var sl,pr,nm;
