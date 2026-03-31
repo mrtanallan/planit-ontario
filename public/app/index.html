@@ -1019,8 +1019,9 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 // SUPABASE + GOOGLE
 // ============================================================
 const SUPABASE_URL = 'https://bbhhkyiyfybmlfkerfto.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGhreWl5ZnlibWxma2VyZnRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMTYxNzYsImV4cCI6MjA1Nzg5MjE3Nn0.R8dRCfIr6KIFdJpHaVqaGXWPpv7YbAPZWNHRoAwnWBk';
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGhreWl5ZnlibWxma2VyZnRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzMTYxNzYsImV4cCI6MjA1Nzg5MjE3Nn0.R8dRCfIr6KIFdJpHaVqaGXWPpv7YbAPZWNHRoAwnWBk';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const GSLIDES_CLIENT_ID = '745642384007-u7anvn00lh74qum6b9u19eodm7flokfd.apps.googleusercontent.com';
 const GSLIDES_SCOPE = 'https://www.googleapis.com/auth/presentations https://www.googleapis.com/auth/drive.file';
 let _gToken = null;
