@@ -111,9 +111,9 @@ strong { font-weight: 600; }
         <input class="ni" type="text" id="wsDate">
       </div>
     </div>
-    <div class="name-suggestion" id="nameSuggestion">
-      <div class="suggestion-text" id="suggestionText"></div>
-      <div class="suggestion-btns">
+    <div class="name-suggestion" id="nameSuggestion" style="flex-wrap:wrap;gap:8px;">
+      <div class="suggestion-text" id="suggestionText" style="width:100%;"></div>
+      <div class="suggestion-btns" id="suggestionBtns">
         <button class="sug-yes" onclick="acceptSuggestion()">Yes, that's me ✓</button>
         <button class="sug-no" onclick="declineSuggestion()">Keep my name</button>
       </div>
@@ -322,13 +322,23 @@ function checkName(){
     document.getElementById('studentName').classList.add('matched');
     return;
   }
-  // Fuzzy match
-  const best=findBestMatch(typed,roster);
-  if(best&&best.score>=0.4){
-    const name=best.student.last?`${best.student.first} ${best.student.last}`:best.student.first;
-    document.getElementById('suggestionText').textContent=`Did you mean "${name}"?`;
+  // Fuzzy match — show ALL similar names, not just the single best
+  const matches=findAllMatches(typed,roster);
+  if(matches.length===1){
+    // Single match — show the old "Did you mean X?" UI
+    const name=matches[0].student.last?`${matches[0].student.first} ${matches[0].student.last}`:matches[0].student.first;
+    document.getElementById('suggestionText').innerHTML=`Did you mean <strong>"${name}"</strong>?`;
     document.getElementById('nameSuggestion').classList.add('show');
-    window._pendingSuggestion=best.student;
+    window._pendingSuggestion=matches[0].student;
+  } else if(matches.length>1){
+    // Multiple matches — show all as selectable buttons
+    const btnsHtml=matches.map(m=>{
+      const name=m.student.last?`${m.student.first} ${m.student.last}`:m.student.first;
+      return `<button class="sug-yes" style="font-size:.78rem;padding:5px 10px;" onclick="selectStudent('${m.student.id}','${name.replace(/'/g,"\'")}')">I am ${name}</button>`;
+    }).join('');
+    document.getElementById('suggestionText').innerHTML=`<span style="display:block;margin-bottom:6px;">Which one are you?</span>${btnsHtml}`;
+    document.getElementById('nameSuggestion').classList.add('show');
+    window._pendingSuggestion=null;
   }
 }
 
@@ -336,6 +346,14 @@ function acceptSuggestion(){
   if(!window._pendingSuggestion)return;
   matchedStudent=window._pendingSuggestion;
   const name=matchedStudent.last?`${matchedStudent.first} ${matchedStudent.last}`:matchedStudent.first;
+  document.getElementById('studentName').value=name;
+  document.getElementById('studentName').classList.add('matched');
+  document.getElementById('nameSuggestion').classList.remove('show');
+  window._pendingSuggestion=null;
+}
+
+function selectStudent(id,name){
+  matchedStudent=roster.find(s=>s.id===id)||{id,first:name};
   document.getElementById('studentName').value=name;
   document.getElementById('studentName').classList.add('matched');
   document.getElementById('nameSuggestion').classList.remove('show');
@@ -357,6 +375,19 @@ function findBestMatch(typed,roster){
     });
   });
   return best;
+}
+
+function findAllMatches(typed,roster){
+  const tl=typed.toLowerCase();
+  const results=[];
+  const seen=new Set();
+  roster.forEach(s=>{
+    const candidates=[s.first,`${s.first} ${s.last||''}`.trim()];
+    let best=0;
+    candidates.forEach(c=>{best=Math.max(best,similarity(tl,c.toLowerCase()));});
+    if(best>=0.35&&!seen.has(s.id)){seen.add(s.id);results.push({student:s,score:best});}
+  });
+  return results.sort((a,b)=>b.score-a.score);
 }
 
 function similarity(a,b){
