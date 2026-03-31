@@ -21,7 +21,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
 :root {
   --ink: #16120E; --cream: #F8F4EE; --paper: #fff;
@@ -99,7 +98,7 @@ nav {
 .signout-btn:hover { background: rgba(255,255,255,0.2); }
 
 /* PAGES */
-.page { display: none; padding: 24px 20px; max-width: 960px; margin: 0 auto; }
+.page { display: none; padding: 24px 28px; max-width: 1200px; margin: 0 auto; }
 #tr-plan:checked   ~ #appScreen #pg-plan   { display: block; }
 #tr-roster:checked ~ #appScreen #pg-roster { display: block; }
 #tr-assess:checked ~ #appScreen #pg-assess { display: block; }
@@ -169,7 +168,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 .cbh { padding: 10px 14px; background: var(--cream); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 7px; }
 .cbl { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
 .cba { display: flex; gap: 5px; flex-wrap: wrap; }
-.cbb { padding: 16px; font-size: 0.86rem; line-height: 1.8; background: var(--paper); min-height: 60px; outline: none; }
+.cbb { padding: 20px 24px; font-size: 0.88rem; line-height: 1.85; background: var(--paper); min-height: 60px; outline: none; }
 .cbb[contenteditable="true"]:focus { box-shadow: inset 0 0 0 2px var(--sage); }
 .cbf { padding: 8px 14px; background: var(--sage-l); border-top: 1px solid var(--border); font-size: 0.75rem; color: var(--sage); display: flex; align-items: center; justify-content: space-between; }
 
@@ -322,6 +321,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 .tour-dot.on { background:var(--sage); }
 .tour-actions { display:flex;gap:8px;justify-content:space-between;align-items:center; }
 </style>
+<script src="https://accounts.google.com/gsi/client" async></script>
 </head>
 <body>
 
@@ -399,6 +399,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   </div>
   <div class="nav-user">
     <span class="nav-email" id="navEmail"></span>
+    <button id="gConnectBtn" onclick="connectGoogleSlides()" style="display:none;background:none;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7);border-radius:6px;padding:3px 9px;font-size:.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;" title="Connect Google Slides">🔗 Connect Google</button>
     <label class="tab" for="tr-account" style="padding:5px 10px;font-size:.75rem;color:#9CA3AF;" title="Account">👤</label>
     <button class="signout-btn" onclick="signOut()">Sign Out</button>
   </div>
@@ -583,7 +584,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div style="display:flex;gap:0;align-items:flex-start;">
 
       <!-- Sticky sidebar nav -->
-      <div id="lessonSidebar" style="width:168px;flex-shrink:0;position:sticky;top:64px;max-height:calc(100vh - 80px);overflow-y:auto;margin-right:16px;display:none;">
+      <div id="lessonSidebar" style="width:152px;flex-shrink:0;position:sticky;top:64px;max-height:calc(100vh - 80px);overflow-y:auto;margin-right:12px;display:none;">
         <div style="font-family:DM Mono,monospace;font-size:.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 4px;">Sections</div>
         <div id="sidebarLinks" style="display:flex;flex-direction:column;gap:2px;"></div>
       </div>
@@ -2465,7 +2466,7 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic,expectations){
           <button class="btn b-out b-sm" onclick="resetBlock('${k}')">↩ Reset</button>
           <button class="btn b-out b-sm" onclick="copyBlock('${k}')">📋 Copy</button>
           ${!isWS?`<button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button>`:''}
-          ${k==='lesson_plan'?`<button class="btn b-sage b-sm" onclick="presentSlides()" style="white-space:nowrap;">▶ Present</button><button class="btn b-out b-sm" onclick="exportSlides()">⬇ PPTX</button><button class="btn b-out b-sm" onclick="exportAnchorChart()" style="white-space:nowrap;">🖼️ Anchor Chart</button>`:''}
+          ${k==='lesson_plan'?`<button class="btn b-sage b-sm" onclick="presentSlides()" style="white-space:nowrap;">▶ Present</button><button class="btn b-out b-sm" onclick="downloadSlidesHTML()" style="white-space:nowrap;" title="Download as HTML file to open in any browser">⬇ Save Slides</button><button class="btn b-out b-sm" id="gSlidesBtn" onclick="exportToGoogleSlides()" style="white-space:nowrap;display:none;" title="Export to Google Slides">🔗 Google Slides</button><button class="btn b-out b-sm" onclick="exportAnchorChart()" style="white-space:nowrap;">🖼️ Anchor Chart</button>`:''}
           ${isWS ? (k.match(/student_worksheet_[A-D]$/) ? `
             <button class="btn b-sage b-sm" onclick="getStudentLink('${k}', true)">🔗 One link (all grades)</button>
             <button class="btn b-out b-sm" onclick="getStudentLink('${k}', false)" style="font-size:.72rem;">🔗 This grade only</button>
@@ -3384,11 +3385,181 @@ ${ac.remember ? `<div style="background:#EAF0EA;border-left:5px solid #4A7C59;bo
 // ============================================================
 // EXPORT TO SLIDES (AI-powered teaching deck)
 // ============================================================
-async function exportSlides() {
-  if(typeof PptxGenJS === 'undefined' && typeof pptxgen === 'undefined') {
-    alert('Slides library failed to load. Please reload the page.');
+// ============================================================
+// GOOGLE SLIDES EXPORT
+// ============================================================
+const GSLIDES_CLIENT_ID = ''; // Set in Vercel env or here after Google Console setup
+const GSLIDES_SCOPE = 'https://www.googleapis.com/auth/presentations https://www.googleapis.com/auth/drive.file';
+let _gToken = null;
+
+function initGoogleSlides() {
+  // Show connect button when slides are generated
+  const btn = document.getElementById('gConnectBtn');
+  if (btn && !_gToken) btn.style.display = 'inline-block';
+}
+
+function connectGoogleSlides() {
+  if (!window.google?.accounts?.oauth2) {
+    showToast('Google sign-in not loaded yet. Please wait a moment and try again.');
     return;
   }
+  if (!GSLIDES_CLIENT_ID) {
+    showToast('Google Slides integration needs a Client ID — set GSLIDES_CLIENT_ID in the code.');
+    return;
+  }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GSLIDES_CLIENT_ID,
+    scope: GSLIDES_SCOPE,
+    callback: (response) => {
+      if (response.error) { showToast('Google auth failed: ' + response.error); return; }
+      _gToken = response.access_token;
+      document.getElementById('gConnectBtn').textContent = '✅ Google Connected';
+      document.getElementById('gConnectBtn').style.borderColor = 'rgba(82,183,136,.6)';
+      document.getElementById('gConnectBtn').style.color = '#95D5B2';
+      document.getElementById('gSlidesBtn').style.display = 'inline-flex';
+      showToast('✅ Google connected — click "Google Slides" to export');
+    }
+  });
+  client.requestAccessToken();
+}
+
+async function exportToGoogleSlides() {
+  if (!_gToken) { connectGoogleSlides(); return; }
+  if (!window._slideData) { showToast('Generate slides first — click ▶ Present'); return; }
+  const {sd, topic, subject, gradeStr} = window._slideData;
+  const btn = document.getElementById('gSlidesBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Creating...'; }
+  try {
+    // 1. Create blank presentation
+    const createRes = await fetch('https://slides.googleapis.com/v1/presentations', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + _gToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: topic + (gradeStr ? ' — ' + gradeStr : '') + ' | TeacherAI' })
+    });
+    if (!createRes.ok) throw new Error('Could not create presentation');
+    const pres = await createRes.json();
+    const presId = pres.presentationId;
+    const firstSlideId = pres.slides[0].objectId;
+
+    // 2. Build batch update requests
+    const requests = [];
+    const slides = [];
+
+    // Title slide
+    slides.push({title: topic, subtitle: (gradeStr||'') + (subject?' · '+subject:'') + '\nTeacherAI · Ontario 2023 Curriculum', type:'title'});
+
+    // Learning Goals
+    if (sd.learning_goals?.length) slides.push({title:'Learning Goals', body: sd.learning_goals.map((g,i)=>(i+1)+'. '+g).join('\n'), type:'content'});
+
+    // Minds On
+    if (sd.minds_on) slides.push({title:'Minds On', body: (sd.minds_on.hook||'') + (sd.minds_on.prompt?'\n\nThink / Pair / Share\n'+sd.minds_on.prompt:''), type:'content'});
+
+    // Vocabulary
+    if (sd.vocabulary?.length) slides.push({title:'Key Vocabulary', body: sd.vocabulary.slice(0,4).map(function(v){return v.word+'\n'+v.definition+(v.example?' ('+v.example+')':'');}).join('\n\n'), type:'content'});
+
+    // Content slides
+    (sd.content_slides||[]).slice(0,5).forEach((cs,i)=>{
+      slides.push({title: cs.title||'Key Concept', body: (cs.key_point||'') + (cs.example?'\n\nExample: '+cs.example:''), type:'content'});
+    });
+
+    // Discussion
+    if (sd.discussion_questions?.length) {
+      const labels=['💭 Recall','💡 Apply','⭐ Evaluate'];
+      slides.push({title:'Discussion', body: sd.discussion_questions.slice(0,3).map((q,i)=>labels[i]+': '+q).join('\n\n'), type:'content'});
+    }
+
+    // Exit ticket
+    if (sd.exit_ticket) slides.push({title:'Exit Ticket 🎟️', body: sd.exit_ticket, type:'content'});
+
+    // Delete the default blank slide and insert ours
+    requests.push({deleteObject: {objectId: firstSlideId}});
+
+    slides.forEach((s, i) => {
+      const slideId = 'slide_' + i;
+      const titleId = 'title_' + i;
+      const bodyId = 'body_' + i;
+      requests.push({
+        createSlide: {
+          objectId: slideId,
+          slideLayoutReference: {predefinedLayout: s.type === 'title' ? 'TITLE' : 'TITLE_AND_BODY'},
+          placeholderIdMappings: [
+            {layoutPlaceholder:{type:'TITLE',index:0}, objectId: titleId},
+            {layoutPlaceholder:{type: s.type==='title'?'SUBTITLE':'BODY',index:0}, objectId: bodyId}
+          ]
+        }
+      });
+      requests.push({insertText:{objectId:titleId,text:s.title}});
+      requests.push({insertText:{objectId:bodyId,text:s.body||''}});
+    });
+
+    // Apply colour to title slides
+    requests.push({
+      updatePageProperties: {
+        objectId: 'slide_0',
+        pageProperties: { pageBackgroundFill: { solidFill: { color: { rgbColor: {red:0.106,green:0.227,blue:0.294} } } } },
+        fields: 'pageBackgroundFill'
+      }
+    });
+
+    await fetch(`https://slides.googleapis.com/v1/presentations/${presId}:batchUpdate`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + _gToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({requests})
+    });
+
+    // 3. Open in Google Slides
+    window.open('https://docs.google.com/presentation/d/' + presId + '/edit', '_blank');
+    showToast('✅ Opened in Google Slides!');
+  } catch(e) {
+    if (e.message?.includes('401') || e.message?.includes('invalid_token')) {
+      _gToken = null;
+      showToast('Google token expired — reconnecting...');
+      connectGoogleSlides();
+    } else {
+      showToast('Export failed: ' + e.message);
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔗 Google Slides'; }
+  }
+}
+
+async function fetchSlideImage(topic) {
+  try {
+    const res = await fetch(
+      'https://pixabay.com/api/?key=47497737-8dc0f9b5f0f3f8c5f1e2a3b4c' +
+      '&q=' + encodeURIComponent(topic.split(' ').slice(0, 3).join(' ')) +
+      '&image_type=photo&orientation=horizontal&min_width=600&per_page=5&safesearch=true'
+    );
+    if (res.ok) {
+      const data = await res.json();
+      const hit = data?.hits?.[0];
+      if (hit?.webformatURL) {
+        const imgRes = await fetch(hit.webformatURL);
+        if (imgRes.ok) {
+          const buf = await imgRes.arrayBuffer();
+          const bytes = new Uint8Array(buf);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+          return 'data:image/jpeg;base64,' + btoa(binary);
+        }
+      }
+    }
+  } catch(e) { /* try fallback */ }
+  try {
+    const seed = topic.split('').reduce((a,c)=>a+c.charCodeAt(0),0) % 1000;
+    const imgRes = await fetch('https://picsum.photos/seed/' + seed + '/800/600');
+    if (imgRes.ok) {
+      const buf = await imgRes.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+      return 'data:image/jpeg;base64,' + btoa(binary);
+    }
+  } catch(e) { /* silent */ }
+  return null;
+}
+
+async function generateSlideData() {
   const topic = curSess?.task || document.getElementById('topic')?.value || 'Lesson';
   const subject = curSess?.subject || '';
   const grades = curSess?.grades || [];
@@ -3450,980 +3621,378 @@ async function exportSlides() {
     // Fetch Wikipedia image
     let wikiImg = null;
     try { wikiImg = await fetchSlideImage(topic); } catch(e) { /* silent — image is optional */ }
-    buildSlideDeck(sd, topic, subject, gradeStr, wikiImg);
-    // Also cache slide data for in-browser presenter
     window._slideData = {sd, topic, subject, gradeStr, wikiImg};
+    // Show Google Slides button
+    const gsBtn = document.getElementById('gSlidesBtn');
+    if (gsBtn && _gToken) gsBtn.style.display = 'inline-flex';
+    // Show connect button if not yet connected
+    const gcBtn = document.getElementById('gConnectBtn');
+    if (gcBtn && !_gToken) gcBtn.style.display = 'inline-block';
   } catch(e) {
     alert('Error generating slides: ' + e.message);
   } finally {
-    if(btn) { btn.disabled = false; btn.textContent = '📊 Slides'; }
+    if(btn) { btn.disabled = false; btn.textContent = '▶ Present'; }
   }
 }
 
 async function presentSlides() {
-  // If we have cached slide data, open directly
   if (window._slideData) {
     openHTMLPresenter(window._slideData.sd, window._slideData.topic, window._slideData.subject, window._slideData.gradeStr, window._slideData.wikiImg);
     return;
   }
-  // Otherwise generate slides first
   const btn = event?.target;
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Building...'; }
-  try { await exportSlides(); }
+  try { await generateSlideData(); }
   finally { if (btn) { btn.disabled = false; btn.textContent = '▶ Present'; } }
   if (window._slideData) {
     openHTMLPresenter(window._slideData.sd, window._slideData.topic, window._slideData.subject, window._slideData.gradeStr, window._slideData.wikiImg);
   }
 }
 
+function downloadSlidesHTML() {
+  if (!window._slideData) {
+    showToast('Generate slides first by clicking ▶ Present');
+    return;
+  }
+  // Build the HTML using the same presenter but return as a blob instead of opening
+  const {sd, topic, subject, gradeStr, wikiImg} = window._slideData;
+  // Reuse openHTMLPresenter but intercept the window.open
+  const orig = window.open;
+  let captured = null;
+  window.open = () => {
+    const fake = {
+      document: {
+        open() {}, write(h) { captured = h; }, close() {}
+      }
+    };
+    return fake;
+  };
+  openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg);
+  window.open = orig;
+  if (!captured) { showToast('Could not build slide file.'); return; }
+  const blob = new Blob([captured], {type: 'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (topic || 'lesson').replace(/[^a-z0-9]/gi, '-').toLowerCase() + '-slides.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('✅ Slides saved — open in any browser to present');
+}
+
 function openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg) {
-  const date = new Date().toLocaleDateString('en-CA', {year:'numeric',month:'long',day:'numeric'});
-  const C = {
-    dark: '#1C3A2B', sage: '#4A7C59', sageLight: '#EAF2EC', sageMid: '#6A9E7A',
-    amber: '#C47B2A', amberLight: '#FDF4E3', amberMid: '#E8A84A',
-    blue: '#2A5FA5', blueLight: '#E8EFF9',
-    ink: '#16120E', muted: '#7A726A', cream: '#F9F5F0', white: '#FFFFFF',
-    rust: '#B54B2A'
+  const date = new Date().toLocaleDateString('en-CA',{year:'numeric',month:'long',day:'numeric'});
+
+  // ── Palette — jewel-tone full-bleed per slide type ──────────
+  const P = {
+    title:   {bg:'#1B3A4B', acc:'#52B788', txt:'#FFFFFF', sub:'rgba(255,255,255,.55)'},
+    goals:   {bg:'#2D6A4F', acc:'#B7E4C7', txt:'#FFFFFF', sub:'rgba(255,255,255,.6)'},
+    mindson: {bg:'#F4A261', acc:'#FFFFFF',  txt:'#1A1209', sub:'rgba(26,18,9,.5)'},
+    vocab:   {bg:'#023E8A', acc:'#90E0EF',  txt:'#FFFFFF', sub:'rgba(255,255,255,.55)'},
+    content: {bg:'#FFFFFF', acc:'#2D6A4F',  txt:'#1A1714', sub:'#7A726A'},
+    discuss: {bg:'#5E0B8B', acc:'#E0AAFF',  txt:'#FFFFFF', sub:'rgba(255,255,255,.6)'},
+    activity:{bg:'#E76F51', acc:'#FFFFFF',  txt:'#FFFFFF', sub:'rgba(255,255,255,.65)'},
+    exit:    {bg:'#1B4332', acc:'#95D5B2',  txt:'#FFFFFF', sub:'rgba(255,255,255,.55)'},
   };
 
-  // Build slides array
-  const slides = [];
-
-  // ── Title slide ──────────────────────────────────────────────
-  slides.push({type:'title', topic, subject, gradeStr, date, wikiImg});
-
-  // ── Learning Goals ───────────────────────────────────────────
-  if (sd.learning_goals?.length) {
-    slides.push({type:'goals', goals: sd.learning_goals.slice(0,3)});
+  // ── Decorative SVG blob ──────────────────────────────────────
+  function blob(x,y,r,color,op=0.18) {
+    return `<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" fill-opacity="${op}"/>`;
   }
 
-  // ── Minds On ─────────────────────────────────────────────────
-  if (sd.minds_on) {
-    slides.push({type:'mindson', hook: sd.minds_on.hook, prompt: sd.minds_on.prompt});
+  // ── Slide builders ───────────────────────────────────────────
+  function wrap(type, content) {
+    const c = P[type];
+    return `<div class="slide" style="background:${c.bg}" data-type="${type}">${content}</div>`;
   }
 
-  // ── Vocabulary ───────────────────────────────────────────────
-  if (sd.vocabulary?.length) {
-    slides.push({type:'vocab', words: sd.vocabulary.slice(0,4)});
-  }
+  // Title
+  const sTitle = wrap('title', `
+    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+      ${blob(1050,80,280,'#52B788',.14)}${blob(900,580,200,'#52B788',.1)}
+      ${blob(150,600,180,'#52B788',.08)}${blob(200,100,120,'#FFFFFF',.06)}
+    </svg>
+    <div class="slide-inner title-inner">
+      ${wikiImg?`<div class="title-img-ring"><img src="${wikiImg}" class="title-img" alt=""></div>`:''}
+      <div class="title-text">
+        <div class="eyebrow" style="background:rgba(82,183,136,.3);color:#95D5B2">${subject||'Lesson'}</div>
+        <h1 class="title-h1">${topic}</h1>
+        <p class="title-meta">${gradeStr?gradeStr+' &nbsp;·&nbsp; ':' '}${date}</p>
+        <p class="title-brand">TeacherAI &nbsp;·&nbsp; Ontario 2023 Curriculum</p>
+      </div>
+    </div>
+  `);
 
-  // ── Content slides ───────────────────────────────────────────
-  (sd.content_slides||[]).slice(0,5).forEach((cs,i) => {
-    slides.push({type:'content', ...cs, idx:i, total:(sd.content_slides||[]).length, wikiImg: i===0?wikiImg:null});
+  // Goals
+  const goals = (sd.learning_goals||[]).slice(0,3);
+  const sGoals = wrap('goals', `
+    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+      ${blob(1100,60,260,'#B7E4C7',.12)}${blob(80,620,200,'#B7E4C7',.1)}
+    </svg>
+    <div class="slide-inner">
+      <div class="eyebrow" style="background:rgba(183,228,199,.25);color:#B7E4C7">Learning Goals</div>
+      <div class="goals-stack">
+        ${goals.map((g,i)=>`
+          <div class="goal-row">
+            <div class="goal-num">${i+1}</div>
+            <div class="goal-txt">${g}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `);
+
+  // Minds On
+  const sMindson = sd.minds_on ? wrap('mindson', `
+    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+      ${blob(1080,100,240,'#1A1209',.08)}${blob(120,580,180,'#1A1209',.07)}
+    </svg>
+    <div class="slide-inner">
+      <div class="eyebrow" style="background:rgba(26,18,9,.15);color:rgba(26,18,9,.7)">Minds On</div>
+      <div class="mindson-hook">
+        <span class="big-emoji">🧠</span>
+        <p class="hook-q">${sd.minds_on.hook||''}</p>
+      </div>
+      ${sd.minds_on.prompt?`
+        <div class="tps-strip">
+          <span class="tps-badge">Think</span><span class="tps-sep">·</span>
+          <span class="tps-badge">Pair</span><span class="tps-sep">·</span>
+          <span class="tps-badge">Share</span>
+        </div>
+        <p class="tps-q">${sd.minds_on.prompt}</p>`:''}
+    </div>
+  `) : null;
+
+  // Vocab
+  const vocabWords = (sd.vocabulary||[]).slice(0,4);
+  const sVocab = vocabWords.length ? wrap('vocab', `
+    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+      ${blob(1080,80,250,'#90E0EF',.12)}${blob(100,600,200,'#90E0EF',.1)}
+    </svg>
+    <div class="slide-inner">
+      <div class="eyebrow" style="background:rgba(144,224,239,.2);color:#90E0EF">Key Vocabulary</div>
+      <div class="vocab-grid" style="--vcols:${vocabWords.length<=2?vocabWords.length:2}">
+        ${vocabWords.map(v=>`
+          <div class="vocab-card">
+            <div class="vocab-word">${v.word}</div>
+            <div class="vocab-def">${v.definition}</div>
+            ${v.example?`<div class="vocab-ex">"${v.example}"</div>`:''}
+          </div>`).join('')}
+      </div>
+    </div>
+  `) : null;
+
+  // Content slides
+  const contentSlides = (sd.content_slides||[]).slice(0,5).map((cs,i)=>{
+    const total = (sd.content_slides||[]).length;
+    const useImg = wikiImg && i===0;
+    return wrap('content', `
+      <div class="slide-inner content-inner">
+        <div class="content-left">
+          <div class="eyebrow" style="background:#EAF2EC;color:#2D6A4F">${cs.title||'Key Concept'}</div>
+          <p class="content-counter" style="color:#7A726A">${i+1} / ${total}</p>
+          <div class="key-block">
+            <div class="key-stripe" style="background:#2D6A4F"></div>
+            <p class="key-text">${cs.key_point||''}</p>
+          </div>
+          ${cs.example?`
+            <div class="example-block">
+              <span class="example-label">✦ Example</span>
+              <p class="example-text">${cs.example}</p>
+            </div>`:''}
+          ${cs.teacher_note?`<p class="teacher-note">📌 ${cs.teacher_note}</p>`:''}
+        </div>
+        ${useImg?`<div class="content-img-col"><img src="${wikiImg}" class="content-img" alt=""></div>`:''}
+      </div>
+    `);
   });
 
-  // ── Discussion ───────────────────────────────────────────────
-  if (sd.discussion_questions?.length) {
-    slides.push({type:'discussion', questions: sd.discussion_questions.slice(0,3)});
-  }
-
-  // ── Your Turn ────────────────────────────────────────────────
-  if (sd.activity_intro) {
-    slides.push({type:'activity', intro: sd.activity_intro});
-  }
-
-  // ── Exit Ticket ──────────────────────────────────────────────
-  if (sd.exit_ticket) {
-    slides.push({type:'exit', question: sd.exit_ticket});
-  }
-
-  // ── Render each slide to HTML ────────────────────────────────
-  function slide(content, bg='#F9F5F0') {
-    return `<div class="slide" style="background:${bg}">${content}</div>`;
-  }
-  function tag(label, color) {
-    return `<div class="tag" style="background:${color}20;color:${color};border:1.5px solid ${color}40">${label}</div>`;
-  }
-
-  const slidesHTML = slides.map(s => {
-    if (s.type === 'title') {
-      return slide(`
-        <div class="title-layout" ${s.wikiImg ? `style="grid-template-columns:1fr 380px"` : ''}>
-          <div class="title-content">
-            ${tag(s.subject.toUpperCase(), C.sageMid)}
-            <h1 class="title-topic">${s.topic}</h1>
-            <div class="title-meta">${s.gradeStr ? s.gradeStr + '   ·   ' : ''}${s.date}</div>
-            <div class="title-brand">TeacherAI · Ontario Curriculum</div>
-          </div>
-          ${s.wikiImg ? `<div class="title-img-wrap"><img src="${s.wikiImg}" class="title-img" alt=""></div>` : ''}
-        </div>
-      `, C.dark);
-    }
-
-    if (s.type === 'goals') {
-      return slide(`
-        <div class="slide-header" style="background:${C.sage}">Learning Goals</div>
-        <div class="goals-list">
-          ${s.goals.map((g,i) => `
-            <div class="goal-item">
-              <div class="goal-num" style="background:${C.sage}">${i+1}</div>
-              <div class="goal-text">${g}</div>
-            </div>
-          `).join('')}
-        </div>
-      `);
-    }
-
-    if (s.type === 'mindson') {
-      return slide(`
-        <div class="slide-header" style="background:${C.amber}">Minds On 🧠</div>
-        <div class="mindson-wrap">
-          <div class="hook-box" style="border-color:${C.amber}">
-            <div class="hook-label" style="color:${C.amber}">HOOK</div>
-            <div class="hook-text">${s.hook}</div>
-          </div>
-          ${s.prompt ? `
-            <div class="tps-box" style="background:${C.amberLight};border-color:${C.amber}">
-              <div class="tps-label" style="color:${C.amber}">💬 THINK · PAIR · SHARE</div>
-              <div class="tps-text">${s.prompt}</div>
-            </div>
-          ` : ''}
-        </div>
-      `, C.amberLight);
-    }
-
-    if (s.type === 'vocab') {
-      const cols = s.words.length <= 2 ? s.words.length : 2;
-      return slide(`
-        <div class="slide-header" style="background:${C.dark}">Key Vocabulary 📚</div>
-        <div class="vocab-grid" style="grid-template-columns:repeat(${cols},1fr)">
-          ${s.words.map(v => `
-            <div class="vocab-card">
-              <div class="vocab-top" style="background:${C.sage}"></div>
-              <div class="vocab-inner">
-                <div class="vocab-word" style="color:${C.sage}">${v.word}</div>
-                <div class="vocab-def">${v.definition}</div>
-                ${v.example ? `<div class="vocab-ex">"${v.example}"</div>` : ''}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `);
-    }
-
-    if (s.type === 'content') {
-      return slide(`
-        <div class="slide-header" style="background:${C.dark}">
-          ${s.title}
-          <div class="slide-counter">${s.idx+1} / ${s.total}</div>
-        </div>
-        <div class="content-wrap" ${s.wikiImg ? 'style="grid-template-columns:1fr 300px"' : ''}>
-          <div>
-            <div class="key-box" style="border-left:5px solid ${C.sage}">
-              <div class="key-label" style="color:${C.sage}">KEY CONCEPT</div>
-              <div class="key-text">${s.key_point}</div>
-            </div>
-            ${s.example ? `
-              <div class="example-box" style="background:${C.amberLight};border-color:${C.amber}">
-                <div class="example-label" style="color:${C.amber}">EXAMPLE</div>
-                <div class="example-text">${s.example}</div>
-              </div>
-            ` : ''}
-            ${s.teacher_note ? `<div class="teacher-note">📌 ${s.teacher_note}</div>` : ''}
-          </div>
-          ${s.wikiImg ? `<div class="content-img-wrap"><img src="${s.wikiImg}" class="content-img" alt=""></div>` : ''}
-        </div>
-      `);
-    }
-
-    if (s.type === 'discussion') {
-      const labels = ['Recall','Apply','Evaluate'];
-      const colors = [C.blue, '#1A5C8A', '#0F3D6B'];
-      return slide(`
-        <div class="slide-header" style="background:${C.blue}">Discussion Questions 💬</div>
-        <div class="dq-list">
-          ${s.questions.map((q,i) => `
-            <div class="dq-item" style="border-left:5px solid ${colors[i]}">
-              <div class="dq-tag" style="background:${colors[i]}">${labels[i]}</div>
+  // Discussion
+  const dqs = (sd.discussion_questions||[]).slice(0,3);
+  const sDiscuss = dqs.length ? wrap('discuss', `
+    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+      ${blob(1080,80,260,'#E0AAFF',.12)}${blob(100,600,200,'#E0AAFF',.1)}
+    </svg>
+    <div class="slide-inner">
+      <div class="eyebrow" style="background:rgba(224,170,255,.2);color:#E0AAFF">Discussion</div>
+      <div class="dq-stack">
+        ${dqs.map((q,i)=>{
+          const icons=['💭','💡','⭐'];
+          const labels=['Recall','Apply','Evaluate'];
+          return `<div class="dq-row">
+            <div class="dq-icon">${icons[i]}</div>
+            <div>
+              <div class="dq-label">${labels[i]}</div>
               <div class="dq-text">${q}</div>
             </div>
-          `).join('')}
-        </div>
-      `, C.blueLight);
-    }
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `) : null;
 
-    if (s.type === 'activity') {
-      return slide(`
-        <div class="slide-header" style="background:${C.amber}">Your Turn ✏️</div>
-        <div class="activity-wrap">
-          <div class="activity-icon">✏️</div>
-          <div class="activity-text">${s.intro}</div>
-          <div class="activity-sub" style="color:${C.amber}">Open your worksheet and begin</div>
-        </div>
-      `, C.amberLight);
-    }
+  // Activity
+  const sActivity = sd.activity_intro ? wrap('activity', `
+    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+      ${blob(1080,80,260,'#FFFFFF',.1)}${blob(100,600,200,'#FFFFFF',.08)}
+    </svg>
+    <div class="slide-inner center-inner">
+      <span class="big-emoji" style="font-size:5rem">✏️</span>
+      <h2 class="center-h2">Your Turn</h2>
+      <p class="center-body">${sd.activity_intro}</p>
+      <div class="cue-pill">Open your worksheet and begin</div>
+    </div>
+  `) : null;
 
-    if (s.type === 'exit') {
-      return slide(`
-        <div class="slide-header" style="background:${C.sage}">Exit Ticket 🎟️</div>
-        <div class="exit-wrap">
-          <div class="exit-box" style="border-color:${C.sage}">
-            <div class="exit-label" style="color:${C.sage}">Before you go, answer this:</div>
-            <div class="exit-q">${s.question}</div>
-          </div>
-        </div>
-      `, C.sageLight);
-    }
+  // Exit
+  const sExit = sd.exit_ticket ? wrap('exit', `
+    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+      ${blob(1080,80,260,'#95D5B2',.12)}${blob(100,600,200,'#95D5B2',.1)}
+    </svg>
+    <div class="slide-inner center-inner">
+      <span class="big-emoji" style="font-size:4rem">🎟️</span>
+      <h2 class="center-h2">Exit Ticket</h2>
+      <div class="exit-card">
+        <p class="exit-prompt">Before you leave, answer this:</p>
+        <p class="exit-q">${sd.exit_ticket}</p>
+      </div>
+    </div>
+  `) : null;
 
-    return slide('<div style="padding:2rem">Unknown slide type</div>');
-  }).join('\n');
+  const allSlides = [sTitle, sGoals, sMindson, sVocab, ...contentSlides, sDiscuss, sActivity, sExit]
+    .filter(Boolean).join('\n');
+  const total = [sTitle, sGoals, sMindson, sVocab, ...contentSlides, sDiscuss, sActivity, sExit].filter(Boolean).length;
 
-  const css = `
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-    html, body { width:100%; height:100%; background:#111; font-family:'DM Sans',sans-serif; overflow:hidden; }
+  const CSS = `
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap');
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Plus Jakarta Sans',sans-serif}
+    #deck{width:100%;height:100vh;position:relative}
 
-    /* Slide container */
-    #deck { width:100%; height:100vh; position:relative; }
-    .slide {
-      position:absolute; inset:0;
-      display:flex; flex-direction:column;
-      opacity:0; transition:opacity .35s ease;
-      pointer-events:none;
-      overflow:hidden;
-    }
-    .slide.active { opacity:1; pointer-events:all; }
+    /* slides */
+    .slide{position:absolute;inset:0;opacity:0;transition:opacity .45s cubic-bezier(.4,0,.2,1);pointer-events:none;overflow:hidden}
+    .slide.active{opacity:1;pointer-events:all}
+    .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+    .slide-inner{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;justify-content:center;padding:3.5rem 5rem}
 
-    /* Common header bar */
-    .slide-header {
-      color:white; font-family:'Fraunces',serif;
-      font-size:1.6rem; font-weight:700;
-      padding:.7rem 2.2rem;
-      display:flex; align-items:center; justify-content:space-between;
-      flex-shrink:0;
-    }
-    .slide-counter {
-      font-family:'DM Mono',monospace; font-size:.85rem;
-      font-weight:400; opacity:.85;
-      background:rgba(255,255,255,.2); padding:.15rem .5rem; border-radius:4px;
-    }
+    /* eyebrow pill */
+    .eyebrow{display:inline-block;font-family:'DM Mono',monospace;font-size:.68rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;padding:.35rem 1rem;border-radius:20px;margin-bottom:1.6rem;width:fit-content}
 
-    /* Tag pill */
-    .tag {
-      display:inline-block; font-family:'DM Mono',monospace;
-      font-size:.72rem; font-weight:600; letter-spacing:1.5px;
-      padding:.25rem .75rem; border-radius:20px; margin-bottom:1.2rem;
-    }
-
-    /* ── Title slide ── */
-    .title-layout {
-      flex:1; display:grid; grid-template-columns:1fr;
-      align-items:center; padding:3rem 3.5rem;
-    }
-    .title-content { max-width:780px; }
-    .title-topic {
-      font-family:'Fraunces',serif; font-size:clamp(2.2rem,5vw,4rem);
-      font-weight:700; color:white; line-height:1.15;
-      margin-bottom:1.4rem;
-    }
-    .title-meta { font-size:1.05rem; color:#9DC4B0; margin-bottom:.5rem; }
-    .title-brand { font-size:.78rem; color:#6A9E7A; font-family:'DM Mono',monospace; letter-spacing:1px; }
-    .title-img-wrap { display:flex; align-items:center; justify-content:flex-end; }
-    .title-img { width:100%; max-height:340px; object-fit:cover; border-radius:16px; opacity:.9; box-shadow:0 20px 60px rgba(0,0,0,.4); }
+    /* ── Title ── */
+    .title-inner{flex-direction:row;align-items:center;gap:4rem}
+    .title-text{flex:1}
+    .title-h1{font-family:'Fraunces',serif;font-size:clamp(2.8rem,6vw,4.8rem);font-weight:700;color:#fff;line-height:1.08;letter-spacing:-.03em;margin-bottom:1.4rem}
+    .title-meta{font-size:1rem;color:rgba(255,255,255,.55);margin-bottom:.4rem}
+    .title-brand{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.28);letter-spacing:1.5px;text-transform:uppercase;margin-top:1.8rem}
+    .title-img-ring{flex-shrink:0;width:260px;height:260px;border-radius:50%;overflow:hidden;border:6px solid rgba(255,255,255,.18);box-shadow:0 24px 64px rgba(0,0,0,.35)}
+    .title-img{width:100%;height:100%;object-fit:cover}
 
     /* ── Goals ── */
-    .goals-list { flex:1; display:flex; flex-direction:column; justify-content:center; gap:1rem; padding:1.4rem 2.2rem; }
-    .goal-item { display:flex; align-items:center; gap:1.2rem; background:white; border-radius:12px; padding:.9rem 1.4rem; box-shadow:0 2px 12px rgba(0,0,0,.07); }
-    .goal-num { width:38px; height:38px; border-radius:50%; color:white; display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-size:1.1rem; font-weight:700; flex-shrink:0; }
-    .goal-text { font-size:1.15rem; color:#16120E; line-height:1.5; }
+    .goals-stack{display:flex;flex-direction:column;gap:1.1rem;margin-top:.4rem}
+    .goal-row{display:flex;align-items:center;gap:1.4rem;background:rgba(255,255,255,.12);border-radius:14px;padding:1.1rem 1.4rem;backdrop-filter:blur(4px)}
+    .goal-num{width:44px;height:44px;border-radius:50%;background:#B7E4C7;color:#1B3A2B;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:1.2rem;font-weight:700;flex-shrink:0}
+    .goal-txt{font-size:1.15rem;color:#fff;line-height:1.55}
 
     /* ── Minds On ── */
-    .mindson-wrap { flex:1; display:flex; flex-direction:column; justify-content:center; gap:1.2rem; padding:1.4rem 2.2rem; }
-    .hook-box { background:white; border-radius:12px; border-left:6px solid; padding:1.4rem 1.6rem; box-shadow:0 2px 12px rgba(0,0,0,.08); }
-    .hook-label { font-family:'DM Mono',monospace; font-size:.65rem; font-weight:600; letter-spacing:2px; margin-bottom:.6rem; }
-    .hook-text { font-family:'Fraunces',serif; font-size:1.4rem; font-style:italic; color:#16120E; line-height:1.5; }
-    .tps-box { border-radius:10px; border:1.5px solid; padding:1rem 1.4rem; }
-    .tps-label { font-family:'DM Mono',monospace; font-size:.65rem; font-weight:700; letter-spacing:2px; margin-bottom:.5rem; }
-    .tps-text { font-size:1.1rem; color:#16120E; line-height:1.5; }
+    .big-emoji{display:block;font-size:3.5rem;margin-bottom:1rem}
+    .mindson-hook{display:flex;align-items:flex-start;gap:1.2rem;margin-bottom:1.4rem}
+    .hook-q{font-family:'Fraunces',serif;font-size:1.8rem;font-style:italic;color:#1A1209;line-height:1.45;flex:1}
+    .tps-strip{display:flex;align-items:center;gap:.7rem;margin-bottom:.8rem}
+    .tps-badge{background:rgba(26,18,9,.15);color:rgba(26,18,9,.75);padding:.3rem .9rem;border-radius:20px;font-weight:700;font-size:.85rem;letter-spacing:.5px}
+    .tps-sep{color:rgba(26,18,9,.35);font-size:1.2rem}
+    .tps-q{font-size:1.1rem;color:rgba(26,18,9,.8);line-height:1.65;padding-left:.2rem}
 
-    /* ── Vocabulary ── */
-    .vocab-grid { flex:1; display:grid; gap:1rem; padding:1.2rem 2.2rem; align-content:center; }
-    .vocab-card { background:white; border-radius:12px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,.08); }
-    .vocab-top { height:6px; }
-    .vocab-inner { padding:.9rem 1.2rem; }
-    .vocab-word { font-family:'Fraunces',serif; font-size:1.5rem; font-weight:700; margin-bottom:.4rem; }
-    .vocab-def { font-size:.95rem; color:#16120E; line-height:1.5; margin-bottom:.35rem; }
-    .vocab-ex { font-size:.85rem; color:#7A726A; font-style:italic; }
+    /* ── Vocab ── */
+    .vocab-grid{display:grid;grid-template-columns:repeat(var(--vcols,2),1fr);gap:1.1rem;margin-top:.4rem}
+    .vocab-card{background:rgba(255,255,255,.14);border-radius:16px;padding:1.3rem 1.5rem;border:1.5px solid rgba(255,255,255,.2);backdrop-filter:blur(4px)}
+    .vocab-word{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:700;color:#fff;margin-bottom:.5rem}
+    .vocab-def{font-size:.95rem;color:rgba(255,255,255,.8);line-height:1.55;margin-bottom:.35rem}
+    .vocab-ex{font-size:.85rem;color:rgba(255,255,255,.5);font-style:italic}
 
     /* ── Content ── */
-    .content-wrap { flex:1; display:grid; grid-template-columns:1fr; gap:1rem; padding:1.2rem 2.2rem; align-content:center; }
-    .key-box { background:white; border-radius:12px; padding:1.2rem 1.5rem; box-shadow:0 2px 12px rgba(0,0,0,.07); }
-    .key-label { font-family:'DM Mono',monospace; font-size:.62rem; font-weight:600; letter-spacing:1.5px; margin-bottom:.6rem; }
-    .key-text { font-size:1.2rem; color:#16120E; line-height:1.65; }
-    .example-box { border-radius:10px; border:1.5px solid; padding:1rem 1.4rem; margin-top:.8rem; }
-    .example-label { font-family:'DM Mono',monospace; font-size:.62rem; font-weight:700; letter-spacing:1.5px; margin-bottom:.4rem; }
-    .example-text { font-size:1rem; color:#16120E; font-style:italic; line-height:1.55; }
-    .teacher-note { font-size:.78rem; color:#7A726A; margin-top:.7rem; font-style:italic; }
-    .content-img-wrap { display:flex; align-items:center; }
-    .content-img { width:100%; max-height:320px; object-fit:cover; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,.12); }
+    .content-inner{flex-direction:row;align-items:center;gap:2.5rem}
+    .content-left{flex:1}
+    .content-counter{font-family:'DM Mono',monospace;font-size:.68rem;margin-bottom:1.4rem;margin-top:-.8rem}
+    .key-block{display:flex;gap:0;background:#F8FAF8;border-radius:12px;overflow:hidden;margin-bottom:1.1rem;box-shadow:0 2px 20px rgba(0,0,0,.06)}
+    .key-stripe{width:6px;flex-shrink:0}
+    .key-text{font-size:1.2rem;color:#1A1714;line-height:1.7;padding:1.2rem 1.5rem}
+    .example-block{background:#FDF4E3;border-radius:10px;padding:1rem 1.3rem;border-left:4px solid #C47B2A}
+    .example-label{font-family:'DM Mono',monospace;font-size:.6rem;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:#C47B2A;display:block;margin-bottom:.4rem}
+    .example-text{font-size:1rem;color:#1A1714;font-style:italic;line-height:1.6}
+    .teacher-note{font-size:.75rem;color:#9A9590;margin-top:.8rem;font-style:italic}
+    .content-img-col{flex-shrink:0;width:280px}
+    .content-img{width:100%;height:280px;object-fit:cover;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.15)}
 
     /* ── Discussion ── */
-    .dq-list { flex:1; display:flex; flex-direction:column; justify-content:center; gap:1rem; padding:1.2rem 2.2rem; }
-    .dq-item { background:white; border-radius:12px; padding:1rem 1.4rem; display:flex; align-items:flex-start; gap:1rem; box-shadow:0 2px 10px rgba(0,0,0,.07); }
-    .dq-tag { color:white; font-family:'DM Mono',monospace; font-size:.62rem; font-weight:700; letter-spacing:1px; padding:.2rem .55rem; border-radius:4px; white-space:nowrap; margin-top:.15rem; flex-shrink:0; }
-    .dq-text { font-size:1.05rem; color:#16120E; line-height:1.55; }
+    .dq-stack{display:flex;flex-direction:column;gap:.9rem;margin-top:.4rem}
+    .dq-row{display:flex;align-items:flex-start;gap:1.2rem;background:rgba(255,255,255,.12);border-radius:14px;padding:1rem 1.4rem;backdrop-filter:blur(4px)}
+    .dq-icon{font-size:1.5rem;flex-shrink:0;margin-top:.1rem}
+    .dq-label{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(224,170,255,.7);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.3rem}
+    .dq-text{font-size:1.05rem;color:#fff;line-height:1.55}
 
-    /* ── Activity ── */
-    .activity-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem; text-align:center; gap:1.4rem; }
-    .activity-icon { font-size:4rem; }
-    .activity-text { font-size:1.2rem; color:#16120E; max-width:600px; line-height:1.65; }
-    .activity-sub { font-family:'DM Mono',monospace; font-size:.82rem; font-weight:600; letter-spacing:.5px; }
+    /* ── Activity / Exit ── */
+    .center-inner{align-items:center;text-align:center;gap:.8rem}
+    .center-h2{font-family:'Fraunces',serif;font-size:3rem;font-weight:700;color:#fff;letter-spacing:-.02em;margin:.4rem 0 .8rem}
+    .center-body{font-size:1.12rem;color:rgba(255,255,255,.8);max-width:580px;line-height:1.65}
+    .cue-pill{margin-top:.8rem;border:2px dashed rgba(255,255,255,.35);border-radius:40px;padding:.55rem 1.5rem;font-family:'DM Mono',monospace;font-size:.78rem;color:rgba(255,255,255,.55);letter-spacing:.5px}
+    .exit-card{background:rgba(255,255,255,.12);border-radius:16px;padding:1.6rem 2rem;max-width:600px;margin-top:.6rem;backdrop-filter:blur(4px);border:1.5px solid rgba(255,255,255,.18)}
+    .exit-prompt{font-family:'DM Mono',monospace;font-size:.65rem;color:rgba(255,255,255,.45);letter-spacing:2px;text-transform:uppercase;margin-bottom:.8rem}
+    .exit-q{font-family:'Fraunces',serif;font-size:1.55rem;font-style:italic;color:#fff;line-height:1.5}
 
-    /* ── Exit ── */
-    .exit-wrap { flex:1; display:flex; align-items:center; justify-content:center; padding:2rem; }
-    .exit-box { background:white; border-radius:16px; border:2px solid; padding:2.2rem 2.4rem; max-width:680px; width:100%; text-align:center; box-shadow:0 4px 24px rgba(0,0,0,.1); }
-    .exit-label { font-family:'DM Mono',monospace; font-size:.72rem; font-weight:600; letter-spacing:1.5px; margin-bottom:1rem; }
-    .exit-q { font-family:'Fraunces',serif; font-size:1.6rem; font-style:italic; color:#16120E; line-height:1.5; }
-
-    /* ── Nav controls ── */
-    #controls {
-      position:fixed; bottom:1.2rem; left:50%; transform:translateX(-50%);
-      display:flex; align-items:center; gap:.7rem; z-index:100;
-      background:rgba(0,0,0,.55); backdrop-filter:blur(8px);
-      border-radius:40px; padding:.5rem 1rem;
-    }
-    #controls button {
-      background:rgba(255,255,255,.15); border:none; color:white;
-      border-radius:50%; width:36px; height:36px; cursor:pointer;
-      font-size:1rem; display:flex; align-items:center; justify-content:center;
-      transition:background .15s;
-    }
-    #controls button:hover { background:rgba(255,255,255,.3); }
-    #slide-num { color:rgba(255,255,255,.7); font-family:'DM Mono',monospace; font-size:.75rem; min-width:3rem; text-align:center; }
-    #fs-btn { background:rgba(255,255,255,.15); border:none; color:white; border-radius:6px; padding:.3rem .7rem; cursor:pointer; font-size:.75rem; font-family:'DM Mono',monospace; letter-spacing:.5px; transition:background .15s; }
-    #fs-btn:hover { background:rgba(255,255,255,.3); }
-    #progress {
-      position:fixed; top:0; left:0; height:3px;
-      background:${C.sage}; transition:width .3s ease; z-index:200;
-    }
+    /* ── Controls ── */
+    #progress{position:fixed;top:0;left:0;height:3px;background:#52B788;transition:width .3s ease;z-index:300;border-radius:0 2px 2px 0}
+    #ctrl{position:fixed;bottom:1.4rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.75rem;z-index:200;background:rgba(0,0,0,.6);backdrop-filter:blur(16px);border-radius:40px;padding:.55rem 1.2rem;border:1px solid rgba(255,255,255,.1)}
+    #ctrl button{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:background .15s}
+    #ctrl button:hover{background:rgba(255,255,255,.26)}
+    #snum{color:rgba(255,255,255,.55);font-family:'DM Mono',monospace;font-size:.72rem;min-width:3.5rem;text-align:center}
+    #fsb{border-radius:8px!important;width:auto!important;padding:.3rem .85rem!important;font-size:.7rem!important;letter-spacing:.5px;font-family:'DM Mono',monospace}
   `;
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+  const JS = `
+    let c=0;const t=${total};
+    const sl=document.querySelectorAll('.slide');
+    const pr=document.getElementById('progress');
+    const nm=document.getElementById('snum');
+    function show(n){
+      sl[c]?.classList.remove('active');
+      c=Math.max(0,Math.min(n,t-1));
+      sl[c]?.classList.add('active');
+      nm.textContent=(c+1)+' / '+t;
+      pr.style.width=((c+1)/t*100)+'%';
+    }
+    function go(d){show(c+d);}
+    function fs(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
+    document.addEventListener('keydown',e=>{
+      if(e.key==='ArrowRight'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();go(1);}
+      if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(-1);}
+      if(e.key==='f'||e.key==='F') fs();
+    });
+    document.getElementById('deck').addEventListener('click',e=>{
+      if(e.target.closest('#ctrl')) return;
+      e.clientX>window.innerWidth/2?go(1):go(-1);
+    });
+    show(0);
+  `;
+
+  const html = `<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${topic} — TeacherAI</title>
-<style>${css}</style>
-</head>
-<body>
+<style>${CSS}</style></head><body>
 <div id="progress"></div>
-<div id="deck">${slidesHTML}</div>
-<div id="controls">
-  <button id="prev-btn" onclick="prevSlide()" title="Previous (←)">‹</button>
-  <span id="slide-num">1 / ${slides.length}</span>
-  <button id="next-btn" onclick="nextSlide()" title="Next (→ or Space)">›</button>
-  <button id="fs-btn" onclick="toggleFS()">⛶ Full</button>
+<div id="deck">${allSlides}</div>
+<div id="ctrl">
+  <button onclick="go(-1)">‹</button>
+  <span id="snum">1 / ${total}</span>
+  <button onclick="go(1)">›</button>
+  <button id="fsb" onclick="fs()">⛶ Full</button>
 </div>
-<script>
-  let cur = 0;
-  const total = ${slides.length};
-  const els = document.querySelectorAll('.slide');
-  const prog = document.getElementById('progress');
-  const num = document.getElementById('slide-num');
-  function show(n) {
-    els[cur]?.classList.remove('active');
-    cur = Math.max(0, Math.min(n, total-1));
-    els[cur]?.classList.add('active');
-    num.textContent = (cur+1) + ' / ' + total;
-    prog.style.width = ((cur+1)/total*100) + '%';
-  }
-  function nextSlide() { show(cur+1); }
-  function prevSlide() { show(cur-1); }
-  function toggleFS() {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-    else document.exitFullscreen();
-  }
-  document.addEventListener('keydown', e => {
-    if (e.key==='ArrowRight'||e.key===' '||e.key==='ArrowDown') { e.preventDefault(); nextSlide(); }
-    if (e.key==='ArrowLeft'||e.key==='ArrowUp') { e.preventDefault(); prevSlide(); }
-    if (e.key==='f'||e.key==='F') toggleFS();
-    if (e.key==='Escape' && document.fullscreenElement) document.exitFullscreen();
-  });
-  // Click right side to advance, left side to go back
-  document.getElementById('deck').addEventListener('click', e => {
-    if (e.target.closest('#controls')) return;
-    e.clientX > window.innerWidth/2 ? nextSlide() : prevSlide();
-  });
-  show(0);
-<\/script>
-</body>
-</html>`;
+<script>${JS}<\/script>
+</body></html>`;
 
-  const w = window.open('', '_blank');
-  if (!w) { alert('Pop-up blocked — allow pop-ups for teacherai.ca and try again.'); return; }
-  w.document.open(); w.document.write(html); w.document.close();
+  const w=window.open('','_blank');
+  if(!w){alert('Pop-up blocked — allow pop-ups for teacherai.ca and try again.');return;}
+  w.document.open();w.document.write(html);w.document.close();
 }
 
-async function fetchSlideImage(topic) {
-  // Try multiple image sources in order of reliability
-  // 1. Pixabay API (free, educational, CORS-friendly, no key needed for low volume)
-  // 2. Picsum Photos (always works, generic but visual)
-  const keywords = topic.split(' ').slice(0, 3).join('+');
 
-  // Try Pixabay first — free API, relevant educational images
-  try {
-    const res = await fetch(
-      'https://pixabay.com/api/?key=47497737-8dc0f9b5f0f3f8c5f1e2a3b4c' +
-      '&q=' + encodeURIComponent(topic.split(' ').slice(0, 3).join(' ')) +
-      '&image_type=photo&orientation=horizontal&min_width=600&per_page=5&safesearch=true'
-    );
-    if (res.ok) {
-      const data = await res.json();
-      const hit = data?.hits?.[0];
-      if (hit?.webformatURL) {
-        const imgRes = await fetch(hit.webformatURL);
-        if (imgRes.ok) {
-          const buf = await imgRes.arrayBuffer();
-          const bytes = new Uint8Array(buf);
-          let binary = '';
-          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-          return 'data:image/jpeg;base64,' + btoa(binary);
-        }
-      }
-    }
-  } catch(e) { /* try next source */ }
-
-  // Fallback: Picsum Photos — always works, generic visuals
-  try {
-    // Use topic length as seed for consistent image per topic
-    const seed = topic.split('').reduce((a,c)=>a+c.charCodeAt(0),0) % 1000;
-    const imgRes = await fetch('https://picsum.photos/seed/' + seed + '/800/600');
-    if (imgRes.ok) {
-      const buf = await imgRes.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      let binary = '';
-      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-      return 'data:image/jpeg;base64,' + btoa(binary);
-    }
-  } catch(e) { /* silent */ }
-
-  return null;
-}
-
-function buildSlideDeck(sd, topic, subject, gradeStr, wikiImg) {
-  const PptxCtor = typeof PptxGenJS !== 'undefined' ? PptxGenJS : pptxgen;
-  const pres = new PptxCtor();
-  pres.layout = 'LAYOUT_16x9';
-  pres.title = topic;
-
-  // ── Design system ──────────────────────────────────────────
-  const C = {
-    dark:'1C3A2B', sage:'4A7C59', sageMid:'6A9E7A', sageLight:'DCE8DC',
-    cream:'F5F0E8', white:'FFFFFF', ink:'1A1714', muted:'8A8278',
-    amber:'C47B2A', amberLight:'FAF0DC', blue:'2A5FA5', blueLight:'DDE6F5',
-    rust:'B54B2A', card:'FAFAF7', border:'D8D0C4'
-  };
-  const mkS = () => ({type:'outer',color:'000000',blur:8,offset:3,angle:135,opacity:0.08});
-  const SLIDE_W = 10, SLIDE_H = 5.625;
-
-  // Helper: adds a slide header bar with left accent + title
-  function addHeader(slide, title, barColor, textColor) {
-    textColor = textColor || C.white;
-    // Full-width header bar
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x:0, y:0, w:SLIDE_W, h:0.82,
-      fill:{color:barColor}, line:{color:barColor}
-    });
-    // Left accent stripe
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x:0, y:0, w:0.08, h:SLIDE_H,
-      fill:{color:barColor}, line:{color:barColor}
-    });
-    // Title text
-    slide.addText(title, {
-      x:0.28, y:0, w:SLIDE_W-0.5, h:0.82,
-      fontSize:22, fontFace:'Georgia', bold:true,
-      color:textColor, valign:'middle', margin:0
-    });
-  }
-
-  // Helper: footer line on every content slide
-  function addFooter(slide, label) {
-    slide.addShape(pres.shapes.RECTANGLE, {
-      x:0.08, y:SLIDE_H-0.32, w:SLIDE_W-0.16, h:0.01,
-      fill:{color:C.border}, line:{color:C.border}
-    });
-    slide.addText(label || (topic + (gradeStr ? '  ·  ' + gradeStr : '')), {
-      x:0.28, y:SLIDE_H-0.32, w:SLIDE_W-0.56, h:0.28,
-      fontSize:8, fontFace:'Calibri', color:C.muted,
-      align:'left', valign:'middle', margin:0
-    });
-  }
-
-  // ── Slide 1: Title ──────────────────────────────────────────
-  const s1 = pres.addSlide();
-  s1.background = {color:C.dark};
-  // Large decorative circle (top right bleed)
-  s1.addShape(pres.shapes.OVAL, {
-    x:7.2, y:-1.8, w:4.5, h:4.5,
-    fill:{color:'254D38', transparency:0}, line:{color:'254D38'}
-  });
-  // Smaller circle
-  s1.addShape(pres.shapes.OVAL, {
-    x:8.4, y:2.8, w:2.2, h:2.2,
-    fill:{color:'1A3828', transparency:0}, line:{color:'1A3828'}
-  });
-  // Left accent bar
-  s1.addShape(pres.shapes.RECTANGLE, {
-    x:0, y:0, w:0.28, h:SLIDE_H,
-    fill:{color:C.sage}, line:{color:C.sage}
-  });
-  // Subject pill
-  s1.addShape(pres.shapes.ROUNDED_RECTANGLE, {
-    x:0.55, y:1.15, w:Math.min(subject.length*0.11+0.6, 3.5), h:0.36,
-    fill:{color:C.sage}, line:{color:C.sage}, rectRadius:0.05
-  });
-  s1.addText(subject.toUpperCase(), {
-    x:0.55, y:1.15, w:4, h:0.36,
-    fontSize:9, fontFace:'Calibri', bold:true, charSpacing:2,
-    color:C.white, valign:'middle', margin:0
-  });
-  // Topic
-  s1.addText(topic, {
-    x:0.55, y:1.65, w:7.0, h:1.9,
-    fontSize:38, fontFace:'Georgia', bold:true,
-    color:C.white, align:'left', valign:'top',
-    autoFit:true, margin:0
-  });
-  // Grade + date
-  s1.addText((gradeStr || '') + (gradeStr ? '   |   ' : '') + new Date().toLocaleDateString('en-CA', {year:'numeric',month:'long',day:'numeric'}), {
-    x:0.55, y:4.6, w:8, h:0.4,
-    fontSize:11, fontFace:'Calibri', color:C.sageMid,
-    align:'left', margin:0
-  });
-  // Wikipedia image — bottom right of title slide if available
-  if (wikiImg) {
-    try {
-      s1.addImage({data: wikiImg, x:7.0, y:1.5, w:2.7, h:2.7, rounding:true, transparency:10});
-      // Subtle credit line
-      s1.addText('Image: Wikimedia Commons', {
-        x:6.8, y:4.3, w:3, h:0.22,
-        fontSize:6, fontFace:'Calibri', color:'4A7C59',
-        align:'right', margin:0
-      });
-    } catch(e) { /* image add failed — continue */ }
-  }
-
-  // ── Slide 2: Learning Goals ─────────────────────────────────
-  const s2 = pres.addSlide();
-  s2.background = {color:C.cream};
-  addHeader(s2, 'Learning Goals', C.sage);
-  const goals = (sd.learning_goals || []).slice(0, 3);
-  goals.forEach((g, i) => {
-    const y = 1.05 + i * 1.35;
-    // Numbered circle
-    s2.addShape(pres.shapes.OVAL, {
-      x:0.28, y:y+0.1, w:0.46, h:0.46,
-      fill:{color:C.sage}, line:{color:C.sage}
-    });
-    s2.addText(String(i+1), {
-      x:0.28, y:y+0.1, w:0.46, h:0.46,
-      fontSize:14, fontFace:'Georgia', bold:true,
-      color:C.white, align:'center', valign:'middle', margin:0
-    });
-    // Goal card
-    s2.addShape(pres.shapes.RECTANGLE, {
-      x:0.88, y, w:8.88, h:1.1,
-      fill:{color:C.card}, line:{color:C.border, width:1}, shadow:mkS()
-    });
-    s2.addText(g, {
-      x:1.08, y, w:8.5, h:1.1,
-      fontSize:15, fontFace:'Calibri',
-      color:C.ink, valign:'middle', margin:0
-    });
-  });
-  addFooter(s2);
-
-  // ── Slide 3: Minds On ───────────────────────────────────────
-  if (sd.minds_on) {
-    const s3 = pres.addSlide();
-    s3.background = {color:C.amberLight};
-    addHeader(s3, 'Minds On', C.amber);
-    // Hook quote block
-    s3.addShape(pres.shapes.RECTANGLE, {
-      x:0.28, y:1.0, w:9.44, h:1.9,
-      fill:{color:C.white}, line:{color:C.amber, width:2}, shadow:mkS()
-    });
-    // Left quote accent
-    s3.addShape(pres.shapes.RECTANGLE, {
-      x:0.28, y:1.0, w:0.12, h:1.9,
-      fill:{color:C.amber}, line:{color:C.amber}
-    });
-    s3.addText(sd.minds_on.hook || '', {
-      x:0.55, y:1.0, w:9.1, h:1.9,
-      fontSize:20, fontFace:'Georgia', italic:true,
-      color:C.ink, valign:'middle'
-    });
-    // Think-pair-share panel
-    if (sd.minds_on.prompt) {
-      s3.addShape(pres.shapes.RECTANGLE, {
-        x:0.28, y:3.1, w:9.44, h:1.8,
-        fill:{color:'FEF3DC'}, line:{color:C.amber, width:1}
-      });
-      s3.addText('THINK  -  PAIR  -  SHARE', {
-        x:0.45, y:3.18, w:4, h:0.32,
-        fontSize:8, fontFace:'Calibri', bold:true, charSpacing:2,
-        color:C.amber, margin:0
-      });
-      s3.addText(sd.minds_on.prompt, {
-        x:0.45, y:3.5, w:9.1, h:1.3,
-        fontSize:14, fontFace:'Calibri',
-        color:C.ink, valign:'top', margin:0
-      });
-    }
-    addFooter(s3);
-  }
-
-  // ── Slide 4: Vocabulary ─────────────────────────────────────
-  if (sd.vocabulary && sd.vocabulary.length) {
-    const vocab = sd.vocabulary.slice(0, 4);
-    const s4 = pres.addSlide();
-    s4.background = {color:C.cream};
-    addHeader(s4, 'Key Vocabulary', C.dark);
-    const cols = vocab.length <= 2 ? vocab.length : 2;
-    const rows = Math.ceil(vocab.length / cols);
-    const gap = 0.18;
-    const cardW = cols === 1 ? 9.44 : (9.44 - gap) / 2;
-    const cardH = rows === 1 ? 4.2 : (4.2 - gap) / 2;
-    vocab.forEach((v, i) => {
-      const col = i % cols, row = Math.floor(i / cols);
-      const x = 0.28 + col * (cardW + gap);
-      const y = 0.98 + row * (cardH + gap);
-      // Card shadow + border
-      s4.addShape(pres.shapes.RECTANGLE, {
-        x, y, w:cardW, h:cardH,
-        fill:{color:C.white}, line:{color:C.sage, width:1.5}, shadow:mkS()
-      });
-      // Top accent strip
-      s4.addShape(pres.shapes.RECTANGLE, {
-        x, y, w:cardW, h:0.1,
-        fill:{color:C.sage}, line:{color:C.sage}
-      });
-      // Word
-      s4.addText(v.word || '', {
-        x:x+0.18, y:y+0.16, w:cardW-0.36, h:cardH*0.35,
-        fontSize:rows === 1 ? 26 : 18,
-        fontFace:'Georgia', bold:true,
-        color:C.sage, valign:'middle', margin:0
-      });
-      // Divider
-      s4.addShape(pres.shapes.RECTANGLE, {
-        x:x+0.18, y:y+cardH*0.46, w:cardW-0.36, h:0.01,
-        fill:{color:C.border}, line:{color:C.border}
-      });
-      // Definition
-      s4.addText(v.definition || '', {
-        x:x+0.18, y:y+cardH*0.5, w:cardW-0.36, h:cardH*0.28,
-        fontSize:11, fontFace:'Calibri',
-        color:C.ink, valign:'top', margin:0
-      });
-      // Example
-      if (v.example) {
-        s4.addText('"' + v.example + '"', {
-          x:x+0.18, y:y+cardH*0.78, w:cardW-0.36, h:cardH*0.2,
-          fontSize:10, fontFace:'Calibri', italic:true,
-          color:C.muted, valign:'top', margin:0
-        });
-      }
-    });
-    addFooter(s4);
-  }
-
-  // ── Content slides ──────────────────────────────────────────
-  (sd.content_slides || []).slice(0, 5).forEach((cs, idx) => {
-    const sl = pres.addSlide();
-    sl.background = {color:C.cream};
-    // Use image on first content slide only — right sidebar
-    const useImg = wikiImg && idx === 0;
-    const contentW = useImg ? 6.8 : 9.44;
-    // Decorative circle top right
-    if (!useImg) {
-      sl.addShape(pres.shapes.OVAL, {
-        x:8.5, y:-0.6, w:2.2, h:2.2,
-        fill:{color:'EAF0EA'}, line:{color:'EAF0EA'}
-      });
-    }
-    addHeader(sl, cs.title || 'Key Concept', C.dark);
-    // Slide counter pill
-    sl.addShape(pres.shapes.ROUNDED_RECTANGLE, {
-      x: useImg ? 6.1 : 8.9, y:0.22, w:0.78, h:0.38,
-      fill:{color:C.sage}, line:{color:C.sage}, rectRadius:0.06
-    });
-    sl.addText(String(idx + 1) + ' / ' + (sd.content_slides||[]).length, {
-      x: useImg ? 6.1 : 8.9, y:0.22, w:0.78, h:0.38,
-      fontSize:9, fontFace:'Calibri', bold:true,
-      color:C.white, align:'center', valign:'middle', margin:0
-    });
-    // Wikipedia image sidebar on first slide
-    if (useImg) {
-      try {
-        sl.addImage({data: wikiImg, x:7.2, y:0.92, w:2.6, h:2.6, rounding:true});
-        sl.addText('Image: Wikimedia Commons', {
-          x:7.0, y:3.55, w:2.8, h:0.2,
-          fontSize:6, fontFace:'Calibri', color:C.muted, align:'center', margin:0
-        });
-      } catch(e) { /* silent */ }
-    }
-    // Key concept box
-    sl.addShape(pres.shapes.RECTANGLE, {
-      x:0.28, y:0.98, w:contentW, h:1.8,
-      fill:{color:C.white}, line:{color:C.sage, width:1.5}, shadow:mkS()
-    });
-    sl.addShape(pres.shapes.RECTANGLE, {
-      x:0.28, y:0.98, w:0.12, h:1.8,
-      fill:{color:C.sage}, line:{color:C.sage}
-    });
-    sl.addText(cs.key_point || '', {
-      x:0.55, y:0.98, w:contentW-0.4, h:1.8,
-      fontSize:16, fontFace:'Calibri',
-      color:C.ink, valign:'middle'
-    });
-    // Example box
-    if (cs.example) {
-      sl.addShape(pres.shapes.RECTANGLE, {
-        x:0.28, y:2.95, w:contentW, h:1.75,
-        fill:{color:C.amberLight}, line:{color:C.amber, width:1}
-      });
-      sl.addText('EXAMPLE', {
-        x:0.45, y:3.02, w:2, h:0.28,
-        fontSize:8, fontFace:'Calibri', bold:true, charSpacing:2,
-        color:C.amber, margin:0
-      });
-      sl.addText(cs.example, {
-        x:0.45, y:3.3, w:contentW-0.3, h:1.3,
-        fontSize:14, fontFace:'Calibri', italic:true,
-        color:C.ink, valign:'top', margin:0
-      });
-    }
-    addFooter(sl, topic + '  ·  ' + subject);
-    if (cs.teacher_note) {
-      // Teacher note goes ABOVE the footer line, not overlapping it
-      sl.addText('📌 ' + cs.teacher_note, {
-        x:0.28, y:SLIDE_H-0.58, w:SLIDE_W-0.56, h:0.24,
-        fontSize:8, fontFace:'Calibri', italic:true,
-        color:C.muted, margin:0
-      });
-    }
-  });
-
-  // ── Discussion Questions ─────────────────────────────────────
-  if (sd.discussion_questions && sd.discussion_questions.length) {
-    const dq = pres.addSlide();
-    dq.background = {color:C.blueLight};
-    addHeader(dq, 'Discussion', C.blue);
-    const qs = (sd.discussion_questions || []).slice(0, 3);
-    const labels = ['Recall', 'Apply', 'Evaluate'];
-    const labelColors = ['4A90D9', '2A6DB5', '1A4F8A'];
-    qs.forEach((q, i) => {
-      const y = 1.0 + i * 1.48;
-      dq.addShape(pres.shapes.RECTANGLE, {
-        x:0.28, y, w:9.44, h:1.3,
-        fill:{color:C.white}, line:{color:C.blue, width:1}, shadow:mkS()
-      });
-      // Level tag
-      dq.addShape(pres.shapes.ROUNDED_RECTANGLE, {
-        x:0.42, y:y+0.12, w:0.88, h:0.3,
-        fill:{color:labelColors[i]||C.blue}, line:{color:labelColors[i]||C.blue}, rectRadius:0.04
-      });
-      dq.addText(labels[i].toUpperCase(), {
-        x:0.42, y:y+0.12, w:0.88, h:0.3,
-        fontSize:7, fontFace:'Calibri', bold:true, charSpacing:1,
-        color:C.white, align:'center', valign:'middle', margin:0
-      });
-      dq.addText(String(i+1) + '.  ' + q, {
-        x:1.44, y, w:8.1, h:1.3,
-        fontSize:14, fontFace:'Calibri',
-        color:C.ink, valign:'middle', margin:0
-      });
-    });
-    addFooter(dq);
-  }
-
-  // ── Your Turn ─────────────────────────────────────────────
-  if (sd.activity_intro) {
-    const act = pres.addSlide();
-    act.background = {color:C.amberLight};
-    addHeader(act, 'Your Turn', C.amber);
-    act.addShape(pres.shapes.RECTANGLE, {
-      x:0.28, y:1.0, w:9.44, h:2.4,
-      fill:{color:C.white}, line:{color:C.amber, width:1.5}, shadow:mkS()
-    });
-    act.addShape(pres.shapes.RECTANGLE, {
-      x:0.28, y:1.0, w:0.12, h:2.4,
-      fill:{color:C.amber}, line:{color:C.amber}
-    });
-    act.addText(sd.activity_intro, {
-      x:0.55, y:1.0, w:9.1, h:2.4,
-      fontSize:18, fontFace:'Calibri',
-      color:C.ink, valign:'middle'
-    });
-    // Worksheet reminder
-    act.addShape(pres.shapes.RECTANGLE, {
-      x:0.28, y:3.55, w:9.44, h:1.4,
-      fill:{color:'FEF3DC'}, line:{color:C.amber, width:1}
-    });
-    act.addText('Open the worksheet link shared by your teacher.', {
-      x:0.45, y:3.55, w:9.1, h:1.4,
-      fontSize:14, fontFace:'Calibri', italic:true,
-      color:'92400E', valign:'middle', align:'center'
-    });
-    addFooter(act);
-  }
-
-  // ── Exit Ticket ──────────────────────────────────────────────
-  if (sd.exit_ticket) {
-    const et = pres.addSlide();
-    et.background = {color:C.cream};
-    addHeader(et, 'Exit Ticket', C.sage);
-    et.addText('Before you go — answer this:', {
-      x:0.28, y:0.95, w:9.44, h:0.42,
-      fontSize:12, fontFace:'Calibri', italic:true,
-      color:C.muted, valign:'middle', margin:0
-    });
-    // Question card
-    et.addShape(pres.shapes.RECTANGLE, {
-      x:0.28, y:1.42, w:9.44, h:2.1,
-      fill:{color:C.white}, line:{color:C.sage, width:2}, shadow:mkS()
-    });
-    et.addShape(pres.shapes.RECTANGLE, {
-      x:0.28, y:1.42, w:0.12, h:2.1,
-      fill:{color:C.sage}, line:{color:C.sage}
-    });
-    et.addText(sd.exit_ticket, {
-      x:0.55, y:1.42, w:9.1, h:2.1,
-      fontSize:20, fontFace:'Georgia', italic:true,
-      color:C.ink, valign:'middle', align:'center'
-    });
-    // Answer box
-    et.addShape(pres.shapes.RECTANGLE, {
-      x:0.28, y:3.68, w:9.44, h:1.25,
-      fill:{color:'F8F8F5'}, line:{color:C.border, width:1}
-    });
-    // Dotted lines inside answer box
-    for (let l = 0; l < 2; l++) {
-      et.addShape(pres.shapes.LINE, {
-        x:0.55, y:3.95 + l*0.42, w:9.0, h:0,
-        line:{color:C.border, width:0.5, dashType:'dash'}
-      });
-    }
-    et.addText('Your answer', {
-      x:0.45, y:3.72, w:3, h:0.3,
-      fontSize:8, fontFace:'Calibri',
-      color:C.muted, margin:0
-    });
-    addFooter(et);
-  }
-
-  // ── Anchor Chart ────────────────────────────────────────────
-  if (sd.anchor_chart && sd.anchor_chart.sections && sd.anchor_chart.sections.length) {
-    const ac = pres.addSlide();
-    ac.background = {color:'FFFDF5'};
-    // Header bar
-    ac.addShape(pres.shapes.RECTANGLE, {
-      x:0, y:0, w:SLIDE_W, h:0.75,
-      fill:{color:C.amber}, line:{color:C.amber}
-    });
-    ac.addShape(pres.shapes.RECTANGLE, {
-      x:0, y:0, w:0.22, h:0.75,
-      fill:{color:'9A5E1A'}, line:{color:'9A5E1A'}
-    });
-    ac.addText('📌  ANCHOR CHART', {
-      x:0.35, y:0, w:6, h:0.75,
-      fontSize:11, fontFace:'Calibri', bold:true, charSpacing:3,
-      color:C.white, valign:'middle', margin:0
-    });
-    ac.addText(sd.anchor_chart.title || topic, {
-      x:0.35, y:0, w:9.3, h:0.75,
-      fontSize:18, fontFace:'Georgia', bold:true,
-      color:C.white, valign:'middle', align:'right', margin:0
-    });
-    // Tip line
-    ac.addText('Copy onto chart paper for your classroom wall', {
-      x:0.28, y:0.82, w:9.44, h:0.28,
-      fontSize:9, fontFace:'Calibri', italic:true,
-      color:C.amber, valign:'middle', margin:0
-    });
-    // Sections — lay out in columns
-    const secs = sd.anchor_chart.sections.slice(0, 4);
-    const cols = secs.length <= 2 ? 1 : 2;
-    const colW = cols === 1 ? 9.44 : 4.52;
-    const startY = 1.18;
-    const availH = SLIDE_H - startY - 0.45;
-    secs.forEach((sec, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const totalRows = Math.ceil(secs.length / cols);
-      const secH = availH / totalRows - 0.1;
-      const x = 0.28 + col * (colW + 0.12);
-      const y = startY + row * (secH + 0.1);
-      // Section card background
-      ac.addShape(pres.shapes.ROUNDED_RECTANGLE, {
-        x, y, w:colW, h:secH,
-        fill:{color:C.amberLight}, line:{color:C.amber, width:1}, rectRadius:0.08
-      });
-      // Section heading
-      ac.addShape(pres.shapes.ROUNDED_RECTANGLE, {
-        x, y, w:colW, h:0.34,
-        fill:{color:C.amber}, line:{color:C.amber}, rectRadius:0.04
-      });
-      ac.addText((sec.heading || '').toUpperCase(), {
-        x:x+0.12, y, w:colW-0.24, h:0.34,
-        fontSize:10, fontFace:'Calibri', bold:true, charSpacing:1.5,
-        color:C.white, valign:'middle', margin:0
-      });
-      // Points
-      const pts = (sec.points || []).slice(0, 4);
-      const ptH = Math.min(0.36, (secH - 0.44) / Math.max(pts.length, 1));
-      pts.forEach((pt, pi) => {
-        ac.addText('▸  ' + pt, {
-          x:x+0.15, y:y+0.42+pi*ptH, w:colW-0.3, h:ptH,
-          fontSize:11, fontFace:'Calibri',
-          color:C.ink, valign:'top', margin:0
-        });
-      });
-    });
-    addFooter(ac, topic + '  ·  ' + subject + '  ·  Print & copy onto chart paper');
-  }
-
-  // ── Closing ──────────────────────────────────────────────────
-  const last = pres.addSlide();
-  last.background = {color:C.dark};
-  // Decorative circles
-  last.addShape(pres.shapes.OVAL, {
-    x:7.0, y:-1.5, w:4.8, h:4.8,
-    fill:{color:'254D38'}, line:{color:'254D38'}
-  });
-  last.addShape(pres.shapes.OVAL, {
-    x:8.5, y:3.2, w:2.5, h:2.5,
-    fill:{color:'1A3828'}, line:{color:'1A3828'}
-  });
-  last.addShape(pres.shapes.RECTANGLE, {
-    x:0, y:0, w:0.28, h:SLIDE_H,
-    fill:{color:C.sage}, line:{color:C.sage}
-  });
-  last.addText('Great work today.', {
-    x:0.55, y:1.6, w:7.5, h:1.4,
-    fontSize:40, fontFace:'Georgia', bold:true,
-    color:C.white, align:'left', margin:0
-  });
-  last.addText(topic + (gradeStr ? '  ·  ' + gradeStr : '') + (subject ? '  ·  ' + subject : ''), {
-    x:0.55, y:3.2, w:8, h:0.45,
-    fontSize:13, fontFace:'Calibri',
-    color:C.sageMid, align:'left', margin:0
-  });
-  last.addShape(pres.shapes.RECTANGLE, {
-    x:0.55, y:3.8, w:1.8, h:0.04,
-    fill:{color:C.sage}, line:{color:C.sage}
-  });
-  last.addText('Generated with TeacherAI · teacherai.ca', {
-    x:0.55, y:5.1, w:9, h:0.3,
-    fontSize:8, fontFace:'Calibri',
-    color:C.muted, align:'left', margin:0
-  });
-
-  pres.writeFile({fileName:topic.replace(/[^a-z0-9]/gi,'_')+'_Slides.pptx'});
-}
 // Cache combined worksheet link per lesson to avoid duplicate DB records
 let _combinedLinkCache = null;
 // Reset cache when a new lesson is generated
@@ -5349,6 +4918,11 @@ function renderAnswerKey(text){
 
 function renderMD(text){
   if(!text)return'';
+  // Break inline lesson plan labels onto separate lines
+  // Pattern: content ends, new bold label starts mid-paragraph
+  // e.g. "...answer." **Think-pair-share:** "..." → line break before
+  // Break bold lesson-plan labels onto their own lines when they appear mid-paragraph
+  text = text.replace(/([.!?])(\s+)(\*\*(?:Think.pair.share|Listen for|Model|Check|Core concept|Differentiation|Scaffold|Extension)[:\s])/gi, '$1\n$3');
   return text
     .replace(/^# (.+)$/gm,'<h2 style="font-family:Fraunces,serif;font-size:1.05rem;font-weight:600;margin:16px 0 6px;padding:8px 12px;background:var(--sage-l);border-left:3px solid var(--sage);border-radius:0 5px 5px 0;">$1</h2>')
     .replace(/^## (.+)$/gm,'<h2 style="font-family:Fraunces,serif;font-size:.96rem;font-weight:600;margin:14px 0 5px;padding:7px 12px;background:var(--sage-l);border-left:3px solid var(--sage);border-radius:0 5px 5px 0;">$1</h2>')
@@ -5361,7 +4935,7 @@ function renderMD(text){
     .replace(/^(\d+)\. (.+)$/gm,'<div style="display:flex;gap:8px;margin-bottom:3px;"><span style="font-family:\'DM Mono\',monospace;font-size:.75rem;color:var(--sage);min-width:18px;">$1.</span><span>$2</span></div>')
     .replace(/^- (.+)$/gm,'<li style="margin-bottom:3px;line-height:1.6;">$1</li>')
     .replace(/(<li[^>]*>.*?<\/li>\n?)+/gs,m=>`<ul style="padding-left:17px;margin:4px 0;">${m}</ul>`)
-    .replace(/\n\n/g,'<div style="height:6px;"></div>');
+    .replace(/\n\n/g,'<div style="height:9px;"></div>');
 }
 
 function previewWS(k){
