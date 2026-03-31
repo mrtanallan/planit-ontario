@@ -3177,8 +3177,27 @@ async function renderAssGrid() {
           ${s.notes?`<span class="atag">${s.notes}</span>`:''}
           <span id="ld-${s.id}" style="font-size:.75rem;font-family:DM Mono,monospace;color:${lvlColor};">${lvlDisplay}</span>
         </div>
-        <div class="lbg">
-          ${['L1','L1+','L2','L2+','L3','L3+','L4'].map(lv => `<button class="lb ${lv.replace('+','p')} ${mark?.level===lv?'sel':''}" data-level="${lv}" onclick="sl('${s.id}','${lv}',this)">${lv}</button>`).join('')}
+        <div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap;">
+          <div class="lbg">
+            <button class="lb L1 ${mark?.level==='L1-'?'sel':''}" data-level="L1-" onclick="sl('${s.id}','L1-',this)">1−</button>
+            <button class="lb L1 ${mark?.level==='L1'?'sel':''}" data-level="L1" onclick="sl('${s.id}','L1',this)">L1</button>
+            <button class="lb L1 ${mark?.level==='L1+'?'sel':''}" data-level="L1+" onclick="sl('${s.id}','L1+',this)">1+</button>
+          </div><div class="ld"></div>
+          <div class="lbg">
+            <button class="lb L2 ${mark?.level==='L2-'?'sel':''}" data-level="L2-" onclick="sl('${s.id}','L2-',this)">2−</button>
+            <button class="lb L2 ${mark?.level==='L2'?'sel':''}" data-level="L2" onclick="sl('${s.id}','L2',this)">L2</button>
+            <button class="lb L2 ${mark?.level==='L2+'?'sel':''}" data-level="L2+" onclick="sl('${s.id}','L2+',this)">2+</button>
+          </div><div class="ld"></div>
+          <div class="lbg">
+            <button class="lb L3 ${mark?.level==='L3-'?'sel':''}" data-level="L3-" onclick="sl('${s.id}','L3-',this)">3−</button>
+            <button class="lb L3 ${mark?.level==='L3'?'sel':''}" data-level="L3" onclick="sl('${s.id}','L3',this)">L3</button>
+            <button class="lb L3 ${mark?.level==='L3+'?'sel':''}" data-level="L3+" onclick="sl('${s.id}','L3+',this)">3+</button>
+          </div><div class="ld"></div>
+          <div class="lbg">
+            <button class="lb L4 ${mark?.level==='L4-'?'sel':''}" data-level="L4-" onclick="sl('${s.id}','L4-',this)">4−</button>
+            <button class="lb L4 ${mark?.level==='L4'?'sel':''}" data-level="L4" onclick="sl('${s.id}','L4',this)">L4</button>
+            <button class="lb L4 ${mark?.level==='L4+'?'sel':''}" data-level="L4+" onclick="sl('${s.id}','L4+',this)">4+</button>
+          </div>
           <div class="ld"></div>
           ${hasSub ? `<button class="btn b-sm automark-btn" data-sid="${s.id}" style="font-size:.65rem;background:var(--blue);color:white;border:none;padding:3px 8px;border-radius:4px;cursor:pointer;">🤖 Auto-mark</button>` : ''}
         </div>
@@ -3382,11 +3401,11 @@ For suggested_level use: L1, L1+, L2, L2+, L3, L3+, or L4. For score: ✓ (corre
       }
     }
 
+    // Don't auto-fill notes field — teacher clicks "Copy to notes" explicitly
+    // Still store in marks for saving
     if (obsNote) {
       if (!curSess.marks[sid]) curSess.marks[sid]={};
       curSess.marks[sid].notes=obsNote;
-      const ntField=document.getElementById('nt-'+sid);
-      if(ntField) ntField.value=obsNote;
     }
 
     try { await saveOneStu(sid,{textContent:'',disabled:false}); } catch(e){}
