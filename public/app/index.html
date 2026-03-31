@@ -4011,7 +4011,7 @@ function openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg) {
   <button onclick="go(1)">›</button>
   <button id="fsb" onclick="fs()">⛶ Full</button>
 </div>
-<script>${JS}<\/script>
+<' + 'script>${JS}<\/script>
 </body></html>`;
 
   const w=window.open('','_blank');
@@ -6002,6 +6002,7 @@ function tourNext() {
 function skipTour() {
   document.getElementById('tourOverlay').style.display = 'none';
   localStorage.setItem('teacherai_tour_done', '1');
+}
 }
 initApp();
 </script>
