@@ -675,7 +675,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     </div>
     <!-- Edit class panel -->
     <div id="editClassForm" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:12px;">
-      <div style="font-family:DM Mono,monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Edit Class</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-family:DM Mono,monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Edit Class</div>
+        <div id="editClassLabel" style="font-family:DM Mono,monospace;font-size:.65rem;font-weight:600;color:var(--sage);"></div>
+      </div>
       <div class="fg" style="margin-bottom:10px;">
         <div class="fi s2"><label>Class Name</label><input type="text" id="editClassName" placeholder="Class name"></div>
         <div class="fi"><label>Subject Focus</label><input type="text" id="editClassSubject" placeholder="e.g. Language, Math..."></div>
@@ -1740,29 +1743,49 @@ function renderClassTabs() {
   document.querySelectorAll('.class-edit-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
-      const cid = this.dataset.cid;
-      const cls = classes.find(c => c.id === cid);
-      if (!cls) return;
-      document.getElementById('editClassName').value = cls.name || '';
-      document.getElementById('editClassSubject').value = cls.subject_focus || '';
-      document.getElementById('editClassContext').value = cls.context || '';
-      document.getElementById('editClassForm').style.display = 'block';
-      document.getElementById('newClassForm').style.display = 'none';
-      // Reset delete confirm state
-      const confirmBox = document.getElementById('deleteClassConfirm');
-      const triggerBtn = document.getElementById('deleteClassTriggerBtn');
-      if (confirmBox) confirmBox.style.display = 'none';
-      if (triggerBtn) triggerBtn.style.display = 'inline-flex';
-      // Wire confirm button to this specific class
-      const confirmBtn = document.getElementById('deleteClassConfirmBtn');
-      if (confirmBtn) {
-        confirmBtn.onclick = () => {
-          document.getElementById('editClassForm').style.display = 'none';
-          deleteClass(cid);
-        };
+      populateEditForm(this.dataset.cid);
+    });
+  });
+
+  // If edit form is already open and user clicks a different class tab, update form
+  document.querySelectorAll('.class-tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const editForm = document.getElementById('editClassForm');
+      if (editForm && editForm.style.display !== 'none') {
+        // Form is open — update it for the newly selected class
+        setTimeout(() => populateEditForm(activeClassId), 50);
       }
     });
   });
+}
+
+function populateEditForm(cid) {
+  if (!cid) return;
+  const cls = classes.find(c => c.id === cid);
+  if (!cls) return;
+  // Update form fields
+  document.getElementById('editClassName').value = cls.name || '';
+  document.getElementById('editClassSubject').value = cls.subject_focus || '';
+  document.getElementById('editClassContext').value = cls.context || '';
+  // Update "editing X" label
+  const editingLabel = document.getElementById('editClassLabel');
+  if (editingLabel) editingLabel.textContent = 'Editing: ' + cls.name;
+  // Show form, hide new class form
+  document.getElementById('editClassForm').style.display = 'block';
+  document.getElementById('newClassForm').style.display = 'none';
+  // Reset delete confirm state
+  const confirmBox = document.getElementById('deleteClassConfirm');
+  const triggerBtn = document.getElementById('deleteClassTriggerBtn');
+  if (confirmBox) confirmBox.style.display = 'none';
+  if (triggerBtn) triggerBtn.style.display = 'inline-flex';
+  // Wire confirm button to this class
+  const confirmBtn = document.getElementById('deleteClassConfirmBtn');
+  if (confirmBtn) {
+    confirmBtn.onclick = () => {
+      document.getElementById('editClassForm').style.display = 'none';
+      deleteClass(cid);
+    };
+  }
 }
 
 function renderClassSelector() {
