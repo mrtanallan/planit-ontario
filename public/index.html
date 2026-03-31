@@ -579,11 +579,24 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
   <!-- Step 2 -->
   <div id="s2" style="display:none;">
-    <div class="ban ban-s"><span>✏️</span><span><strong>Review & Edit:</strong> Click "Edit" on any section to modify before sharing with students.</span></div>
-    <div id="editBlocks"></div>
-    <div class="brow">
-      <button class="btn b-out" onclick="gs(1)">← Back to Plan</button>
-      <button class="btn b-ink" onclick="gs(4)">Assess →</button>
+    <div class="ban ban-s" style="margin-bottom:14px;"><span>✏️</span><span><strong>Review & Edit:</strong> Click "Edit" on any section to modify before sharing with students.</span></div>
+    <div style="display:flex;gap:0;align-items:flex-start;">
+
+      <!-- Sticky sidebar nav -->
+      <div id="lessonSidebar" style="width:168px;flex-shrink:0;position:sticky;top:64px;max-height:calc(100vh - 80px);overflow-y:auto;margin-right:16px;display:none;">
+        <div style="font-family:DM Mono,monospace;font-size:.58rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0 4px;">Sections</div>
+        <div id="sidebarLinks" style="display:flex;flex-direction:column;gap:2px;"></div>
+      </div>
+
+      <!-- Main content -->
+      <div style="flex:1;min-width:0;">
+        <div id="editBlocks"></div>
+        <div class="brow" style="margin-top:4px;">
+          <button class="btn b-out" onclick="gs(1)">← Back to Plan</button>
+          <button class="btn b-ink" onclick="gs(4)">Assess →</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1917,6 +1930,9 @@ function renderAssessClassTabs() {
       renderAssessClassTabs();
       renderTracker();
       loadSubmissions();
+      // Re-render expectations tracker with new class filter
+      const curView = localStorage.getItem('teacherai_tracker_view');
+      if (curView === 'exp') renderExpInAssess();
     });
   });
 }
@@ -2000,6 +2016,8 @@ function gs(n) {
 function unlock(){for(let i=2;i<=5;i++){const e=document.getElementById('ws'+i);e.classList.remove('locked');e.classList.add('done');}}
 function resetWorkflow(){
   // Reset to step 1, lock steps 2-5, clear generated content
+  const sidebar = document.getElementById('lessonSidebar');
+  if (sidebar) sidebar.style.display = 'none';
   for(let i=1;i<=5;i++){
     const s=document.getElementById('s'+i);
     const w=document.getElementById('ws'+i);
@@ -2358,6 +2376,13 @@ CRITICAL: Return ONLY a valid JSON object. No markdown fences. Each grade worksh
 // EDIT BLOCKS
 // ============================================================
 function buildEditBlocks(outputs,gradeDesc,subj,topic,expectations){
+  // Always sort outputs into canonical display order regardless of source
+  const BLOCK_ORDER = ['lesson_plan','reading_resource','student_worksheet','assessment_rubric','answer_key','differentiation_tips'];
+  outputs = [...outputs].sort((a,b)=>{
+    const ai = BLOCK_ORDER.findIndex(o => a===o || a.startsWith(o.replace(/_[A-D]$/,'')));
+    const bi = BLOCK_ORDER.findIndex(o => b===o || b.startsWith(o.replace(/_[A-D]$/,'')));
+    return (ai===-1?99:ai)-(bi===-1?99:bi);
+  });
   const c=document.getElementById('editBlocks');
   // Ontario 2023 curriculum strand names (matching curriculum.org)
   const strandNames = {
@@ -2428,6 +2453,51 @@ function buildEditBlocks(outputs,gradeDesc,subj,topic,expectations){
       ${isWS?`<div class="cbf"><span>💡 Students tap to fill in answers on their devices</span><button class="btn b-out b-sm" onclick="previewWS('${k}')">👁 Full Preview</button></div>`:''}
     </div>`;
   });
+
+  // Build sidebar navigation
+  setTimeout(() => {
+    const sidebar = document.getElementById('lessonSidebar');
+    const links = document.getElementById('sidebarLinks');
+    if (!sidebar || !links) return;
+    const icons = {lesson_plan:'📅',student_worksheet:'📝',reading_resource:'📄',assessment_rubric:'📏',answer_key:'📋',differentiation_tips:'🔀'};
+    links.innerHTML = outputs.map(k => {
+      const rawLabel = BLABELS[k] || k;
+      const label = rawLabel.replace(/^\S+\s/, ''); // strip leading emoji
+      const icon = rawLabel.match(/^(\S+)/)?.[1] || '📄';
+      return `<button onclick="document.getElementById('cb-${k}')?.scrollIntoView({behavior:'smooth',block:'start'});updateSidebarActive('${k}')"
+        id="sbl-${k}"
+        style="text-align:left;background:none;border:none;cursor:pointer;padding:5px 8px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--muted);width:100%;display:flex;align-items:center;gap:5px;line-height:1.3;"
+        onmouseover="this.style.background='var(--sage-l)';this.style.color='var(--sage)'"
+        onmouseout="if(!this.classList.contains('active')){this.style.background='none';this.style.color='var(--muted)'}"
+        ><span style="font-size:.85rem;">${icon}</span><span>${label}</span></button>`;
+    }).join('');
+    sidebar.style.display = outputs.length > 1 ? 'block' : 'none';
+    if (outputs.length > 0) updateSidebarActive(outputs[0]);
+    initSidebarScroll();
+  }, 120);
+}
+
+function updateSidebarActive(k) {
+  document.querySelectorAll('[id^="sbl-"]').forEach(b => {
+    const isActive = b.id === 'sbl-'+k;
+    b.style.background = isActive ? 'var(--sage-l)' : 'none';
+    b.style.color = isActive ? 'var(--sage)' : 'var(--muted)';
+    b.style.fontWeight = isActive ? '600' : '400';
+    b.classList.toggle('active', isActive);
+  });
+}
+
+// Highlight sidebar item as user scrolls
+function initSidebarScroll() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const k = e.target.id.replace('cb-','');
+        updateSidebarActive(k);
+      }
+    });
+  }, {threshold:0.4, rootMargin:'-60px 0px -40% 0px'});
+  document.querySelectorAll('.cb[id^="cb-"]').forEach(el => observer.observe(el));
 }
 
 function toggleEdit(k){const el=document.getElementById('cbb-'+k);if(el.contentEditable==='true'){el.contentEditable='false';genC[k].cur=el.innerText;}else{el.contentEditable='true';el.focus();}}
@@ -5056,7 +5126,14 @@ function loadLesson(idx){
     alert('No content found for this lesson.');return;
   }
   genC={};
-  const keys=Object.keys(l.content).filter(k=>k!=='expectations');
+  const LOAD_ORDER = ['lesson_plan','reading_resource','student_worksheet','student_worksheet_A','student_worksheet_B','student_worksheet_C','student_worksheet_D','assessment_rubric','answer_key','answer_key_A','answer_key_B','answer_key_C','answer_key_D','differentiation_tips'];
+  const keys=Object.keys(l.content)
+    .filter(k=>k!=='expectations')
+    .sort((a,b)=>{
+      const ai=LOAD_ORDER.findIndex(o=>a===o||a.startsWith(o.replace(/_[A-D]$/,'')));
+      const bi=LOAD_ORDER.findIndex(o=>b===o||b.startsWith(o.replace(/_[A-D]$/,'')));
+      return (ai===-1?99:ai)-(bi===-1?99:bi);
+    });
   keys.forEach(k=>{genC[k]={orig:l.content[k],cur:l.content[k]};});
   curSess={id:null,date:new Date().toLocaleDateString('en-CA'),subject:l.subject,strand:'General',grades:l.grades||[],task:l.topic,marks:{}};
   document.getElementById('tr-plan').checked=true;
@@ -5862,7 +5939,8 @@ function renderExpInAssess() {
 
   // Get currently selected class in this filter (preserve across re-renders)
   const existingFilter = document.getElementById('expInAssessFilter');
-  const selectedClass = existingFilter?.value || activeClassId || '';
+  // Always use activeClassId as source of truth — don't let stale filter override it
+  const selectedClass = activeClassId || existingFilter?.value || '';
 
   // Filter lessons
   const filteredLessons = selectedClass
