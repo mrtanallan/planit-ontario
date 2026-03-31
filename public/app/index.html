@@ -2209,7 +2209,7 @@ function buildEditBlocks(outputs, gradeDesc, subj, topic, expectations) {
         </div>
       </div>
       <div class="cbb" id="cbb-${k}" contenteditable="false">${rendered}</div>
-      ${isWS?`<div class="cbf"><span>💡 Students tap to fill in answers on their devices</span><button class="btn b-out b-sm" onclick="previewWS('${k}')">👁 Full Preview</button></div>`:''}
+      ${isWS?`<div class="cbf"><span>💡 Students tap to fill in answers on their devices</span><button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button></div>`:''}
     </div>`;
   });
 
@@ -2338,36 +2338,46 @@ function renderMD(text) {
 // ============================================================
 function renderRubric(text) {
   if (!text) return '';
-  const lvlColors = {'Level 1':'#EF4444','Level 2':'#EAB308','Level 3':'#3B82F6','Level 4':'#22C55E'};
-  const lvlBgs    = {'Level 1':'#FEE2E2','Level 2':'#FEF9C3','Level 3':'#DBEAFE','Level 4':'#DCFCE7'};
+  const lvlColors  = {'Level 1':'#EF4444','Level 2':'#EAB308','Level 3':'#3B82F6','Level 4':'#22C55E'};
+  const lvlBgs     = {'Level 1':'#FEE2E2','Level 2':'#FEF9C3','Level 3':'#DBEAFE','Level 4':'#DCFCE7'};
+  const lvlTextCol = {'Level 1':'#991B1B','Level 2':'#854D0E','Level 3':'#1E40AF','Level 4':'#166534'};
   const lines = text.split('\n');
   let html = '';
   let inCategory = false;
   let inLevel = false;
 
   lines.forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
     if (line.startsWith('## ')) {
-      if (inLevel) { html += '</div>'; inLevel = false; }
+      if (inLevel)    { html += '</div>'; inLevel = false; }
       if (inCategory) { html += '</div></div>'; inCategory = false; }
       const cat = line.slice(3).trim();
-      html += `<div style="margin-bottom:20px;">
+      html += `<div style="margin-bottom:18px;">
         <div style="font-family:Fraunces,serif;font-size:.95rem;font-weight:600;padding:8px 12px;background:var(--sage-l);border-left:3px solid var(--sage);border-radius:0 5px 5px 0;margin-bottom:8px;">${cat}</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">`;
       inCategory = true;
+
     } else if (line.startsWith('### ')) {
       if (inLevel) { html += '</div>'; inLevel = false; }
       const lvl = line.slice(4).trim();
-      const col = lvlColors[lvl]||'#999';
-      const bg  = lvlBgs[lvl]||'#f5f5f5';
+      // Match "Level 1", "Level 2" etc (may have percentage in parens)
+      const lvlKey = Object.keys(lvlColors).find(k => lvl.startsWith(k)) || '';
+      const col    = lvlColors[lvlKey]  || '#9CA3AF';
+      const bg     = lvlBgs[lvlKey]     || '#F5F5F5';
+      const txtCol = lvlTextCol[lvlKey] || '#374151';
       html += `<div style="background:${bg};border:1.5px solid ${col};border-radius:7px;padding:9px 11px;">
-        <div style="font-family:DM Mono,monospace;font-size:.62rem;font-weight:700;color:${col};margin-bottom:6px;">${lvl}</div>`;
+        <div style="font-family:DM Mono,monospace;font-size:.62rem;font-weight:700;color:${txtCol};margin-bottom:6px;border-bottom:1px solid ${col}40;padding-bottom:4px;">${lvl}</div>`;
       inLevel = true;
-    } else if (line.trim() && !line.startsWith('#')) {
-      const txt = line.replace(/^[-*]\s*/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim();
-      if (txt) html += `<div style="font-size:.78rem;line-height:1.55;color:var(--ink);">${txt}</div>`;
+
+    } else if (trimmed) {
+      const txt = trimmed.replace(/^[-*]\s*/, '').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      if (txt) html += `<div style="font-size:.78rem;line-height:1.55;margin-bottom:4px;">${txt}</div>`;
     }
   });
-  if (inLevel) html += '</div>';
+
+  if (inLevel)    html += '</div>';
   if (inCategory) html += '</div></div>';
   return html || renderMD(text);
 }
@@ -3912,7 +3922,8 @@ function loadLesson(id) {
   _combinedLinkCache = null;
   const gradeDesc = (lesson.grades||[]).length > 1 ? (lesson.grades||[]).join(' / ')+' split class' : (lesson.grades||[])[0]||'';
   const displayKeys = Object.keys(content).filter(k => k!=='expectations' && !k.startsWith('answer_key'));
-  buildEditBlocks(displayKeys, gradeDesc, lesson.subject||'', lesson.topic||'', lesson.expectations||[]);
+  const answerKeyKeys = Object.keys(content).filter(k => k.startsWith('answer_key'));
+  buildEditBlocks([...displayKeys, ...answerKeyKeys], gradeDesc, lesson.subject||'', lesson.topic||'', lesson.expectations||[]);
   buildShareCards(displayKeys.filter(k => SHAREABLE.includes(k)));
   unlock();
   document.getElementById('tr-plan').checked = true;
@@ -4098,7 +4109,20 @@ Return ONLY the comment text, nothing else.`;
     if (data.error) throw new Error(data.error.message||'API error');
     const comment = data.content.map(i=>i.text||'').join('').trim();
     renderCommentCard(s.id, comment, charLimit);
-    await db.from('report_card_comments').upsert({teacher_id:currentUser.id,student_id:s.id,term,subject:subj,comment,char_limit:charLimit,updated_at:new Date().toISOString()},{onConflict:'teacher_id,student_id,term,subject'});
+    // Auto-save with fallback
+    try {
+      const { error:se } = await db.from('report_card_comments').upsert(
+        {teacher_id:currentUser.id,student_id:s.id,term,subject:subj,comment,char_limit:charLimit,updated_at:new Date().toISOString()},
+        {onConflict:'teacher_id,student_id,term,subject',ignoreDuplicates:false}
+      );
+      if (se) {
+        await db.from('report_card_comments').delete()
+          .eq('teacher_id',currentUser.id).eq('student_id',s.id).eq('term',term).eq('subject',subj);
+        await db.from('report_card_comments').insert(
+          {teacher_id:currentUser.id,student_id:s.id,term,subject:subj,comment,char_limit:charLimit,updated_at:new Date().toISOString()}
+        );
+      }
+    } catch(e) { /* silent - teacher can save manually */ }
   } catch(e) {
     if (commentEl) { commentEl.style.display='block'; commentEl.innerHTML=`<div style="color:var(--rust);font-size:.82rem;padding:6px 0;">Error: ${e.message}</div>`; }
   }
@@ -4143,11 +4167,28 @@ function copyRCComment(sid) {
 
 async function saveRCComment(sid, charLimit) {
   const el = document.getElementById('rc-text-'+sid);
-  const comment = el ? el.innerText : '';
+  const comment = el ? el.innerText.trim() : '';
+  if (!comment) return;
   const term = document.getElementById('rc-term')?.value||'progress';
   const subj = document.getElementById('rc-subj')?.value||'Language / Literacy';
-  await db.from('report_card_comments').upsert({teacher_id:currentUser.id,student_id:sid,term,subject:subj,comment,char_limit:charLimit,updated_at:new Date().toISOString()},{onConflict:'teacher_id,student_id,term,subject'});
-  showToast('✅ Comment saved!');
+  try {
+    // Try upsert first (requires unique constraint on teacher_id,student_id,term,subject)
+    const { error } = await db.from('report_card_comments').upsert(
+      {teacher_id:currentUser.id, student_id:sid, term, subject:subj, comment, char_limit:charLimit, updated_at:new Date().toISOString()},
+      {onConflict:'teacher_id,student_id,term,subject', ignoreDuplicates:false}
+    );
+    if (error) {
+      // Fall back to delete + insert if upsert fails (no unique constraint)
+      await db.from('report_card_comments').delete()
+        .eq('teacher_id',currentUser.id).eq('student_id',sid).eq('term',term).eq('subject',subj);
+      await db.from('report_card_comments').insert(
+        {teacher_id:currentUser.id, student_id:sid, term, subject:subj, comment, char_limit:charLimit, updated_at:new Date().toISOString()}
+      );
+    }
+    showToast('✅ Comment saved!');
+  } catch(e) {
+    showToast('⚠️ Could not save comment: '+e.message, 5000);
+  }
 }
 
 function copyAllRCComments() {
