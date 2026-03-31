@@ -916,7 +916,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <select id="rc-subj"><option>Language / Literacy</option></select>
       </div>
       <div class="fi" style="flex:1;min-width:100px;">
-        <label style="white-space:nowrap;">Char limit <span style="font-weight:400;color:var(--muted);font-size:.72rem;">(PowerSchool)</span></label>
+        <label style="white-space:nowrap;">Char limit <span style="font-weight:400;color:var(--muted);font-size:.72rem;">(board limit)</span></label>
         <input type="text" inputmode="numeric" id="rc-charlimit" value="500" placeholder="500"
           style="font-size:.9rem;font-weight:600;text-align:center;padding:8px;"
           oninput="this.value=this.value.replace(/[^0-9]/,'')">
@@ -3769,7 +3769,20 @@ function renderExpInAssess() {
     Object.keys(byStrand).sort().forEach(strand => {
       html+=`<div style="margin-bottom:16px;"><div style="font-family:DM Mono,monospace;font-size:.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--sage);margin-bottom:8px;font-weight:600;">${strandNames[strand]||'Strand '+strand}</div><div style="display:flex;flex-wrap:wrap;gap:6px;">`;
       byStrand[strand].forEach(item => {
-        html+=`<div title="${item.lessons.join(', ')}" style="background:var(--sage-l);border:1px solid #A8C4AB;border-radius:6px;padding:5px 10px;font-size:.78rem;"><span style="font-family:DM Mono,monospace;font-weight:600;color:var(--sage);margin-right:5px;">${item.exp.code}</span><span>${item.exp.desc||''}</span>${item.count>1?`<span style="font-family:DM Mono,monospace;font-size:.62rem;color:var(--muted);margin-left:5px;">×${item.count}</span>`:''}</div>`;
+        const chipId = 'expchip_'+item.exp.code.replace('.','_')+'_'+strand;
+        const lessonList = item.lessons.map(l=>`<div style="font-size:.72rem;padding:2px 0;border-bottom:1px solid #A8C4AB20;">📅 ${l}</div>`).join('');
+        html+=`<div style="background:var(--sage-l);border:1px solid #A8C4AB;border-radius:6px;padding:5px 10px;font-size:.78rem;cursor:pointer;" onclick="const d=document.getElementById('${chipId}');if(d)d.style.display=d.style.display==='none'?'block':'none';">
+          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+            <span style="font-family:DM Mono,monospace;font-weight:600;color:var(--sage);">${item.exp.code}</span>
+            <span>${item.exp.desc||''}</span>
+            ${item.count>1?`<span style="font-family:DM Mono,monospace;font-size:.62rem;color:var(--muted);">×${item.count}</span>`:''}
+            <span style="font-family:DM Mono,monospace;font-size:.55rem;color:var(--sage);opacity:.7;margin-left:auto;">▾</span>
+          </div>
+          <div id="${chipId}" style="display:none;margin-top:6px;padding-top:5px;border-top:1px solid #A8C4AB;">
+            <div style="font-family:DM Mono,monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--sage);margin-bottom:4px;">Covered in:</div>
+            ${lessonList}
+          </div>
+        </div>`;
       });
       html+='</div></div>';
     });
@@ -3856,7 +3869,7 @@ function _renderLessonsUI() {
         <div class="lesson-meta">${gradesStr} · ${subj} · ${date}</div>
       </div>
       ${!isBulk ? `<div class="brow">
-        <button class="btn b-sage b-sm" onclick="loadLesson('${l.id}')">👁 View</button>
+        <button class="btn b-sage b-sm" onclick="loadLesson('${l.id}')">📋 Open</button>
         <button class="btn b-out b-sm" onclick="deleteLesson('${l.id}',event)" style="color:var(--rust);border-color:transparent;font-size:.72rem;">🗑</button>
       </div>` : ''}
     </div>`;
