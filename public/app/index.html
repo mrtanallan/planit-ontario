@@ -3314,7 +3314,11 @@ strong{font-weight:700;}
 <div class="meta">${label} · ${new Date().toLocaleDateString('en-CA')}</div>
 ${renderMD(txt)}
 </body></html>`;
-  
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.setTimeout(() => w.focus(), 300);
+}
 
 // ============================================================
 // ANCHOR CHART — printable classroom wall chart
@@ -6002,7 +6006,6 @@ function tourNext() {
 function skipTour() {
   document.getElementById('tourOverlay').style.display = 'none';
   localStorage.setItem('teacherai_tour_done', '1');
-}
 }
 initApp();
 </script>
