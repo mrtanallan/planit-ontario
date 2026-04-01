@@ -287,13 +287,15 @@ function checkName(){
       return;
     }
     matchedStudent=s;document.getElementById('studentName').classList.add('matched');return;
-  } else if(prefixMatches.length>1){
+  } else if(prefixMatches.length>1 && typed.length>=2){
     const btnsHtml=prefixMatches.map(s=>{
       const name=s.last?`${s.first} ${s.last}`:s.first;
-      return `<button class="sug-yes" style="font-size:.78rem;padding:5px 10px;" onclick="selectStudent('${s.id}','${name.replace(/'/g,"\'")}')">I am ${name}</button>`;
+      return `<span onclick="selectStudent('${s.id}','${name.replace(/'/g,"\'")}');event.stopPropagation();" style="display:inline-block;padding:3px 10px;margin:2px;background:white;border:1.5px solid #E8C98A;border-radius:12px;font-size:.82rem;color:#7A5020;cursor:pointer;font-family:'DM Sans',sans-serif;">${name}</span>`;
     }).join('');
-    document.getElementById('suggestionText').innerHTML=`<span style="display:block;margin-bottom:6px;">Which one are you?</span>${btnsHtml}`;
+    document.getElementById('suggestionText').innerHTML=`<span style="font-size:.82rem;">Is that you? </span>${btnsHtml}`;
     document.getElementById('nameSuggestion').classList.add('show');
+    // Hide the Yes/Keep buttons when showing name chips
+    document.querySelector('.suggestion-btns').style.display='none';
     window._pendingSuggestion=null;
     return;
   }
@@ -306,13 +308,13 @@ function checkName(){
     document.getElementById('nameSuggestion').classList.add('show');
     window._pendingSuggestion=matches[0].student;
   } else if(matches.length>1){
-    // Multiple matches — show all as selectable buttons
     const btnsHtml=matches.map(m=>{
       const name=m.student.last?`${m.student.first} ${m.student.last}`:m.student.first;
-      return `<button class="sug-yes" style="font-size:.78rem;padding:5px 10px;" onclick="selectStudent('${m.student.id}','${name.replace(/'/g,"\'")}')">I am ${name}</button>`;
+      return `<span onclick="selectStudent('${m.student.id}','${name.replace(/'/g,"\'")}');event.stopPropagation();" style="display:inline-block;padding:3px 10px;margin:2px;background:white;border:1.5px solid #E8C98A;border-radius:12px;font-size:.82rem;color:#7A5020;cursor:pointer;font-family:'DM Sans',sans-serif;">${name}</span>`;
     }).join('');
-    document.getElementById('suggestionText').innerHTML=`<span style="display:block;margin-bottom:6px;">Which one are you?</span>${btnsHtml}`;
+    document.getElementById('suggestionText').innerHTML=`<span style="font-size:.82rem;">Is that you? </span>${btnsHtml}`;
     document.getElementById('nameSuggestion').classList.add('show');
+    document.querySelector('.suggestion-btns').style.display='none';
     window._pendingSuggestion=null;
   }
 }
@@ -332,11 +334,15 @@ function selectStudent(id,name){
   document.getElementById('studentName').value=name;
   document.getElementById('studentName').classList.add('matched');
   document.getElementById('nameSuggestion').classList.remove('show');
+  const btns=document.querySelector('.suggestion-btns');
+  if(btns)btns.style.display='flex';
   window._pendingSuggestion=null;
 }
 
 function declineSuggestion(){
   document.getElementById('nameSuggestion').classList.remove('show');
+  const btns=document.querySelector('.suggestion-btns');
+  if(btns)btns.style.display='flex';
   window._pendingSuggestion=null;
 }
 
