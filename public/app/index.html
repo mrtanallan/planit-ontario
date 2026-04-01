@@ -1908,12 +1908,15 @@ async function generate() {
   // Build curriculum context from loaded JSON — real codes the model MUST choose from
   const isMathSubj = subj === 'Mathematics';
   const relevantExps = getExpectations(subj, grades, []);
+  // Limit by grade — upper grades have complex topics, need response space
+  const isUpperGrade = grades.some(g => ['Grade 6','Grade 7','Grade 8'].includes(g));
+  const expLimit = isUpperGrade ? 15 : 25;
   const expContext = relevantExps.length
     ? (isMathSubj
-        ? 'ONTARIO MATH CURRICULUM EXPECTATIONS FOR '+grades.join('/')+' (choose 2-4 most relevant to the topic):\n'
-          + relevantExps.slice(0,30).map(e=>`${e.code} [Strand ${e.strand}] — ${e.desc}`).join('\n')
-        : 'ONTARIO LANGUAGE CURRICULUM EXPECTATIONS FOR THIS GRADE (choose 2-4 most relevant):\n'
-          + relevantExps.slice(0,40).map(e=>`${e.code} — ${e.desc}`).join('\n'))
+        ? 'ONTARIO MATH CURRICULUM EXPECTATIONS FOR '+grades.join('/')+' (choose 2-4 most relevant):\n'
+          + relevantExps.slice(0,expLimit).map(e=>e.code+' ['+e.strand+'] '+e.desc).join('\n')
+        : 'ONTARIO LANGUAGE CURRICULUM EXPECTATIONS (choose 2-4 most relevant):\n'
+          + relevantExps.slice(0,expLimit).map(e=>e.code+' '+e.desc).join('\n'))
     : '';
 
   const expHint = preMatchedExp.length
@@ -2802,8 +2805,26 @@ async function generateSlideData(callerBtn) {
       '- discussion_questions: exactly 3',
       '- All content age-appropriate for grade '+(gradeStr||'Elementary'),
       '- visual_params must use REAL numbers appropriate for the grade — no placeholders',
-      '- CRITICAL: visual_type must be an exact type name (e.g. "worked_steps", "array", "bar_graph"). NEVER use strand names like "NUMBER", "ALGEBRA", "DATA", "SPATIAL", "FINANCIAL" as a visual_type.',
+      '- PARAM CORRECTNESS RULES:',
+      '  * number_line: min must be 0 or less (never start at 1). highlights must include labelled values.',
+      '  * fraction_compare: verify comparison operator is correct (e.g. 1/4 < 1/2, not >).',
+      '  * worked_steps: verify every arithmetic calculation in steps is correct. final answer must be correct.',
+      '  * bar_graph/pictograph: values must be realistic for the grade context.',
+      '  * coordinate_graph: points array must include label field with coordinate e.g. "(2,4)".',
+      '  * pie_chart: slice values must sum to 100 if using percentages.',
+      '  * t_table: rule must be mathematically consistent with all rows in the table.',
+      '  * isometric_box: include volume_label showing V = l × w × h = result cm³.',
+      '- CRITICAL: visual_type must be an exact type name. NEVER use strand names (NUMBER/ALGEBRA/DATA/SPATIAL/FINANCIAL) as visual_type.',
       '- Return ONLY the JSON object with no markdown fences and no text before or after it.',
+      '- VISUAL TYPE SELECTION — read before choosing:',
+      '  concept_card/worked_steps/comparison_table/formula_display = TEXT ONLY. NEVER choose these for: area, geometry shapes, transformations, graphing, or any concept that requires students to see a diagram.',
+      '  area_grid = counting squares method only. For triangle/parallelogram formula method use triangle_area/parallelogram_area.',
+      '  labelled_shape = sides and angles only. NEVER for area — area requires triangle_area.',
+      '  For Pythagorean theorem: pythagorean type (NOT formula_display or worked_steps as main visual).',
+      '  For transformations: always transform_translate/reflect/rotate/overview.',
+      '  For circle graphs: pie_chart. For probability: probability_scale.',
+      '  For coordinate geometry: coordinate_graph with points array including label field.',
+      '- PARAM VERIFICATION before submitting: check every calculation is correct, comparison operators are right (1/4 < 1/2), t_table rule matches all rows, pie_chart slices sum to 100.',
       '- Pure JSON only, no markdown, no comments'
     ].filter(Boolean).join('\n');
 
