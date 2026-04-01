@@ -286,7 +286,7 @@ function buildStructurePrompt(unit, gradeExps) {
     '* Volume: isometric_box with volume_label. NEVER formula_display alone.\n' +
     '* place_value: single number only. NEVER for addition/subtraction.\n' +
     '* area_grid area_label: write label only like "A=24cm2", NOT a formula equation.\n' +
-    '* ten_frame: one number only in filled param.\n' +
+    '* ten_frame filled: set to TOTAL/RESULT being shown, not first addend. 7+2=9 → filled:9.\n' +
     '* Addition/subtraction: number_line or array. NOT place_value.\n' +
     (isEarlyGrade ? '* K and Grade 1: counting_dots, ten_frame, shape_grid, sort_diagram. NEVER concept_card or worked_steps.\n' : '') +
     'CRITICAL: visual_type must be exact type name above. NEVER use NUMBER/ALGEBRA/DATA/SPATIAL/FINANCIAL.\n' +
@@ -509,7 +509,7 @@ async function runUnit(idx) {
         place_value:'Place value columns with digits.',
         array:'Dot grid showing rows×cols.',
         balance_scale:'Two-pan scale showing equation. Solution below.',
-        pattern_row:'Shape sequence with rule and next element.',
+        pattern_row:'Shape sequence with rule and next element. CRITICAL: validate next by tracing the FULL pattern rule from start, not just the last item. AB pattern (A,B,A,B) after B comes A. ABB pattern trace full sequence. Only fail if next clearly breaks the rule.',
         budget_bar:'Bar chart income vs expenses.',
         percent_bar:'Filled bar showing percentage.',
         counting_dots:'Dots arranged in rows of 5, numbered 1 to N. For counting lessons K-Gr1. params need count (1-20) and label.',
