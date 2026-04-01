@@ -54,7 +54,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
   border: 1px solid var(--border); position: relative; z-index: 2;
 }
 .auth-logo { font-family: 'Fraunces', serif; font-size: 1.9rem; font-weight: 700; margin-bottom: 6px; }
-.auth-logo span { color: #9B1B1B; }
+.auth-logo span:not(.logo-full) { color: #9B1B1B; }
 .auth-tagline { color: var(--muted); font-size: .85rem; line-height: 1.55; margin-bottom: 28px; }
 .auth-tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--cream); border-radius: 10px; padding: 4px; }
 .auth-tab { flex: 1; padding: 8px; text-align: center; border-radius: 7px; cursor: pointer; font-size: .85rem; font-weight: 500; color: var(--muted); transition: all 0.15s; }
@@ -72,7 +72,7 @@ nav {
   padding: 0 20px; height: 52px; position: sticky; top: 0; z-index: 100;
 }
 .logo { font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 700; color: var(--cream); margin-right: 24px; flex-shrink: 0; }
-.logo span { color: #9B1B1B; }
+.logo span:not(.logo-full) { color: #9B1B1B; }
 .logo-full { color: var(--cream); }
 @media(max-width:480px) { .logo-full { display: none; } .logo { font-size:.95rem; margin-right:6px; } }
 .nav-tabs { display: flex; gap: 2px; overflow-x: auto; flex: 1; scrollbar-width: none; -ms-overflow-style: none; }
@@ -592,9 +592,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <!-- Row 3: Topic input -->
       <div style="margin-bottom:18px;">
         <label style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px;">What are you teaching? <span style="color:var(--rust);">✱</span></label>
-        <input type="text" id="topic" placeholder="e.g. Making Inferences, Persuasive Writing, Fractions..." autocapitalize="sentences"
+        <input type="text" id="topic" list="topicSuggestions" placeholder="e.g. Making Inferences, Persuasive Writing, Fractions..." autocapitalize="sentences"
           style="width:100%;font-family:'DM Sans',sans-serif;font-size:1rem;padding:13px 16px;border:2px solid var(--border);border-radius:10px;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;"
           onfocus="this.style.borderColor='var(--sage)'" onblur="this.style.borderColor='var(--border)'">
+        <datalist id="topicSuggestions"></datalist>
       </div>
 
       <!-- Subject note for non-literacy subjects -->
@@ -1097,11 +1098,12 @@ function matchExpectations(inputText, gradeBand) {
   const bands = gradeBand ? [...new Set(gradeBand.map(g => getBand(g.replace('Grade ','').replace('Kindergarten','1'))))] : ['1-3','4-6','7-8'];
   terms.forEach(term => {
     const stripped = term.replace(/^\d+\./, '');
-    const codeMatch = ONTARIO_EXPECTATIONS.find(e => (e.code.toLowerCase()===term || e.code.toLowerCase()===stripped) && bands.includes(e.band));
+    const _allExp = Object.values(EXPECTATIONS).flat();
+    const codeMatch = _allExp.find(e => (e.code.toLowerCase()===term || e.code.toLowerCase()===stripped) && bands.includes(e.band));
     if (codeMatch) { if (!results.find(r=>r.code===codeMatch.code)) results.push(codeMatch); return; }
-    const partials = ONTARIO_EXPECTATIONS.filter(e => (e.code.toLowerCase().startsWith(term+'.') || e.code.toLowerCase().startsWith(stripped+'.')) && bands.includes(e.band));
+    const partials = _allExp.filter(e => (e.code.toLowerCase().startsWith(term+'.') || e.code.toLowerCase().startsWith(stripped+'.')) && bands.includes(e.band));
     if (partials.length) { partials.forEach(e => { if (!results.find(r=>r.code===e.code)) results.push(e); }); return; }
-    const textMatches = ONTARIO_EXPECTATIONS.filter(e => {
+    const textMatches = _allExp.filter(e => {
       if (!bands.includes(e.band)) return false;
       const hay = (e.overall+' '+e.desc).toLowerCase();
       return term.split(/\s+/).every(w => w.length > 2 && hay.includes(w));
@@ -1280,6 +1282,7 @@ async function initApp() {
     try { await loadUserData(); handleOAuthRedirect(); } catch(e){ console.error(e); }
     loadUsageMeter();
     loadCurriculum('Language / Literacy'); // preload most common subject in background
+    updateTopicSuggestions(); // set default suggestions for Language
     hideLoading();
     showApp();
   }
@@ -1721,9 +1724,87 @@ function addExtraGrade() {
 // ============================================================
 // SUBJECT CHANGE
 // ============================================================
+
+// ============================================================
+// TOPIC SUGGESTIONS — by subject
+// ============================================================
+const TOPIC_SUGGESTIONS = {
+  'Language / Literacy': [
+    'Making Inferences','Main Idea and Supporting Details','Author\'s Purpose',
+    'Text Features','Making Connections','Visualizing','Summarizing',
+    'Cause and Effect','Compare and Contrast','Point of View',
+    'Narrative Writing','Persuasive Writing','Procedural Writing',
+    'Descriptive Writing','Opinion Writing','Informational Writing',
+    'Short Story','Poetry','Report Writing','Letter Writing',
+    'Reading Comprehension','Vocabulary','Media Literacy',
+    'Oral Communication','Presentation Skills','Debate',
+    'Spelling Strategies','Grammar','Punctuation','Sentence Structure',
+    'Parts of Speech','Figurative Language','Story Elements',
+  ],
+  'Mathematics': [
+    'Fractions','Decimals','Multiplication','Division','Addition','Subtraction',
+    'Place Value','Number Sense','Integers','Ratios and Rates','Percentages',
+    'Patterns and Algebra','Equations','Variables','Coding',
+    'Data and Graphs','Mean, Median, Mode','Probability',
+    'Geometry','Area and Perimeter','Volume and Surface Area',
+    'Measurement','Angles','Transformations','Symmetry',
+    'Money and Financial Literacy','Budgeting','Simple Interest',
+    'Multiplication Facts','Long Division','Order of Operations',
+    'Pythagorean Theorem','Scatter Plots','Linear Relations',
+  ],
+  'Science & Technology': [
+    'Life Systems','Habitats and Communities','Animal Adaptations',
+    'Growth and Changes in Plants','Human Body Systems','Biodiversity',
+    'Matter','States of Matter','Physical and Chemical Changes',
+    'Forces and Motion','Structures and Mechanisms','Simple Machines',
+    'Energy Forms','Heat and Temperature','Sound and Light',
+    'Earth and Space','Weather','Rocks and Minerals','Soil',
+    'Space Systems','Ecosystems','Environmental Sustainability',
+    'Scientific Inquiry','Scientific Method','Experiments',
+    'Technology Design','Engineering Design',
+  ],
+  'Social Studies': [
+    'Canadian Communities','Indigenous Peoples of Canada',
+    'Early Settler Communities','Heritage and Identity',
+    'Government and Democracy','Rights and Responsibilities',
+    'Geography of Canada','Physical Regions of Canada',
+    'Economic Systems','Trade and Resources',
+    'Global Communities','Cultural Diversity',
+    'Historical Thinking','Cause and Consequence',
+    'Continuity and Change','Perspective Taking',
+  ],
+  'Health & Physical Education': [
+    'Healthy Living','Nutrition and Healthy Eating',
+    'Physical Activity','Body Systems','Puberty and Growth',
+    'Mental Health and Well-Being','Stress Management',
+    'Relationships and Communication','Conflict Resolution',
+    'Safety and Injury Prevention','Drug Awareness',
+    'Personal Health Practices','Community Health',
+  ],
+};
+
+function updateTopicSuggestions() {
+  const subj = document.getElementById('subj')?.value || 'Language / Literacy';
+  const list = document.getElementById('topicSuggestions');
+  const placeholder = document.getElementById('topic');
+  if (!list) return;
+  const suggestions = TOPIC_SUGGESTIONS[subj] || TOPIC_SUGGESTIONS['Language / Literacy'];
+  list.innerHTML = suggestions.map(s => `<option value="${s}">`).join('');
+  // Update placeholder to be subject-specific
+  const placeholders = {
+    'Language / Literacy': 'e.g. Making Inferences, Persuasive Writing, Short Story...',
+    'Mathematics': 'e.g. Fractions, Multiplication, Area and Perimeter...',
+    'Science & Technology': 'e.g. Habitats, States of Matter, Simple Machines...',
+    'Social Studies': 'e.g. Indigenous Communities, Canadian Government...',
+    'Health & Physical Education': 'e.g. Nutrition, Mental Health, Relationships...',
+  };
+  if (placeholder) placeholder.placeholder = placeholders[subj] || 'e.g. Enter your topic...';
+}
+
 function onSubjectChange() {
   const subj = document.getElementById('subj').value;
   loadCurriculum(subj); // preload curriculum JSON for selected subject
+  updateTopicSuggestions();
   const isLiteracy = subj === 'Language / Literacy';
   const strandSection = document.getElementById('strandSection');
   const subjectNote = document.getElementById('subjectNote');
@@ -2110,7 +2191,8 @@ function buildEditBlocks(outputs, gradeDesc, subj, topic, expectations) {
           const s = e.strand||(e.code&&e.code[0])||'';
           const sColor = strandColors[s]||'var(--sage)';
           const sBg = strandBgs[s]||'var(--sage-l)';
-          const localExp = ONTARIO_EXPECTATIONS.find(x=>x.code===e.code);
+          const _allExp2 = Object.values(EXPECTATIONS).flat();
+          const localExp = _allExp2.find(x=>x.code===e.code);
           // Show specific grade if AI returned it (split), else show actual lesson grades
           const _lg = (window._curSessGrades||curSess?.grades||[]);
           const gradeDisplay = e.grade
