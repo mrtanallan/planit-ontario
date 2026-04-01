@@ -3719,11 +3719,29 @@ function toggleTrackerRow(detailId) {
   });
 }
 
-function loadSession(sessId) {
+async function loadSession(sessId) {
   const sess = sessions.find(s => s.id===sessId);
   if (!sess) return;
   curSess = {id:sess.id, date:sess.date, subject:sess.subject, strand:sess.strand||'General', grades:sess.grades||[], task:sess.task, marks:{...sess.marks}};
   window._curSessGrades = sess.grades||[];
+  // Try to load matching lesson content into genC so question text shows in submitted work
+  if (!Object.keys(genC).filter(k=>k.startsWith('student_worksheet')).length) {
+    try {
+      const { data } = await db.from('lessons')
+        .select('content,expectations,grades,subject,topic')
+        .eq('teacher_id', currentUser.id)
+        .eq('topic', sess.task)
+        .order('created_at', {ascending: false})
+        .limit(1)
+        .single();
+      if (data?.content) {
+        Object.keys(data.content).forEach(k => {
+          if (typeof data.content[k] === 'string') genC[k] = {orig: data.content[k], cur: data.content[k]};
+        });
+        genC['_expectations'] = data.expectations || [];
+      }
+    } catch(e) { /* no matching lesson found — questions show as Q1, Q2 etc */ }
+  }
   document.getElementById('tr-plan').checked=true;
   unlock(); gs(4);
 }
