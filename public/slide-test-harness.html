@@ -347,7 +347,7 @@ async function runUnit(idx) {
   // Step 1: Structure call
   setStatusBar(`[${idx+1}/36] ${unit.grade} — ${unit.topic}: getting structure...`);
   const structureData = await apiFetch('/api/generate', {
-    model: MODEL, max_tokens: 5000,
+    model: MODEL, max_tokens: 6000,
     messages: [{role:'user', content: buildStructurePrompt(unit)}]
   });
 
@@ -415,8 +415,38 @@ async function runUnit(idx) {
     const sr = slideResults[i];
 
     if (sr.hardcoded) {
-      // Hardcoded — mark as pass, no API call needed for validation
-      sr.svg = '<!-- hardcoded renderer -->'; sr.pass = true; sr.issues = [];
+      // Hardcoded renderer — still run critic to verify output quality
+      // Get the actual SVG from the renderer type name for critic review
+      // We pass the type and params as context; critic evaluates conceptual correctness
+      setStatusBar('['+(idx+1)+'/36] '+unit.grade+' — '+unit.topic+': critiquing slide '+(i+1)+'/4 (hardcoded: '+sr.type+')...');
+      const criticData2 = await apiFetch('/api/generate', {
+        model: MODEL, max_tokens: 600, call_type: 'svg',
+        system: CRITIC_SYSTEM,
+        messages: [{role:'user', content: [
+          'GRADE: '+unit.grade,
+          'TOPIC: '+unit.topic,
+          'SLIDE TITLE: '+(cs.title||''),
+          'KEY CONCEPT: '+(cs.key_point||''),
+          'VISUAL TYPE: '+sr.type,
+          'VISUAL PARAMS: '+JSON.stringify(sr.params||{}),
+          '',
+          'NOTE: This is a hardcoded renderer. You cannot see the SVG output.',
+          'Based ONLY on the visual type and params provided, evaluate:',
+          '1. Is this the CORRECT type of diagram for this concept? (e.g. triangle_area for area, not labelled_shape)',
+          '2. Do the params contain the required values? (e.g. area diagram needs base, height, formula)',
+          '3. Are all param values mathematically correct for the grade level?',
+          '4. Are the param values consistent with each other? (e.g. area_label matches base × height calculation)',
+          '5. Is any required param missing that would make the diagram incomplete?',
+        ].join('\n')}]
+      });
+      await new Promise(r=>setTimeout(r,200));
+      const criticRaw2 = (criticData2?.content||[]).map(b=>b.text||'').join('').trim();
+      try {
+        const verdict2 = JSON.parse(criticRaw2.replace(/^[^{]*/,'').replace(/[^}]*$/,''));
+        sr.pass = verdict2.pass;
+        sr.issues = verdict2.issues||[];
+      } catch(e) { sr.pass = true; sr.issues = []; }
+      sr.svg = '<!-- hardcoded: '+sr.type+' -->';
       setStatus(idx, 'running', slideResults);
       continue;
     }
