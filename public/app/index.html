@@ -2747,7 +2747,7 @@ async function generateSlideData(callerBtn) {
       '== EARLY GRADES K-1 ONLY: counting_dots({count:7,label:"Count the dots!"}) | ten_frame({filled:7,label:"Show 7"}) | shape_grid({shapes:[{name:"Circle",color:"#1D9E75"},{name:"Square",color:"#E07B39"},{name:"Triangle",color:"#F5C842"},{name:"Rectangle",color:"#6B63D4"}],properties:["0 sides","4 equal sides","3 sides","4 sides"]}) | sort_diagram({left_label:"Has corners",right_label:"No corners",left_items:["Square","Triangle","Rectangle"],right_items:["Circle"],rule:"Corners"})',
       '== ALGEBRA: worked_steps({problem:"2x+3=11",steps:[{label:"Subtract 3",work:"2x=8"},{label:"Divide by 2",work:"x=4"}],answer:"x=4"}) | formula_display({formula:"A=l×w",variables:[{symbol:"A",meaning:"Area",unit:"cm²"},{symbol:"l",meaning:"length",unit:"cm"},{symbol:"w",meaning:"width",unit:"cm"}]}) | balance_scale({left:"2x+3",right:"11",solution:"x=4"}) | pattern_row({items:["▲","■","▲","■"],rule:"Repeating",next:"▲"}) | t_table({headers:["x","y"],rows:[[0,2],[1,4],[2,6]],rule:"y=2x"}) | coordinate_graph({points:[{x:1,y:2,label:"(1,2)"},{x:3,y:6,label:"(3,6)"}],line:true,x_max:8,y_max:10})',
       '== DATA: bar_graph({title:"T",labels:["A","B","C"],values:[12,8,10],y_label:"Count"}) | line_graph({title:"T",labels:["Mon","Tue","Wed"],values:[12,15,11],y_label:"°C"}) | pie_chart({title:"T",slices:[{label:"A",value:50,color:"#1D9E75"},{label:"B",value:30,color:"#F5C842"},{label:"C",value:20,color:"#E07B39"}]}) | pictograph({title:"T",rows:[{label:"Jan",count:4},{label:"Feb",count:6}],symbol:"🌟",scale:2,scale_label:"=2"}) | double_bar({title:"T",labels:["A","B"],series:[{name:"Gr4",values:[8,5],color:"#1D9E75"},{name:"Gr5",values:[6,9],color:"#E07B39"}]}) | probability_scale({events:[{label:"Impossible",value:0},{label:"Flip heads",value:0.5},{label:"Certain",value:1}]}) | stem_leaf({title:"T",stems:[{stem:6,leaves:[2,5,8]},{stem:7,leaves:[0,3,7]}]}) | scatter_plot({points:[{x:2,y:4},{x:4,y:7},{x:6,y:9}],x_max:10,y_max:12,x_label:\"Hours\",y_label:\"Score\",line_of_best_fit:true})',
-      '== SPATIAL: area_grid({cols:6,rows:4,label_top:"6cm",label_right:"4cm",area_label:"A=24cm²"}) | triangle_area({base:8,height:6,units:"cm",area_label:"A=(8×6)÷2=24cm²"}) | parallelogram_area({base:10,height:6,units:"cm",area_label:"A=10×6=60cm²"}) | perimeter_shape({shape:"rectangle",sides:{top:"6cm",bottom:"6cm",left:"4cm",right:"4cm"},perimeter_label:"P=20cm"}) | circle_diagram({radius:5,show_diameter:true,radius_label:"r=5cm",diameter_label:"d=10cm",formula:"C=πd≈31.4cm"}) | angle_diagram({degrees:60,label:"60°",type:"acute"}) | transform_translate({shape:"rectangle",shape_w:3,shape_h:2,start_col:1,start_row:3,dx:4,dy:0,cols:12,rows:8}) | transform_reflect({shape:"right_triangle",shape_w:3,shape_h:3,col:1,row:1,axis:"vertical",axis_col:5,cols:12,rows:8}) | transform_rotate({shape:"rectangle",shape_w:4,shape_h:2,col:2,row:4,degrees:90,direction:"clockwise",pivot_col:2,pivot_row:4,cols:12,rows:8}) | transform_overview({shape:"rectangle"}) | labelled_shape({shape:"triangle",sides:["8cm","6cm","10cm"],angles:["90°","53°","37°"]}) | pythagorean({a:3,b:4,c:5,units:"cm"}) | isometric_box({l:6,w:4,h:3,unit:"cm",volume_label:"V=72cm³"})',
+      '== SPATIAL: grouped_objects({groups:3,per_group:4,label:"3 groups of 4",operator:"×"}) | measurement_bar({unit_name:"paperclip",count:5,object:"pencil"}) | angle_types({types:[{degrees:45,label:"Acute",desc:"Less than 90°",color:"#1D9E75"},{degrees:90,label:"Right",desc:"Exactly 90°",color:"#1D3461"},{degrees:130,label:"Obtuse",desc:"Greater than 90°",color:"#E07B39"}]}) | area_grid({cols:6,rows:4,label_top:"6cm",label_right:"4cm",area_label:"A=24cm²"}) | triangle_area({base:8,height:6,units:"cm",area_label:"A=(8×6)÷2=24cm²"}) | parallelogram_area({base:10,height:6,units:"cm",area_label:"A=10×6=60cm²"}) | perimeter_shape({shape:"rectangle",sides:{top:"6cm",bottom:"6cm",left:"4cm",right:"4cm"},perimeter_label:"P=20cm"}) | circle_diagram({radius:5,show_diameter:true,radius_label:"r=5cm",diameter_label:"d=10cm",formula:"C=πd≈31.4cm"}) | angle_diagram({degrees:60,label:"60°",type:"acute"}) | transform_translate({shape:"rectangle",shape_w:3,shape_h:2,start_col:1,start_row:3,dx:4,dy:0,cols:12,rows:8}) | transform_reflect({shape:"right_triangle",shape_w:3,shape_h:3,col:1,row:1,axis:"vertical",axis_col:5,cols:12,rows:8}) | transform_rotate({shape:"rectangle",shape_w:4,shape_h:2,col:2,row:4,degrees:90,direction:"clockwise",pivot_col:2,pivot_row:4,cols:12,rows:8}) | transform_overview({shape:"rectangle"}) | labelled_shape({shape:"triangle",sides:["8cm","6cm","10cm"],angles:["90°","53°","37°"]}) | pythagorean({a:3,b:4,c:5,units:"cm"}) | isometric_box({l:6,w:4,h:3,unit:"cm",volume_label:"V=72cm³"})',
       '== FINANCIAL: money_display({amount:2.75,breakdown:[{coin:"toonie",count:1},{coin:"quarter",count:3}]}) | budget_bar({income:500,expenses:[{label:"Food",amount:200},{label:"Transport",amount:80}]})',
       '== UNIVERSAL: comparison_table({headers:["Shape","Formula","Example"],rows:[["Rectangle","l×w","6×4=24cm²"]]}) | concept_card({title:"Types",items:[{name:"Equilateral",detail:"3 equal sides"}]}) | venn_diagram({left_label:"A",right_label:"B",overlap_label:"Both",left_items:["only A"],right_items:["only B"],overlap_items:["shared"]})',
       'RULES:',
@@ -2770,6 +2770,12 @@ async function generateSlideData(callerBtn) {
       '- CRITICAL: visual_type must be an exact type name. NEVER use strand names (NUMBER/ALGEBRA/DATA/SPATIAL/FINANCIAL) as visual_type.',
       '- Return ONLY the JSON object with no markdown fences and no text before or after it.',
       '- VISUAL TYPE SELECTION — read before choosing:',
+      '  EXPLICIT TOPIC MAPPINGS — these override all other rules:',
+      '  * Multiplication/Division (any grade): use grouped_objects showing equal groups. NEVER concept_card or comparison_table.',
+      '  * Measurement with non-standard units (Gr1-3): use measurement_bar. NEVER worked_steps or comparison_table.',
+      '  * Angles - Acute/Obtuse/Right (Gr3-5): use angle_types for any comparison/overview slide. Use angle_diagram for individual angle slides.',
+      '  * Area of rectangles (Gr3-5): use area_grid for visual model. NEVER formula_display or worked_steps as primary visual.',
+      '  * Perimeter and area together: use perimeter_shape for perimeter slides, area_grid for area slides.',
       '  For KINDERGARTEN and GRADE 1: always use concrete visual types. counting_dots for counting lessons. ten_frame for number sense and addition. shape_grid for 2D shape lessons. sort_diagram for sorting/classifying. pattern_row for patterns. array for simple grouping. NEVER use concept_card or worked_steps as the primary visual for K/Gr1 math concepts.',
       '  concept_card/worked_steps/comparison_table/formula_display = TEXT ONLY. NEVER choose these for: area, geometry shapes, transformations, graphing, or any concept that requires students to see a diagram.',
       '  area_grid = counting squares method only. For triangle/parallelogram formula method use triangle_area/parallelogram_area.',
@@ -3750,6 +3756,110 @@ const SVG_RENDERERS = {
       <text x="${ox-a*sc/2}" y="${oy+a*sc/2+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#6B63D4" font-family="Arial,sans-serif">a²=${a*a}</text>
       <text x="${ox+b*sc/2-16}" y="${oy+a*sc/2-10}" text-anchor="middle" font-size="14" fill="#0F6E56" font-family="Arial,sans-serif">c=${c}${u}</text>
       <text x="250" y="300" text-anchor="middle" font-size="18" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">a² + b² = c²  →  ${a*a} + ${b*b} = ${c*c}</text>
+    </svg>`;
+  },
+
+  // grouped_objects — equal groups showing multiplication/division (Gr2-4)
+  grouped_objects(p) {
+    const groups = Math.min(p.groups||3, 6);
+    const per_group = Math.min(p.per_group||4, 8);
+    const total = groups * per_group;
+    const label = p.label || (groups + ' groups of ' + per_group + ' = ' + total);
+    const operator = p.operator || '×';
+    const gw = Math.min(Math.floor(440/groups), 80);
+    const ox = Math.round((500 - groups*gw) / 2);
+    const oy = 30;
+    const dotR = Math.min(Math.floor((gw-20)/(per_group<=4?2:3)/2)-2, 14);
+    const cols = per_group <= 4 ? 2 : 3;
+    const rows_per_group = Math.ceil(per_group/cols);
+    const gh = rows_per_group * (dotR*2+6) + 20;
+
+    let groups_svg = '';
+    for(let g=0;g<groups;g++){
+      const gx = ox + g*gw;
+      groups_svg += `<rect x="${gx+2}" y="${oy}" width="${gw-8}" height="${gh}" rx="8" fill="#E8F5E9" stroke="#1D9E75" stroke-width="2"/>`;
+      for(let d=0;d<per_group;d++){
+        const col=d%cols, row=Math.floor(d/cols);
+        const dx=gx+2+10+col*(dotR*2+6), dy=oy+10+row*(dotR*2+6);
+        groups_svg += `<circle cx="${dx+dotR}" cy="${dy+dotR}" r="${dotR}" fill="#1D9E75"/>`;
+      }
+      groups_svg += `<text x="${gx+gw/2-4}" y="${oy+gh+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${per_group}</text>`;
+    }
+    const equationY = oy + gh + 46;
+    return `<svg viewBox="0 0 500 ${Math.min(equationY+40, 300)}" width="100%" height="100%">
+      ${groups_svg}
+      <text x="250" y="${equationY}" text-anchor="middle" font-size="20" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${groups} ${operator} ${per_group} = ${total}</text>
+      <text x="250" y="${Math.min(equationY+26, 295)}" text-anchor="middle" font-size="14" fill="#5F5E5A" font-family="Arial,sans-serif">${label}</text>
+    </svg>`;
+  },
+
+  // measurement_bar — object above ruler with non-standard units (Gr2-3)
+  measurement_bar(p) {
+    const unit_name = p.unit_name || 'paperclip';
+    const count = Math.min(p.count || 5, 12);
+    const obj_label = p.object || 'pencil';
+    const unit_w = Math.min(Math.floor(400/count), 44);
+    const ox = Math.round((500 - count*unit_w) / 2);
+    const ruler_y = 160, obj_y = 60, obj_h = 40;
+
+    // Object being measured
+    const obj_svg = `<rect x="${ox}" y="${obj_y}" width="${count*unit_w}" height="${obj_h}" rx="6" fill="#FFF3E0" stroke="#E07B39" stroke-width="2.5"/>
+      <text x="${ox + count*unit_w/2}" y="${obj_y+obj_h/2+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">${obj_label}</text>`;
+
+    // Arrows from object to ruler
+    const arrow_svg = `<line x1="${ox}" y1="${obj_y+obj_h}" x2="${ox}" y2="${ruler_y}" stroke="#888780" stroke-width="1" stroke-dasharray="4,3"/>
+      <line x1="${ox+count*unit_w}" y1="${obj_y+obj_h}" x2="${ox+count*unit_w}" y2="${ruler_y}" stroke="#888780" stroke-width="1" stroke-dasharray="4,3"/>`;
+
+    // Non-standard units (ruler)
+    let units_svg = '';
+    const colors = ['#1D9E75','#C8E6C9'];
+    for(let i=0;i<count;i++){
+      units_svg += `<rect x="${ox+i*unit_w}" y="${ruler_y}" width="${unit_w-2}" height="30" rx="3" fill="${colors[i%2]}" stroke="white" stroke-width="1.5"/>
+        <text x="${ox+i*unit_w+unit_w/2-1}" y="${ruler_y+20}" text-anchor="middle" font-size="11" font-weight="700" fill="${i%2===0?'white':'#0F6E56'}" font-family="Arial,sans-serif">${i+1}</text>`;
+    }
+    const label_svg = `<text x="250" y="${ruler_y+52}" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">Length = ${count} ${unit_name}s</text>
+      <text x="250" y="${ruler_y+72}" text-anchor="middle" font-size="13" fill="#5F5E5A" font-family="Arial,sans-serif">(1 ${unit_name} = each box)</text>`;
+
+    return `<svg viewBox="0 0 500 255" width="100%" height="100%">
+      ${obj_svg}${arrow_svg}${units_svg}${label_svg}
+    </svg>`;
+  },
+
+  // angle_types — all 3 angle types side by side (Gr4)
+  angle_types(p) {
+    const types = p.types || [
+      {degrees:45, label:'Acute', desc:'Less than 90°', color:'#1D9E75'},
+      {degrees:90, label:'Right', desc:'Exactly 90°', color:'#1D3461'},
+      {degrees:130, label:'Obtuse', desc:'Greater than 90°', color:'#E07B39'},
+    ];
+    const count = Math.min(types.length, 3);
+    const cw = Math.floor(480/count);
+    const len = 70, cx_base = cw/2, cy = 80;
+
+    const angle_svgs = types.slice(0,3).map((t,i) => {
+      const ox = 10 + i*cw + cw/2;
+      const rad = t.degrees * Math.PI / 180;
+      const x1 = ox + len, y1 = cy; // horizontal ray
+      const x2 = ox + len*Math.cos(-rad), y2 = cy + len*Math.sin(-rad); // angled ray
+      const arcR = 28;
+      const ax = ox + arcR*Math.cos(-rad/2), ay = cy + arcR*Math.sin(-rad/2);
+      const arcFlag = t.degrees > 180 ? 1 : 0;
+      const arc = `M${ox+arcR},${cy} A${arcR},${arcR} 0 ${arcFlag},1 ${ox+arcR*Math.cos(-rad)},${cy+arcR*Math.sin(-rad)}`;
+      const rightBox = t.degrees === 90
+        ? `<rect x="${ox}" y="${cy-16}" width="16" height="16" fill="none" stroke="${t.color}" stroke-width="1.8"/>`
+        : '';
+      return `<line x1="${ox}" y1="${cy}" x2="${x1}" y2="${y1}" stroke="${t.color}" stroke-width="3"/>
+        <line x1="${ox}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${t.color}" stroke-width="3"/>
+        ${rightBox}
+        <path d="${arc}" fill="none" stroke="${t.color}" stroke-width="2"/>
+        <circle cx="${ox}" cy="${cy}" r="4" fill="${t.color}"/>
+        <text x="${ox}" y="${cy+38}" text-anchor="middle" font-size="15" font-weight="900" fill="${t.color}" font-family="Arial,sans-serif">${t.label}</text>
+        <text x="${ox}" y="${cy+56}" text-anchor="middle" font-size="13" fill="#5F5E5A" font-family="Arial,sans-serif">${t.degrees}°</text>
+        <text x="${ox}" y="${cy+74}" text-anchor="middle" font-size="12" fill="#888780" font-family="Arial,sans-serif">${t.desc}</text>`;
+    }).join('');
+
+    return `<svg viewBox="0 0 500 165" width="100%" height="100%">
+      ${angle_svgs}
     </svg>`;
   },
 
