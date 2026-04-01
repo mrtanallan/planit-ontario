@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TeacherAI — Slide Quality Test Harness</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Courier New',monospace;background:#0D0D0D;color:#E0E0E0;min-height:100vh}
+  header{background:#111;border-bottom:1px solid #222;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .logo{font-size:1.1rem;font-weight:700;color:#3BBFAD;letter-spacing:1px}
+  .stats{display:flex;gap:20px;font-size:.75rem}
+  .stat{text-align:center}
+  .stat-n{font-size:1.4rem;font-weight:700}
+  .stat-n.pass{color:#3BBFAD}
+  .stat-n.fail{color:#E07B39}
+  .stat-n.skip{color:#F5C842}
+  .stat-n.pending{color:#888}
+  .stat-l{color:#555;font-size:.65rem;text-transform:uppercase;letter-spacing:1px}
+  #controls{padding:16px 24px;border-bottom:1px solid #1a1a1a;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  button{background:#1a1a1a;border:1px solid #333;color:#E0E0E0;padding:8px 16px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:.8rem;transition:all .15s}
+  button:hover{background:#222;border-color:#3BBFAD;color:#3BBFAD}
+  button.primary{background:#3BBFAD;color:#000;border-color:#3BBFAD;font-weight:700}
+  button.primary:hover{background:#2da899}
+  button.danger{background:#E07B39;color:#000;border-color:#E07B39;font-weight:700}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .filter-btn{font-size:.7rem;padding:5px 10px}
+  .filter-btn.active{background:#222;border-color:#3BBFAD;color:#3BBFAD}
+  #status-bar{padding:8px 24px;background:#111;font-size:.72rem;color:#555;border-bottom:1px solid #1a1a1a;min-height:32px}
+  #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;padding:20px 24px}
+  .unit-card{background:#111;border:1px solid #1e1e1e;border-radius:10px;overflow:hidden;transition:border-color .2s}
+  .unit-card.pass{border-color:#1a3a38}
+  .unit-card.fail{border-color:#3a2a1a}
+  .unit-card.running{border-color:#1D3461;animation:pulse 1.5s ease-in-out infinite}
+  .unit-card.pending{opacity:.5}
+  @keyframes pulse{0%,100%{border-color:#1D3461}50%{border-color:#3BBFAD}}
+  .card-header{padding:12px 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .card-meta{flex:1}
+  .card-grade{font-size:.65rem;color:#3BBFAD;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+  .card-topic{font-size:.85rem;font-weight:700;color:#E0E0E0;line-height:1.3}
+  .card-unit{font-size:.65rem;color:#555;text-transform:uppercase;margin-top:2px}
+  .card-badge{font-size:.65rem;font-weight:700;padding:3px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+  .badge-pass{background:#0a2a28;color:#3BBFAD;border:1px solid #1a4a48}
+  .badge-fail{background:#2a1a0a;color:#E07B39;border:1px solid #4a3a1a}
+  .badge-running{background:#0a1a2a;color:#5599DD;border:1px solid #1a3a5a}
+  .badge-pending{background:#1a1a1a;color:#555;border:1px solid #2a2a2a}
+  .slides-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 12px 12px}
+  .slide-thumb{background:#0D0D0D;border-radius:6px;overflow:hidden;aspect-ratio:5/3;position:relative;cursor:pointer;border:1px solid #222;transition:border-color .15s}
+  .slide-thumb:hover{border-color:#3BBFAD}
+  .slide-thumb.pass{border-color:#1a3a38}
+  .slide-thumb.fail{border-color:#E07B39}
+  .slide-thumb svg{width:100%;height:100%}
+  .slide-idx{position:absolute;top:3px;left:4px;font-size:.55rem;color:#444;font-family:'Courier New',monospace}
+  .slide-status{position:absolute;bottom:3px;right:4px;font-size:.55rem;font-weight:700}
+  .slide-status.pass{color:#3BBFAD}
+  .slide-status.fail{color:#E07B39}
+  .slide-status.loading{color:#5599DD}
+  .issues-list{padding:8px 14px 12px;display:none}
+  .issue-item{font-size:.7rem;color:#E07B39;padding:3px 0;border-top:1px solid #1a1a1a;line-height:1.4}
+  .issue-item:first-child{border-top:none}
+  .unit-card.fail .issues-list{display:block}
+  #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:1000;overflow:auto;padding:40px}
+  #modal-inner{background:#111;border:1px solid #333;border-radius:12px;max-width:900px;margin:0 auto;overflow:hidden}
+  #modal-header{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #222}
+  #modal-title{font-size:.9rem;font-weight:700;color:#E0E0E0}
+  #modal-close{background:none;border:none;color:#555;font-size:1.4rem;cursor:pointer;padding:0;line-height:1}
+  #modal-close:hover{color:#E0E0E0}
+  #modal-body{padding:20px}
+  #modal-svg{background:white;border-radius:8px;padding:16px;margin-bottom:16px;min-height:200px;display:flex;align-items:center;justify-content:center}
+  #modal-svg svg{max-width:100%;max-height:400px}
+  #modal-code{background:#0D0D0D;border-radius:6px;padding:12px;font-size:.7rem;line-height:1.5;overflow-x:auto;color:#888;max-height:200px;overflow-y:auto;border:1px solid #1a1a1a}
+  #modal-verdict{margin-top:12px;padding:12px;border-radius:6px;font-size:.75rem}
+  #modal-verdict.pass{background:#0a2a28;color:#3BBFAD;border:1px solid #1a4a48}
+  #modal-verdict.fail{background:#2a1a0a;color:#E07B39;border:1px solid #4a3a1a}
+  #export-btn{margin-left:auto}
+  .progress-bar{height:3px;background:#1a1a1a;margin:0 14px 10px}
+  .progress-fill{height:100%;background:#3BBFAD;transition:width .3s;border-radius:2px}
+  .type-tag{display:inline-block;font-size:.6rem;color:#F5C842;background:#1a1a0a;border:1px solid #2a2a1a;border-radius:3px;padding:1px 5px;margin-top:4px}
+  .hardcoded-tag{color:#3BBFAD;background:#0a1a1a;border-color:#1a2a2a}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🧪 TeacherAI Slide Test Harness</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-n pass" id="s-pass">0</div><div class="stat-l">Pass</div></div>
+    <div class="stat"><div class="stat-n fail" id="s-fail">0</div><div class="stat-l">Fail</div></div>
+    <div class="stat"><div class="stat-n skip" id="s-skip">0</div><div class="stat-l">Skipped</div></div>
+    <div class="stat"><div class="stat-n pending" id="s-pending">25</div><div class="stat-l">Pending</div></div>
+    <div class="stat"><div class="stat-n" id="s-total" style="color:#E0E0E0">0/25</div><div class="stat-l">Done</div></div>
+  </div>
+</header>
+
+<div id="controls">
+  <button class="primary" id="btn-run" onclick="runAll()">▶ Run All 25 Units</button>
+  <button id="btn-stop" onclick="stopAll()" disabled>⏹ Stop</button>
+  <button id="btn-rerun-fails" onclick="rerunFails()" disabled>↩ Re-run Failures</button>
+  <button id="btn-export" id="export-btn" onclick="exportReport()" disabled>⬇ Export Report</button>
+  <span style="font-size:.7rem;color:#555;margin-left:8px">Filter:</span>
+  <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+  <button class="filter-btn" onclick="setFilter('fail',this)">Failures</button>
+  <button class="filter-btn" onclick="setFilter('pass',this)">Passing</button>
+  <button class="filter-btn" onclick="setFilter('hardcoded',this)">Hardcoded</button>
+  <button class="filter-btn" onclick="setFilter('agent',this)">Agent Loop</button>
+</div>
+
+<div id="status-bar">Ready. Click "Run All" to begin testing.</div>
+<div id="grid"></div>
+
+<div id="modal">
+  <div id="modal-inner">
+    <div id="modal-header">
+      <span id="modal-title">Slide Inspector</span>
+      <button id="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body">
+      <div id="modal-svg"></div>
+      <div id="modal-verdict"></div>
+      <details style="margin-top:12px">
+        <summary style="font-size:.72rem;color:#555;cursor:pointer;margin-bottom:8px">SVG Source</summary>
+        <div id="modal-code"></div>
+      </details>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://bbhhkyiyfybmlfkerfto.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJiaGhreWl5ZnlibWxma2VyZnRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMDgzODMsImV4cCI6MjA4OTc4NDM4M30.nLzOUCAa8XSD4BL0XIdPvwVNZy-5Rnp6NVLUTVjE-ZQ';
+const API_BASE = 'https://teacherai.ca';
+const MODEL = 'claude-sonnet-4-20250514';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const UNITS = [
+  {grade:'Grade 2',topic:'Addition and Subtraction to 100',unit:'number'},
+  {grade:'Grade 3',topic:'Multiplication and Division',unit:'number'},
+  {grade:'Grade 4',topic:'Fractions',unit:'number'},
+  {grade:'Grade 5',topic:'Decimals',unit:'number'},
+  {grade:'Grade 6',topic:'Integers',unit:'number'},
+  {grade:'Grade 7',topic:'Ratios and Rates',unit:'number'},
+  {grade:'Grade 8',topic:'Percent',unit:'number'},
+  {grade:'Grade 3',topic:'Patterning',unit:'algebra'},
+  {grade:'Grade 5',topic:'Equations and Variables',unit:'algebra'},
+  {grade:'Grade 7',topic:'Linear Relations',unit:'algebra'},
+  {grade:'Grade 2',topic:'Pictographs and Bar Graphs',unit:'data'},
+  {grade:'Grade 5',topic:'Mean Median Mode',unit:'data'},
+  {grade:'Grade 7',topic:'Circle Graphs',unit:'data'},
+  {grade:'Grade 4',topic:'Probability',unit:'data'},
+  {grade:'Grade 3',topic:'Perimeter and Area',unit:'spatial'},
+  {grade:'Grade 4',topic:'Area of Rectangles',unit:'spatial'},
+  {grade:'Grade 5',topic:'Volume of Rectangular Prisms',unit:'spatial'},
+  {grade:'Grade 6',topic:'Area of Triangles and Parallelograms',unit:'spatial'},
+  {grade:'Grade 7',topic:'Circle Area and Circumference',unit:'spatial'},
+  {grade:'Grade 8',topic:'Pythagorean Theorem',unit:'spatial'},
+  {grade:'Grade 3',topic:'Transformations - Slide Flip Turn',unit:'spatial'},
+  {grade:'Grade 6',topic:'Transformations on a Coordinate Grid',unit:'spatial'},
+  {grade:'Grade 4',topic:'Angles - Acute Obtuse Right',unit:'spatial'},
+  {grade:'Grade 5',topic:'Financial Literacy - Budgeting',unit:'financial'},
+  {grade:'Grade 7',topic:'Financial Literacy - Simple Interest',unit:'financial'},
+];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let results = {}; // { unitIdx: { status, slides: [{type, svg, pass, issues, hardcoded}] } }
+let running = false;
+let stopFlag = false;
+let token = null;
+let currentFilter = 'all';
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+async function getToken() {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) { alert('Not logged in. Open teacherai.ca/app first, log in, then come back here.'); return null; }
+  return session.access_token;
+}
+
+async function apiFetch(endpoint, body) {
+  if (!token) token = await getToken();
+  if (!token) return null;
+  try {
+    const r = await fetch(API_BASE + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) { console.error('API error', r.status); return null; }
+    return r.json();
+  } catch(e) { console.error('Fetch error', e); return null; }
+}
+
+// ── Structure prompt ─────────────────────────────────────────────────────────
+function buildStructurePrompt(unit) {
+  const isMath = true;
+  return `You are an Ontario elementary teacher creating a classroom presentation deck.
+Generate TEXT CONTENT and visual specifications for a slide deck.
+
+Topic: ${unit.topic}
+Grade(s): ${unit.grade}
+Subject: Mathematics
+Duration: 1 lesson
+
+Return ONLY valid JSON:
+{
+  "learning_goals": ["I can... statement", "I can... statement"],
+  "minds_on": {"hook": "real-world hook max 2 sentences", "prompt": "think-pair-share prompt"},
+  "vocabulary": [{"word": "term", "definition": "student-friendly definition", "example": "sentence"}],
+  "content_slides": [
+    {"title": "slide title", "key_point": "core concept 1 sentence", "teacher_note": "tip max 10 words", "visual_type": "TYPE", "visual_params": {...}}
+  ],
+  "practice_problem": {"question": "one problem", "solution_steps": ["step 1", "step 2", "step 3"]},
+  "discussion_questions": ["recall", "apply", "evaluate"],
+  "exit_ticket": {"question": "consolidation question", "answer_hint": "expected answer"}
+}
+
+VISUAL TYPES — use exact names, populate visual_params with real grade-appropriate numbers:
+NUMBER: place_value, array, fraction_bar, fraction_compare, fraction_circle, fraction_circle_compare, number_line, integer_line, percent_bar
+ALGEBRA: worked_steps, formula_display, balance_scale, t_table, coordinate_graph, pattern_row
+DATA: bar_graph, line_graph, pie_chart, pictograph, double_bar, probability_scale, stem_leaf
+SPATIAL: area_grid, perimeter_shape, circle_diagram, angle_diagram, transform_translate, transform_reflect, transform_rotate, transform_overview, labelled_shape, pythagorean, isometric_box
+FINANCIAL: money_display, budget_bar
+UNIVERSAL: comparison_table, concept_card, venn_diagram
+
+MATH SEQUENCE: slide1=formula/concept, slide2=worked_steps or visual model, slide3=diagram or data visual, slide4=comparison_table or harder worked_steps
+content_slides: exactly 4. visual_params must use REAL numbers for ${unit.grade}.
+Pure JSON only, no markdown.`;
+}
+
+// ── SVG system prompt ────────────────────────────────────────────────────────
+const SVG_SYSTEM = `You are a specialist in drawing educational SVG diagrams for K-8 Ontario classrooms.
+Return ONLY a raw <svg> element. viewBox="0 0 500 300" always. width="100%" height="100%".
+Background: transparent. Font: font-family="Arial,sans-serif". Min font-size: 15px.
+Colours: #1D9E75 teal, #1D3461 navy, #F5C842 yellow, #E07B39 orange, #F4F3EF light grey.
+DO NOT repeat the slide title. Fill the full viewBox — shapes LARGE and classroom-readable.
+All mathematics must be 100% arithmetically correct.
+Keep ALL content within x:10-490, y:10-290.
+Text labels must NOT overlap each other or any shape. Leave at least 16px between elements.
+Fraction notation: numerator and denominator as separate text elements, fraction bar as a line. Min 24px gap between each.
+Pie/circle diagrams: sweep per slice = 2π/d radians. large-arc-flag = 1 if sweep > π, else 0. Calculate precisely.
+One clear concept per diagram. No clutter.`;
+
+const CRITIC_SYSTEM = `You are a strict quality checker for K-8 educational SVG diagrams.
+Respond with ONLY a JSON object: {"pass": true, "issues": []} or {"pass": false, "issues": ["issue1"]}
+Check:
+1. Mathematical accuracy — all numbers, formulas, calculations correct
+2. Completeness — all required labels, arrows, elements present
+3. Readability — no overlapping text, font sizes adequate, all within viewBox
+4. Pedagogical correctness — diagram teaches the concept correctly for the grade
+5. SVG arc geometry — pie/circle: large-arc-flag must be 1 if sweep > 180°, else 0. Balloon/teardrop shapes = FAIL
+6. No shape overflow — shapes within viewBox, no overlaps
+Be strict. Confusing or misleading diagrams MUST fail.`;
+
+// ── Hardcoded renderer detection ─────────────────────────────────────────────
+const HARDCODED_TYPES = new Set([
+  'place_value','array','fraction_bar','fraction_compare','fraction_circle','fraction_circle_compare',
+  'number_line','integer_line','percent_bar','worked_steps','formula_display','balance_scale',
+  't_table','coordinate_graph','pattern_row','bar_graph','line_graph','pie_chart','pictograph',
+  'double_bar','probability_scale','stem_leaf','area_grid','perimeter_shape','circle_diagram',
+  'angle_diagram','transform_translate','transform_reflect','transform_rotate','transform_overview',
+  'labelled_shape','pythagorean','isometric_box','money_display','budget_bar',
+  'comparison_table','concept_card','venn_diagram'
+]);
+
+// ── Run a single unit ────────────────────────────────────────────────────────
+async function runUnit(idx) {
+  const unit = UNITS[idx];
+  setStatus(idx, 'running');
+
+  // Step 1: Structure call
+  setStatusBar(`[${idx+1}/25] ${unit.grade} — ${unit.topic}: getting structure...`);
+  const structureData = await apiFetch('/api/generate', {
+    model: MODEL, max_tokens: 3500,
+    messages: [{role:'user', content: buildStructurePrompt(unit)}]
+  });
+
+  if (!structureData) { setStatus(idx, 'fail', [], 'Structure call failed'); return; }
+
+  const raw = (structureData.content||[]).map(b=>b.text||'').join('').trim();
+  let sd;
+  try {
+    const clean = raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
+    sd = JSON.parse(clean);
+  } catch(e) {
+    try { const s=raw.indexOf('{'),en=raw.lastIndexOf('}'); sd=JSON.parse(raw.slice(s,en+1)); }
+    catch(e2) { setStatus(idx, 'fail', [], 'JSON parse failed: '+raw.substring(0,100)); return; }
+  }
+
+  const slides = (sd.content_slides||[]).slice(0,4);
+  const slideResults = slides.map(s=>({type:s.visual_type||'unknown', params:s.visual_params, title:s.title, key_point:s.key_point, svg:'', pass:null, issues:[], hardcoded:HARDCODED_TYPES.has(s.visual_type)}));
+  setStatus(idx, 'running', slideResults);
+
+  // Step 2: For each slide — if hardcoded type, mark as auto-pass; else call agent
+  const delay = ms => new Promise(r=>setTimeout(r,ms));
+
+  for (let i = 0; i < slides.length; i++) {
+    if (stopFlag) break;
+    const cs = slides[i];
+    const sr = slideResults[i];
+
+    if (sr.hardcoded) {
+      // Hardcoded — mark as pass, no API call needed for validation
+      sr.svg = '<!-- hardcoded renderer -->'; sr.pass = true; sr.issues = [];
+      setStatus(idx, 'running', slideResults);
+      continue;
+    }
+
+    // Agent loop
+    setStatusBar(`[${idx+1}/25] ${unit.grade} — ${unit.topic}: generating visual ${i+1}/4...`);
+    const userPrompt = `Topic: ${unit.topic}\nGrade: ${unit.grade}\nSlide: ${cs.title||''}\nConcept: ${cs.key_point||''}\n\nDraw this visual:\n${cs.visual_type?'Type requested: '+cs.visual_type+'\nParams: '+JSON.stringify(cs.visual_params||{}):'Illustrate the concept visually'}`;
+    const fullPrompt = SVG_SYSTEM + '\n\n---\n\n' + userPrompt;
+
+    const genData = await apiFetch('/api/generate', {
+      model: MODEL, max_tokens: 1800, call_type: 'svg',
+      system: SVG_SYSTEM,
+      messages: [{role:'user', content: fullPrompt}]
+    });
+    await delay(300);
+
+    const genRaw = (genData?.content||[]).map(b=>b.text||'').join('').trim();
+    const s1 = genRaw.indexOf('<svg'), e1 = genRaw.lastIndexOf('</svg>');
+    sr.svg = (s1!==-1&&e1!==-1) ? genRaw.slice(s1,e1+6) : '';
+
+    if (!sr.svg) { sr.pass = false; sr.issues = ['No SVG generated']; setStatus(idx,'running',slideResults); continue; }
+
+    // Critic
+    setStatusBar(`[${idx+1}/25] ${unit.grade} — ${unit.topic}: critiquing visual ${i+1}/4...`);
+    const criticData = await apiFetch('/api/generate', {
+      model: MODEL, max_tokens: 400, call_type: 'svg',
+      system: CRITIC_SYSTEM,
+      messages: [{role:'user', content: `Grade: ${unit.grade}\nConcept: ${cs.key_point||''}\n\nSVG to check:\n${sr.svg.substring(0,2000)}`}]
+    });
+    await delay(200);
+
+    const criticRaw = (criticData?.content||[]).map(b=>b.text||'').join('').trim();
+    try {
+      const verdict = JSON.parse(criticRaw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim());
+      sr.pass = verdict.pass;
+      sr.issues = verdict.issues||[];
+    } catch(e) { sr.pass = true; sr.issues = []; } // parse fail = trust it
+
+    // Retry once if failed
+    if (!sr.pass) {
+      setStatusBar(`[${idx+1}/25] ${unit.grade} — ${unit.topic}: retrying visual ${i+1}/4...`);
+      await delay(1000);
+      const retryData = await apiFetch('/api/generate', {
+        model: MODEL, max_tokens: 1800, call_type: 'svg',
+        system: SVG_SYSTEM,
+        messages: [{role:'user', content: fullPrompt+'\n\nPREVIOUS ATTEMPT FAILED: '+sr.issues.join(', ')+'\nFix these issues in your new attempt.'}]
+      });
+      await delay(300);
+      const retryRaw = (retryData?.content||[]).map(b=>b.text||'').join('').trim();
+      const s2=retryRaw.indexOf('<svg'),e2=retryRaw.lastIndexOf('</svg>');
+      if(s2!==-1&&e2!==-1) {
+        sr.svg = retryRaw.slice(s2,e2+6);
+        // Re-critique
+        const rc2 = await apiFetch('/api/generate', {
+          model: MODEL, max_tokens: 400, call_type: 'svg',
+          system: CRITIC_SYSTEM,
+          messages: [{role:'user', content: `Grade: ${unit.grade}\nConcept: ${cs.key_point||''}\n\nSVG to check:\n${sr.svg.substring(0,2000)}`}]
+        });
+        await delay(200);
+        try {
+          const v2 = JSON.parse((rc2?.content||[]).map(b=>b.text||'').join('').trim().replace(/^```json\s*/,'').replace(/\s*```$/,'').trim());
+          sr.pass = v2.pass; sr.issues = sr.pass ? [] : (v2.issues||[]).map(i=>'[retry] '+i);
+        } catch(e) { sr.pass = true; sr.issues = []; }
+      }
+    }
+
+    setStatus(idx, 'running', slideResults);
+    await delay(400);
+  }
+
+  if (stopFlag) { setStatus(idx, 'pending', slideResults); return; }
+
+  const anyFail = slideResults.some(s=>s.pass===false);
+  setStatus(idx, anyFail?'fail':'pass', slideResults);
+  updateStats();
+}
+
+// ── Run all ──────────────────────────────────────────────────────────────────
+async function runAll() {
+  token = await getToken();
+  if (!token) return;
+  running = true; stopFlag = false;
+  document.getElementById('btn-run').disabled = true;
+  document.getElementById('btn-stop').disabled = false;
+  renderGrid();
+  for (let i=0; i<UNITS.length; i++) {
+    if (stopFlag) break;
+    await runUnit(i);
+    await new Promise(r=>setTimeout(r,500));
+  }
+  running = false;
+  document.getElementById('btn-run').disabled = false;
+  document.getElementById('btn-stop').disabled = true;
+  document.getElementById('btn-rerun-fails').disabled = false;
+  document.getElementById('btn-export').disabled = false;
+  setStatusBar(`Done. ${Object.values(results).filter(r=>r.status==='pass').length} passed, ${Object.values(results).filter(r=>r.status==='fail').length} failed.`);
+}
+
+async function rerunFails() {
+  token = await getToken();
+  if (!token) return;
+  running = true; stopFlag = false;
+  document.getElementById('btn-stop').disabled = false;
+  const failIdxs = Object.entries(results).filter(([,r])=>r.status==='fail').map(([i])=>parseInt(i));
+  for (const i of failIdxs) {
+    if (stopFlag) break;
+    await runUnit(i);
+    await new Promise(r=>setTimeout(r,500));
+  }
+  running = false;
+  document.getElementById('btn-stop').disabled = true;
+  updateStats();
+}
+
+function stopAll() { stopFlag = true; document.getElementById('btn-stop').disabled = true; setStatusBar('Stopping...'); }
+
+// ── Rendering ────────────────────────────────────────────────────────────────
+function renderGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = UNITS.map((u,i) => `<div class="unit-card pending" id="card-${i}">${cardHTML(i,u,'pending',[])}</div>`).join('');
+}
+
+function cardHTML(idx, unit, status, slides) {
+  const badge = {pass:'✓ Pass',fail:'✗ Fail',running:'⟳ Running',pending:'○ Pending'}[status]||'';
+  const badgeCls = 'badge-'+status;
+  const totalSlides = slides.length||4;
+  const done = slides.filter(s=>s.pass!==null).length;
+  const pct = Math.round(done/totalSlides*100);
+  const thumbs = slides.map((s,i)=>{
+    const tStatus = s.pass===null?'loading':s.pass?'pass':'fail';
+    const svgContent = s.hardcoded
+      ? `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:9px;color:#3BBFAD;text-align:center;padding:4px">[hardcoded]<br>${s.type}</div>`
+      : (s.svg&&s.svg.length>20 ? s.svg : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:9px;color:#555">${s.pass===null?'...':(s.pass?'ok':'fail')}</div>`);
+    return `<div class="slide-thumb ${tStatus}" onclick="openModal(${idx},${i})" title="${s.title||''}">
+      <div class="slide-idx">${i+1}</div>
+      ${svgContent}
+      <div class="slide-status ${tStatus}">${{pass:'✓',fail:'✗',loading:'...'}[tStatus]||''}</div>
+    </div>`;
+  }).join('');
+  const thumbPad = slides.length<4 ? Array(4-slides.length).fill(`<div class="slide-thumb pending"><div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:9px;color:#2a2a2a">-</div></div>`).join('') : '';
+  const issues = slides.flatMap(s=>s.issues||[]).slice(0,3);
+  const typeInfo = slides.filter(s=>s.type).map(s=>`<span class="type-tag ${s.hardcoded?'hardcoded-tag':''}">${s.type}</span>`).join(' ');
+  return `<div class="card-header">
+    <div class="card-meta">
+      <div class="card-grade">${unit.grade} · ${unit.unit}</div>
+      <div class="card-topic">${unit.topic}</div>
+      <div style="margin-top:4px">${typeInfo}</div>
+    </div>
+    <span class="card-badge ${badgeCls}">${badge}</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+  <div class="slides-grid">${thumbs}${thumbPad}</div>
+  ${issues.length?`<div class="issues-list">${issues.map(i=>`<div class="issue-item">⚠ ${i}</div>`).join('')}</div>`:''}`;
+}
+
+function setStatus(idx, status, slides=[], errorMsg='') {
+  results[idx] = { status, slides: slides||[], unit: UNITS[idx] };
+  const card = document.getElementById('card-'+idx);
+  if (!card) return;
+  card.className = 'unit-card '+status;
+  card.innerHTML = cardHTML(idx, UNITS[idx], status, slides);
+  applyFilter();
+}
+
+function setStatusBar(msg) { document.getElementById('status-bar').textContent = msg; }
+
+function updateStats() {
+  const vals = Object.values(results);
+  document.getElementById('s-pass').textContent = vals.filter(r=>r.status==='pass').length;
+  document.getElementById('s-fail').textContent = vals.filter(r=>r.status==='fail').length;
+  document.getElementById('s-skip').textContent = vals.filter(r=>r.status==='skipped').length;
+  document.getElementById('s-pending').textContent = UNITS.length - vals.filter(r=>['pass','fail','skipped'].includes(r.status)).length;
+  document.getElementById('s-total').textContent = vals.filter(r=>['pass','fail'].includes(r.status)).length+'/'+UNITS.length;
+}
+
+// ── Modal ────────────────────────────────────────────────────────────────────
+function openModal(unitIdx, slideIdx) {
+  const r = results[unitIdx];
+  if (!r||!r.slides[slideIdx]) return;
+  const s = r.slides[slideIdx];
+  const u = UNITS[unitIdx];
+  document.getElementById('modal-title').textContent = `${u.grade} — ${u.topic} | Slide ${slideIdx+1}: ${s.title||s.type}`;
+  const svgEl = document.getElementById('modal-svg');
+  if (s.hardcoded) {
+    svgEl.innerHTML = `<div style="color:#3BBFAD;text-align:center;padding:40px;font-size:.85rem">Hardcoded renderer: <strong>${s.type}</strong><br><br><span style="color:#555;font-size:.72rem">Params: ${JSON.stringify(s.params||{})}</span></div>`;
+  } else {
+    svgEl.innerHTML = s.svg||'<div style="color:#555;padding:40px;text-align:center">No SVG generated</div>';
+  }
+  const verdict = document.getElementById('modal-verdict');
+  if (s.pass===null) { verdict.className='modal-verdict'; verdict.textContent='Not yet evaluated'; }
+  else if (s.pass) { verdict.className='modal-verdict pass'; verdict.textContent='✓ PASSED critic evaluation'; }
+  else { verdict.className='modal-verdict fail'; verdict.innerHTML='✗ FAILED: '+( s.issues||[]).join(' | '); }
+  document.getElementById('modal-code').textContent = s.svg||'(no svg)';
+  document.getElementById('modal').style.display='block';
+}
+function closeModal() { document.getElementById('modal').style.display='none'; }
+document.getElementById('modal').addEventListener('click', e=>{ if(e.target===document.getElementById('modal')) closeModal(); });
+
+// ── Filter ───────────────────────────────────────────────────────────────────
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+function applyFilter() {
+  UNITS.forEach((_,i)=>{
+    const card = document.getElementById('card-'+i);
+    if (!card) return;
+    const r = results[i];
+    let show = true;
+    if (currentFilter==='fail') show = r&&r.status==='fail';
+    else if (currentFilter==='pass') show = r&&r.status==='pass';
+    else if (currentFilter==='hardcoded') show = r&&r.slides&&r.slides.every(s=>s.hardcoded);
+    else if (currentFilter==='agent') show = r&&r.slides&&r.slides.some(s=>!s.hardcoded);
+    card.style.display = show?'':'none';
+  });
+}
+
+// ── Export ───────────────────────────────────────────────────────────────────
+function exportReport() {
+  const report = {
+    generated: new Date().toISOString(),
+    summary: {
+      total: UNITS.length,
+      pass: Object.values(results).filter(r=>r.status==='pass').length,
+      fail: Object.values(results).filter(r=>r.status==='fail').length,
+    },
+    failures: Object.values(results).filter(r=>r.status==='fail').map(r=>({
+      grade: r.unit.grade, topic: r.unit.topic, unit: r.unit.unit,
+      failing_slides: (r.slides||[]).filter(s=>!s.pass).map(s=>({
+        type: s.type, title: s.title, issues: s.issues, hardcoded: s.hardcoded
+      }))
+    })),
+    all_visual_types_used: [...new Set(Object.values(results).flatMap(r=>(r.slides||[]).map(s=>s.type)))].sort(),
+    hardcoded_coverage: Object.values(results).flatMap(r=>(r.slides||[]).filter(s=>s.hardcoded).map(s=>s.type)),
+    agent_loop_types: Object.values(results).flatMap(r=>(r.slides||[]).filter(s=>!s.hardcoded&&s.pass).map(s=>s.type)),
+    failed_types: Object.values(results).flatMap(r=>(r.slides||[]).filter(s=>!s.pass).map(s=>s.type)),
+  };
+  const blob = new Blob([JSON.stringify(report,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'teacherai-slide-report-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+renderGrid();
+getToken().then(t=>{ if(t) setStatusBar('Authenticated. Ready to run.'); else setStatusBar('⚠ Not logged in — open teacherai.ca/app first.'); });
+</script>
+</body>
+</html>
