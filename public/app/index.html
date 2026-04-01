@@ -2682,34 +2682,24 @@ async function getStudentLink(k, allGrades) {
 // SLIDES — generate data
 // ============================================================
 async function generateSlideData(callerBtn) {
-  const topic = curSess?.task || document.getElementById('topic')?.value || 'Lesson';
+  const topic   = curSess?.task || document.getElementById('topic')?.value || 'Lesson';
   const subject = curSess?.subject || '';
-  const grades = curSess?.grades || [];
+  const grades  = curSess?.grades || [];
   const gradeStr = grades.join(' / ') || '';
-  const dur = document.getElementById('dur')?.value || '';
+  const dur  = document.getElementById('dur')?.value || '';
   const activeClass2 = classes.find(c=>c.id===activeClassId);
-  const ctx = activeClass2?.context?.trim() || document.getElementById('ctx')?.value?.trim() || '';
+  const ctx  = activeClass2?.context?.trim() || document.getElementById('ctx')?.value?.trim() || '';
   if (!topic) { alert('Generate a lesson first.'); return false; }
   const lpText = genC['lesson_plan']?.cur || '';
   if (callerBtn) { callerBtn.disabled=true; callerBtn.textContent='⏳ Building slides...'; }
   try {
     const iepCount = students.filter(s=>s.iep&&s.iep.trim()).length;
     const isMath = (subject||'').toLowerCase().includes('math');
-    const visualTypeRules = [
-      'VISUAL TYPE RULES — pick the best type for each content slide:',
-      '1. formula_box — introducing a formula or rule. visual_data: {"formula":"A = l × w","variables":[{"symbol":"A","meaning":"Area"},{"symbol":"l","meaning":"length"},{"symbol":"w","meaning":"width"}],"unit":"cm²"}',
-      '2. worked_example — step-by-step solved problem. CRITICAL: every step must use correct arithmetic. visual_data: {"problem":"Find the area of a rectangle 6 cm × 4 cm","steps":[{"label":"Write formula","work":"A = l × w"},{"label":"Substitute","work":"A = 6 × 4"},{"label":"Calculate","work":"A = 24 cm²"}]}',
-      '3. grid_diagram — USE THIS for any area, perimeter, multiplication array, or unit-square lesson. Draws a real grid students can count. visual_data: {"cols":6,"rows":4,"cell_size":40,"label_top":"6 cm","label_right":"4 cm","label_center":"A = 24 cm²","highlight_border":true}',
-      '4. labelled_diagram — for shapes with dimension labels only (no grid). Good for triangles, circles, composite shapes. visual_data: {"shape":"triangle","labels":[{"pos":"top","text":"base = 8 cm"},{"pos":"right","text":"height = 5 cm"},{"pos":"center","text":"A = 20 cm²"}]} — shape options: rectangle, square, triangle, circle, parallelogram, trapezoid',
-      '5. comparison_table — comparing formulas or properties side by side. visual_data: {"headers":["Shape","Formula","Example"],"rows":[["Rectangle","l × w","6×4=24 cm²"],["Triangle","b×h÷2","8×5÷2=20 cm²"]]}',
-      '6. number_line — fractions, decimals, integers, ordering. visual_data: {"min":0,"max":10,"marks":[{"value":0,"label":"0"},{"value":5,"label":"5"},{"value":10,"label":"10"}],"highlight":[{"value":3.5,"label":"3½"}]}',
-      '7. text_only — LAST RESORT only. visual_data: {"bullets":["point 1","point 2","point 3"]}'
-    ].join('\n');
 
-    const prompt = [
-      'You are an Ontario elementary teacher creating a VISUAL classroom presentation deck.',
-      'Generate slides for live classroom delivery — student-facing, visual, age-appropriate.',
-      'This is NOT a lesson plan. These are projected slides that students SEE.',
+    // ── STEP 1: Generate slide structure (text only, cheap + fast) ─────────────
+    const structurePrompt = [
+      'You are an Ontario elementary teacher creating a classroom presentation deck.',
+      'Generate the TEXT CONTENT for a slide deck. A separate system will draw the visuals.',
       '',
       'Topic: '+topic,
       'Grade(s): '+(gradeStr||'Elementary'),
@@ -2721,51 +2711,58 @@ async function generateSlideData(callerBtn) {
       '',
       'Return ONLY valid JSON:',
       '{',
-      '  "learning_goals": ["I can... statement 1", "I can... statement 2"],',
-      '  "minds_on": {"hook": "engaging real-world scenario max 2 sentences", "prompt": "think-pair-share prompt"},',
-      '  "vocabulary": [{"word": "term", "definition": "student-friendly definition", "example": "use in a sentence"}],',
+      '  "learning_goals": ["I can... statement", "I can... statement"],',
+      '  "minds_on": {"hook": "engaging real-world hook max 2 sentences", "prompt": "think-pair-share prompt"},',
+      '  "vocabulary": [{"word": "term", "definition": "student-friendly definition", "example": "sentence using the word"}],',
       '  "content_slides": [',
-      '    {"title":"slide title","key_point":"1 clear sentence","teacher_note":"delivery note max 10 words","visual_type":"formula_box|worked_example|grid_diagram|labelled_diagram|comparison_table|number_line|text_only","visual_data":{...}}',
+      '    {',
+      '      "title": "slide title",',
+      '      "key_point": "the core concept in 1 clear sentence",',
+      '      "teacher_note": "delivery tip max 10 words",',
+      '      "visual_prompt": "precise description of what to draw — specific numbers, labels, shapes, what concept it shows"',
+      '    }',
       '  ],',
-      '  "practice_problem": {"question": "one problem for students to solve", "solution_steps": ["step 1", "step 2", "step 3"]},',
+      '  "practice_problem": {"question": "one problem students solve", "solution_steps": ["step 1", "step 2", "step 3"]},',
       '  "discussion_questions": ["recall question", "apply question", "evaluate question"],',
-      '  "exit_ticket": {"question": "consolidation question", "answer_hint": "brief expected answer"}',
+      '  "exit_ticket": {"question": "consolidation question", "answer_hint": "expected answer"}',
       '}',
       '',
-      visualTypeRules,
+      'VISUAL PROMPT RULES — write visual_prompt as a precise drawing instruction:',
+      isMath ? [
+        '- Slide 1 (introduce concept): "Draw a large formula. Example: A rectangle labelled with l=6cm, w=4cm. Formula A=l×w displayed prominently. Show each variable meaning."',
+        '- Slide 2 (show the math): "Draw a step-by-step worked solution with numbered steps. Each step on its own row. Final answer highlighted in green. Use real numbers appropriate for grade '+gradeStr+'."',
+        '- Slide 3 (visual model): "Draw [appropriate visual — grid of unit squares for area, shape with all sides labelled for perimeter, number line for fractions, etc.]. Include all labels and measurements."',
+        '- Slide 4 (extend/compare): "Draw a comparison showing [2-3 examples or variations]. Could be a table, multiple diagrams side by side, or a harder worked example."',
+      ].join('\n') : [
+        '- Each visual_prompt should describe a diagram, chart, anchor chart, or visual organiser that helps students understand the concept.',
+        '- Be specific: describe the exact text, layout, and structure you want drawn.',
+      ].join('\n'),
+      '- Include real numbers from the topic (not placeholders)',
+      '- Describe layout: "left side shows X, right side shows Y", "3 rows with labels", etc.',
+      '- Mention colours only if meaningful (e.g. "highlight the answer row in green")',
       '',
-      'Rules:',
-      '- learning_goals: exactly 2-3',
-      '- vocabulary: 3-5 words',
-      '- content_slides: exactly 4 — choose visual_type that SHOWS the concept, not just describes it',
-      isMath ? '- MATH FLOW (measurement/geometry): slide 1=formula_box (introduce the formula), slide 2=grid_diagram (show unit squares students count), slide 3=worked_example (full step-by-step with correct arithmetic), slide 4=comparison_table (multiple shapes/formulas side by side). For non-measurement math: slide 1=formula_box, slide 2=worked_example, slide 3=worked_example harder, slide 4=comparison_table or number_line' : '- Use text_only only as absolute last resort',
-      '- discussion_questions: exactly 3',
-      '- All content age-appropriate for grade '+(gradeStr||'Elementary'),
-      '- Pure JSON only, no markdown, no comments'
+      'Rules: learning_goals=2-3, vocabulary=3-5, content_slides=exactly 4, discussion_questions=exactly 3.',
+      'Age-appropriate for grade '+(gradeStr||'Elementary')+'. Pure JSON only, no markdown.'
     ].filter(Boolean).join('\n');
 
     const res = await authFetch('/api/generate', {
-      method:'POST',
-      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4500,messages:[{role:'user',content:prompt}]})
+      method: 'POST',
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:3000, messages:[{role:'user',content:structurePrompt}]})
     });
+    if (!res||!res.ok) throw new Error('Slide structure generation failed');
     const data = await res.json();
     const raw = data.content?.map(i=>i.text||'').join('')||'';
     let sd;
     try { sd = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
-    catch(e) { try { const s=raw.indexOf('{'),en=raw.lastIndexOf('}'); sd=JSON.parse(raw.slice(s,en+1)); } catch(e2) { throw new Error('Could not parse slide data. Try again.'); } }
+    catch(e) { try { const s=raw.indexOf('{'),en=raw.lastIndexOf('}'); sd=JSON.parse(raw.slice(s,en+1)); } catch(e2) { throw new Error('Could not parse slide structure.'); } }
 
-    let wikiImg = null;
-    try {
-      const imgRes = await fetch('https://picsum.photos/seed/'+topic.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%1000+'/800/600');
-      if (imgRes.ok) {
-        const buf = await imgRes.arrayBuffer();
-        const bytes = new Uint8Array(buf);
-        let bin=''; for(let i=0;i<bytes.byteLength;i++) bin+=String.fromCharCode(bytes[i]);
-        wikiImg = 'data:image/jpeg;base64,'+btoa(bin);
-      }
-    } catch(e) {}
+    // ── STEP 2: Generate SVGs in parallel (one per content slide) ──────────────
+    if (callerBtn) callerBtn.textContent = '⏳ Drawing visuals...';
 
-    window._slideData = {sd, topic, subject, gradeStr, wikiImg};
+    const svgResults = await generateSlideVisuals(sd.content_slides||[], topic, subject, gradeStr);
+    (sd.content_slides||[]).forEach((cs, i) => { cs.svg_html = svgResults[i] || ''; });
+
+    window._slideData = {sd, topic, subject, gradeStr};
     const gsBtn = document.getElementById('gSlidesBtn');
     if (gsBtn && _gToken) gsBtn.style.display='inline-flex';
     const gcBtn = document.getElementById('gConnectBtn');
@@ -2779,9 +2776,67 @@ async function generateSlideData(callerBtn) {
   }
 }
 
+// ── Parallel SVG generation ──────────────────────────────────────────────────
+async function generateSlideVisuals(contentSlides, topic, subject, gradeStr) {
+  const isMath = (subject||'').toLowerCase().includes('math');
+
+  const svgSystemPrompt = [
+    'You are a specialist in drawing educational SVG diagrams for K-8 Ontario classrooms.',
+    'You draw clear, accurate, visually clean SVGs that project well on a classroom screen.',
+    '',
+    'RULES:',
+    '- Return ONLY a raw <svg> element. No explanation, no markdown, no code fences.',
+    '- viewBox="0 0 500 300" always. width="100%" height="100%".',
+    '- Background: transparent (no background rect).',
+    '- Font: font-family="Arial, sans-serif"',
+    '- Colour palette: #1D9E75 (teal/green), #1D3461 (navy), #F5C842 (yellow), #E07B39 (orange), #F4F3EF (light grey fill), white.',
+    '- Text minimum font-size: 14px. Labels on shapes: bold, 14-16px.',
+    '- All mathematics must be arithmetically correct.',
+    '- For measurement diagrams: label ALL sides, use double-headed arrows for dimensions.',
+    '- For worked examples: number each step, show working clearly, highlight final answer row in #1D9E75 fill with white text.',
+    '- For formula slides: show the formula large (28-36px), then show each variable in a labelled box.',
+    '- For grids/arrays: draw actual cells students can count, label dimensions with arrows.',
+    '- For tables: green header row (#1D9E75, white text), alternating row fills (#F4F3EF / white).',
+    '- Keep it simple and readable. A Grade 3 student must understand it at a glance.',
+  ].join('\n');
+
+  const calls = contentSlides.slice(0,4).map((cs, i) => {
+    const userPrompt = [
+      'Topic: '+topic,
+      'Grade: '+gradeStr,
+      'Slide title: '+(cs.title||''),
+      'Key concept: '+(cs.key_point||''),
+      '',
+      'Draw this visual:',
+      cs.visual_prompt || ('Illustrate the concept: '+(cs.key_point||topic)),
+    ].join('\n');
+
+    return authFetch('/api/generate', {
+      method: 'POST',
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1800,
+        system: svgSystemPrompt,
+        messages: [{role:'user', content: userPrompt}]
+      })
+    })
+    .then(r => r?.ok ? r.json() : null)
+    .then(d => {
+      const raw = (d?.content||[]).map(i=>i.text||'').join('').trim();
+      // Extract SVG element robustly
+      const svgStart = raw.indexOf('<svg');
+      const svgEnd = raw.lastIndexOf('</svg>');
+      if (svgStart !== -1 && svgEnd !== -1) return raw.slice(svgStart, svgEnd+6);
+      return '';
+    })
+    .catch(() => '');
+  });
+
+  return Promise.all(calls);
+}
+
 // ============================================================
-// PRESENT SLIDES — fix: use blob URL instead of document.write
-// This avoids the blank page bug where show(0) fired before DOM committed
+// PRESENT SLIDES
 // ============================================================
 async function presentSlides(e) {
   const btn = e?.target || null;
@@ -2791,382 +2846,169 @@ async function presentSlides(e) {
     if (btn) { btn.disabled=false; btn.textContent='▶ Present'; }
     if (!ok || !window._slideData) return;
   }
-  openHTMLPresenter(window._slideData.sd, window._slideData.topic, window._slideData.subject, window._slideData.gradeStr, window._slideData.wikiImg);
+  openHTMLPresenter(window._slideData.sd, window._slideData.topic, window._slideData.subject, window._slideData.gradeStr);
 }
 
-function openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg) {
+function openHTMLPresenter(sd, topic, subject, gradeStr) {
   const date = new Date().toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'});
-
-  // ── SVG VISUAL RENDERERS ────────────────────────────────────────────────────
-  function svgFormulaBox(vd) {
-    if (!vd) return '';
-    const vars = (vd.variables||[]).slice(0,4);
-    const varBoxes = vars.map((v,i)=>{
-      const x = 40 + i*(160/Math.max(vars.length,1));
-      const bw = vars.length<=2?140:vars.length===3?120:100;
-      const bx = 20 + i*(bw+12);
-      return `<g>
-        <rect x="${bx}" y="142" width="${bw}" height="52" rx="6" fill="#E8F4F0" stroke="#1D9E75" stroke-width="1"/>
-        <text x="${bx+bw/2}" y="165" text-anchor="middle" font-size="18" font-weight="700" fill="#0F6E56" font-family="Georgia,serif">${esc(v.symbol)}</text>
-        <text x="${bx+bw/2}" y="183" text-anchor="middle" font-size="11" fill="#3D3D3A" font-family="sans-serif">${esc(v.meaning)}</text>
-      </g>`;
-    }).join('');
-    return `<svg viewBox="0 0 520 210" style="width:100%;max-height:210px">
-      <rect x="10" y="10" width="500" height="68" rx="10" fill="#1D9E75"/>
-      <text x="260" y="52" text-anchor="middle" font-size="28" font-weight="700" fill="white" font-family="Georgia,serif">${esc(vd.formula||'')}</text>
-      ${vd.unit?`<text x="260" y="78" text-anchor="middle" font-size="13" fill="rgba(255,255,255,.7)" font-family="sans-serif">unit: ${esc(vd.unit)}</text>`:''}
-      <text x="260" y="130" text-anchor="middle" font-size="12" fill="#5F5E5A" font-family="sans-serif" letter-spacing="2">WHERE</text>
-      ${varBoxes}
-    </svg>`;
-  }
-
-  function svgWorkedExample(vd) {
-    if (!vd) return '';
-    const steps = (vd.steps||[]).slice(0,5);
-    const rowH = 44;
-    const totalH = 60 + steps.length * rowH + 20;
-    const rows = steps.map((s,i)=>{
-      const y = 60 + i*rowH;
-      const isLast = i===steps.length-1;
-      return `<g>
-        <rect x="10" y="${y}" width="500" height="${rowH-4}" rx="6"
-          fill="${isLast?'#1D9E75':'#F1EFE8'}" opacity="${isLast?'1':'1'}"/>
-        <rect x="10" y="${y}" width="36" height="${rowH-4}" rx="6"
-          fill="${isLast?'#0F6E56':'#D3D1C7'}"/>
-        <text x="28" y="${y+(rowH-4)/2+5}" text-anchor="middle" font-size="14" font-weight="700"
-          fill="${isLast?'white':'#888780'}" font-family="sans-serif">${i+1}</text>
-        <text x="56" y="${y+16}" font-size="11" fill="${isLast?'rgba(255,255,255,.75)':'#5F5E5A'}" font-family="sans-serif">${esc(s.label||'')}</text>
-        <text x="56" y="${y+32}" font-size="15" font-weight="700" fill="${isLast?'white':'#2C2C2A'}" font-family="Georgia,serif">${esc(s.work||'')}</text>
-      </g>`;
-    }).join('');
-    return `<svg viewBox="0 0 520 ${totalH}" style="width:100%;max-height:${totalH}px">
-      <text x="10" y="22" font-size="12" fill="#5F5E5A" font-family="sans-serif" font-weight="600" letter-spacing="1">PROBLEM</text>
-      <text x="10" y="44" font-size="14" fill="#2C2C2A" font-family="sans-serif">${esc(vd.problem||'')}</text>
-      ${rows}
-    </svg>`;
-  }
-
-  function svgGridDiagram(vd) {
-    if (!vd) return '';
-    const cols = Math.min(parseInt(vd.cols)||6, 12);
-    const rows = Math.min(parseInt(vd.rows)||4, 8);
-    const cs = Math.min(parseInt(vd.cell_size)||40, Math.floor(340/Math.max(cols,rows)));
-    const ox = Math.round((520 - cols*cs) / 2);
-    const oy = 38;
-    const gw = cols * cs;
-    const gh = rows * cs;
-    // Grid cell fills (alternating light for visual counting)
-    let cells = '';
-    for (let r=0; r<rows; r++) {
-      for (let c=0; c<cols; c++) {
-        const shade = (r+c)%2===0 ? '#D4EDDA' : '#E8F5E9';
-        cells += `<rect x="${ox+c*cs}" y="${oy+r*cs}" width="${cs}" height="${cs}" fill="${shade}" stroke="#1D9E75" stroke-width="1"/>`;
-      }
-    }
-    // Dimension arrows + labels
-    const topLabel = vd.label_top||'';
-    const rightLabel = vd.label_right||'';
-    const centerLabel = vd.label_center||'';
-    const topArrow = topLabel ? `
-      <line x1="${ox}" y1="${oy-18}" x2="${ox+gw}" y2="${oy-18}" stroke="#0F6E56" stroke-width="2" marker-end="url(#ag)" marker-start="url(#ag)"/>
-      <rect x="${ox+gw/2-36}" y="${oy-34}" width="72" height="20" rx="4" fill="white"/>
-      <text x="${ox+gw/2}" y="${oy-20}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(topLabel)}</text>` : '';
-    const rightArrow = rightLabel ? `
-      <line x1="${ox+gw+18}" y1="${oy}" x2="${ox+gw+18}" y2="${oy+gh}" stroke="#0F6E56" stroke-width="2" marker-end="url(#ag)" marker-start="url(#ag)"/>
-      <rect x="${ox+gw+26}" y="${oy+gh/2-12}" width="72" height="20" rx="4" fill="white"/>
-      <text x="${ox+gw+62}" y="${oy+gh/2+2}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(rightLabel)}</text>` : '';
-    const centerText = centerLabel ? `
-      <rect x="${ox+gw/2-52}" y="${oy+gh/2-14}" width="104" height="26" rx="6" fill="rgba(29,158,117,.9)"/>
-      <text x="${ox+gw/2}" y="${oy+gh/2+4}" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Georgia,serif">${esc(centerLabel)}</text>` : '';
-    const totalH = oy + gh + 40;
-    return `<svg viewBox="0 0 520 ${totalH}" style="width:100%;max-height:${Math.min(totalH,300)}px">
-      <defs>
-        <marker id="ag" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M2 2L8 5L2 8" fill="none" stroke="#0F6E56" stroke-width="1.5"/>
-        </marker>
-      </defs>
-      ${cells}
-      <rect x="${ox}" y="${oy}" width="${gw}" height="${gh}" fill="none" stroke="#0F6E56" stroke-width="2.5"/>
-      ${topArrow}${rightArrow}${centerText}
-    </svg>`;
-  }
-
-  function svgLabelledDiagram(vd) {
-    if (!vd) return '';
-    const shape = (vd.shape||'rectangle').toLowerCase();
-    const labels = vd.labels||[];
-    const get = pos => labels.find(l=>l.pos===pos);
-    const ctr = get('center'), top = get('top'), right = get('right'), bottom = get('bottom');
-    const DEFS = `<defs><marker id="arrd" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M2 2L8 5L2 8" fill="none" stroke="#0F6E56" stroke-width="1.5"/></marker></defs>`;
-    let shapeEl = '';
-    if (shape==='rectangle'||shape==='square') {
-      const w=shape==='square'?180:260, h=shape==='square'?180:150;
-      const sx=50, sy=50;
-      shapeEl = `${DEFS}
-        <rect x="${sx}" y="${sy}" width="${w}" height="${h}" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="2.5"/>
-        ${ctr?`<rect x="${sx+w/2-54}" y="${sy+h/2-14}" width="108" height="26" rx="6" fill="rgba(29,158,117,.85)"/><text x="${sx+w/2}" y="${sy+h/2+4}" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}
-        ${top?`<line x1="${sx+8}" y1="${sy-20}" x2="${sx+w-8}" y2="${sy-20}" stroke="#0F6E56" stroke-width="1.8" marker-end="url(#arrd)" marker-start="url(#arrd)"/>
-               <rect x="${sx+w/2-38}" y="${sy-36}" width="76" height="20" rx="4" fill="white"/>
-               <text x="${sx+w/2}" y="${sy-22}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(top.text)}</text>`:''}
-        ${right?`<line x1="${sx+w+20}" y1="${sy+8}" x2="${sx+w+20}" y2="${sy+h-8}" stroke="#0F6E56" stroke-width="1.8" marker-end="url(#arrd)" marker-start="url(#arrd)"/>
-                 <rect x="${sx+w+28}" y="${sy+h/2-12}" width="76" height="20" rx="4" fill="white"/>
-                 <text x="${sx+w+66}" y="${sy+h/2+4}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(right.text)}</text>`:''}`;
-      return `<svg viewBox="0 0 520 ${h+100}" style="width:100%;max-height:${h+100}px">${shapeEl}</svg>`;
-    } else if (shape==='triangle') {
-      shapeEl = `${DEFS}
-        <polygon points="260,40 100,230 420,230" fill="#E1F5EE" stroke="#0F6E56" stroke-width="2.5"/>
-        ${top?`<text x="260" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(top.text)}</text>`:''}
-        ${bottom?`<text x="260" y="255" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(bottom.text)}</text>`:''}
-        ${right?`<text x="438" y="175" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(right.text)}</text>`:''}
-        ${ctr?`<rect x="208" y="168" width="104" height="26" rx="6" fill="rgba(29,158,117,.85)"/><text x="260" y="185" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}`;
-      return `<svg viewBox="0 0 520 280" style="width:100%;max-height:280px">${shapeEl}</svg>`;
-    } else if (shape==='circle') {
-      shapeEl = `${DEFS}
-        <circle cx="220" cy="140" r="110" fill="#E1F5EE" stroke="#0F6E56" stroke-width="2.5"/>
-        <line x1="220" y1="140" x2="330" y2="140" stroke="#0F6E56" stroke-width="2" stroke-dasharray="6,4"/>
-        ${right?`<rect x="338" y="128" width="80" height="24" rx="4" fill="white"/><text x="378" y="144" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(right.text)}</text>`:''}
-        ${top?`<text x="220" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(top.text)}</text>`:''}
-        ${ctr?`<rect x="168" y="150" width="104" height="26" rx="6" fill="rgba(29,158,117,.85)"/><text x="220" y="167" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}`;
-      return `<svg viewBox="0 0 520 280" style="width:100%;max-height:280px">${shapeEl}</svg>`;
-    }
-    // fallback
-    return `<svg viewBox="0 0 520 280" style="width:100%;max-height:280px">
-      ${DEFS}<rect x="80" y="60" width="360" height="180" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="2.5"/>
-      ${ctr?`<text x="260" y="158" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}
-    </svg>`;
-  }
-  function svgComparisonTable(vd) {
-    if (!vd||!vd.rows) return '';
-    const hdrs = vd.headers||[];
-    const rows = (vd.rows||[]).slice(0,5);
-    const cols = Math.max(hdrs.length, ...rows.map(r=>r.length));
-    const cw = Math.floor(490/cols);
-    const totalH = 44 + rows.length*42 + 16;
-    const thCells = hdrs.map((h,i)=>`
-      <rect x="${10+i*cw}" y="10" width="${cw-4}" height="34" rx="4" fill="#1D9E75"/>
-      <text x="${10+i*cw+cw/2-2}" y="32" text-anchor="middle" font-size="12" font-weight="700" fill="white" font-family="sans-serif">${esc(h)}</text>`).join('');
-    const dataRows = rows.map((row,ri)=>{
-      const y = 50+ri*42;
-      const bg = ri%2===0?'#F1EFE8':'white';
-      return row.map((cell,ci)=>`
-        <rect x="${10+ci*cw}" y="${y}" width="${cw-4}" height="36" rx="4" fill="${bg}"/>
-        <text x="${10+ci*cw+cw/2-2}" y="${y+22}" text-anchor="middle" font-size="13" fill="${ci===0?'#0F6E56':'#2C2C2A'}" font-weight="${ci===0?'700':'400'}" font-family="${ci===0?'Georgia,serif':'sans-serif'}">${esc(String(cell))}</text>`).join('');
-    }).join('');
-    return `<svg viewBox="0 0 520 ${totalH}" style="width:100%;max-height:${totalH}px">
-      ${thCells}${dataRows}
-    </svg>`;
-  }
-
-  function svgNumberLine(vd) {
-    if (!vd) return '';
-    const mn=parseFloat(vd.min||0), mx=parseFloat(vd.max||10);
-    const range=mx-mn||1;
-    const px=x=>40+((x-mn)/range)*440;
-    const marks=(vd.marks||[]);
-    const highlights=(vd.highlight||[]);
-    const tickLines=marks.map(m=>`
-      <line x1="${px(m.value)}" y1="85" x2="${px(m.value)}" y2="105" stroke="#5F5E5A" stroke-width="1.5"/>
-      <text x="${px(m.value)}" y="122" text-anchor="middle" font-size="12" fill="#5F5E5A" font-family="sans-serif">${esc(String(m.label||m.value))}</text>`).join('');
-    const hlPoints=highlights.map(h=>`
-      <circle cx="${px(h.value)}" cy="95" r="10" fill="#1D9E75" stroke="white" stroke-width="2"/>
-      <text x="${px(h.value)}" y="72" text-anchor="middle" font-size="12" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(String(h.label||h.value))}</text>
-      <line x1="${px(h.value)}" y1="78" x2="${px(h.value)}" y2="85" stroke="#0F6E56" stroke-width="1.5"/>`).join('');
-    return `<svg viewBox="0 0 520 150" style="width:100%;max-height:150px">
-      <line x1="30" y1="95" x2="490" y2="95" stroke="#2C2C2A" stroke-width="2.5"/>
-      <polygon points="490,90 502,95 490,100" fill="#2C2C2A"/>
-      ${tickLines}${hlPoints}
-    </svg>`;
-  }
-
-  function svgTextOnly(vd) { return ''; }
-
-  function renderVisual(type, vd) {
-    try {
-      if (type==='formula_box') return svgFormulaBox(vd);
-      if (type==='worked_example') return svgWorkedExample(vd);
-      if (type==='grid_diagram') return svgGridDiagram(vd);
-      if (type==='labelled_diagram') return svgLabelledDiagram(vd);
-      if (type==='comparison_table') return svgComparisonTable(vd);
-      if (type==='number_line') return svgNumberLine(vd);
-    } catch(e) { console.warn('Visual render error:', e); }
-    return '';
-  }
-
   function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  // ── SLIDE BUILDERS ──────────────────────────────────────────────────────────
-  // Design language: teal header bar, white card on light grey bg, coloured corner arcs
-  // Inspired by Ontario math TpT slide decks teachers already know
-
-  const TEAL='#3BBFAD', NAVY='#1D3461', YELLOW='#F5C842', WHITE='#FFFFFF', GREY='#F4F3EF';
+  const TEAL='#3BBFAD', NAVY='#1D3461', YELLOW='#F5C842', GREY='#F4F3EF';
   const HEADER_H = 72;
 
   function corners(accent='#F5C842') {
-    return `
-      <circle cx="0" cy="0" r="80" fill="${accent}" opacity=".18"/>
+    return `<circle cx="0" cy="0" r="80" fill="${accent}" opacity=".18"/>
       <circle cx="1200" cy="675" r="100" fill="${TEAL}" opacity=".14"/>
       <circle cx="1200" cy="0" r="60" fill="#BDBDBD" opacity=".13"/>`;
   }
-
   function headerBar(text, bg=TEAL) {
     return `<rect x="0" y="0" width="1200" height="${HEADER_H}" fill="${bg}"/>
-      <text x="48" y="46" font-family="'Arial Black',Arial,sans-serif" font-size="28" font-weight="900" fill="white" letter-spacing="0.5">${esc(text)}</text>`;
+      <text x="48" y="46" font-family="'Arial Black',Arial,sans-serif" font-size="28" font-weight="900" fill="white">${esc(text)}</text>`;
+  }
+  function slideWrap(html, bg=GREY) {
+    return `<div class="slide" style="background:${bg}">${html}</div>`;
   }
 
-  function slideWrap(contentHTML, bgColor=WHITE) {
-    return `<div class="slide" style="background:${bgColor}">${contentHTML}</div>`;
-  }
-
-  // 1. TITLE SLIDE
+  // 1. TITLE
   const sTitle = slideWrap(`
     <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="#1D3461"/>
+      <rect width="1200" height="675" fill="${NAVY}"/>
       <rect x="0" y="0" width="8" height="675" fill="${TEAL}"/>
       <rect x="0" y="550" width="1200" height="125" fill="rgba(0,0,0,.15)"/>
       <circle cx="1100" cy="80" r="200" fill="${TEAL}" opacity=".12"/>
       <circle cx="100" cy="600" r="150" fill="${YELLOW}" opacity=".1"/>
-      <circle cx="950" cy="580" r="120" fill="${TEAL}" opacity=".1"/>
-      <text x="80" y="240" font-family="'Arial Black',Arial,sans-serif" font-size="62" font-weight="900" fill="white" letter-spacing="-1">${esc(topic)}</text>
+      <text x="80" y="240" font-family="'Arial Black',Arial,sans-serif" font-size="62" font-weight="900" fill="white">${esc(topic)}</text>
       <text x="82" y="310" font-family="Arial,sans-serif" font-size="26" fill="rgba(255,255,255,.65)">${esc(gradeStr?gradeStr+' · ':'')}${esc(subject||'')}</text>
       <rect x="80" y="340" width="120" height="4" rx="2" fill="${TEAL}"/>
       <text x="80" y="390" font-family="Arial,sans-serif" font-size="18" fill="rgba(255,255,255,.4)">${esc(date)}</text>
       <text x="80" y="624" font-family="'Courier New',monospace" font-size="13" fill="rgba(255,255,255,.25)" letter-spacing="2">TEACHERAI · ONTARIO CURRICULUM</text>
-    </svg>`, '#1D3461');
+    </svg>`, NAVY);
 
   // 2. LEARNING GOALS
   const goals = (sd.learning_goals||[]).slice(0,3);
   const goalItems = goals.map((g,i)=>{
     const colors=['#F5C842','#3BBFAD','#E07B39'];
-    const yb=160+i*130;
-    return `<div style="display:flex;align-items:flex-start;gap:18px;margin-bottom:${i<goals.length-1?'18px':'0'}">
+    return `<div style="display:flex;align-items:flex-start;gap:18px;margin-bottom:16px">
       <div style="min-width:52px;height:52px;border-radius:8px;background:${colors[i%3]};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:${i===0?'#2C2C2A':'white'};flex-shrink:0">${i+1}</div>
-      <div style="background:white;border-radius:10px;padding:14px 18px;flex:1;font-size:19px;color:#1D3461;line-height:1.5;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.06)">${esc(g)}</div>
+      <div style="background:white;border-radius:10px;padding:14px 18px;flex:1;font-size:19px;color:${NAVY};line-height:1.5;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.06)">${esc(g)}</div>
     </div>`;
   }).join('');
   const sGoals = slideWrap(`
     <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="${GREY}"/>
-      ${corners(YELLOW)}
-      ${headerBar('Learning Goals')}
+      <rect width="1200" height="675" fill="${GREY}"/>${corners(YELLOW)}${headerBar('Learning Goals')}
     </svg>
     <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+28}px 60px 28px;display:flex;flex-direction:column;justify-content:center;">
-      <p style="font-size:15px;color:#888780;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:20px">By the end of this lesson, we will...</p>
+      <p style="font-size:14px;color:#888780;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:20px">By the end of this lesson, we will...</p>
       ${goalItems}
-    </div>`, GREY);
+    </div>`);
 
   // 3. MINDS ON
   const sMindson = sd.minds_on ? slideWrap(`
     <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="${GREY}"/>
-      ${corners('#E07B39')}
-      ${headerBar('Minds On!', '#E07B39')}
+      <rect width="1200" height="675" fill="${GREY}"/>${corners('#E07B39')}${headerBar('Minds On!','#E07B39')}
     </svg>
     <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+24}px 60px 24px;display:flex;flex-direction:column;justify-content:center;">
-      <div style="background:white;border-radius:14px;padding:28px 32px;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:24px">
-        <p style="font-size:22px;color:#1D3461;line-height:1.6;font-weight:500">${esc(sd.minds_on.hook||'')}</p>
+      <div style="background:white;border-radius:14px;padding:28px 32px;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:22px">
+        <p style="font-size:22px;color:${NAVY};line-height:1.6;font-weight:500;margin:0">${esc(sd.minds_on.hook||'')}</p>
       </div>
-      ${sd.minds_on.prompt?`<div style="display:flex;gap:10px;align-items:center">
-        ${['Think','Pair','Share'].map((t,i)=>`<div style="background:${['#F5C842','#3BBFAD','#E07B39'][i]};color:${i===0?'#2C2C2A':'white'};padding:10px 22px;border-radius:40px;font-weight:700;font-size:15px">${t}</div><div style="color:#BDBDBD;font-size:20px">${i<2?'·':''}</div>`).join('')}
-        <div style="margin-left:8px;font-size:17px;color:#5F5E5A;flex:1">${esc(sd.minds_on.prompt)}</div>
+      ${sd.minds_on.prompt?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        ${['Think','Pair','Share'].map((t,i)=>`<div style="background:${['#F5C842','#3BBFAD','#E07B39'][i]};color:${i===0?'#2C2C2A':'white'};padding:10px 22px;border-radius:40px;font-weight:700;font-size:15px">${t}</div>${i<2?'<div style="color:#BDBDBD;font-size:20px">·</div>':''}`).join('')}
+        <div style="margin-left:6px;font-size:17px;color:#5F5E5A;flex:1">${esc(sd.minds_on.prompt)}</div>
       </div>`:''}
-    </div>`, GREY) : null;
+    </div>`) : null;
 
   // 4. VOCABULARY
   const vocabWords = (sd.vocabulary||[]).slice(0,4);
-  const vocabCards = vocabWords.map((v,i)=>{
-    const accents=['#3BBFAD','#F5C842','#E07B39','#6B63D4'];
-    return `<div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-top:4px solid ${accents[i%4]}">
-      <div style="font-size:20px;font-weight:900;color:#1D3461;margin-bottom:6px">${esc(v.word)}</div>
-      <div style="font-size:14px;color:#5F5E5A;line-height:1.5;margin-bottom:6px">${esc(v.definition)}</div>
-      ${v.example?`<div style="font-size:13px;color:#888780;font-style:italic">"${esc(v.example)}"</div>`:''}
-    </div>`;
-  }).join('');
   const sVocab = vocabWords.length ? slideWrap(`
     <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="${GREY}"/>
-      ${corners('#6B63D4')}
-      ${headerBar('Key Vocabulary', '#6B63D4')}
+      <rect width="1200" height="675" fill="${GREY}"/>${corners('#6B63D4')}${headerBar('Key Vocabulary','#6B63D4')}
     </svg>
     <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+24}px 60px 24px;display:flex;align-items:center">
-      <div style="display:grid;grid-template-columns:repeat(${Math.min(vocabWords.length,2)},1fr);gap:16px;width:100%">${vocabCards}</div>
-    </div>`, GREY) : null;
+      <div style="display:grid;grid-template-columns:repeat(${Math.min(vocabWords.length,2)},1fr);gap:16px;width:100%">
+        ${vocabWords.map((v,i)=>{
+          const acc=['#3BBFAD','#F5C842','#E07B39','#6B63D4'][i%4];
+          return `<div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-top:4px solid ${acc}">
+            <div style="font-size:20px;font-weight:900;color:${NAVY};margin-bottom:6px">${esc(v.word)}</div>
+            <div style="font-size:14px;color:#5F5E5A;line-height:1.5;margin-bottom:6px">${esc(v.definition)}</div>
+            ${v.example?`<div style="font-size:13px;color:#888780;font-style:italic">"${esc(v.example)}"</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`) : null;
 
-  // 5. CONTENT SLIDES — with SVG visuals
+  // 5. CONTENT SLIDES — inject Claude-drawn SVG directly
   const contentSlides = (sd.content_slides||[]).slice(0,4).map((cs,i)=>{
     const total = Math.min((sd.content_slides||[]).length,4);
-    const visual = renderVisual(cs.visual_type, cs.visual_data);
-    const hasVis = visual.length > 0;
+    const svgHtml = cs.svg_html || '';
+    const hasVis = svgHtml.length > 20;
     return slideWrap(`
       <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-        <rect width="1200" height="675" fill="${GREY}"/>
-        ${corners()}
+        <rect width="1200" height="675" fill="${GREY}"/>${corners()}
         ${headerBar(esc(cs.title||'Key Concept'))}
         <text x="1152" y="46" text-anchor="end" font-family="'Courier New',monospace" font-size="14" fill="rgba(255,255,255,.55)">${i+1}/${total}</text>
       </svg>
-      <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+20}px 52px 20px;display:flex;flex-direction:${hasVis?'row':'column'};gap:28px;align-items:center">
-        <div style="flex:${hasVis?'0 0 38%':'1'};display:flex;flex-direction:column;justify-content:center">
-          <div style="background:white;border-left:5px solid ${TEAL};border-radius:0 10px 10px 0;padding:16px 20px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
-            <p style="font-size:18px;color:#1D3461;line-height:1.6;font-weight:500;margin:0">${esc(cs.key_point||'')}</p>
+      <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+16}px 48px 16px;display:flex;flex-direction:row;gap:24px;align-items:center">
+        <div style="flex:0 0 34%;display:flex;flex-direction:column;justify-content:center;gap:12px">
+          <div style="background:white;border-left:5px solid ${TEAL};border-radius:0 10px 10px 0;padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+            <p style="font-size:17px;color:${NAVY};line-height:1.6;font-weight:500;margin:0">${esc(cs.key_point||'')}</p>
           </div>
           ${cs.teacher_note?`<p style="font-size:12px;color:#888780;font-style:italic;padding-left:4px">📌 ${esc(cs.teacher_note)}</p>`:''}
         </div>
-        ${hasVis?`<div style="flex:1;display:flex;align-items:center;justify-content:center;background:white;border-radius:14px;padding:20px;box-shadow:0 2px 14px rgba(0,0,0,.07)">${visual}</div>`:''}
-      </div>`, GREY);
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;background:white;border-radius:14px;padding:${hasVis?'16px':'24px'};box-shadow:0 2px 14px rgba(0,0,0,.07);min-height:300px;overflow:hidden">
+          ${hasVis ? svgHtml : `<p style="font-size:16px;color:#BDBDBD;text-align:center">Visual generating...</p>`}
+        </div>
+      </div>`);
   });
 
   // 6. PRACTICE PROBLEM
   const pp = sd.practice_problem;
   const sPractice = pp ? slideWrap(`
     <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="${GREY}"/>
-      ${corners('#E07B39')}
-      ${headerBar('Practice Questions', '#1D3461')}
+      <rect width="1200" height="675" fill="${GREY}"/>${corners('#E07B39')}${headerBar('Practice Questions',NAVY)}
     </svg>
-    <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+24}px 60px 24px;display:flex;flex-direction:row;gap:28px;align-items:center">
+    <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+24}px 60px 24px;display:flex;flex-direction:row;gap:32px;align-items:center">
       <div style="flex:1">
-        <div style="background:#1D3461;border-radius:12px;padding:22px 26px;margin-bottom:20px">
-          <p style="font-size:14px;font-weight:700;color:${TEAL};letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">YOUR TURN</p>
+        <div style="background:${NAVY};border-radius:12px;padding:22px 26px;margin-bottom:20px">
+          <p style="font-size:13px;font-weight:700;color:${TEAL};letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">YOUR TURN</p>
           <p style="font-size:20px;color:white;line-height:1.6;margin:0">${esc(pp.question||'')}</p>
         </div>
         <div style="background:white;border-radius:12px;padding:18px 22px;box-shadow:0 2px 10px rgba(0,0,0,.07)">
-          <p style="font-size:12px;font-weight:700;color:#888780;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">STEPS TO FOLLOW</p>
-          ${(pp.solution_steps||[]).map((s,i)=>`<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:${i<(pp.solution_steps.length-1)?'10px':'0'}">
+          <p style="font-size:11px;font-weight:700;color:#888780;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">STEPS</p>
+          ${(pp.solution_steps||[]).map((s,i)=>`<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px">
             <div style="min-width:26px;height:26px;border-radius:50%;background:${TEAL};color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">${i+1}</div>
-            <p style="font-size:15px;color:#2C2C2A;margin:4px 0 0">${esc(s)}</p>
+            <p style="font-size:15px;color:#2C2C2A;margin:3px 0 0">${esc(s)}</p>
           </div>`).join('')}
         </div>
       </div>
-    </div>`, GREY) : null;
+    </div>`) : null;
 
   // 7. DISCUSSION
   const dqs = (sd.discussion_questions||[]).slice(0,3);
   const sDiscuss = dqs.length ? slideWrap(`
     <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="${GREY}"/>
-      ${corners('#6B63D4')}
-      ${headerBar('Discussion', '#6B63D4')}
+      <rect width="1200" height="675" fill="${GREY}"/>${corners('#6B63D4')}${headerBar('Discussion','#6B63D4')}
     </svg>
     <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+24}px 60px 24px;display:flex;flex-direction:column;justify-content:center;gap:14px">
       ${dqs.map((q,i)=>{
         const icons=['💭','💡','⭐'];
         const labels=['Recall','Apply','Evaluate'];
         const bgs=['#E1F5EE','#FFF8E1','#EDE7F6'];
-        const borders=['#3BBFAD','#F5C842','#6B63D4'];
+        const borders=[TEAL,YELLOW,'#6B63D4'];
         return `<div style="display:flex;align-items:flex-start;gap:16px;background:${bgs[i]};border-left:5px solid ${borders[i]};border-radius:0 10px 10px 0;padding:16px 20px">
           <span style="font-size:22px;flex-shrink:0">${icons[i]}</span>
           <div>
             <p style="font-size:11px;font-weight:700;color:${borders[i]};letter-spacing:2px;text-transform:uppercase;margin:0 0 5px">${labels[i]}</p>
-            <p style="font-size:17px;color:#1D3461;margin:0;line-height:1.5">${esc(q)}</p>
+            <p style="font-size:17px;color:${NAVY};margin:0;line-height:1.5">${esc(q)}</p>
           </div>
         </div>`;
       }).join('')}
-    </div>`, GREY) : null;
+    </div>`) : null;
 
   // 8. EXIT TICKET
-  const et = typeof sd.exit_ticket === 'object' ? sd.exit_ticket : {question: sd.exit_ticket||'', answer_hint:''};
+  const et = typeof sd.exit_ticket==='object' ? sd.exit_ticket : {question:sd.exit_ticket||'',answer_hint:''};
   const sExit = et.question ? slideWrap(`
     <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="#1D3461"/>
+      <rect width="1200" height="675" fill="${NAVY}"/>
       <circle cx="1100" cy="80" r="200" fill="${TEAL}" opacity=".1"/>
       <circle cx="100" cy="600" r="150" fill="${YELLOW}" opacity=".08"/>
       <rect x="0" y="0" width="8" height="675" fill="${TEAL}"/>
@@ -3180,25 +3022,24 @@ function openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg) {
       <div style="margin-top:28px;display:flex;gap:12px">
         ${['Name:','Date:','Class:'].map(l=>`<div style="border-bottom:1px solid rgba(255,255,255,.3);padding:8px 32px 4px;font-size:13px;color:rgba(255,255,255,.4)">${l}</div>`).join('')}
       </div>
-    </div>`, '#1D3461') : null;
+    </div>`, NAVY) : null;
 
-  const allSlides = [sTitle, sGoals, sMindson, sVocab, ...contentSlides, sPractice, sDiscuss, sExit].filter(Boolean);
+  const allSlides = [sTitle,sGoals,sMindson,sVocab,...contentSlides,sPractice,sDiscuss,sExit].filter(Boolean);
   const total = allSlides.length;
 
-  const CSS = `
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  const CSS = `*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html,body{width:100%;height:100%;overflow:hidden;background:#111;font-family:Arial,'Helvetica Neue',sans-serif}
     #deck{width:100%;height:100vh;position:relative}
     .slide{position:absolute;inset:0;opacity:0;transition:opacity .35s ease;pointer-events:none;overflow:hidden}
     .slide.active{opacity:1;pointer-events:all}
     .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-    #progress{position:fixed;top:0;left:0;height:4px;background:${TEAL};transition:width .3s ease;z-index:300}
+    #progress{position:fixed;top:0;left:0;height:4px;background:#3BBFAD;transition:width .3s ease;z-index:300}
     #ctrl{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.6rem;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(16px);border-radius:40px;padding:.5rem 1rem;border:1px solid rgba(255,255,255,.1)}
     #ctrl button{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
     #ctrl button:hover{background:rgba(255,255,255,.28)}
     #snum{color:rgba(255,255,255,.55);font-size:.72rem;min-width:3.2rem;text-align:center;font-family:monospace}
-    #fsb{border-radius:8px!important;width:auto!important;padding:.3rem .85rem!important;font-size:.7rem!important;font-family:monospace}
-  `;
+    #fsb{border-radius:8px!important;width:auto!important;padding:.3rem .85rem!important;font-size:.7rem!important;font-family:monospace}`;
+
   const JS = `var c=0,t=${total},sl,pr,nm;
     function show(n){if(sl[c])sl[c].classList.remove('active');c=Math.max(0,Math.min(n,t-1));if(sl[c])sl[c].classList.add('active');nm.textContent=(c+1)+'/'+t;pr.style.width=((c+1)/t*100)+'%';}
     function go(d){show(c+d);}
@@ -3214,21 +3055,20 @@ function openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg) {
 <div id="progress"></div>
 <div id="deck">${allSlides.join('\n')}</div>
 <div id="ctrl">
-  <button onclick="go(-1)">‹</button>
+  <button onclick="go(-1)">&#8249;</button>
   <span id="snum">1/${total}</span>
-  <button onclick="go(1)">›</button>
-  <button id="fsb" onclick="fs()">⛶ Full</button>
+  <button onclick="go(1)">&#8250;</button>
+  <button id="fsb" onclick="fs()">&#x26F6; Full</button>
 </div>
 <script>${JS}<\/script>
 </body></html>`;
 
-  const b = new Blob([html], {type:'text/html'});
+  const b = new Blob([html],{type:'text/html'});
   const blobUrl = URL.createObjectURL(b);
-  const w = window.open(blobUrl, '_blank');
+  const w = window.open(blobUrl,'_blank');
   if (!w) { alert('Pop-up blocked — allow pop-ups for teacherai.ca and try again.'); return; }
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+  setTimeout(()=>URL.revokeObjectURL(blobUrl),60000);
 }
-
 function downloadSlidesHTML() {
   if (!window._slideData) { showToast('Generate slides first — click ▶ Present'); return; }
   openHTMLPresenter(window._slideData.sd, window._slideData.topic, window._slideData.subject, window._slideData.gradeStr, window._slideData.wikiImg);
