@@ -883,7 +883,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div id="gTable"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No data yet.</div></div>
     </div>
     <div class="card">
-      <div class="ct">Recent Tasks</div>
+      <div class="ct">Recently Assessed</div>
       <div id="sList"><div style="color:var(--muted);font-size:.83rem;font-style:italic;">No tasks yet.</div></div>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:16px;border-top:1px solid var(--border);font-size:.75rem;color:var(--muted);">
@@ -3867,18 +3867,32 @@ function renderExpInAssess() {
   let classOptions = '<option value="">All classes</option>';
   classes.forEach(c => { classOptions+=`<option value="${c.id}" ${c.id===activeClassId?'selected':''}>${c.name}</option>`; });
   const selectedClass = activeClassId || '';
-  const filteredLessons = selectedClass ? savedLessons.filter(l=>l.class_id===selectedClass) : savedLessons;
+  const _selectedSubj = document.getElementById('expSubjFilter')?.value || '';
+  const filteredLessons = savedLessons.filter(l =>
+    (!selectedClass || l.class_id===selectedClass) &&
+    (!_selectedSubj || l.subject===_selectedSubj)
+  );
   const allCovered = {};
   filteredLessons.forEach(l => {
     if (!l.expectations||!Array.isArray(l.expectations)) return;
     l.expectations.forEach(e => { if(!allCovered[e.code]) allCovered[e.code]={exp:e,count:0,lessons:[]}; allCovered[e.code].count++; allCovered[e.code].lessons.push(l.topic||'Untitled'); });
   });
-  const strandNames={A:'Literacy Connections',B:'Foundations of Language',C:'Comprehension',D:'Composition'};
+  const isMath = filteredLessons.some(l => l.subject === 'Mathematics');
+  const strandNames = isMath ? {
+    B:'Number', C:'Algebra', D:'Data', E:'Spatial Sense', F:'Financial Literacy'
+  } : {
+    A:'Literacy Connections', B:'Foundations of Language', C:'Comprehension', D:'Composition'
+  };
   const byStrand={};
   Object.values(allCovered).forEach(item => { const s=item.exp.strand||item.exp.code?.[0]||'?'; if(!byStrand[s])byStrand[s]=[]; byStrand[s].push(item); });
   let html=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);">
-    <span style="font-family:DM Mono,monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap;">Filter by class</span>
+    <span style="font-family:DM Mono,monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap;">Class</span>
     <select onchange="activeClassId=this.value||null;renderExpInAssess()" style="font-family:'DM Sans',sans-serif;font-size:.82rem;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--paper);">${classOptions}</select>
+    <span style="font-family:DM Mono,monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);white-space:nowrap;">Subject</span>
+    <select id="expSubjFilter" onchange="renderExpInAssess()" style="font-family:'DM Sans',sans-serif;font-size:.82rem;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--paper);">
+      <option value="">All subjects</option>
+      ${[...new Set(savedLessons.map(l=>l.subject).filter(Boolean))].map(s=>`<option value="${s}">${s}</option>`).join('')}
+    </select>
     <span style="font-size:.78rem;color:var(--muted);">${filteredLessons.length} lesson${filteredLessons.length!==1?'s':''} · ${Object.keys(allCovered).length} expectation${Object.keys(allCovered).length!==1?'s':''} covered</span>
   </div>`;
   if (!Object.keys(byStrand).length) {
