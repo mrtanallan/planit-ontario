@@ -1904,11 +1904,27 @@ async function generate() {
   const targetExpInput = document.getElementById('targetExp')?.value?.trim() || '';
   const pinOnly = document.getElementById('expPinOnly')?.checked || false;
   const preMatchedExp = targetExpInput ? matchExpectations(targetExpInput, grades) : [];
+
+  // Build curriculum context from loaded JSON — real codes the model MUST choose from
+  const isMathSubj = subj === 'Mathematics';
+  const relevantExps = getExpectations(subj, grades, []);
+  const expContext = relevantExps.length
+    ? (isMathSubj
+        ? 'ONTARIO MATH CURRICULUM EXPECTATIONS FOR '+grades.join('/')+' (choose 2-4 most relevant to the topic):\n'
+          + relevantExps.slice(0,60).map(e=>`${e.code} [Strand ${e.strand}] — ${e.desc}`).join('\n')
+        : 'ONTARIO LANGUAGE CURRICULUM EXPECTATIONS FOR THIS GRADE (choose 2-4 most relevant):\n'
+          + relevantExps.slice(0,40).map(e=>`${e.code} — ${e.desc}`).join('\n'))
+    : '';
+
   const expHint = preMatchedExp.length
     ? (pinOnly
       ? 'CRITICAL — PINNED EXPECTATIONS: Return ONLY these. Build lesson around them:\n'+preMatchedExp.map(e=>`${e.code} — ${e.desc}`).join('\n')
       : 'CRITICAL — REQUIRED EXPECTATIONS: Include ALL of these:\n'+preMatchedExp.map(e=>`${e.code} — ${e.desc}`).join('\n'))
-    : 'EXPECTATIONS: Identify 2–4 most relevant Ontario 2023 Language expectations for this topic and grade.';
+    : expContext
+      ? 'CRITICAL — You MUST choose expectations ONLY from this list. Do NOT invent codes.\n'+expContext+'\n\nReturn 2-4 of these codes in the expectations array. Pick the ones most relevant to: '+topic
+      : (isMathSubj
+          ? 'EXPECTATIONS: Return 2-4 Ontario Math 2020 expectations most relevant to this topic and grade.'
+          : 'EXPECTATIONS: Return 2-4 Ontario 2023 Language expectations most relevant to this topic and grade.');
 
   const btn = document.getElementById('genBtn');
   btn.disabled=true; btn.textContent='⏳ Generating...';
