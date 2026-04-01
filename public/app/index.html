@@ -2807,6 +2807,8 @@ async function generateSlideVisuals(contentSlides, topic, subject, gradeStr) {
     '- Comparison/table: teal header row (#1D9E75, white bold text), alternating rows (#F4F3EF / white), row height 38px minimum.',
     '- Number line: thick main line (stroke-width=3), tall tick marks, highlighted values as large filled circles (r=10, fill=#1D9E75) with bold labels above.',
     '- Keep it clean. One main idea. No clutter. Simple is better.',
+    '- ALL text and shapes must stay within the viewBox (x: 10-490, y: 10-290). Never place text labels outside this area.',
+    '- Do not add a title or heading inside the SVG — the slide header already shows the title.',
   ].join('\n');
 
   // Stagger calls by 300ms each to avoid rate limit spikes
@@ -2847,7 +2849,7 @@ async function generateSlideVisuals(contentSlides, topic, subject, gradeStr) {
     // Merge system into user message so old backend still gets the drawing instructions
     const fullPrompt = svgSystemPrompt + '\n\n---\n\n' + userPrompt;
 
-    return delay(i * 350).then(() =>
+    return delay(i * 600).then(() =>
       authFetch('/api/generate', {
         method: 'POST',
         body: JSON.stringify({
@@ -2862,7 +2864,17 @@ async function generateSlideVisuals(contentSlides, topic, subject, gradeStr) {
         if (!r?.ok) { console.warn('SVG slide '+i+' HTTP '+r?.status); return null; }
         return r.json();
       })
-      .then(d => {
+      .then(async d => {
+        if (!d) {
+          // Retry once after 2s on null response
+          console.warn('SVG '+i+' null response — retrying in 2s');
+          await delay(2000);
+          const retry = await authFetch('/api/generate', {
+            method: 'POST',
+            body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1800,call_type:'svg',system:svgSystemPrompt,messages:[{role:'user',content:fullPrompt}]})
+          }).then(r=>r?.ok?r.json():null).catch(()=>null);
+          d = retry;
+        }
         if (!d) return '';
         const raw = (d?.content||[]).map(b=>b.text||'').join('').trim();
         const s = raw.indexOf('<svg'), e = raw.lastIndexOf('</svg>');
