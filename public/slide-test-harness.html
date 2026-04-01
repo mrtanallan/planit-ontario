@@ -88,13 +88,13 @@
     <div class="stat"><div class="stat-n pass" id="s-pass">0</div><div class="stat-l">Pass</div></div>
     <div class="stat"><div class="stat-n fail" id="s-fail">0</div><div class="stat-l">Fail</div></div>
     <div class="stat"><div class="stat-n skip" id="s-skip">0</div><div class="stat-l">Skipped</div></div>
-    <div class="stat"><div class="stat-n pending" id="s-pending">25</div><div class="stat-l">Pending</div></div>
-    <div class="stat"><div class="stat-n" id="s-total" style="color:#E0E0E0">0/25</div><div class="stat-l">Done</div></div>
+    <div class="stat"><div class="stat-n pending" id="s-pending">36</div><div class="stat-l">Pending</div></div>
+    <div class="stat"><div class="stat-n" id="s-total" style="color:#E0E0E0">0/36</div><div class="stat-l">Done</div></div>
   </div>
 </header>
 
 <div id="controls">
-  <button class="primary" id="btn-run" onclick="runAll()">▶ Run All 25 Units</button>
+  <button class="primary" id="btn-run" onclick="runAll()">▶ Run All 36 Units</button>
   <button id="btn-stop" onclick="stopAll()" disabled>⏹ Stop</button>
   <button id="btn-rerun-fails" onclick="rerunFails()" disabled>↩ Re-run Failures</button>
   <button id="btn-export" id="export-btn" onclick="exportReport()" disabled>⬇ Export Report</button>
@@ -137,31 +137,51 @@ const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const UNITS = [
+  // ── KINDERGARTEN ──
+  {grade:'Kindergarten',topic:'Counting to 10',unit:'number'},
+  {grade:'Kindergarten',topic:'2D Shapes - Circle Square Triangle Rectangle',unit:'spatial'},
+  // ── GRADE 1 ──
+  {grade:'Grade 1',topic:'Addition and Subtraction to 20',unit:'number'},
+  {grade:'Grade 1',topic:'Repeating Patterns',unit:'algebra'},
+  {grade:'Grade 1',topic:'Sorting and Classifying',unit:'data'},
+  {grade:'Grade 1',topic:'2D and 3D Shapes',unit:'spatial'},
+  // ── GRADE 2 ──
   {grade:'Grade 2',topic:'Addition and Subtraction to 100',unit:'number'},
-  {grade:'Grade 3',topic:'Multiplication and Division',unit:'number'},
-  {grade:'Grade 4',topic:'Fractions',unit:'number'},
-  {grade:'Grade 5',topic:'Decimals',unit:'number'},
-  {grade:'Grade 6',topic:'Integers',unit:'number'},
-  {grade:'Grade 7',topic:'Ratios and Rates',unit:'number'},
-  {grade:'Grade 8',topic:'Percent',unit:'number'},
-  {grade:'Grade 3',topic:'Patterning',unit:'algebra'},
-  {grade:'Grade 5',topic:'Equations and Variables',unit:'algebra'},
-  {grade:'Grade 7',topic:'Linear Relations',unit:'algebra'},
   {grade:'Grade 2',topic:'Pictographs and Bar Graphs',unit:'data'},
-  {grade:'Grade 5',topic:'Mean Median Mode',unit:'data'},
-  {grade:'Grade 7',topic:'Circle Graphs',unit:'data'},
-  {grade:'Grade 4',topic:'Probability',unit:'data'},
+  {grade:'Grade 2',topic:'Measurement - Length and Height',unit:'spatial'},
+  // ── GRADE 3 ──
+  {grade:'Grade 3',topic:'Multiplication and Division',unit:'number'},
+  {grade:'Grade 3',topic:'Fractions - Equal Parts of a Whole',unit:'number'},
+  {grade:'Grade 3',topic:'Patterning',unit:'algebra'},
   {grade:'Grade 3',topic:'Perimeter and Area',unit:'spatial'},
-  {grade:'Grade 4',topic:'Area of Rectangles',unit:'spatial'},
-  {grade:'Grade 5',topic:'Volume of Rectangular Prisms',unit:'spatial'},
-  {grade:'Grade 6',topic:'Area of Triangles and Parallelograms',unit:'spatial'},
-  {grade:'Grade 7',topic:'Circle Area and Circumference',unit:'spatial'},
-  {grade:'Grade 8',topic:'Pythagorean Theorem',unit:'spatial'},
   {grade:'Grade 3',topic:'Transformations - Slide Flip Turn',unit:'spatial'},
-  {grade:'Grade 6',topic:'Transformations on a Coordinate Grid',unit:'spatial'},
+  // ── GRADE 4 ──
+  {grade:'Grade 4',topic:'Fractions',unit:'number'},
+  {grade:'Grade 4',topic:'Probability',unit:'data'},
+  {grade:'Grade 4',topic:'Area of Rectangles',unit:'spatial'},
   {grade:'Grade 4',topic:'Angles - Acute Obtuse Right',unit:'spatial'},
+  // ── GRADE 5 ──
+  {grade:'Grade 5',topic:'Decimals',unit:'number'},
+  {grade:'Grade 5',topic:'Equations and Variables',unit:'algebra'},
+  {grade:'Grade 5',topic:'Mean Median Mode',unit:'data'},
+  {grade:'Grade 5',topic:'Volume of Rectangular Prisms',unit:'spatial'},
   {grade:'Grade 5',topic:'Financial Literacy - Budgeting',unit:'financial'},
+  // ── GRADE 6 ──
+  {grade:'Grade 6',topic:'Integers',unit:'number'},
+  {grade:'Grade 6',topic:'Area of Triangles and Parallelograms',unit:'spatial'},
+  {grade:'Grade 6',topic:'Transformations on a Coordinate Grid',unit:'spatial'},
+  // ── GRADE 7 ──
+  {grade:'Grade 7',topic:'Ratios and Rates',unit:'number'},
+  {grade:'Grade 7',topic:'Linear Relations',unit:'algebra'},
+  {grade:'Grade 7',topic:'Circle Graphs',unit:'data'},
+  {grade:'Grade 7',topic:'Circle Area and Circumference',unit:'spatial'},
   {grade:'Grade 7',topic:'Financial Literacy - Simple Interest',unit:'financial'},
+  // ── GRADE 8 ──
+  {grade:'Grade 8',topic:'Percent',unit:'number'},
+  {grade:'Grade 8',topic:'Pythagorean Theorem',unit:'spatial'},
+  {grade:'Grade 8',topic:'Linear Equations',unit:'algebra'},
+  {grade:'Grade 8',topic:'Scatter Plots and Lines of Best Fit',unit:'data'},
+  {grade:'Grade 8',topic:'Financial Literacy - Compound Interest',unit:'financial'},
 ];
 
 // ── State ────────────────────────────────────────────────────────────────────
@@ -288,13 +308,28 @@ async function runUnit(idx) {
   if (!structureData) { setStatus(idx, 'fail', [], 'Structure call failed: '+lastApiError); setStatusBar('Structure failed for '+unit.topic+': '+lastApiError); return; }
 
   const raw = (structureData.content||[]).map(b=>b.text||'').join('').trim();
+  console.log('['+unit.topic+'] raw response length:', raw.length, 'preview:', raw.substring(0,100));
   let sd;
   try {
     const clean = raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
     sd = JSON.parse(clean);
   } catch(e) {
     try { const s=raw.indexOf('{'),en=raw.lastIndexOf('}'); sd=JSON.parse(raw.slice(s,en+1)); }
-    catch(e2) { setStatus(idx, 'fail', [], 'JSON parse failed. Raw: '+raw.substring(0,200)); setStatusBar('Parse failed for '+unit.topic+': '+raw.substring(0,150)); return; }
+    catch(e2) {
+      const errDetail = 'RAW['+raw.length+']: '+raw.substring(0,300);
+      console.error('Parse failed for', unit.topic, errDetail);
+      setStatus(idx, 'fail', [{type:'parse_error',params:{},title:'Structure Parse Failed',key_point:errDetail,svg:'',pass:false,issues:['JSON parse error: '+raw.substring(0,150)],hardcoded:false}], 'JSON parse failed');
+      setStatusBar('Parse failed for '+unit.topic+': '+raw.substring(0,150));
+      return;
+    }
+  }
+  // Validate content_slides exists
+  if (!sd.content_slides || !Array.isArray(sd.content_slides) || sd.content_slides.length === 0) {
+    const errDetail = 'content_slides missing. Keys: '+Object.keys(sd||{}).join(',');
+    console.error('No content_slides for', unit.topic, errDetail, sd);
+    setStatus(idx, 'fail', [{type:'missing_slides',params:{},title:'No Content Slides',key_point:errDetail,svg:'',pass:false,issues:[errDetail],hardcoded:false}], 'No content_slides in response');
+    setStatusBar('No content_slides for '+unit.topic+': '+errDetail);
+    return;
   }
 
   const slides = (sd.content_slides||[]).slice(0,4);
