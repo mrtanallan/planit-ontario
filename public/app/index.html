@@ -2697,12 +2697,13 @@ async function generateSlideData(callerBtn) {
     const isMath = (subject||'').toLowerCase().includes('math');
     const visualTypeRules = [
       'VISUAL TYPE RULES — pick the best type for each content slide:',
-      '1. formula_box — introducing a formula. visual_data: {"formula":"A = l × w","variables":[{"symbol":"A","meaning":"Area"},{"symbol":"l","meaning":"length"},{"symbol":"w","meaning":"width"}],"unit":"cm²"}',
-      '2. worked_example — step-by-step solved problem. visual_data: {"problem":"Find the area of a rectangle 6 cm × 4 cm","steps":[{"label":"Write formula","work":"A = l × w"},{"label":"Substitute","work":"A = 6 × 4"},{"label":"Solve","work":"A = 24 cm²"}]}',
-      '3. labelled_diagram — shapes or geometric concepts. visual_data: {"shape":"rectangle","labels":[{"pos":"top","text":"6 cm"},{"pos":"right","text":"4 cm"},{"pos":"center","text":"A = 24 cm²"}]} — shape options: rectangle, square, triangle, circle, parallelogram, trapezoid',
-      '4. comparison_table — comparing formulas or concepts. visual_data: {"headers":["Shape","Formula","Example"],"rows":[["Rectangle","l × w","6×4=24"],["Square","s²","5²=25"]]}',
-      '5. number_line — fractions, decimals, ordering. visual_data: {"min":0,"max":10,"marks":[{"value":0,"label":"0"},{"value":5,"label":"5"},{"value":10,"label":"10"}],"highlight":[{"value":3.5,"label":"3½","color":"teal"}]}',
-      '6. text_only — non-visual concepts. visual_data: {"bullets":["point 1","point 2","point 3"]}'
+      '1. formula_box — introducing a formula or rule. visual_data: {"formula":"A = l × w","variables":[{"symbol":"A","meaning":"Area"},{"symbol":"l","meaning":"length"},{"symbol":"w","meaning":"width"}],"unit":"cm²"}',
+      '2. worked_example — step-by-step solved problem. CRITICAL: every step must use correct arithmetic. visual_data: {"problem":"Find the area of a rectangle 6 cm × 4 cm","steps":[{"label":"Write formula","work":"A = l × w"},{"label":"Substitute","work":"A = 6 × 4"},{"label":"Calculate","work":"A = 24 cm²"}]}',
+      '3. grid_diagram — USE THIS for any area, perimeter, multiplication array, or unit-square lesson. Draws a real grid students can count. visual_data: {"cols":6,"rows":4,"cell_size":40,"label_top":"6 cm","label_right":"4 cm","label_center":"A = 24 cm²","highlight_border":true}',
+      '4. labelled_diagram — for shapes with dimension labels only (no grid). Good for triangles, circles, composite shapes. visual_data: {"shape":"triangle","labels":[{"pos":"top","text":"base = 8 cm"},{"pos":"right","text":"height = 5 cm"},{"pos":"center","text":"A = 20 cm²"}]} — shape options: rectangle, square, triangle, circle, parallelogram, trapezoid',
+      '5. comparison_table — comparing formulas or properties side by side. visual_data: {"headers":["Shape","Formula","Example"],"rows":[["Rectangle","l × w","6×4=24 cm²"],["Triangle","b×h÷2","8×5÷2=20 cm²"]]}',
+      '6. number_line — fractions, decimals, integers, ordering. visual_data: {"min":0,"max":10,"marks":[{"value":0,"label":"0"},{"value":5,"label":"5"},{"value":10,"label":"10"}],"highlight":[{"value":3.5,"label":"3½"}]}',
+      '7. text_only — LAST RESORT only. visual_data: {"bullets":["point 1","point 2","point 3"]}'
     ].join('\n');
 
     const prompt = [
@@ -2724,7 +2725,7 @@ async function generateSlideData(callerBtn) {
       '  "minds_on": {"hook": "engaging real-world scenario max 2 sentences", "prompt": "think-pair-share prompt"},',
       '  "vocabulary": [{"word": "term", "definition": "student-friendly definition", "example": "use in a sentence"}],',
       '  "content_slides": [',
-      '    {"title":"slide title","key_point":"1 clear sentence","teacher_note":"delivery note max 10 words","visual_type":"formula_box|worked_example|labelled_diagram|comparison_table|number_line|text_only","visual_data":{...}}',
+      '    {"title":"slide title","key_point":"1 clear sentence","teacher_note":"delivery note max 10 words","visual_type":"formula_box|worked_example|grid_diagram|labelled_diagram|comparison_table|number_line|text_only","visual_data":{...}}',
       '  ],',
       '  "practice_problem": {"question": "one problem for students to solve", "solution_steps": ["step 1", "step 2", "step 3"]},',
       '  "discussion_questions": ["recall question", "apply question", "evaluate question"],',
@@ -2737,7 +2738,7 @@ async function generateSlideData(callerBtn) {
       '- learning_goals: exactly 2-3',
       '- vocabulary: 3-5 words',
       '- content_slides: exactly 4 — choose visual_type that SHOWS the concept, not just describes it',
-      isMath ? '- Math flow: slide 1=formula_box, slide 2=worked_example, slide 3=labelled_diagram or comparison_table, slide 4=worked_example with harder numbers' : '- Use text_only only as last resort when no visual type fits',
+      isMath ? '- MATH FLOW (measurement/geometry): slide 1=formula_box (introduce the formula), slide 2=grid_diagram (show unit squares students count), slide 3=worked_example (full step-by-step with correct arithmetic), slide 4=comparison_table (multiple shapes/formulas side by side). For non-measurement math: slide 1=formula_box, slide 2=worked_example, slide 3=worked_example harder, slide 4=comparison_table or number_line' : '- Use text_only only as absolute last resort',
       '- discussion_questions: exactly 3',
       '- All content age-appropriate for grade '+(gradeStr||'Elementary'),
       '- Pure JSON only, no markdown, no comments'
@@ -2845,44 +2846,95 @@ function openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg) {
     </svg>`;
   }
 
+  function svgGridDiagram(vd) {
+    if (!vd) return '';
+    const cols = Math.min(parseInt(vd.cols)||6, 12);
+    const rows = Math.min(parseInt(vd.rows)||4, 8);
+    const cs = Math.min(parseInt(vd.cell_size)||40, Math.floor(340/Math.max(cols,rows)));
+    const ox = Math.round((520 - cols*cs) / 2);
+    const oy = 38;
+    const gw = cols * cs;
+    const gh = rows * cs;
+    // Grid cell fills (alternating light for visual counting)
+    let cells = '';
+    for (let r=0; r<rows; r++) {
+      for (let c=0; c<cols; c++) {
+        const shade = (r+c)%2===0 ? '#D4EDDA' : '#E8F5E9';
+        cells += `<rect x="${ox+c*cs}" y="${oy+r*cs}" width="${cs}" height="${cs}" fill="${shade}" stroke="#1D9E75" stroke-width="1"/>`;
+      }
+    }
+    // Dimension arrows + labels
+    const topLabel = vd.label_top||'';
+    const rightLabel = vd.label_right||'';
+    const centerLabel = vd.label_center||'';
+    const topArrow = topLabel ? `
+      <line x1="${ox}" y1="${oy-18}" x2="${ox+gw}" y2="${oy-18}" stroke="#0F6E56" stroke-width="2" marker-end="url(#ag)" marker-start="url(#ag)"/>
+      <rect x="${ox+gw/2-36}" y="${oy-34}" width="72" height="20" rx="4" fill="white"/>
+      <text x="${ox+gw/2}" y="${oy-20}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(topLabel)}</text>` : '';
+    const rightArrow = rightLabel ? `
+      <line x1="${ox+gw+18}" y1="${oy}" x2="${ox+gw+18}" y2="${oy+gh}" stroke="#0F6E56" stroke-width="2" marker-end="url(#ag)" marker-start="url(#ag)"/>
+      <rect x="${ox+gw+26}" y="${oy+gh/2-12}" width="72" height="20" rx="4" fill="white"/>
+      <text x="${ox+gw+62}" y="${oy+gh/2+2}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(rightLabel)}</text>` : '';
+    const centerText = centerLabel ? `
+      <rect x="${ox+gw/2-52}" y="${oy+gh/2-14}" width="104" height="26" rx="6" fill="rgba(29,158,117,.9)"/>
+      <text x="${ox+gw/2}" y="${oy+gh/2+4}" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Georgia,serif">${esc(centerLabel)}</text>` : '';
+    const totalH = oy + gh + 40;
+    return `<svg viewBox="0 0 520 ${totalH}" style="width:100%;max-height:${Math.min(totalH,300)}px">
+      <defs>
+        <marker id="ag" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 2L8 5L2 8" fill="none" stroke="#0F6E56" stroke-width="1.5"/>
+        </marker>
+      </defs>
+      ${cells}
+      <rect x="${ox}" y="${oy}" width="${gw}" height="${gh}" fill="none" stroke="#0F6E56" stroke-width="2.5"/>
+      ${topArrow}${rightArrow}${centerText}
+    </svg>`;
+  }
+
   function svgLabelledDiagram(vd) {
     if (!vd) return '';
     const shape = (vd.shape||'rectangle').toLowerCase();
     const labels = vd.labels||[];
     const get = pos => labels.find(l=>l.pos===pos);
-    const ctr = get('center'), top = get('top'), right = get('right'), bottom = get('bottom'), left2 = get('left');
-
+    const ctr = get('center'), top = get('top'), right = get('right'), bottom = get('bottom');
+    const DEFS = `<defs><marker id="arrd" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M2 2L8 5L2 8" fill="none" stroke="#0F6E56" stroke-width="1.5"/></marker></defs>`;
     let shapeEl = '';
     if (shape==='rectangle'||shape==='square') {
-      const w=shape==='square'?200:280, h=shape==='square'?200:140;
-      const sx=120, sy=55;
-      shapeEl = `<rect x="${sx}" y="${sy}" width="${w}" height="${h}" rx="6" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2.5"/>
-        ${ctr?`<text x="${sx+w/2}" y="${sy+h/2+6}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}
-        ${top?`<text x="${sx+w/2}" y="${sy-10}" text-anchor="middle" font-size="13" font-weight="700" fill="#2C2C2A" font-family="sans-serif">${esc(top.text)}</text>
-               <line x1="${sx+20}" y1="${sy-6}" x2="${sx+w-20}" y2="${sy-6}" stroke="#1D9E75" stroke-width="1.5" marker-end="url(#arrd)" marker-start="url(#arrd)"/>`:''}
-        ${right?`<text x="${sx+w+38}" y="${sy+h/2+5}" text-anchor="middle" font-size="13" font-weight="700" fill="#2C2C2A" font-family="sans-serif">${esc(right.text)}</text>
-                 <line x1="${sx+w+8}" y1="${sy+20}" x2="${sx+w+8}" y2="${sy+h-20}" stroke="#1D9E75" stroke-width="1.5"/>`:''}`;
+      const w=shape==='square'?180:260, h=shape==='square'?180:150;
+      const sx=50, sy=50;
+      shapeEl = `${DEFS}
+        <rect x="${sx}" y="${sy}" width="${w}" height="${h}" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="2.5"/>
+        ${ctr?`<rect x="${sx+w/2-54}" y="${sy+h/2-14}" width="108" height="26" rx="6" fill="rgba(29,158,117,.85)"/><text x="${sx+w/2}" y="${sy+h/2+4}" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}
+        ${top?`<line x1="${sx+8}" y1="${sy-20}" x2="${sx+w-8}" y2="${sy-20}" stroke="#0F6E56" stroke-width="1.8" marker-end="url(#arrd)" marker-start="url(#arrd)"/>
+               <rect x="${sx+w/2-38}" y="${sy-36}" width="76" height="20" rx="4" fill="white"/>
+               <text x="${sx+w/2}" y="${sy-22}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(top.text)}</text>`:''}
+        ${right?`<line x1="${sx+w+20}" y1="${sy+8}" x2="${sx+w+20}" y2="${sy+h-8}" stroke="#0F6E56" stroke-width="1.8" marker-end="url(#arrd)" marker-start="url(#arrd)"/>
+                 <rect x="${sx+w+28}" y="${sy+h/2-12}" width="76" height="20" rx="4" fill="white"/>
+                 <text x="${sx+w+66}" y="${sy+h/2+4}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(right.text)}</text>`:''}`;
+      return `<svg viewBox="0 0 520 ${h+100}" style="width:100%;max-height:${h+100}px">${shapeEl}</svg>`;
     } else if (shape==='triangle') {
-      shapeEl = `<polygon points="260,50 130,220 390,220" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2.5"/>
-        ${ctr?`<text x="260" y="175" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}
-        ${top?`<text x="260" y="38" text-anchor="middle" font-size="13" font-weight="700" fill="#2C2C2A" font-family="sans-serif">${esc(top.text)}</text>`:''}
-        ${bottom?`<text x="260" y="245" text-anchor="middle" font-size="13" font-weight="700" fill="#2C2C2A" font-family="sans-serif">${esc(bottom.text)}</text>`:''}`;
+      shapeEl = `${DEFS}
+        <polygon points="260,40 100,230 420,230" fill="#E1F5EE" stroke="#0F6E56" stroke-width="2.5"/>
+        ${top?`<text x="260" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(top.text)}</text>`:''}
+        ${bottom?`<text x="260" y="255" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(bottom.text)}</text>`:''}
+        ${right?`<text x="438" y="175" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(right.text)}</text>`:''}
+        ${ctr?`<rect x="208" y="168" width="104" height="26" rx="6" fill="rgba(29,158,117,.85)"/><text x="260" y="185" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}`;
+      return `<svg viewBox="0 0 520 280" style="width:100%;max-height:280px">${shapeEl}</svg>`;
     } else if (shape==='circle') {
-      shapeEl = `<circle cx="260" cy="140" r="110" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2.5"/>
-        <line x1="260" y1="140" x2="370" y2="140" stroke="#0F6E56" stroke-width="2" stroke-dasharray="5,4"/>
-        ${ctr?`<text x="310" y="132" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(ctr.text)}</text>`:''}
-        ${top?`<text x="260" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#2C2C2A" font-family="sans-serif">${esc(top.text)}</text>`:''}
-        ${right?`<text x="420" y="145" font-size="13" font-weight="700" fill="#2C2C2A" font-family="sans-serif">${esc(right.text)}</text>`:''}`;
-    } else {
-      shapeEl = `<rect x="100" y="70" width="320" height="150" rx="8" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2.5"/>
-        ${ctr?`<text x="260" y="152" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}`;
+      shapeEl = `${DEFS}
+        <circle cx="220" cy="140" r="110" fill="#E1F5EE" stroke="#0F6E56" stroke-width="2.5"/>
+        <line x1="220" y1="140" x2="330" y2="140" stroke="#0F6E56" stroke-width="2" stroke-dasharray="6,4"/>
+        ${right?`<rect x="338" y="128" width="80" height="24" rx="4" fill="white"/><text x="378" y="144" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(right.text)}</text>`:''}
+        ${top?`<text x="220" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="sans-serif">${esc(top.text)}</text>`:''}
+        ${ctr?`<rect x="168" y="150" width="104" height="26" rx="6" fill="rgba(29,158,117,.85)"/><text x="220" y="167" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}`;
+      return `<svg viewBox="0 0 520 280" style="width:100%;max-height:280px">${shapeEl}</svg>`;
     }
+    // fallback
     return `<svg viewBox="0 0 520 280" style="width:100%;max-height:280px">
-      <defs><marker id="arrd" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 2L8 5L2 8" fill="none" stroke="#1D9E75" stroke-width="1.5"/></marker></defs>
-      ${shapeEl}
+      ${DEFS}<rect x="80" y="60" width="360" height="180" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="2.5"/>
+      ${ctr?`<text x="260" y="158" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Georgia,serif">${esc(ctr.text)}</text>`:''}
     </svg>`;
   }
-
   function svgComparisonTable(vd) {
     if (!vd||!vd.rows) return '';
     const hdrs = vd.headers||[];
@@ -2932,6 +2984,7 @@ function openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg) {
     try {
       if (type==='formula_box') return svgFormulaBox(vd);
       if (type==='worked_example') return svgWorkedExample(vd);
+      if (type==='grid_diagram') return svgGridDiagram(vd);
       if (type==='labelled_diagram') return svgLabelledDiagram(vd);
       if (type==='comparison_table') return svgComparisonTable(vd);
       if (type==='number_line') return svgNumberLine(vd);
