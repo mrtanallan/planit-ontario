@@ -3628,8 +3628,14 @@ async function renderTracker() {
     const sorted = [...students].sort((a,b) => gradeOrder.indexOf(a.grade)-gradeOrder.indexOf(b.grade));
     gTable.innerHTML = `<table class="dt"><thead><tr><th>Student</th><th>Grade</th><th>Tasks</th><th>Avg Level</th></tr></thead><tbody>` +
       sorted.map(s => {
-        const marks = sessions.flatMap(sess => sess.marks[s.id]?.level ? [lvN[sess.marks[s.id].level]||2] : []);
-        const avg = marks.length ? marks.reduce((a,b)=>a+b,0)/marks.length : null;
+        // Build rich marks array with task/date/level info for expandable rows
+        const marks = sessions.flatMap(sess => sess.marks[s.id]?.level ? [{
+          level: sess.marks[s.id].level,
+          num: lvN[sess.marks[s.id].level]||2,
+          task: sess.task||'Assessment',
+          date: sess.date||''
+        }] : []);
+        const avg = marks.length ? marks.map(m=>m.num).reduce((a,b)=>a+b,0)/marks.length : null;
         const avgLvLabel = !avg ? null
           : avg >= 3.85 ? 'L4'  : avg >= 3.5  ? 'L4−'
           : avg >= 3.15 ? 'L3+' : avg >= 2.85 ? 'L3'
@@ -3638,7 +3644,28 @@ async function renderTracker() {
           : avg >= 1.15 ? 'L1+' : 'L1';
         const baseNum = avgLvLabel ? avgLvLabel.replace(/[^0-9]/g,'') : null;
         const gpClass = baseNum ? `gp${baseNum}` : '';
-        return `<tr><td>${s.first} ${s.last||''}</td><td><span style="font-family:DM Mono,monospace;font-size:.72rem;">${s.grade}</span></td><td style="font-family:DM Mono,monospace;text-align:center;">${marks.length}</td><td>${avgLvLabel?`<span class="gp ${gpClass}">${avgLvLabel}</span>`:'<span style="color:var(--muted);font-size:.78rem;">—</span>'}</td></tr>`;
+        const rowId = 'trow-' + s.id;
+        const detailId = 'tdet-' + s.id;
+
+        const detailHtml = marks.length ? marks.map(m => {
+          const base = m.level.replace(/[+-]/g,'');
+          const cols = {L1:'#EF4444',L2:'#EAB308',L3:'#3B82F6',L4:'#22C55E'};
+          const bgs  = {L1:'#FEE2E2',L2:'#FEF9C3',L3:'#DBEAFE',L4:'#DCFCE7'};
+          return `<tr id="${detailId}-row" style="display:none;background:#FAFAF8;">
+            <td style="padding:5px 16px 5px 28px;font-size:.78rem;color:var(--muted);">↳ ${m.task}</td>
+            <td style="font-size:.78rem;color:var(--muted);">${m.date}</td>
+            <td></td>
+            <td><span style="font-family:DM Mono,monospace;font-size:.68rem;font-weight:600;padding:1px 7px;border-radius:4px;background:${bgs[base]||'#f5f5f5'};color:${cols[base]||'#666'};border:1px solid ${cols[base]||'#ccc'}40;">${m.level}</span></td>
+          </tr>`;
+        }).join('') : '';
+        return `<tr id="${rowId}" onclick="
+          document.querySelectorAll('[id=\'${detailId}-row\']').forEach(r=>r.style.display=r.style.display==='none'?'table-row':'none');
+        " style="cursor:${marks.length?'pointer':'default'};" onmouseover="this.style.background='var(--sage-l)'" onmouseout="this.style.background=''">
+          <td>${s.first} ${s.last||''} ${marks.length?'<span style="font-family:DM Mono,monospace;font-size:.6rem;color:var(--sage);">▾</span>':''}</td>
+          <td><span style="font-family:DM Mono,monospace;font-size:.72rem;">${s.grade}</span></td>
+          <td style="font-family:DM Mono,monospace;text-align:center;">${marks.length}</td>
+          <td>${avgLvLabel?`<span class="gp ${gpClass}">${avgLvLabel}</span>`:'<span style="color:var(--muted);font-size:.78rem;">—</span>'}</td>
+        </tr>${detailHtml}`;
       }).join('')+'</tbody></table>';
   }
 
