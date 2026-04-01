@@ -2698,10 +2698,10 @@ async function generateSlideData(callerBtn) {
     const iepCount = students.filter(s=>s.iep&&s.iep.trim()).length;
     const isMath = (subject||'').toLowerCase().includes('math');
 
-    // ── STEP 1: Generate slide structure (text only, cheap + fast) ─────────────
+    // ── STEP 1: Structure call (text + visual specs) ───────────────────────────
     const structurePrompt = [
       'You are an Ontario elementary teacher creating a classroom presentation deck.',
-      'Generate the TEXT CONTENT for a slide deck. A separate system will draw the visuals.',
+      'Generate TEXT CONTENT and visual specifications for a slide deck.',
       '',
       'Topic: '+topic,
       'Grade(s): '+(gradeStr||'Elementary'),
@@ -2714,14 +2714,15 @@ async function generateSlideData(callerBtn) {
       'Return ONLY valid JSON:',
       '{',
       '  "learning_goals": ["I can... statement", "I can... statement"],',
-      '  "minds_on": {"hook": "engaging real-world hook max 2 sentences", "prompt": "think-pair-share prompt"},',
+      '  "minds_on": {"hook": "real-world hook max 2 sentences", "prompt": "think-pair-share prompt"},',
       '  "vocabulary": [{"word": "term", "definition": "student-friendly definition", "example": "sentence using the word"}],',
       '  "content_slides": [',
       '    {',
       '      "title": "slide title",',
-      '      "key_point": "the core concept in 1 clear sentence",',
+      '      "key_point": "core concept in 1 clear sentence",',
       '      "teacher_note": "delivery tip max 10 words",',
-      '      "visual_prompt": "precise description of what to draw — specific numbers, labels, shapes, what concept it shows"',
+      '      "visual_type": "ONE OF THE TYPES BELOW",',
+      '      "visual_params": { ... }',
       '    }',
       '  ],',
       '  "practice_problem": {"question": "one problem students solve", "solution_steps": ["step 1", "step 2", "step 3"]},',
@@ -2729,169 +2730,987 @@ async function generateSlideData(callerBtn) {
       '  "exit_ticket": {"question": "consolidation question", "answer_hint": "expected answer"}',
       '}',
       '',
-      'VISUAL PROMPT RULES — write visual_prompt as a precise drawing instruction:',
-      isMath ? [
-        '- Slide 1 (introduce concept): Describe the core visual — e.g. "Draw the formula A=l×w large and bold. Show a labelled rectangle with l=6cm, w=4cm. Box each variable with its meaning below." For transformations: "Draw a triangle on a grid. Show it sliding 4 units right. Label Original and Image."',
-        '- Slide 2 (show the process): "Draw a step-by-step worked example with 3-4 numbered steps, each on its own row. Final answer row highlighted green. Use real grade-appropriate numbers." For transformations: "Draw a shape on a grid and show the flip/rotation with before and after labelled."',
-        '- Slide 3 (visual model): For measurement: "Draw a grid of unit squares inside a rectangle [cols]×[rows]. Label dimensions with arrows outside." For transformations: "Draw all steps of the transformation on one grid — original, then arrow/mirror line, then image. Label each." For fractions: "Draw a number line from 0 to 1, mark [fraction] with a point."',
-        '- Slide 4 (compare/extend): "Draw a side-by-side comparison of [2-3 variations or related concepts]. Could be a table, multiple labelled diagrams, or a harder example with solution."',
-        '- TRANSFORMATION TOPICS: Every single slide should show shapes ON a grid. Always label Original and Image. Always show the transformation action (arrow for slide, dashed line for flip, arc for turn).',
-      ].join('\n') : [
-        '- Each visual_prompt should describe a diagram, chart, anchor chart, or visual organiser that helps students understand the concept.',
-        '- Be specific: describe the exact text, layout, and structure you want drawn.',
-      ].join('\n'),
-      '- Include real numbers from the topic (not placeholders)',
-      '- Describe layout: "left side shows X, right side shows Y", "3 rows with labels", etc.',
-      '- Mention colours only if meaningful (e.g. "highlight the answer row in green")',
+      '══ VISUAL TYPE LIBRARY ══',
+      'Pick the BEST type for each slide. Use exact type names. Populate visual_params precisely.',
       '',
-      'Rules: learning_goals=2-3, vocabulary=3-5, content_slides=exactly 4, discussion_questions=exactly 3.',
-      'Age-appropriate for grade '+(gradeStr||'Elementary')+'. Pure JSON only, no markdown.'
+      '── STRAND B: NUMBER ──',
+      '"place_value" — place value chart. params: {"digits":{"thousands":3,"hundreds":0,"tens":4,"ones":2},"highlight":"tens"}',
+      '"array" — multiplication array of dots/squares. params: {"rows":4,"cols":6,"label":"4 × 6 = 24"}',
+      '"fraction_bar" — rectangle divided into equal parts. params: {"numerator":3,"denominator":4,"label":"3/4","color":"#1D9E75"}',
+      '"fraction_compare" — two fraction bars side by side. params: {"fractions":[{"n":1,"d":2,"label":"1/2"},{"n":3,"d":4,"label":"3/4"}]}',
+      '"number_line" — marked number line. params: {"min":0,"max":10,"step":1,"highlights":[{"value":3.5,"label":"3½"}],"show_negatives":false}',
+      '"percent_bar" — percent/ratio bar. params: {"percent":75,"label":"75%","part_label":"75","whole_label":"100"}',
+      '"integer_line" — number line with negatives. params: {"min":-5,"max":5,"highlights":[{"value":-2,"label":"-2"}]}',
+      '',
+      '── STRAND C: ALGEBRA ──',
+      '"worked_steps" — numbered step-by-step solution. params: {"problem":"2x + 3 = 11","steps":[{"label":"Subtract 3","work":"2x = 8"},{"label":"Divide by 2","work":"x = 4"}],"answer":"x = 4"}',
+      '"formula_display" — large formula with variable legend. params: {"formula":"A = l × w","variables":[{"symbol":"A","meaning":"Area","unit":"cm²"},{"symbol":"l","meaning":"length","unit":"cm"},{"symbol":"w","meaning":"width","unit":"cm"}]}',
+      '"balance_scale" — equation as a balance. params: {"left":"2x + 3","right":"11","solution":"x = 4"}',
+      '"pattern_row" — repeating or growing pattern. params: {"items":["▲","■","▲","■","▲","■"],"rule":"Repeating: triangle, square","next":"▲"}',
+      '"t_table" — table of values. params: {"headers":["x","y"],"rows":[[0,2],[1,4],[2,6],[3,8]],"rule":"y = 2x"}',
+      '"coordinate_graph" — x/y axes with plotted points. params: {"points":[{"x":1,"y":2,"label":"(1,2)"},{"x":3,"y":6,"label":"(3,6)"}],"line":true,"x_max":8,"y_max":10}',
+      '',
+      '── STRAND D: DATA ──',
+      '"bar_graph" — vertical bar chart. params: {"title":"Favourite Sports","labels":["Soccer","Basketball","Swimming","Hockey"],"values":[12,8,5,10],"y_label":"Number of Students"}',
+      '"pictograph" — symbol chart. params: {"title":"Books Read","rows":[{"label":"Jan","count":3},{"label":"Feb","count":5}],"symbol":"📚","scale":2,"scale_label":"= 2 books"}',
+      '"line_graph" — connected points over time. params: {"title":"Temperature","labels":["Mon","Tue","Wed","Thu","Fri"],"values":[12,15,11,18,14],"y_label":"°C"}',
+      '"pie_chart" — circle graph with slices. params: {"title":"Transport to School","slices":[{"label":"Bus","value":45,"color":"#1D9E75"},{"label":"Walk","value":30,"color":"#F5C842"},{"label":"Car","value":25,"color":"#E07B39"}]}',
+      '"probability_scale" — 0-to-1 line with events. params: {"events":[{"label":"Impossible","value":0},{"label":"Flip heads","value":0.5},{"label":"Certain","value":1}]}',
+      '"stem_leaf" — stem and leaf plot. params: {"title":"Test Scores","stems":[{"stem":6,"leaves":[2,5,8]},{"stem":7,"leaves":[0,3,3,7]},{"stem":8,"leaves":[1,4,9]}]}',
+      '"double_bar" — grouped bar chart. params: {"title":"Sports by Grade","labels":["Soccer","Basketball","Swimming"],"series":[{"name":"Grade 4","values":[8,5,3],"color":"#1D9E75"},{"name":"Grade 5","values":[6,9,4],"color":"#E07B39"}]}',
+      '',
+      '── STRAND E: SPATIAL SENSE ──',
+      '"area_grid" — shape filled with unit squares. params: {"cols":6,"rows":4,"label_top":"6 cm","label_right":"4 cm","area_label":"A = 24 cm²"}',
+      '"perimeter_shape" — shape with all sides labelled. params: {"shape":"rectangle","sides":{"top":"6 cm","bottom":"6 cm","left":"4 cm","right":"4 cm"},"perimeter_label":"P = 20 cm"}',
+      '"circle_diagram" — circle with radius/diameter/circumference. params: {"radius":5,"show_diameter":true,"show_radius":true,"radius_label":"r = 5 cm","diameter_label":"d = 10 cm","formula":"C = πd ≈ 31.4 cm"}',
+      '"angle_diagram" — two rays with angle arc. params: {"degrees":60,"label":"60°","type":"acute","ray1_label":"","ray2_label":""}',
+      '"transform_translate" — shape on grid sliding. params: {"shape":"rectangle","shape_w":3,"shape_h":2,"start_col":1,"start_row":3,"dx":4,"dy":-1,"unit_label":"units","cols":12,"rows":8}',
+      '"transform_reflect" — shape on grid flipped. params: {"shape":"right_triangle","shape_w":3,"shape_h":3,"col":1,"row":1,"axis":"vertical","axis_col":5,"cols":12,"rows":8}',
+      '"transform_rotate" — shape on grid rotated. params: {"shape":"rectangle","shape_w":4,"shape_h":2,"col":2,"row":4,"degrees":90,"direction":"clockwise","pivot_col":2,"pivot_row":4,"cols":12,"rows":8}',
+      '"transform_overview" — all 3 transformations on one diagram. params: {"shape":"rectangle"}',
+      '"labelled_shape" — 2D shape with side labels and angles. params: {"shape":"triangle","sides":["8 cm","6 cm","10 cm"],"angles":["90°","53°","37°"],"area_label":"A = 24 cm²"}',
+      '"pythagorean" — right triangle with squares on sides. params: {"a":3,"b":4,"c":5,"units":"cm"}',
+      '"net_diagram" — unfolded 3D shape. params: {"shape":"cube","side":4,"unit":"cm"}',
+      '"isometric_box" — 3D rectangular prism. params: {"l":6,"w":4,"h":3,"unit":"cm","volume_label":"V = 72 cm³"}',
+      '',
+      '── STRAND F: FINANCIAL ──',
+      '"money_display" — coins and bills. params: {"amount":2.75,"breakdown":[{"coin":"toonie","count":1},{"coin":"quarter","count":3}]}',
+      '"budget_bar" — income vs expenses. params: {"income":500,"expenses":[{"label":"Food","amount":200},{"label":"Transport","amount":80},{"label":"Fun","amount":120}]}',
+      '',
+      '── UNIVERSAL ──',
+      '"comparison_table" — header row + data rows. params: {"headers":["Shape","Formula","Example"],"rows":[["Rectangle","l × w","6×4=24 cm²"],["Triangle","b×h÷2","8×6÷2=24 cm²"]]}',
+      '"concept_card" — anchor chart style. params: {"title":"Types of Triangles","items":[{"name":"Equilateral","detail":"3 equal sides"},{"name":"Isosceles","detail":"2 equal sides"},{"name":"Scalene","detail":"no equal sides"}]}',
+      '"venn_diagram" — two overlapping circles. params: {"left_label":"Rectangles","right_label":"Rhombuses","overlap_label":"Squares","left_items":["4 right angles"],"right_items":["4 equal sides"],"overlap_items":["Both!"]}',
+      '',
+      'RULES:',
+      '- learning_goals: exactly 2-3',
+      '- vocabulary: 3-5 words',
+      '- content_slides: exactly 4 — choose type that best shows the concept',
+      isMath ? '- MATH SLIDE SEQUENCE: slide1=formula/concept intro, slide2=worked_steps or visual model, slide3=labelled diagram or data visual, slide4=comparison_table or harder worked_steps' : '- Use concept_card, comparison_table, or venn_diagram for literacy/science concepts',
+      '- discussion_questions: exactly 3',
+      '- All content age-appropriate for grade '+(gradeStr||'Elementary'),
+      '- visual_params must use REAL numbers appropriate for the grade — no placeholders',
+      '- Pure JSON only, no markdown, no comments'
     ].filter(Boolean).join('\n');
 
     const res = await authFetch('/api/generate', {
       method: 'POST',
-      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:3000, messages:[{role:'user',content:structurePrompt}]})
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:3500, messages:[{role:'user',content:structurePrompt}]})
     });
-    if (!res||!res.ok) throw new Error('Slide structure generation failed');
+    if (!res||!res.ok) throw new Error('Slide structure generation failed ('+res?.status+')');
     const data = await res.json();
     const raw = data.content?.map(i=>i.text||'').join('')||'';
     let sd;
     try { sd = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
     catch(e) { try { const s=raw.indexOf('{'),en=raw.lastIndexOf('}'); sd=JSON.parse(raw.slice(s,en+1)); } catch(e2) { throw new Error('Could not parse slide structure.'); } }
 
-    // ── STEP 2: Generate SVGs in parallel (one per content slide) ──────────────
-    if (callerBtn) callerBtn.textContent = '⏳ Drawing visuals...';
-
-    const svgResults = await generateSlideVisuals(sd.content_slides||[], topic, subject, gradeStr);
-    (sd.content_slides||[]).forEach((cs, i) => { cs.svg_html = svgResults[i] || ''; });
-
     window._slideData = {sd, topic, subject, gradeStr};
+
+    // ── STEP 2: Open deck IMMEDIATELY with skeleton visuals ────────────────────
+    if (callerBtn) { callerBtn.disabled=false; callerBtn.textContent='▶ Present'; }
+    const deckWindow = openHTMLPresenter(sd, topic, subject, gradeStr);
+
+    // ── STEP 3: Generate visuals in background, push via postMessage ───────────
+    generateAndPushVisuals(sd.content_slides||[], topic, subject, gradeStr, deckWindow);
+
     const gsBtn = document.getElementById('gSlidesBtn');
     if (gsBtn && _gToken) gsBtn.style.display='inline-flex';
-    const gcBtn = document.getElementById('gConnectBtn');
-    if (gcBtn && !_gToken) gcBtn.style.display='inline-block';
     return true;
+
   } catch(e) {
     alert('Error generating slides: '+e.message);
-    return false;
-  } finally {
     if (callerBtn) { callerBtn.disabled=false; callerBtn.textContent='▶ Present'; }
+    return false;
   }
 }
 
-// ── Parallel SVG generation ──────────────────────────────────────────────────
-async function generateSlideVisuals(contentSlides, topic, subject, gradeStr) {
-  const isMath = (subject||'').toLowerCase().includes('math');
+// ══════════════════════════════════════════════════════════════════════════════
+// HARDCODED SVG RENDERERS — mathematically accurate, zero API cost
+// ══════════════════════════════════════════════════════════════════════════════
+const SVG_RENDERERS = {
 
-  const svgSystemPrompt = [
-    'You are a specialist in drawing educational SVG diagrams for K-8 Ontario classrooms.',
-    'You draw clear, accurate, visually clean SVGs that project well on a classroom screen from 6 metres away.',
-    '',
-    'RULES:',
-    '- Return ONLY a raw <svg> element. No explanation, no markdown, no code fences.',
-    '- viewBox="0 0 500 300" always. width="100%" height="100%".',
-    '- Background: transparent (no background rect).',
-    '- Font: font-family="Arial, sans-serif"',
-    '- Colour palette: #1D9E75 (teal), #1D3461 (navy), #F5C842 (yellow), #E07B39 (orange), #E8F5E9 (light green fill), #FFF3E0 (light orange fill), #F4F3EF (light grey), white.',
-    '- DO NOT repeat the slide title inside the SVG — it already appears in the header bar above.',
-    '- Fill the full viewBox. Make shapes and diagrams LARGE — readable from the back of a classroom.',
-    '- Text minimum font-size: 15px. Shape labels: bold 16-18px. Leave 20px padding from all edges.',
-    '- All mathematics must be arithmetically correct. Double-check before outputting.',
-    '',
-    'DIAGRAM TYPE RULES:',
-    '- Measurement (area/perimeter): label ALL sides. Use double-headed arrows outside the shape for dimensions. For area: draw a grid of unit squares inside the shape, cells alternating #E8F5E9 and #C8E6C9, with a bold outline around the whole shape.',
-    '- Worked examples: each step on its own row in a rounded rect. Step number in a coloured circle on the left. Final answer row: #1D9E75 fill, white bold text. Minimum row height 44px.',
-    '- Formulas: formula text LARGE (34-40px, bold, navy). Each variable in its own rounded coloured box below, symbol bold in teal, meaning in grey.',
-    '- TRANSFORMATIONS (slide/flip/turn/translation/reflection/rotation): ALWAYS draw on a grid. Grid lines every 36px, stroke="#D0D0D0" stroke-width="0.7". Original shape: filled #1D9E75, labelled "Original". Transformed shape: filled #E07B39 with 0.85 opacity, labelled "Image". For slides/translations: dashed arrow showing direction. For flips/reflections: dashed mirror line, stroke="#1D3461" stroke-dasharray="6,4". For turns/rotations: dot at centre of rotation (r=5, fill=#1D3461), curved arc arrow showing angle.',
-    '- Coordinate geometry: draw x and y axes (stroke="#1D3461", stroke-width=2), grid in #E0E0E0, axis labels, points as filled circles r=7 with coordinate labels.',
-    '- Comparison/table: teal header row (#1D9E75, white bold text), alternating rows (#F4F3EF / white), row height 38px minimum.',
-    '- Number line: thick main line (stroke-width=3), tall tick marks, highlighted values as large filled circles (r=10, fill=#1D9E75) with bold labels above.',
-    '- Keep it clean. One main idea. No clutter. Simple is better.',
-    '- ALL text and shapes must stay within the viewBox (x: 10-490, y: 10-290). Never place text labels outside this area.',
-    '- Do not add a title or heading inside the SVG — the slide header already shows the title.',
-  ].join('\n');
+  // ── STRAND B: NUMBER ────────────────────────────────────────────────────────
 
-  // Stagger calls by 300ms each to avoid rate limit spikes
+  place_value(p) {
+    const cols = Object.entries(p.digits||{});
+    const cw = Math.floor(460/Math.max(cols.length,1));
+    const headers = cols.map(([name],i) => {
+      const x = 20+i*cw, hl = (name===p.highlight);
+      return `<rect x="${x}" y="20" width="${cw-6}" height="44" rx="6" fill="${hl?'#1D9E75':'#1D3461'}"/>
+        <text x="${x+(cw-6)/2}" y="47" text-anchor="middle" font-size="13" font-weight="700" fill="white" font-family="Arial,sans-serif">${name.charAt(0).toUpperCase()+name.slice(1)}</text>`;
+    }).join('');
+    const values = cols.map(([name,val],i) => {
+      const x = 20+i*cw, hl = (name===p.highlight);
+      return `<rect x="${x}" y="72" width="${cw-6}" height="60" rx="6" fill="${hl?'#E8F5E9':'#F4F3EF'}"/>
+        <text x="${x+(cw-6)/2}" y="110" text-anchor="middle" font-size="36" font-weight="900" fill="${hl?'#0F6E56':'#1D3461'}" font-family="Arial,sans-serif">${val}</text>`;
+    }).join('');
+    const chips = cols.map(([name,val],i) => {
+      const x = 20+i*cw;
+      return Array.from({length:Math.min(val,10)},(_,j)=>
+        `<circle cx="${x+14+j*(Math.min((cw-20)/Math.max(val,1),22))}" cy="168" r="9" fill="#1D9E75" opacity="0.7"/>`
+      ).join('');
+    }).join('');
+    return `<svg viewBox="0 0 500 210" width="100%" height="100%">${headers}${values}${chips}</svg>`;
+  },
 
-  // Stagger calls 350ms apart to avoid rate-limit spikes after the main lesson call
-  const delay = ms => new Promise(r => setTimeout(r, ms));
+  array(p) {
+    const rows=Math.min(p.rows||4,10), cols=Math.min(p.cols||6,12);
+    const cs=Math.min(Math.floor(420/Math.max(cols,rows)),36);
+    const ox=Math.round((500-cols*cs)/2), oy=20;
+    let cells='';
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
+      cells+=`<circle cx="${ox+c*cs+cs/2}" cy="${oy+r*cs+cs/2}" r="${cs/2-4}" fill="#1D9E75" opacity="0.8"/>`;
+    }
+    const totalH=oy+rows*cs+50;
+    return `<svg viewBox="0 0 500 ${totalH}" width="100%" height="100%">
+      ${cells}
+      <text x="250" y="${oy+rows*cs+34}" text-anchor="middle" font-size="20" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.label||rows+' × '+cols+' = '+(rows*cols)}</text>
+    </svg>`;
+  },
 
-  const calls = contentSlides.slice(0,4).map((cs, i) => {
-    // Detect transformation/geometry topics to force grid requirement
-    const topicLower = (topic+' '+(cs.title||'')+' '+(cs.visual_prompt||'')).toLowerCase();
-    const isTransform = /transform|translat|reflec|rotat|slide|flip|turn|symmetr|congruent|similar/.test(topicLower);
-    const isCoordinate = /coordinat|plot|grid|quadrant|ordered pair|x.axis|y.axis/.test(topicLower);
-    const needsGrid = isTransform || isCoordinate;
+  fraction_bar(p) {
+    const n=Math.max(1,p.numerator||1), d=Math.max(1,p.denominator||4);
+    const sw=460, sh=80, ox=20, oy=40;
+    const cw=sw/d;
+    let cells='';
+    for(let i=0;i<d;i++) {
+      cells+=`<rect x="${ox+i*cw+1}" y="${oy}" width="${cw-2}" height="${sh}" rx="4"
+        fill="${i<n?(p.color||'#1D9E75'):'#F4F3EF'}" stroke="white" stroke-width="2"/>`;
+    }
+    return `<svg viewBox="0 0 500 200" width="100%" height="100%">
+      <text x="250" y="30" text-anchor="middle" font-size="16" fill="#5F5E5A" font-family="Arial,sans-serif">${d} equal parts</text>
+      ${cells}
+      <rect x="${ox}" y="${oy}" width="${sw}" height="${sh}" rx="4" fill="none" stroke="#1D3461" stroke-width="2.5"/>
+      <text x="${ox+n*cw/2}" y="${oy+sh/2+6}" text-anchor="middle" font-size="22" font-weight="700" fill="white" font-family="Arial,sans-serif">${p.label||n+'/'+d}</text>
+      <text x="250" y="${oy+sh+36}" text-anchor="middle" font-size="28" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${p.label||n+'/'+d}</text>
+      <text x="250" y="${oy+sh+64}" text-anchor="middle" font-size="14" fill="#5F5E5A" font-family="Arial,sans-serif">${n} out of ${d} parts shaded</text>
+    </svg>`;
+  },
 
-    const gridInstruction = needsGrid
-      ? '\nCRITICAL REQUIREMENT: Draw this on a grid background. Grid lines every 36px, stroke="#D0D0D0" stroke-width="0.7". Original shape filled #1D9E75. Transformed/image shape filled #E07B39 opacity 0.85. Label "Original" and "Image" clearly in bold navy. Show the transformation: dashed arrow for slides, dashed vertical/horizontal line for flips, curved arc arrow for turns. Do NOT draw a mangled shape — keep geometry simple (use rectangles, right-angled triangles, or simple arrows as the shape).'
-      : '';
+  fraction_compare(p) {
+    const fracs=(p.fractions||[{n:1,d:2,label:'1/2'},{n:3,d:4,label:'3/4'}]).slice(0,2);
+    const sw=200, sh=60, gap=60;
+    const totalW=fracs.length*sw+(fracs.length-1)*gap+40;
+    const bars=fracs.map((f,fi)=>{
+      const ox=20+fi*(sw+gap), n=f.n||f.numerator||1, d=f.d||f.denominator||2;
+      const cw=sw/d;
+      const cells=Array.from({length:d},(_,i)=>
+        `<rect x="${ox+i*cw+1}" y="50" width="${cw-2}" height="${sh}" rx="3"
+          fill="${i<n?'#1D9E75':'#F4F3EF'}" stroke="white" stroke-width="1.5"/>`
+      ).join('');
+      return `${cells}
+        <rect x="${ox}" y="50" width="${sw}" height="${sh}" rx="3" fill="none" stroke="#1D3461" stroke-width="2"/>
+        <text x="${ox+sw/2}" y="32" text-anchor="middle" font-size="22" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${f.label||n+'/'+d}</text>`;
+    }).join('');
+    const mid=fracs.length===2 ? 20+sw+(gap/2) : 250;
+    return `<svg viewBox="0 0 ${Math.max(totalW,500)} 180" width="100%" height="100%">
+      ${bars}
+      ${fracs.length===2?`<text x="${mid}" y="82" text-anchor="middle" font-size="28" font-weight="900" fill="#E07B39" font-family="Arial,sans-serif">vs</text>`:''}
+    </svg>`;
+  },
 
-    // Detect transformation/geometry topics — force grid in the prompt itself
-    const _tl = (topic+' '+(cs.title||'')+' '+(cs.visual_prompt||'')).toLowerCase();
-    const _needsGrid = /transform|translat|reflec|rotat|\bslide\b|\bflip\b|\bturn\b|symmetr|congruent|coordinat|quadrant/.test(_tl);
+  number_line(p) {
+    const mn=parseFloat(p.min??0), mx=parseFloat(p.max??10), step=parseFloat(p.step||1);
+    const range=mx-mn||1;
+    const px=v=>40+((v-mn)/range)*420;
+    const ticks=[];
+    for(let v=mn;v<=mx+0.001;v+=step) ticks.push(v);
+    const tickSVG=ticks.map(v=>`
+      <line x1="${px(v)}" y1="90" x2="${px(v)}" y2="110" stroke="#1D3461" stroke-width="2"/>
+      <text x="${px(v)}" y="128" text-anchor="middle" font-size="14" fill="#1D3461" font-family="Arial,sans-serif">${Number(v.toFixed(4))}</text>`).join('');
+    const hlSVG=(p.highlights||[]).map(h=>`
+      <circle cx="${px(h.value)}" cy="100" r="12" fill="#1D9E75" stroke="white" stroke-width="2"/>
+      <text x="${px(h.value)}" y="75" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${h.label||h.value}</text>
+      <line x1="${px(h.value)}" y1="80" x2="${px(h.value)}" y2="88" stroke="#0F6E56" stroke-width="2"/>`).join('');
+    return `<svg viewBox="0 0 500 170" width="100%" height="100%">
+      <line x1="30" y1="100" x2="470" y2="100" stroke="#1D3461" stroke-width="3"/>
+      <polygon points="470,95 482,100 470,105" fill="#1D3461"/>
+      ${tickSVG}${hlSVG}
+    </svg>`;
+  },
 
-    const _gridNote = _needsGrid
-      ? 'CRITICAL: Draw on a grid. Grid lines every 36px, stroke="#D0D0D0" stroke-width="0.7". Original shape: filled #1D9E75, label "Original". Transformed shape: filled #E07B39 opacity=0.85, label "Image". Use SIMPLE shapes only — rectangles or right triangles (no complex polygons). Show transformation action: dotted arrow for slides, dashed line (#1D3461) for flips, curved arc arrow for turns/rotations.'
-      : '';
+  integer_line(p) {
+    return SVG_RENDERERS.number_line({...p, show_negatives:true});
+  },
 
-    const userPrompt = [
-      'Topic: '+topic,
-      'Grade: '+gradeStr,
-      'Slide title: '+(cs.title||''),
-      'Key concept: '+(cs.key_point||''),
-      '',
-      'Draw this visual:',
-      cs.visual_prompt || ('Illustrate the concept: '+(cs.key_point||topic)),
-      _gridNote,
-    ].filter(Boolean).join('\n');
+  percent_bar(p) {
+    const pct=Math.min(100,Math.max(0,p.percent||75));
+    return `<svg viewBox="0 0 500 200" width="100%" height="100%">
+      <rect x="20" y="60" width="460" height="70" rx="8" fill="#F4F3EF" stroke="#D0D0D0" stroke-width="1.5"/>
+      <rect x="20" y="60" width="${460*pct/100}" height="70" rx="8" fill="#1D9E75"/>
+      <text x="${20+460*pct/100/2}" y="102" text-anchor="middle" font-size="26" font-weight="900" fill="white" font-family="Arial,sans-serif">${p.part_label||pct}</text>
+      <text x="250" y="28" text-anchor="middle" font-size="15" fill="#5F5E5A" font-family="Arial,sans-serif">out of ${p.whole_label||100}</text>
+      <text x="250" y="162" text-anchor="middle" font-size="32" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${p.label||pct+'%'}</text>
+    </svg>`;
+  },
 
-    // Merge system into user message so old backend still gets the drawing instructions
-    const fullPrompt = svgSystemPrompt + '\n\n---\n\n' + userPrompt;
+  // ── STRAND C: ALGEBRA ────────────────────────────────────────────────────────
 
-    return delay(i * 600).then(() =>
-      authFetch('/api/generate', {
-        method: 'POST',
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1800,
-          call_type: 'svg',
-          system: svgSystemPrompt,
-          messages: [{role:'user', content: fullPrompt}]
-        })
-      })
-      .then(r => {
-        if (!r?.ok) { console.warn('SVG slide '+i+' HTTP '+r?.status); return null; }
-        return r.json();
-      })
-      .then(async d => {
-        if (!d) {
-          // Retry once after 2s on null response
-          console.warn('SVG '+i+' null response — retrying in 2s');
-          await delay(2000);
-          const retry = await authFetch('/api/generate', {
-            method: 'POST',
-            body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1800,call_type:'svg',system:svgSystemPrompt,messages:[{role:'user',content:fullPrompt}]})
-          }).then(r=>r?.ok?r.json():null).catch(()=>null);
-          d = retry;
-        }
-        if (!d) return '';
-        const raw = (d?.content||[]).map(b=>b.text||'').join('').trim();
-        const s = raw.indexOf('<svg'), e = raw.lastIndexOf('</svg>');
-        if (s !== -1 && e !== -1) { console.log('SVG '+i+' OK len='+raw.slice(s,e+6).length); return raw.slice(s,e+6); }
-        console.warn('SVG '+i+' no <svg> tag. Preview:', raw.substring(0,150));
-        return '';
-      })
-      .catch(err => { console.error('SVG '+i+' error:', err); return ''; })
-    );
-  });
+  worked_steps(p) {
+    const steps=(p.steps||[]).slice(0,6);
+    const rh=50, oy=50, totalH=oy+steps.length*rh+80;
+    const rows=steps.map((s,i)=>{
+      const y=oy+i*rh, isLast=(i===steps.length-1);
+      return `<rect x="10" y="${y}" width="480" height="${rh-4}" rx="6" fill="${isLast?'#1D9E75':'#F4F3EF'}"/>
+        <circle cx="36" cy="${y+rh/2-2}" r="16" fill="${isLast?'#0F6E56':'#1D9E75'}"/>
+        <text x="36" cy="${y+rh/2-2}" y="${y+rh/2+5}" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Arial,sans-serif">${i+1}</text>
+        <text x="62" y="${y+18}" font-size="11" fill="${isLast?'rgba(255,255,255,.7)':'#888780'}" font-family="Arial,sans-serif">${s.label||''}</text>
+        <text x="62" y="${y+38}" font-size="18" font-weight="700" fill="${isLast?'white':'#1D3461'}" font-family="Arial,sans-serif">${s.work||''}</text>`;
+    }).join('');
+    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
+      <text x="10" y="36" font-size="15" font-weight="600" fill="#5F5E5A" font-family="Arial,sans-serif">${p.problem||''}</text>
+      ${rows}
+    </svg>`;
+  },
 
-  return Promise.all(calls);
+  formula_display(p) {
+    const vars=(p.variables||[]).slice(0,4);
+    const vw=Math.floor(460/Math.max(vars.length,1));
+    const varBoxes=vars.map((v,i)=>`
+      <rect x="${20+i*vw}" y="130" width="${vw-8}" height="60" rx="8" fill="#E8F5E9" stroke="#1D9E75" stroke-width="1.5"/>
+      <text x="${20+i*vw+(vw-8)/2}" y="157" text-anchor="middle" font-size="22" font-weight="900" fill="#0F6E56" font-family="Arial,sans-serif">${v.symbol}</text>
+      <text x="${20+i*vw+(vw-8)/2}" y="178" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${v.meaning}${v.unit?' ('+v.unit+')':''}</text>`).join('');
+    return `<svg viewBox="0 0 500 220" width="100%" height="100%">
+      <rect x="10" y="20" width="480" height="90" rx="10" fill="#1D3461"/>
+      <text x="250" y="76" text-anchor="middle" font-size="38" font-weight="900" fill="white" font-family="Arial,sans-serif">${p.formula||''}</text>
+      <text x="250" y="115" text-anchor="middle" font-size="12" fill="#9FACC4" font-family="Arial,sans-serif">WHERE:</text>
+      ${varBoxes}
+    </svg>`;
+  },
+
+  balance_scale(p) {
+    return `<svg viewBox="0 0 500 260" width="100%" height="100%">
+      <line x1="250" y1="40" x2="250" y2="120" stroke="#1D3461" stroke-width="4"/>
+      <line x1="100" y1="120" x2="400" y2="120" stroke="#1D3461" stroke-width="4"/>
+      <circle cx="250" cy="40" r="8" fill="#1D9E75"/>
+      <line x1="100" y1="120" x2="100" y2="160" stroke="#1D3461" stroke-width="3"/>
+      <line x1="400" y1="120" x2="400" y2="160" stroke="#1D3461" stroke-width="3"/>
+      <rect x="40" y="160" width="120" height="50" rx="8" fill="#E8F5E9" stroke="#1D9E75" stroke-width="2"/>
+      <rect x="340" y="160" width="120" height="50" rx="8" fill="#FFF3E0" stroke="#E07B39" stroke-width="2"/>
+      <text x="100" y="192" text-anchor="middle" font-size="18" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${p.left||''}</text>
+      <text x="400" y="192" text-anchor="middle" font-size="18" font-weight="700" fill="#E07B39" font-family="Arial,sans-serif">${p.right||''}</text>
+      <text x="250" y="145" text-anchor="middle" font-size="22" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">=</text>
+      <text x="250" y="240" text-anchor="middle" font-size="20" font-weight="700" fill="#1D9E75" font-family="Arial,sans-serif">${p.solution||''}</text>
+    </svg>`;
+  },
+
+  t_table(p) {
+    const rows=(p.rows||[]).slice(0,6), hdrs=p.headers||['x','y'];
+    const rh=38, oy=50, totalH=oy+rows.length*rh+50;
+    const hdrSVG=hdrs.map((h,i)=>`
+      <rect x="${10+i*240}" y="12" width="228" height="34" rx="4" fill="#1D3461"/>
+      <text x="${10+i*240+114}" y="34" text-anchor="middle" font-size="16" font-weight="700" fill="white" font-family="Arial,sans-serif">${h}</text>`).join('');
+    const rowSVG=rows.map((row,ri)=>{
+      const y=oy+ri*rh;
+      return row.map((cell,ci)=>`
+        <rect x="${10+ci*240}" y="${y}" width="228" height="${rh-2}" rx="4" fill="${ri%2===0?'#F4F3EF':'white'}"/>
+        <text x="${10+ci*240+114}" y="${y+rh/2+6}" text-anchor="middle" font-size="16" fill="#1D3461" font-family="Arial,sans-serif">${cell}</text>`).join('');
+    }).join('');
+    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
+      ${hdrSVG}${rowSVG}
+      ${p.rule?`<text x="250" y="${Math.min(totalH-12,285)}" text-anchor="middle" font-size="14" fill="#1D9E75" font-weight="700" font-family="Arial,sans-serif">${p.rule}</text>`:''}
+    </svg>`;
+  },
+
+  coordinate_graph(p) {
+    const xm=p.x_max||10, ym=p.y_max||10, gs=24;
+    const ox=40, oy=20, gw=xm*gs, gh=ym*gs;
+    let grid='';
+    for(let x=0;x<=xm;x++) grid+=`<line x1="${ox+x*gs}" y1="${oy}" x2="${ox+x*gs}" y2="${oy+gh}" stroke="#E0E0E0" stroke-width="0.8"/>`;
+    for(let y=0;y<=ym;y++) grid+=`<line x1="${ox}" y1="${oy+y*gs}" x2="${ox+gw}" y2="${oy+y*gs}" stroke="#E0E0E0" stroke-width="0.8"/>`;
+    const axisLabels=[];
+    for(let x=0;x<=xm;x+=2) axisLabels.push(`<text x="${ox+x*gs}" y="${oy+gh+16}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${x}</text>`);
+    for(let y=0;y<=ym;y+=2) axisLabels.push(`<text x="${ox-8}" y="${oy+gh-y*gs+4}" text-anchor="end" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${y}</text>`);
+    const pts=(p.points||[]).map(pt=>`
+      <circle cx="${ox+pt.x*gs}" cy="${oy+gh-pt.y*gs}" r="7" fill="#1D9E75" stroke="white" stroke-width="2"/>
+      <text x="${ox+pt.x*gs+10}" y="${oy+gh-pt.y*gs-8}" font-size="12" fill="#1D3461" font-family="Arial,sans-serif">${pt.label||'('+pt.x+','+pt.y+')'}</text>`).join('');
+    let line='';
+    if(p.line&&(p.points||[]).length>=2) {
+      const sorted=[...(p.points||[])].sort((a,b)=>a.x-b.x);
+      const pts2=sorted.map(pt=>`${ox+pt.x*gs},${oy+gh-pt.y*gs}`).join(' ');
+      line=`<polyline points="${pts2}" fill="none" stroke="#1D9E75" stroke-width="2" stroke-dasharray="6,3"/>`;
+    }
+    const totalH=oy+gh+30;
+    return `<svg viewBox="0 0 ${ox+gw+20} ${totalH}" width="100%" height="100%">
+      ${grid}
+      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh+4}" stroke="#1D3461" stroke-width="2.5"/>
+      <line x1="${ox-4}" y1="${oy+gh}" x2="${ox+gw+4}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2.5"/>
+      <polygon points="${ox+gw+4},${oy+gh-4} ${ox+gw+12},${oy+gh} ${ox+gw+4},${oy+gh+4}" fill="#1D3461"/>
+      <polygon points="${ox-4},${oy} ${ox},${oy-8} ${ox+4},${oy}" fill="#1D3461"/>
+      <text x="${ox+gw+14}" y="${oy+gh+4}" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">x</text>
+      <text x="${ox+4}" y="${oy-4}" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">y</text>
+      ${axisLabels.join('')}${line}${pts}
+    </svg>`;
+  },
+
+  pattern_row(p) {
+    const items=(p.items||['▲','■','▲','■','▲','■']).slice(0,10);
+    const iw=Math.min(Math.floor(440/items.length),60);
+    const shapes=items.map((item,i)=>`
+      <rect x="${20+i*iw}" y="40" width="${iw-6}" height="${iw-6}" rx="8" fill="${i%2===0?'#E8F5E9':'#FFF3E0'}" stroke="${i%2===0?'#1D9E75':'#E07B39'}" stroke-width="2"/>
+      <text x="${20+i*iw+(iw-6)/2}" y="${40+(iw-6)/2+8}" text-anchor="middle" font-size="${Math.max(14,iw-20)}" font-family="Arial,sans-serif">${item}</text>`).join('');
+    return `<svg viewBox="0 0 500 180" width="100%" height="100%">
+      ${shapes}
+      <text x="250" y="${40+iw+24}" text-anchor="middle" font-size="14" fill="#1D9E75" font-weight="700" font-family="Arial,sans-serif">${p.rule||''}</text>
+      ${p.next?`<text x="250" y="${40+iw+50}" text-anchor="middle" font-size="14" fill="#5F5E5A" font-family="Arial,sans-serif">Next: ${p.next}</text>`:''}
+    </svg>`;
+  },
+
+  // ── STRAND D: DATA ───────────────────────────────────────────────────────────
+
+  bar_graph(p) {
+    const labels=p.labels||[], values=p.values||[];
+    const maxVal=Math.max(...values,1);
+    const gh=160, bw=Math.min(Math.floor(380/Math.max(labels.length,1)),70);
+    const ox=50, oy=20;
+    const bars=labels.map((lbl,i)=>{
+      const bh=Math.round((values[i]/maxVal)*gh);
+      const x=ox+i*(bw+12);
+      const colors=['#1D9E75','#E07B39','#F5C842','#6B63D4','#1D3461'];
+      return `<rect x="${x}" y="${oy+gh-bh}" width="${bw}" height="${bh}" rx="4" fill="${colors[i%colors.length]}"/>
+        <text x="${x+bw/2}" y="${oy+gh-bh-8}" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${values[i]}</text>
+        <text x="${x+bw/2}" y="${oy+gh+18}" text-anchor="middle" font-size="12" fill="#5F5E5A" font-family="Arial,sans-serif">${lbl}</text>`;
+    }).join('');
+    const yTicks=[0,Math.round(maxVal/2),maxVal].map(v=>`
+      <line x1="${ox-4}" y1="${oy+gh-(v/maxVal)*gh}" x2="${ox}" y2="${oy+gh-(v/maxVal)*gh}" stroke="#1D3461" stroke-width="1.5"/>
+      <text x="${ox-8}" y="${oy+gh-(v/maxVal)*gh+4}" text-anchor="end" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${v}</text>`).join('');
+    return `<svg viewBox="0 0 500 240" width="100%" height="100%">
+      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2"/>
+      <line x1="${ox}" y1="${oy+gh}" x2="${ox+labels.length*(bw+12)}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2"/>
+      ${yTicks}${bars}
+      <text x="${ox/2}" y="${oy+gh/2}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif" transform="rotate(-90,${ox/2},${oy+gh/2})">${p.y_label||''}</text>
+      <text x="250" y="230" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+    </svg>`;
+  },
+
+  line_graph(p) {
+    const labels=p.labels||[], values=p.values||[];
+    const maxVal=Math.max(...values,1);
+    const gh=160, ox=50, oy=20;
+    const xStep=Math.floor(380/Math.max(labels.length-1,1));
+    const pts=values.map((v,i)=>`${ox+i*xStep},${oy+gh-(v/maxVal)*gh}`).join(' ');
+    const dots=values.map((v,i)=>`
+      <circle cx="${ox+i*xStep}" cy="${oy+gh-(v/maxVal)*gh}" r="7" fill="#1D9E75" stroke="white" stroke-width="2"/>
+      <text x="${ox+i*xStep}" y="${oy+gh-(v/maxVal)*gh-12}" text-anchor="middle" font-size="12" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${v}</text>
+      <text x="${ox+i*xStep}" y="${oy+gh+16}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${labels[i]}</text>`).join('');
+    return `<svg viewBox="0 0 500 240" width="100%" height="100%">
+      <polyline points="${pts}" fill="none" stroke="#1D9E75" stroke-width="2.5"/>
+      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2"/>
+      <line x1="${ox}" y1="${oy+gh}" x2="${ox+380}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2"/>
+      ${dots}
+      <text x="250" y="230" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+    </svg>`;
+  },
+
+  pie_chart(p) {
+    const slices=p.slices||[];
+    const total=slices.reduce((s,sl)=>s+(sl.value||0),0)||1;
+    const cx=160, cy=130, r=110;
+    let angle=-Math.PI/2, paths='', labels='';
+    slices.forEach(sl=>{
+      const frac=(sl.value||0)/total;
+      const sweep=frac*2*Math.PI;
+      const x1=cx+r*Math.cos(angle), y1=cy+r*Math.sin(angle);
+      const x2=cx+r*Math.cos(angle+sweep), y2=cy+r*Math.sin(angle+sweep);
+      const lg=sweep>Math.PI?1:0;
+      paths+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${lg},1 ${x2},${y2} Z" fill="${sl.color||'#1D9E75'}" stroke="white" stroke-width="2"/>`;
+      const lAngle=angle+sweep/2;
+      const lx=cx+(r+24)*Math.cos(lAngle), ly=cy+(r+24)*Math.sin(lAngle);
+      labels+=`<text x="${lx}" y="${ly+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${sl.label||''} (${sl.value}%)</text>`;
+      angle+=sweep;
+    });
+    return `<svg viewBox="0 0 500 280" width="100%" height="100%">
+      ${paths}${labels}
+      <text x="360" y="40" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+    </svg>`;
+  },
+
+  pictograph(p) {
+    const rows=(p.rows||[]).slice(0,6);
+    const scale=p.scale||1;
+    const rh=36, oy=40;
+    const rowSVG=rows.map((row,ri)=>{
+      const count=Math.round((row.count||0)/scale);
+      const symbols=Array.from({length:Math.min(count,12)},(_,i)=>
+        `<text x="${120+i*28}" y="${oy+ri*rh+24}" font-size="20" font-family="Arial,sans-serif">${p.symbol||'●'}</text>`
+      ).join('');
+      return `<text x="10" y="${oy+ri*rh+24}" font-size="14" fill="#1D3461" font-family="Arial,sans-serif">${row.label||''}</text>
+        ${symbols}`;
+    }).join('');
+    const totalH=oy+rows.length*rh+40;
+    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
+      <text x="250" y="24" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+      ${rowSVG}
+      <text x="250" y="${Math.min(totalH-8,288)}" text-anchor="middle" font-size="13" fill="#5F5E5A" font-family="Arial,sans-serif">${p.symbol||'●'} ${p.scale_label||'= '+scale}</text>
+    </svg>`;
+  },
+
+  double_bar(p) {
+    const labels=p.labels||[], series=p.series||[];
+    const allVals=series.flatMap(s=>s.values||[]);
+    const maxVal=Math.max(...allVals,1);
+    const gh=150, bw=20, gap=6, groupGap=20, ox=50, oy=20;
+    const groupW=series.length*(bw+gap);
+    const bars=labels.map((lbl,gi)=>{
+      const gx=ox+gi*(groupW+groupGap);
+      const bs=series.map((s,si)=>{
+        const v=s.values[gi]||0, bh=Math.round((v/maxVal)*gh);
+        return `<rect x="${gx+si*(bw+gap)}" y="${oy+gh-bh}" width="${bw}" height="${bh}" rx="3" fill="${s.color||'#1D9E75'}"/>
+          <text x="${gx+si*(bw+gap)+bw/2}" y="${oy+gh-bh-5}" text-anchor="middle" font-size="10" fill="#1D3461" font-family="Arial,sans-serif">${v}</text>`;
+      }).join('');
+      return `${bs}<text x="${gx+groupW/2}" y="${oy+gh+16}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${lbl}</text>`;
+    }).join('');
+    const legend=series.map((s,i)=>`
+      <rect x="${50+i*110}" y="0" width="16" height="12" rx="2" fill="${s.color||'#1D9E75'}"/>
+      <text x="${70+i*110}" y="11" font-size="11" fill="#1D3461" font-family="Arial,sans-serif">${s.name||''}</text>`).join('');
+    return `<svg viewBox="0 0 500 240" width="100%" height="100%">
+      <g transform="translate(0,8)">${legend}</g>
+      <line x1="${ox}" y1="${oy+20}" x2="${ox}" y2="${oy+gh+20}" stroke="#1D3461" stroke-width="2"/>
+      <line x1="${ox}" y1="${oy+gh+20}" x2="480" y2="${oy+gh+20}" stroke="#1D3461" stroke-width="2"/>
+      <g transform="translate(0,20)">${bars}</g>
+      <text x="250" y="235" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+    </svg>`;
+  },
+
+  probability_scale(p) {
+    const events=p.events||[];
+    const px=v=>40+v*420;
+    const dots=events.map((e,i)=>`
+      <circle cx="${px(e.value)}" cy="80" r="12" fill="#1D9E75" stroke="white" stroke-width="2"/>
+      <text x="${px(e.value)}" y="${i%2===0?54:120}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${e.label||''}</text>
+      <line x1="${px(e.value)}" y1="${i%2===0?60:94}" x2="${px(e.value)}" y2="${i%2===0?68:92}" stroke="#1D9E75" stroke-width="1.5"/>`).join('');
+    return `<svg viewBox="0 0 500 170" width="100%" height="100%">
+      <line x1="30" y1="80" x2="470" y2="80" stroke="#1D3461" stroke-width="3"/>
+      <text x="30" y="152" text-anchor="middle" font-size="13" fill="#E07B39" font-weight="700" font-family="Arial,sans-serif">0</text>
+      <text x="250" y="152" text-anchor="middle" font-size="13" fill="#F5C842" font-weight="700" font-family="Arial,sans-serif">½</text>
+      <text x="470" y="152" text-anchor="middle" font-size="13" fill="#1D9E75" font-weight="700" font-family="Arial,sans-serif">1</text>
+      <text x="30" y="170" text-anchor="middle" font-size="10" fill="#888780" font-family="Arial,sans-serif">Impossible</text>
+      <text x="470" y="170" text-anchor="middle" font-size="10" fill="#888780" font-family="Arial,sans-serif">Certain</text>
+      ${dots}
+    </svg>`;
+  },
+
+  stem_leaf(p) {
+    const stems=p.stems||[];
+    const rh=36, oy=50, totalH=oy+stems.length*rh+30;
+    const rows=stems.map((row,ri)=>{
+      const y=oy+ri*rh;
+      const leaves=(row.leaves||[]).join('  ');
+      return `<rect x="10" y="${y}" width="480" height="${rh-2}" rx="4" fill="${ri%2===0?'#F4F3EF':'white'}"/>
+        <rect x="10" y="${y}" width="60" height="${rh-2}" rx="4" fill="#1D3461"/>
+        <text x="40" y="${y+rh/2+5}" text-anchor="middle" font-size="16" font-weight="700" fill="white" font-family="Arial,sans-serif">${row.stem}</text>
+        <text x="80" y="${y+rh/2+5}" font-size="16" fill="#1D3461" font-family="Arial,sans-serif">${leaves}</text>`;
+    }).join('');
+    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
+      <text x="250" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+      <rect x="10" y="34" width="60" height="12" rx="2" fill="#1D9E75"/>
+      <text x="40" y="44" text-anchor="middle" font-size="10" font-weight="700" fill="white" font-family="Arial,sans-serif">Stem</text>
+      <text x="80" y="44" font-size="10" font-weight="700" fill="#1D9E75" font-family="Arial,sans-serif">Leaf</text>
+      ${rows}
+    </svg>`;
+  },
+
+  // ── STRAND E: SPATIAL SENSE ──────────────────────────────────────────────────
+
+  area_grid(p) {
+    const cols=Math.min(p.cols||6,15), rows=Math.min(p.rows||4,10);
+    const cs=Math.min(Math.floor(340/Math.max(cols,rows)),38);
+    const ox=60, oy=48, gw=cols*cs, gh=rows*cs;
+    let cells='';
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
+      cells+=`<rect x="${ox+c*cs}" y="${oy+r*cs}" width="${cs}" height="${cs}" fill="${(r+c)%2===0?'#C8E6C9':'#E8F5E9'}" stroke="white" stroke-width="1"/>`;
+    }
+    return `<svg viewBox="0 0 500 ${gh+130}" width="100%" height="100%">
+      ${cells}
+      <rect x="${ox}" y="${oy}" width="${gw}" height="${gh}" fill="none" stroke="#0F6E56" stroke-width="3"/>
+      <line x1="${ox}" y1="${oy-28}" x2="${ox+gw}" y2="${oy-28}" stroke="#0F6E56" stroke-width="2" marker-end="url(#da)" marker-start="url(#da)"/>
+      <text x="${ox+gw/2}" y="${oy-10}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${p.label_top||''}</text>
+      <line x1="${ox+gw+28}" y1="${oy}" x2="${ox+gw+28}" y2="${oy+gh}" stroke="#0F6E56" stroke-width="2" marker-end="url(#da)" marker-start="url(#da)"/>
+      <text x="${ox+gw+48}" y="${oy+gh/2+5}" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${p.label_right||''}</text>
+      <rect x="${ox+gw/2-62}" y="${oy+gh/2-18}" width="124" height="36" rx="8" fill="rgba(29,158,117,.9)"/>
+      <text x="${ox+gw/2}" y="${oy+gh/2+7}" text-anchor="middle" font-size="18" font-weight="700" fill="white" font-family="Arial,sans-serif">${p.area_label||''}</text>
+      <defs>
+        <marker id="da" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 2L8 5L2 8" fill="none" stroke="#0F6E56" stroke-width="1.5"/>
+        </marker>
+      </defs>
+    </svg>`;
+  },
+
+  perimeter_shape(p) {
+    const sides=p.sides||{top:'6 cm',bottom:'6 cm',left:'4 cm',right:'4 cm'};
+    const W=260, H=160, ox=110, oy=50;
+    return `<svg viewBox="0 0 500 290" width="100%" height="100%">
+      <defs><marker id="dp" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 2L8 5L2 8" fill="none" stroke="#0F6E56" stroke-width="1.5"/></marker></defs>
+      <rect x="${ox}" y="${oy}" width="${W}" height="${H}" rx="4" fill="#E8F5E9" stroke="#0F6E56" stroke-width="3" stroke-dasharray="${p.trace?'12,6':'none'}"/>
+      ${sides.top?`<line x1="${ox+12}" y1="${oy-22}" x2="${ox+W-12}" y2="${oy-22}" stroke="#0F6E56" stroke-width="2" marker-end="url(#dp)" marker-start="url(#dp)"/>
+        <text x="${ox+W/2}" y="${oy-6}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${sides.top}</text>`:''}
+      ${sides.bottom?`<line x1="${ox+12}" y1="${oy+H+22}" x2="${ox+W-12}" y2="${oy+H+22}" stroke="#0F6E56" stroke-width="2" marker-end="url(#dp)" marker-start="url(#dp)"/>
+        <text x="${ox+W/2}" y="${oy+H+38}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${sides.bottom}</text>`:''}
+      ${sides.left?`<line x1="${ox-22}" y1="${oy+12}" x2="${ox-22}" y2="${oy+H-12}" stroke="#0F6E56" stroke-width="2" marker-end="url(#dp)" marker-start="url(#dp)"/>
+        <text x="${ox-38}" y="${oy+H/2+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${sides.left}</text>`:''}
+      ${sides.right?`<line x1="${ox+W+22}" y1="${oy+12}" x2="${ox+W+22}" y2="${oy+H-12}" stroke="#0F6E56" stroke-width="2" marker-end="url(#dp)" marker-start="url(#dp)"/>
+        <text x="${ox+W+42}" y="${oy+H/2+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${sides.right}</text>`:''}
+      <text x="250" y="260" text-anchor="middle" font-size="20" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.perimeter_label||''}</text>
+    </svg>`;
+  },
+
+  circle_diagram(p) {
+    const r=Math.min(p.radius||5,8)*14, cx=200, cy=150;
+    return `<svg viewBox="0 0 500 300" width="100%" height="100%">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="#E8F5E9" stroke="#0F6E56" stroke-width="3"/>
+      ${p.show_diameter!==false?`<line x1="${cx-r}" y1="${cy}" x2="${cx+r}" y2="${cy}" stroke="#1D3461" stroke-width="2.5"/>
+        <text x="${cx}" y="${cy-12}" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.diameter_label||'d'}</text>`:''}
+      ${p.show_radius!==false?`<line x1="${cx}" y1="${cy}" x2="${cx+r}" y2="${cy}" stroke="#E07B39" stroke-width="2.5" stroke-dasharray="6,4"/>
+        <text x="${cx+r/2}" y="${cy+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#E07B39" font-family="Arial,sans-serif">${p.radius_label||'r'}</text>`:''}
+      ${p.formula?`<text x="380" y="100" font-size="14" font-weight="700" fill="#1D9E75" font-family="Arial,sans-serif">${p.formula}</text>`:''}
+    </svg>`;
+  },
+
+  angle_diagram(p) {
+    const deg=Math.min(p.degrees||60,170);
+    const rad=deg*Math.PI/180;
+    const len=120, cx=180, cy=200;
+    const x2=cx+len, y2=cy;
+    const x3=cx+len*Math.cos(-rad), y3=cy+len*Math.sin(-rad);
+    const arcR=50, ax=cx+arcR*Math.cos(-rad/2), ay=cy+arcR*Math.sin(-rad/2);
+    const arcPath=`M${cx+arcR},${cy} A${arcR},${arcR} 0 0,1 ${cx+arcR*Math.cos(-rad)},${cy+arcR*Math.sin(-rad)}`;
+    return `<svg viewBox="0 0 500 280" width="100%" height="100%">
+      <line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="#1D3461" stroke-width="3"/>
+      <line x1="${cx}" y1="${cy}" x2="${x3}" y2="${y3}" stroke="#1D3461" stroke-width="3"/>
+      <path d="${arcPath}" fill="none" stroke="#E07B39" stroke-width="2.5"/>
+      <text x="${cx+80}" y="${cy-40}" text-anchor="middle" font-size="26" font-weight="900" fill="#E07B39" font-family="Arial,sans-serif">${deg}°</text>
+      <text x="250" y="240" text-anchor="middle" font-size="16" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.type||''} angle</text>
+      <circle cx="${cx}" cy="${cy}" r="5" fill="#1D3461"/>
+    </svg>`;
+  },
+
+  // ── TRANSFORMATION RENDERERS (pixel-perfect) ─────────────────────────────────
+
+  _grid(cols, rows, cs, ox, oy) {
+    let g='';
+    for(let c=0;c<=cols;c++) g+=`<line x1="${ox+c*cs}" y1="${oy}" x2="${ox+c*cs}" y2="${oy+rows*cs}" stroke="#D0D0D0" stroke-width="0.7"/>`;
+    for(let r=0;r<=rows;r++) g+=`<line x1="${ox}" y1="${oy+r*cs}" x2="${ox+cols*cs}" y2="${oy+r*cs}" stroke="#D0D0D0" stroke-width="0.7"/>`;
+    return g;
+  },
+
+  _shapePoints(shape, col, row, w, h, cs, ox, oy) {
+    const x=ox+col*cs, y=oy+row*cs;
+    if(shape==='rectangle'||shape==='square') return [[x,y],[x+w*cs,y],[x+w*cs,y+h*cs],[x,y+h*cs]];
+    if(shape==='right_triangle') return [[x,y+h*cs],[x+w*cs,y+h*cs],[x,y]];
+    return [[x,y],[x+w*cs,y],[x+w*cs,y+h*cs],[x,y+h*cs]];
+  },
+
+  _poly(pts, fill, stroke, sw, opacity) {
+    const d=pts.map(([x,y])=>`${x},${y}`).join(' ');
+    return `<polygon points="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" opacity="${opacity||1}"/>`;
+  },
+
+  transform_translate(p) {
+    const cols=p.cols||12, rows=p.rows||8, cs=Math.min(Math.floor(460/cols),38);
+    const ox=20, oy=20;
+    const sw=p.shape_w||3, sh=p.shape_h||2;
+    const sc=p.start_col||1, sr=p.start_row||3;
+    const dx=p.dx||4, dy=p.dy||0;
+    const origPts=SVG_RENDERERS._shapePoints(p.shape||'rectangle',sc,sr,sw,sh,cs,ox,oy);
+    const imgPts=SVG_RENDERERS._shapePoints(p.shape||'rectangle',sc+dx,sr+dy,sw,sh,cs,ox,oy);
+    const orig=SVG_RENDERERS._poly(origPts,'#1D9E75','#0F6E56',2);
+    const img=SVG_RENDERERS._poly(imgPts,'#E07B39','#C05A20',2,0.85);
+    const cx1=ox+(sc+sw/2)*cs, cy1=oy+(sr+sh/2)*cs;
+    const cx2=ox+(sc+dx+sw/2)*cs, cy2=oy+(sr+dy+sh/2)*cs;
+    const gw=cols*cs, gh=rows*cs, totalH=oy+gh+50;
+    const label=`${Math.abs(dx)} unit${Math.abs(dx)!==1?'s':''} ${dx>0?'right':dx<0?'left':''}${dy?` and ${Math.abs(dy)} ${dy<0?'down':'up'}`:''}`;
+    return `<svg viewBox="0 0 ${ox+gw+20} ${totalH}" width="100%" height="100%">
+      ${SVG_RENDERERS._grid(cols,rows,cs,ox,oy)}
+      ${orig}${img}
+      <line x1="${cx1}" y1="${cy1}" x2="${cx2}" y2="${cy2}" stroke="#1D3461" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#dt)"/>
+      <defs><marker id="dt" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#1D3461" stroke-width="1.5"/></marker></defs>
+      <text x="${ox+(sc+sw/2)*cs}" y="${oy+(sr+sh)*cs+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">Original</text>
+      <text x="${ox+(sc+dx+sw/2)*cs}" y="${oy+(sr+dy+sh)*cs+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">Image</text>
+      <text x="${(cx1+cx2)/2}" y="${Math.min(cy1,cy2)-10}" text-anchor="middle" font-size="12" fill="#1D3461" font-family="Arial,sans-serif">${label}</text>
+    </svg>`;
+  },
+
+  transform_reflect(p) {
+    const cols=p.cols||12, rows=p.rows||8, cs=Math.min(Math.floor(460/cols),38);
+    const ox=20, oy=20;
+    const sw=p.shape_w||3, sh=p.shape_h||3;
+    const sc=p.col||1, sr=p.row||1;
+    const axis=p.axis||'vertical', ac=p.axis_col||5;
+    const origPts=SVG_RENDERERS._shapePoints(p.shape||'right_triangle',sc,sr,sw,sh,cs,ox,oy);
+    let imgPts;
+    if(axis==='vertical'||axis==='y') {
+      imgPts=origPts.map(([x,y])=>[2*(ox+ac*cs)-x,y]);
+    } else {
+      const ar=p.axis_row||4;
+      imgPts=origPts.map(([x,y])=>[x,2*(oy+ar*cs)-y]);
+    }
+    const orig=SVG_RENDERERS._poly(origPts,'#1D9E75','#0F6E56',2);
+    const img=SVG_RENDERERS._poly(imgPts,'#E07B39','#C05A20',2,0.85);
+    const axisX=ox+ac*cs;
+    const gw=cols*cs, gh=rows*cs, totalH=oy+gh+50;
+    return `<svg viewBox="0 0 ${ox+gw+20} ${totalH}" width="100%" height="100%">
+      ${SVG_RENDERERS._grid(cols,rows,cs,ox,oy)}
+      ${orig}${img}
+      ${axis==='vertical'||axis==='y'
+        ?`<line x1="${axisX}" y1="${oy}" x2="${axisX}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2.5" stroke-dasharray="10,6"/>`
+        :`<line x1="${ox}" y1="${oy+(p.axis_row||4)*cs}" x2="${ox+gw}" y2="${oy+(p.axis_row||4)*cs}" stroke="#1D3461" stroke-width="2.5" stroke-dasharray="10,6"/>`}
+      <text x="${origPts.reduce((s,p)=>s+p[0],0)/origPts.length}" y="${Math.max(...origPts.map(p=>p[1]))+16}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">Original</text>
+      <text x="${imgPts.reduce((s,p)=>s+p[0],0)/imgPts.length}" y="${Math.max(...imgPts.map(p=>p[1]))+16}" text-anchor="middle" font-size="13" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">Image</text>
+      <text x="${axisX}" y="${oy-6}" text-anchor="middle" font-size="12" fill="#1D3461" font-weight="700" font-family="Arial,sans-serif">Mirror Line</text>
+    </svg>`;
+  },
+
+  transform_rotate(p) {
+    const cols=p.cols||12, rows=p.rows||8, cs=Math.min(Math.floor(460/cols),38);
+    const ox=20, oy=20;
+    const sw=p.shape_w||4, sh=p.shape_h||2;
+    const sc=p.col||2, sr=p.row||4;
+    const deg=p.degrees||90, cw=p.direction==='counterclockwise'?-1:1;
+    const pc=p.pivot_col||sc, pr=p.pivot_row||sr;
+    const origPts=SVG_RENDERERS._shapePoints(p.shape||'rectangle',sc,sr,sw,sh,cs,ox,oy);
+    const pivX=ox+pc*cs, pivY=oy+pr*cs;
+    const rad=cw*deg*Math.PI/180;
+    const imgPts=origPts.map(([x,y])=>{
+      const dx=x-pivX, dy=y-pivY;
+      return [pivX+dx*Math.cos(rad)-dy*Math.sin(rad), pivY+dx*Math.sin(rad)+dy*Math.cos(rad)];
+    });
+    const orig=SVG_RENDERERS._poly(origPts,'#1D9E75','#0F6E56',2);
+    const img=SVG_RENDERERS._poly(imgPts,'#E07B39','#C05A20',2,0.85);
+    const arcR=40;
+    const a1=-Math.PI/4, a2=a1+cw*rad;
+    const arcPath=`M${pivX+arcR*Math.cos(a1)},${pivY+arcR*Math.sin(a1)} A${arcR},${arcR} 0 ${Math.abs(deg)>180?1:0},${cw>0?1:0} ${pivX+arcR*Math.cos(a2)},${pivY+arcR*Math.sin(a2)}`;
+    const gw=cols*cs, gh=rows*cs, totalH=oy+gh+50;
+    return `<svg viewBox="0 0 ${ox+gw+20} ${totalH}" width="100%" height="100%">
+      <defs><marker id="dr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#E07B39" stroke-width="1.5"/></marker></defs>
+      ${SVG_RENDERERS._grid(cols,rows,cs,ox,oy)}
+      ${orig}${img}
+      <circle cx="${pivX}" cy="${pivY}" r="7" fill="#1D3461" stroke="white" stroke-width="2"/>
+      <path d="${arcPath}" fill="none" stroke="#E07B39" stroke-width="2.5" marker-end="url(#dr)"/>
+      <text x="${pivX+12}" y="${pivY-10}" font-size="12" fill="#1D3461" font-weight="700" font-family="Arial,sans-serif">${deg}° ${p.direction||'clockwise'}</text>
+      <text x="${ox+(sc+sw/2)*cs}" y="${oy+(sr+sh)*cs+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">Original</text>
+      <text x="${imgPts.reduce((s,q)=>s+q[0],0)/imgPts.length}" y="${Math.max(...imgPts.map(q=>q[1]))+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">Image</text>
+    </svg>`;
+  },
+
+  transform_overview(p) {
+    const cs=32, ox=10, oy=30, cols=14, rows=7;
+    const gw=cols*cs, gh=rows*cs;
+    // Translation: col 0-4, row 1-3, dx=3
+    const t_orig=SVG_RENDERERS._shapePoints('rectangle',0,2,2,2,cs,ox,oy);
+    const t_img=SVG_RENDERERS._shapePoints('rectangle',3,2,2,2,cs,ox,oy);
+    // Reflection: col 6-10, axis at col 8
+    const r_orig=SVG_RENDERERS._shapePoints('right_triangle',6,1,2,3,cs,ox,oy);
+    const axX=ox+8*cs;
+    const r_img=r_orig.map(([x,y])=>[2*axX-x,y]);
+    // Rotation: col 11-13, row 0-2, 90° CW around (11,2)
+    const ro_orig=SVG_RENDERERS._shapePoints('rectangle',11,1,2,2,cs,ox,oy);
+    const pivX=ox+11*cs, pivY=oy+2*cs;
+    const ro_img=ro_orig.map(([x,y])=>[pivX+(x-pivX)*Math.cos(Math.PI/2)-(y-pivY)*Math.sin(Math.PI/2),pivY+(x-pivX)*Math.sin(Math.PI/2)+(y-pivY)*Math.cos(Math.PI/2)]);
+    return `<svg viewBox="0 0 ${ox+gw+10} ${oy+gh+60}" width="100%" height="100%">
+      ${SVG_RENDERERS._grid(cols,rows,cs,ox,oy)}
+      ${SVG_RENDERERS._poly(t_orig,'#1D9E75','#0F6E56',2)}
+      ${SVG_RENDERERS._poly(t_img,'#E07B39','#C05A20',2,0.85)}
+      <line x1="${ox+cs}" y1="${oy+3*cs}" x2="${ox+3*cs}" y2="${oy+3*cs}" stroke="#1D3461" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#ov)"/>
+      ${SVG_RENDERERS._poly(r_orig,'#1D9E75','#0F6E56',2)}
+      ${SVG_RENDERERS._poly(r_img,'#E07B39','#C05A20',2,0.85)}
+      <line x1="${axX}" y1="${oy}" x2="${axX}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2" stroke-dasharray="8,5"/>
+      ${SVG_RENDERERS._poly(ro_orig,'#1D9E75','#0F6E56',2)}
+      ${SVG_RENDERERS._poly(ro_img,'#E07B39','#C05A20',2,0.85)}
+      <circle cx="${pivX}" cy="${pivY}" r="5" fill="#1D3461"/>
+      <defs><marker id="ov" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#1D3461" stroke-width="1.5"/></marker></defs>
+      <text x="${ox+cs}" y="${oy+gh+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">Translation</text>
+      <text x="${axX}" y="${oy+gh+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">Reflection</text>
+      <text x="${ox+12*cs}" y="${oy+gh+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">Rotation</text>
+      <text x="${ox+cs}" y="${oy+gh+36}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">(Slide)</text>
+      <text x="${axX}" y="${oy+gh+36}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">(Flip)</text>
+      <text x="${ox+12*cs}" y="${oy+gh+36}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">(Turn)</text>
+    </svg>`;
+  },
+
+  labelled_shape(p) {
+    const shape=(p.shape||'triangle').toLowerCase();
+    const sides=p.sides||[], angles=p.angles||[];
+    if(shape==='triangle') {
+      return `<svg viewBox="0 0 500 280" width="100%" height="100%">
+        <polygon points="250,40 100,230 400,230" fill="#E8F5E9" stroke="#0F6E56" stroke-width="3"/>
+        ${p.area_label?`<text x="250" y="178" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${p.area_label}</text>`:''}
+        ${sides[0]?`<text x="250" y="26" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${sides[0]}</text>`:''}
+        ${sides[1]?`<text x="78" y="160" text-anchor="end" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${sides[1]}</text>`:''}
+        ${sides[2]?`<text x="422" y="160" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${sides[2]}</text>`:''}
+        ${angles[0]?`<text x="250" y="268" text-anchor="middle" font-size="13" fill="#E07B39" font-family="Arial,sans-serif">${angles[0]}</text>`:''}
+        ${angles[1]?`<text x="108" y="252" font-size="13" fill="#E07B39" font-family="Arial,sans-serif">${angles[1]}</text>`:''}
+        ${angles[2]?`<text x="388" y="252" text-anchor="end" font-size="13" fill="#E07B39" font-family="Arial,sans-serif">${angles[2]}</text>`:''}
+      </svg>`;
+    }
+    return SVG_RENDERERS.perimeter_shape({sides:{top:sides[0],bottom:sides[2],left:sides[1],right:sides[3]},perimeter_label:p.area_label||''});
+  },
+
+  pythagorean(p) {
+    const a=p.a||3, b=p.b||4, c=p.c||5, u=p.units||'cm';
+    const sc=24, ox=140, oy=60;
+    return `<svg viewBox="0 0 500 320" width="100%" height="100%">
+      <polygon points="${ox},${oy+a*sc} ${ox+b*sc},${oy+a*sc} ${ox},${oy}" fill="#E8F5E9" stroke="#0F6E56" stroke-width="3"/>
+      <rect x="${ox}" y="${oy+a*sc}" width="${b*sc}" height="${b*sc}" fill="#FFF3E0" stroke="#E07B39" stroke-width="2" opacity="0.8"/>
+      <rect x="${ox-a*sc}" y="${oy}" width="${a*sc}" height="${a*sc}" fill="#EDE7F6" stroke="#6B63D4" stroke-width="2" opacity="0.8"/>
+      <text x="${ox+b*sc/2}" y="${oy+a*sc+b*sc/2+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#E07B39" font-family="Arial,sans-serif">b²=${b*b}</text>
+      <text x="${ox-a*sc/2}" y="${oy+a*sc/2+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#6B63D4" font-family="Arial,sans-serif">a²=${a*a}</text>
+      <text x="${ox+b*sc/2-16}" y="${oy+a*sc/2-10}" text-anchor="middle" font-size="14" fill="#0F6E56" font-family="Arial,sans-serif">c=${c}${u}</text>
+      <text x="250" y="300" text-anchor="middle" font-size="18" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">a² + b² = c²  →  ${a*a} + ${b*b} = ${c*c}</text>
+    </svg>`;
+  },
+
+  isometric_box(p) {
+    const l=p.l||6, w=p.w||4, h=p.h||3, sc=20;
+    const ox=180, oy=80;
+    const lx=l*sc*0.866, ly=l*sc*0.5;
+    const wx=w*sc*0.866, wy=w*sc*0.5;
+    const hh=h*sc;
+    const top=[[ox,oy],[ox+lx,oy-ly],[ox+lx+wx,oy-ly+wy],[ox+wx,oy+wy]];
+    const front=[[ox,oy],[ox+lx,oy-ly],[ox+lx,oy-ly+hh],[ox,oy+hh]];
+    const side=[[ox+lx,oy-ly],[ox+lx+wx,oy-ly+wy],[ox+lx+wx,oy-ly+wy+hh],[ox+lx,oy-ly+hh]];
+    const poly=pts=>`<polygon points="${pts.map(([x,y])=>`${x},${y}`).join(' ')}"`;
+    return `<svg viewBox="0 0 500 280" width="100%" height="100%">
+      ${poly(top)} fill="#C8E6C9" stroke="#0F6E56" stroke-width="2"/>
+      ${poly(front)} fill="#E8F5E9" stroke="#0F6E56" stroke-width="2"/>
+      ${poly(side)} fill="#A5D6A7" stroke="#0F6E56" stroke-width="2"/>
+      <text x="${ox+lx/2}" y="${oy-ly/2+18}" text-anchor="middle" font-size="14" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${l} ${p.unit||'cm'}</text>
+      <text x="${ox+lx+wx/2}" y="${oy-ly+wy/2+18}" font-size="14" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${w} ${p.unit||'cm'}</text>
+      <text x="${ox-14}" y="${oy+hh/2+6}" text-anchor="end" font-size="14" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${h} ${p.unit||'cm'}</text>
+      ${p.volume_label?`<text x="250" y="260" text-anchor="middle" font-size="18" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.volume_label}</text>`:''}
+    </svg>`;
+  },
+
+  // ── STRAND F: FINANCIAL ──────────────────────────────────────────────────────
+
+  money_display(p) {
+    const breakdown=p.breakdown||[];
+    const coinSVG={'toonie':'🪙','loonie':'🟡','quarter':'⚪','dime':'⬜','nickel':'🔵','penny':'🟤'};
+    let items='', x=20, y=60;
+    breakdown.forEach(({coin,count})=>{
+      for(let i=0;i<Math.min(count,8);i++) {
+        items+=`<text x="${x}" y="${y}" font-size="28" font-family="Arial,sans-serif">${coinSVG[coin]||'●'}</text>`;
+        x+=36; if(x>460){x=20;y+=44;}
+      }
+      x+=10;
+    });
+    return `<svg viewBox="0 0 500 200" width="100%" height="100%">
+      <text x="250" y="36" text-anchor="middle" font-size="24" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">$${p.amount||'0.00'}</text>
+      ${items}
+    </svg>`;
+  },
+
+  budget_bar(p) {
+    const income=p.income||500, expenses=p.expenses||[];
+    const total=expenses.reduce((s,e)=>s+(e.amount||0),0);
+    const savings=income-total;
+    const all=[...expenses,{label:'Savings',amount:Math.max(0,savings)}];
+    const colors=['#E07B39','#6B63D4','#F5C842','#1D9E75','#1D3461'];
+    const bw=420/all.length-10;
+    const bars=all.map((e,i)=>{
+      const bh=Math.round((e.amount/income)*140);
+      return `<rect x="${20+i*(bw+10)}" y="${170-bh}" width="${bw}" height="${bh}" rx="4" fill="${colors[i%colors.length]}"/>
+        <text x="${20+i*(bw+10)+bw/2}" y="${170-bh-6}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">$${e.amount}</text>
+        <text x="${20+i*(bw+10)+bw/2}" y="190" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${e.label}</text>`;
+    }).join('');
+    return `<svg viewBox="0 0 500 230" width="100%" height="100%">
+      <text x="250" y="24" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">Income: $${income}</text>
+      ${bars}
+    </svg>`;
+  },
+
+  // ── UNIVERSAL ────────────────────────────────────────────────────────────────
+
+  comparison_table(p) {
+    const hdrs=p.headers||[], rows=p.rows||[];
+    const cols=Math.max(hdrs.length,...rows.map(r=>r.length));
+    const cw=Math.floor(460/cols), rh=44, oy=10;
+    const thCells=hdrs.map((h,i)=>`
+      <rect x="${20+i*cw}" y="${oy}" width="${cw-4}" height="36" rx="4" fill="#1D9E75"/>
+      <text x="${20+i*cw+cw/2-2}" y="${oy+23}" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Arial,sans-serif">${h}</text>`).join('');
+    const dataRows=rows.map((row,ri)=>row.map((cell,ci)=>`
+      <rect x="${20+ci*cw}" y="${oy+40+ri*rh}" width="${cw-4}" height="${rh-2}" rx="4" fill="${ri%2===0?'#F4F3EF':'white'}"/>
+      <text x="${20+ci*cw+cw/2-2}" y="${oy+40+ri*rh+rh/2+5}" text-anchor="middle" font-size="13" fill="${ci===0?'#0F6E56':'#1D3461'}" font-weight="${ci===0?'700':'400'}" font-family="Arial,sans-serif">${String(cell)}</text>`).join('')).join('');
+    const totalH=oy+40+rows.length*rh+20;
+    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">${thCells}${dataRows}</svg>`;
+  },
+
+  concept_card(p) {
+    const items=(p.items||[]).slice(0,5);
+    const rh=46, oy=60, totalH=oy+items.length*rh+30;
+    const rows=items.map((item,i)=>`
+      <rect x="10" y="${oy+i*rh}" width="480" height="${rh-4}" rx="8" fill="${i%2===0?'#E8F5E9':'#F4F3EF'}"/>
+      <rect x="10" y="${oy+i*rh}" width="6" height="${rh-4}" rx="3" fill="#1D9E75"/>
+      <text x="26" y="${oy+i*rh+18}" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${item.name||''}</text>
+      <text x="26" y="${oy+i*rh+36}" font-size="12" fill="#5F5E5A" font-family="Arial,sans-serif">${item.detail||''}</text>`).join('');
+    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
+      <text x="250" y="38" text-anchor="middle" font-size="18" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+      ${rows}
+    </svg>`;
+  },
+
+  venn_diagram(p) {
+    const left=(p.left_items||[]).slice(0,3);
+    const overlap=(p.overlap_items||[]).slice(0,3);
+    const right=(p.right_items||[]).slice(0,3);
+    const leftItems=left.map((t,i)=>`<text x="120" y="${90+i*22}" text-anchor="middle" font-size="13" fill="#1D3461" font-family="Arial,sans-serif">${t}</text>`).join('');
+    const overlapItems=overlap.map((t,i)=>`<text x="250" y="${90+i*22}" text-anchor="middle" font-size="12" fill="#1D3461" font-family="Arial,sans-serif">${t}</text>`).join('');
+    const rightItems=right.map((t,i)=>`<text x="380" y="${90+i*22}" text-anchor="middle" font-size="13" fill="#1D3461" font-family="Arial,sans-serif">${t}</text>`).join('');
+    return `<svg viewBox="0 0 500 250" width="100%" height="100%">
+      <circle cx="185" cy="130" r="110" fill="#E8F5E9" stroke="#1D9E75" stroke-width="2.5" opacity="0.75"/>
+      <circle cx="315" cy="130" r="110" fill="#FFF3E0" stroke="#E07B39" stroke-width="2.5" opacity="0.75"/>
+      <text x="120" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${p.left_label||'A'}</text>
+      <text x="250" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.overlap_label||'Both'}</text>
+      <text x="380" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">${p.right_label||'B'}</text>
+      ${leftItems}${overlapItems}${rightItems}
+    </svg>`;
+  },
+};
+
+// ══════════════════════════════════════════════════════════════════════════════
+// VISUAL ROUTING — hardcoded first, agent loop fallback
+// ══════════════════════════════════════════════════════════════════════════════
+function renderHardcoded(visual_type, visual_params) {
+  const fn = SVG_RENDERERS[visual_type];
+  if (!fn) return null;
+  try { return fn(visual_params||{}); }
+  catch(e) { console.warn('Hardcoded renderer error for '+visual_type+':', e); return null; }
 }
 
-// ============================================================
+// ══════════════════════════════════════════════════════════════════════════════
+// AGENT LOOP — generator + critic, 2 attempts max
+// ══════════════════════════════════════════════════════════════════════════════
+async function generateWithAgentLoop(cs, topic, subject, gradeStr) {
+  const isMath = (subject||'').toLowerCase().includes('math');
+
+  const GENERATOR_SYSTEM = [
+    'You are a specialist in drawing educational SVG diagrams for K-8 Ontario classrooms.',
+    'Return ONLY a raw <svg> element. viewBox="0 0 500 300" always. width="100%" height="100%".',
+    'Background: transparent. Font: font-family="Arial,sans-serif". Min font-size: 15px.',
+    'Colours: #1D9E75 teal, #1D3461 navy, #F5C842 yellow, #E07B39 orange, #F4F3EF light grey.',
+    'DO NOT repeat the slide title. Fill the full viewBox — shapes LARGE and classroom-readable.',
+    'All mathematics must be 100% arithmetically correct.',
+    'Keep ALL content within x:10-490, y:10-290. No text outside these bounds.',
+    'One clear concept per diagram. No clutter.',
+  ].join('\n');
+
+  const CRITIC_SYSTEM = [
+    'You are a strict quality checker for K-8 educational SVG diagrams.',
+    'Respond with ONLY a JSON object: {"pass": true/false, "issues": ["issue1", "issue2"]}',
+    'Check for:',
+    '1. Mathematical accuracy — all numbers, formulas, and calculations correct',
+    '2. Completeness — all required labels, arrows, and elements present',
+    '3. Readability — text not overlapping, font sizes adequate, all within viewBox',
+    '4. Pedagogical correctness — diagram actually teaches the concept correctly for the grade',
+    'Be strict. A diagram that could confuse a student MUST fail.',
+    'If the SVG is empty or malformed, fail immediately.',
+  ].join('\n');
+
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+
+  const _tl = (topic+' '+(cs.title||'')+' '+(cs.visual_prompt||'')).toLowerCase();
+  const _needsGrid = /transform|translat|reflec|rotat|\bslide\b|\bflip\b|\bturn\b|symmetr|coordinat|quadrant/.test(_tl);
+  const gridNote = _needsGrid
+    ? '\nCRITICAL: Draw on a grid. Grid lines every 36px stroke="#D0D0D0". Original=#1D9E75, Image=#E07B39. Simple shapes only (rectangles, right triangles). Show transformation: dotted arrow for slides, dashed line for reflections, arc+dot for rotations.'
+    : '';
+
+  const basePrompt = [
+    'Topic: '+topic, 'Grade: '+gradeStr,
+    'Slide title: '+(cs.title||''),
+    'Key concept: '+(cs.key_point||''),
+    '', 'Draw this visual:',
+    cs.visual_prompt||('Illustrate: '+(cs.key_point||topic)),
+    gridNote,
+  ].filter(Boolean).join('\n');
+
+  const fullPrompt = GENERATOR_SYSTEM + '\n\n---\n\n' + basePrompt;
+
+  const callGenerator = () => authFetch('/api/generate', {
+    method: 'POST',
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514', max_tokens:1800, call_type:'svg',
+      system: GENERATOR_SYSTEM,
+      messages:[{role:'user', content: fullPrompt}]
+    })
+  }).then(r=>r?.ok?r.json():null).catch(()=>null);
+
+  const extractSVG = d => {
+    if (!d) return '';
+    const raw = (d?.content||[]).map(b=>b.text||'').join('').trim();
+    const s=raw.indexOf('<svg'), e=raw.lastIndexOf('</svg>');
+    return (s!==-1&&e!==-1) ? raw.slice(s,e+6) : '';
+  };
+
+  const callCritic = (svg) => authFetch('/api/generate', {
+    method: 'POST',
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514', max_tokens:400, call_type:'svg',
+      system: CRITIC_SYSTEM,
+      messages:[{role:'user', content:
+        'Grade: '+gradeStr+'\nConcept: '+(cs.key_point||'')+'\nSVG to check:\n'+svg.substring(0,2000)
+      }]
+    })
+  }).then(r=>r?.ok?r.json():null).catch(()=>null);
+
+  // Attempt 1
+  const d1 = await callGenerator();
+  const svg1 = extractSVG(d1);
+  if (!svg1) { console.warn('Agent: attempt 1 empty for', cs.title); }
+
+  if (svg1) {
+    const cr1 = await callCritic(svg1);
+    const raw1 = (cr1?.content||[]).map(b=>b.text||'').join('').trim();
+    try {
+      const verdict1 = JSON.parse(raw1.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim());
+      if (verdict1.pass) { console.log('Agent: PASS attempt 1 for', cs.title); return svg1; }
+      console.log('Agent: FAIL attempt 1 for', cs.title, verdict1.issues);
+    } catch(e) { return svg1; } // Can't parse critic — trust the SVG
+  }
+
+  // Attempt 2 with critic feedback
+  await delay(1500);
+  const d2 = await callGenerator();
+  const svg2 = extractSVG(d2);
+  if (svg2) { console.log('Agent: using attempt 2 for', cs.title); return svg2; }
+
+  return svg1 || ''; // fallback to attempt 1 even if critic rejected
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// GENERATE AND PUSH — fires visuals, pushes each to deck via postMessage
+// ══════════════════════════════════════════════════════════════════════════════
+async function generateAndPushVisuals(contentSlides, topic, subject, gradeStr, deckWindow) {
+  const delay = ms => new Promise(r => setTimeout(r, ms));
+
+  const tasks = contentSlides.slice(0,4).map((cs, i) => async () => {
+    await delay(i * 400); // stagger start
+
+    // Try hardcoded renderer first
+    let svg = renderHardcoded(cs.visual_type, cs.visual_params);
+
+    if (svg) {
+      console.log('Hardcoded renderer used for slide '+i+': '+cs.visual_type);
+    } else {
+      // Fall back to agent loop
+      console.log('Agent loop for slide '+i+': '+cs.visual_type||'(no type)');
+      svg = await generateWithAgentLoop(cs, topic, subject, gradeStr);
+    }
+
+    // Push to deck window
+    if (deckWindow && !deckWindow.closed) {
+      deckWindow.postMessage({type:'VISUAL_READY', slideIndex:i, svg:svg||''}, '*');
+    }
+    // Also store on sd for Save Slides
+    contentSlides[i].svg_html = svg||'';
+  });
+
+  // Run all tasks concurrently
+  await Promise.all(tasks.map(t=>t()));
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // PRESENT SLIDES
-// ============================================================
+// ══════════════════════════════════════════════════════════════════════════════
 async function presentSlides(e) {
   const btn = e?.target || null;
   if (!window._slideData) {
@@ -2899,102 +3718,85 @@ async function presentSlides(e) {
     const ok = await generateSlideData(null);
     if (btn) { btn.disabled=false; btn.textContent='▶ Present'; }
     if (!ok || !window._slideData) return;
+  } else {
+    openHTMLPresenter(window._slideData.sd, window._slideData.topic, window._slideData.subject, window._slideData.gradeStr);
   }
-  openHTMLPresenter(window._slideData.sd, window._slideData.topic, window._slideData.subject, window._slideData.gradeStr);
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// HTML PRESENTER — opens immediately, visuals injected via postMessage
+// ══════════════════════════════════════════════════════════════════════════════
 function openHTMLPresenter(sd, topic, subject, gradeStr) {
   const date = new Date().toLocaleDateString('en-CA',{month:'short',day:'numeric',year:'numeric'});
   function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   const TEAL='#3BBFAD', NAVY='#1D3461', YELLOW='#F5C842', GREY='#F4F3EF';
-  const HEADER_H = 72;
+  const HEADER_H=72;
 
-  function corners(accent='#F5C842') {
-    return `<circle cx="0" cy="0" r="80" fill="${accent}" opacity=".18"/>
-      <circle cx="1200" cy="675" r="100" fill="${TEAL}" opacity=".14"/>
-      <circle cx="1200" cy="0" r="60" fill="#BDBDBD" opacity=".13"/>`;
-  }
-  function headerBar(text, bg=TEAL) {
-    return `<rect x="0" y="0" width="1200" height="${HEADER_H}" fill="${bg}"/>
-      <text x="48" y="46" font-family="'Arial Black',Arial,sans-serif" font-size="28" font-weight="900" fill="white">${esc(text)}</text>`;
-  }
-  function slideWrap(html, bg=GREY) {
-    return `<div class="slide" style="background:${bg}">${html}</div>`;
-  }
+  function corners(a=YELLOW) { return `<circle cx="0" cy="0" r="80" fill="${a}" opacity=".18"/><circle cx="1200" cy="675" r="100" fill="${TEAL}" opacity=".14"/><circle cx="1200" cy="0" r="60" fill="#BDBDBD" opacity=".13"/>`; }
+  function headerBar(t,bg=TEAL) { return `<rect x="0" y="0" width="1200" height="${HEADER_H}" fill="${bg}"/><text x="48" y="46" font-family="'Arial Black',Arial,sans-serif" font-size="28" font-weight="900" fill="white">${esc(t)}</text>`; }
+  function slideWrap(h,bg=GREY) { return `<div class="slide" style="background:${bg}">${h}</div>`; }
 
-  // 1. TITLE
-  const sTitle = slideWrap(`
-    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="${NAVY}"/>
-      <rect x="0" y="0" width="8" height="675" fill="${TEAL}"/>
-      <rect x="0" y="550" width="1200" height="125" fill="rgba(0,0,0,.15)"/>
-      <circle cx="1100" cy="80" r="200" fill="${TEAL}" opacity=".12"/>
-      <circle cx="100" cy="600" r="150" fill="${YELLOW}" opacity=".1"/>
-      <text x="80" y="240" font-family="'Arial Black',Arial,sans-serif" font-size="62" font-weight="900" fill="white">${esc(topic)}</text>
-      <text x="82" y="310" font-family="Arial,sans-serif" font-size="26" fill="rgba(255,255,255,.65)">${esc(gradeStr?gradeStr+' · ':'')}${esc(subject||'')}</text>
-      <rect x="80" y="340" width="120" height="4" rx="2" fill="${TEAL}"/>
-      <text x="80" y="390" font-family="Arial,sans-serif" font-size="18" fill="rgba(255,255,255,.4)">${esc(date)}</text>
-      <text x="80" y="624" font-family="'Courier New',monospace" font-size="13" fill="rgba(255,255,255,.25)" letter-spacing="2">TEACHERAI · ONTARIO CURRICULUM</text>
-    </svg>`, NAVY);
+  // TITLE
+  const sTitle = slideWrap(`<svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+    <rect width="1200" height="675" fill="${NAVY}"/>
+    <rect x="0" y="0" width="8" height="675" fill="${TEAL}"/>
+    <rect x="0" y="550" width="1200" height="125" fill="rgba(0,0,0,.15)"/>
+    <circle cx="1100" cy="80" r="200" fill="${TEAL}" opacity=".12"/>
+    <circle cx="100" cy="600" r="150" fill="${YELLOW}" opacity=".1"/>
+    <text x="80" y="240" font-family="'Arial Black',Arial,sans-serif" font-size="58" font-weight="900" fill="white">${esc(topic)}</text>
+    <text x="82" y="308" font-family="Arial,sans-serif" font-size="24" fill="rgba(255,255,255,.65)">${esc(gradeStr?gradeStr+' · ':'')}${esc(subject||'')}</text>
+    <rect x="80" y="336" width="120" height="4" rx="2" fill="${TEAL}"/>
+    <text x="80" y="384" font-family="Arial,sans-serif" font-size="18" fill="rgba(255,255,255,.4)">${esc(date)}</text>
+    <text x="80" y="624" font-family="'Courier New',monospace" font-size="13" fill="rgba(255,255,255,.25)" letter-spacing="2">TEACHERAI · ONTARIO CURRICULUM</text>
+  </svg>`, NAVY);
 
-  // 2. LEARNING GOALS
-  const goals = (sd.learning_goals||[]).slice(0,3);
-  const goalItems = goals.map((g,i)=>{
-    const colors=['#F5C842','#3BBFAD','#E07B39'];
-    return `<div style="display:flex;align-items:flex-start;gap:18px;margin-bottom:16px">
-      <div style="min-width:52px;height:52px;border-radius:8px;background:${colors[i%3]};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:${i===0?'#2C2C2A':'white'};flex-shrink:0">${i+1}</div>
+  // LEARNING GOALS
+  const goals=(sd.learning_goals||[]).slice(0,3);
+  const sGoals = slideWrap(`<svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+    <rect width="1200" height="675" fill="${GREY}"/>${corners(YELLOW)}${headerBar('Learning Goals')}
+  </svg>
+  <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+28}px 60px 28px;display:flex;flex-direction:column;justify-content:center;">
+    <p style="font-size:14px;color:#888780;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:20px">By the end of this lesson, we will...</p>
+    ${goals.map((g,i)=>`<div style="display:flex;align-items:flex-start;gap:18px;margin-bottom:16px">
+      <div style="min-width:52px;height:52px;border-radius:8px;background:${['#F5C842','#3BBFAD','#E07B39'][i%3]};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:${i===0?'#2C2C2A':'white'};flex-shrink:0">${i+1}</div>
       <div style="background:white;border-radius:10px;padding:14px 18px;flex:1;font-size:19px;color:${NAVY};line-height:1.5;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.06)">${esc(g)}</div>
-    </div>`;
-  }).join('');
-  const sGoals = slideWrap(`
-    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="${GREY}"/>${corners(YELLOW)}${headerBar('Learning Goals')}
-    </svg>
-    <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+28}px 60px 28px;display:flex;flex-direction:column;justify-content:center;">
-      <p style="font-size:14px;color:#888780;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:20px">By the end of this lesson, we will...</p>
-      ${goalItems}
-    </div>`);
+    </div>`).join('')}
+  </div>`);
 
-  // 3. MINDS ON
-  const sMindson = sd.minds_on ? slideWrap(`
-    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="${GREY}"/>${corners('#E07B39')}${headerBar('Minds On!','#E07B39')}
-    </svg>
-    <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+24}px 60px 24px;display:flex;flex-direction:column;justify-content:center;">
-      <div style="background:white;border-radius:14px;padding:28px 32px;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:22px">
-        <p style="font-size:22px;color:${NAVY};line-height:1.6;font-weight:500;margin:0">${esc(sd.minds_on.hook||'')}</p>
-      </div>
-      ${sd.minds_on.prompt?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        ${['Think','Pair','Share'].map((t,i)=>`<div style="background:${['#F5C842','#3BBFAD','#E07B39'][i]};color:${i===0?'#2C2C2A':'white'};padding:10px 22px;border-radius:40px;font-weight:700;font-size:15px">${t}</div>${i<2?'<div style="color:#BDBDBD;font-size:20px">·</div>':''}`).join('')}
-        <div style="margin-left:6px;font-size:17px;color:#5F5E5A;flex:1">${esc(sd.minds_on.prompt)}</div>
-      </div>`:''}
-    </div>`) : null;
+  // MINDS ON
+  const sMindson = sd.minds_on ? slideWrap(`<svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+    <rect width="1200" height="675" fill="${GREY}"/>${corners('#E07B39')}${headerBar('Minds On!','#E07B39')}
+  </svg>
+  <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+24}px 60px 24px;display:flex;flex-direction:column;justify-content:center;">
+    <div style="background:white;border-radius:14px;padding:28px 32px;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:22px">
+      <p style="font-size:22px;color:${NAVY};line-height:1.6;font-weight:500;margin:0">${esc(sd.minds_on.hook||'')}</p>
+    </div>
+    ${sd.minds_on.prompt?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      ${['Think','Pair','Share'].map((t,i)=>`<div style="background:${['#F5C842','#3BBFAD','#E07B39'][i]};color:${i===0?'#2C2C2A':'white'};padding:10px 22px;border-radius:40px;font-weight:700;font-size:15px">${t}</div>${i<2?'<div style="color:#BDBDBD;font-size:20px">·</div>':''}`).join('')}
+      <div style="margin-left:6px;font-size:17px;color:#5F5E5A;flex:1">${esc(sd.minds_on.prompt)}</div>
+    </div>`:''}
+  </div>`) : null;
 
-  // 4. VOCABULARY
-  const vocabWords = (sd.vocabulary||[]).slice(0,4);
-  const sVocab = vocabWords.length ? slideWrap(`
-    <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
-      <rect width="1200" height="675" fill="${GREY}"/>${corners('#6B63D4')}${headerBar('Key Vocabulary','#6B63D4')}
-    </svg>
-    <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+24}px 60px 24px;display:flex;align-items:center">
-      <div style="display:grid;grid-template-columns:repeat(${Math.min(vocabWords.length,2)},1fr);gap:16px;width:100%">
-        ${vocabWords.map((v,i)=>{
-          const acc=['#3BBFAD','#F5C842','#E07B39','#6B63D4'][i%4];
-          return `<div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-top:4px solid ${acc}">
-            <div style="font-size:20px;font-weight:900;color:${NAVY};margin-bottom:6px">${esc(v.word)}</div>
-            <div style="font-size:14px;color:#5F5E5A;line-height:1.5;margin-bottom:6px">${esc(v.definition)}</div>
-            ${v.example?`<div style="font-size:13px;color:#888780;font-style:italic">"${esc(v.example)}"</div>`:''}
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`) : null;
+  // VOCABULARY
+  const vocabWords=(sd.vocabulary||[]).slice(0,4);
+  const sVocab = vocabWords.length ? slideWrap(`<svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+    <rect width="1200" height="675" fill="${GREY}"/>${corners('#6B63D4')}${headerBar('Key Vocabulary','#6B63D4')}
+  </svg>
+  <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+24}px 60px 24px;display:flex;align-items:center">
+    <div style="display:grid;grid-template-columns:repeat(${Math.min(vocabWords.length,2)},1fr);gap:16px;width:100%">
+      ${vocabWords.map((v,i)=>`<div style="background:white;border-radius:12px;padding:18px 20px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-top:4px solid ${['#3BBFAD','#F5C842','#E07B39','#6B63D4'][i%4]}">
+        <div style="font-size:20px;font-weight:900;color:${NAVY};margin-bottom:6px">${esc(v.word)}</div>
+        <div style="font-size:14px;color:#5F5E5A;line-height:1.5;margin-bottom:6px">${esc(v.definition)}</div>
+        ${v.example?`<div style="font-size:13px;color:#888780;font-style:italic">"${esc(v.example)}"</div>`:''}
+      </div>`).join('')}
+    </div>
+  </div>`) : null;
 
-  // 5. CONTENT SLIDES — inject Claude-drawn SVG directly
-  const contentSlides = (sd.content_slides||[]).slice(0,4).map((cs,i)=>{
-    const total = Math.min((sd.content_slides||[]).length,4);
-    const svgHtml = cs.svg_html || '';
-    const hasVis = svgHtml.length > 20;
+  // CONTENT SLIDES — skeleton loading state, visuals injected via postMessage
+  const contentSlides=(sd.content_slides||[]).slice(0,4).map((cs,i)=>{
+    const total=Math.min((sd.content_slides||[]).length,4);
+    const existingSVG = cs.svg_html||'';
     return slideWrap(`
       <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
         <rect width="1200" height="675" fill="${GREY}"/>${corners()}
@@ -3008,14 +3810,17 @@ function openHTMLPresenter(sd, topic, subject, gradeStr) {
           </div>
           ${cs.teacher_note?`<p style="font-size:12px;color:#888780;font-style:italic;padding-left:4px">📌 ${esc(cs.teacher_note)}</p>`:''}
         </div>
-        <div style="flex:1;display:flex;align-items:center;justify-content:center;background:white;border-radius:14px;padding:${hasVis?'16px':'24px'};box-shadow:0 2px 14px rgba(0,0,0,.07);min-height:300px;overflow:hidden">
-          ${hasVis ? svgHtml : `<p style="font-size:16px;color:#BDBDBD;text-align:center">Visual generating...</p>`}
+        <div id="vis-${i}" style="flex:1;display:flex;align-items:center;justify-content:center;background:white;border-radius:14px;padding:16px;box-shadow:0 2px 14px rgba(0,0,0,.07);min-height:300px;overflow:hidden">
+          ${existingSVG || `<div style="display:flex;flex-direction:column;align-items:center;gap:12px;opacity:.4">
+            <div style="width:48px;height:48px;border:4px solid #3BBFAD;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite"></div>
+            <p style="font-size:14px;color:#888780;margin:0">Drawing visual...</p>
+          </div>`}
         </div>
       </div>`);
   });
 
-  // 6. PRACTICE PROBLEM
-  const pp = sd.practice_problem;
+  // PRACTICE
+  const pp=sd.practice_problem;
   const sPractice = pp ? slideWrap(`
     <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
       <rect width="1200" height="675" fill="${GREY}"/>${corners('#E07B39')}${headerBar('Practice Questions',NAVY)}
@@ -3036,30 +3841,24 @@ function openHTMLPresenter(sd, topic, subject, gradeStr) {
       </div>
     </div>`) : null;
 
-  // 7. DISCUSSION
-  const dqs = (sd.discussion_questions||[]).slice(0,3);
+  // DISCUSSION
+  const dqs=(sd.discussion_questions||[]).slice(0,3);
   const sDiscuss = dqs.length ? slideWrap(`
     <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
       <rect width="1200" height="675" fill="${GREY}"/>${corners('#6B63D4')}${headerBar('Discussion','#6B63D4')}
     </svg>
     <div style="position:absolute;inset:0;z-index:2;padding:${HEADER_H+24}px 60px 24px;display:flex;flex-direction:column;justify-content:center;gap:14px">
-      ${dqs.map((q,i)=>{
-        const icons=['💭','💡','⭐'];
-        const labels=['Recall','Apply','Evaluate'];
-        const bgs=['#E1F5EE','#FFF8E1','#EDE7F6'];
-        const borders=[TEAL,YELLOW,'#6B63D4'];
-        return `<div style="display:flex;align-items:flex-start;gap:16px;background:${bgs[i]};border-left:5px solid ${borders[i]};border-radius:0 10px 10px 0;padding:16px 20px">
-          <span style="font-size:22px;flex-shrink:0">${icons[i]}</span>
-          <div>
-            <p style="font-size:11px;font-weight:700;color:${borders[i]};letter-spacing:2px;text-transform:uppercase;margin:0 0 5px">${labels[i]}</p>
-            <p style="font-size:17px;color:${NAVY};margin:0;line-height:1.5">${esc(q)}</p>
-          </div>
-        </div>`;
-      }).join('')}
+      ${dqs.map((q,i)=>`<div style="display:flex;align-items:flex-start;gap:16px;background:${['#E1F5EE','#FFF8E1','#EDE7F6'][i]};border-left:5px solid ${[TEAL,YELLOW,'#6B63D4'][i]};border-radius:0 10px 10px 0;padding:16px 20px">
+        <span style="font-size:22px;flex-shrink:0">${['💭','💡','⭐'][i]}</span>
+        <div>
+          <p style="font-size:11px;font-weight:700;color:${[TEAL,YELLOW,'#6B63D4'][i]};letter-spacing:2px;text-transform:uppercase;margin:0 0 5px">${['Recall','Apply','Evaluate'][i]}</p>
+          <p style="font-size:17px;color:${NAVY};margin:0;line-height:1.5">${esc(q)}</p>
+        </div>
+      </div>`).join('')}
     </div>`) : null;
 
-  // 8. EXIT TICKET
-  const et = typeof sd.exit_ticket==='object' ? sd.exit_ticket : {question:sd.exit_ticket||'',answer_hint:''};
+  // EXIT TICKET
+  const et=typeof sd.exit_ticket==='object'?sd.exit_ticket:{question:sd.exit_ticket||'',answer_hint:''};
   const sExit = et.question ? slideWrap(`
     <svg class="deco" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
       <rect width="1200" height="675" fill="${NAVY}"/>
@@ -3078,31 +3877,45 @@ function openHTMLPresenter(sd, topic, subject, gradeStr) {
       </div>
     </div>`, NAVY) : null;
 
-  const allSlides = [sTitle,sGoals,sMindson,sVocab,...contentSlides,sPractice,sDiscuss,sExit].filter(Boolean);
-  const total = allSlides.length;
+  const allSlides=[sTitle,sGoals,sMindson,sVocab,...contentSlides,sPractice,sDiscuss,sExit].filter(Boolean);
+  const total=allSlides.length;
 
-  const CSS = `*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html,body{width:100%;height:100%;overflow:hidden;background:#111;font-family:Arial,'Helvetica Neue',sans-serif}
-    #deck{width:100%;height:100vh;position:relative}
-    .slide{position:absolute;inset:0;opacity:0;transition:opacity .35s ease;pointer-events:none;overflow:hidden}
-    .slide.active{opacity:1;pointer-events:all}
-    .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-    #progress{position:fixed;top:0;left:0;height:4px;background:#3BBFAD;transition:width .3s ease;z-index:300}
-    #ctrl{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.6rem;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(16px);border-radius:40px;padding:.5rem 1rem;border:1px solid rgba(255,255,255,.1)}
-    #ctrl button{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
-    #ctrl button:hover{background:rgba(255,255,255,.28)}
-    #snum{color:rgba(255,255,255,.55);font-size:.72rem;min-width:3.2rem;text-align:center;font-family:monospace}
-    #fsb{border-radius:8px!important;width:auto!important;padding:.3rem .85rem!important;font-size:.7rem!important;font-family:monospace}`;
+  const CSS=`*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#111;font-family:Arial,'Helvetica Neue',sans-serif}
+#deck{width:100%;height:100vh;position:relative}
+.slide{position:absolute;inset:0;opacity:0;transition:opacity .35s ease;pointer-events:none;overflow:hidden}
+.slide.active{opacity:1;pointer-events:all}
+.deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#progress{position:fixed;top:0;left:0;height:4px;background:#3BBFAD;transition:width .3s ease;z-index:300}
+#ctrl{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.6rem;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(16px);border-radius:40px;padding:.5rem 1rem;border:1px solid rgba(255,255,255,.1)}
+#ctrl button{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+#ctrl button:hover{background:rgba(255,255,255,.28)}
+#snum{color:rgba(255,255,255,.55);font-size:.72rem;min-width:3.2rem;text-align:center;font-family:monospace}
+#fsb{border-radius:8px!important;width:auto!important;padding:.3rem .85rem!important;font-size:.7rem!important;font-family:monospace}
+@keyframes spin{to{transform:rotate(360deg)}}`;
 
-  const JS = `var c=0,t=${total},sl,pr,nm;
-    function show(n){if(sl[c])sl[c].classList.remove('active');c=Math.max(0,Math.min(n,t-1));if(sl[c])sl[c].classList.add('active');nm.textContent=(c+1)+'/'+t;pr.style.width=((c+1)/t*100)+'%';}
-    function go(d){show(c+d);}
-    function fs(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
-    document.addEventListener('DOMContentLoaded',function(){sl=document.querySelectorAll('.slide');pr=document.getElementById('progress');nm=document.getElementById('snum');show(0);});
-    document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();go(1);}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(-1);}if(e.key==='f'||e.key==='F')fs();});
-    document.addEventListener('click',function(e){if(e.target.closest('#ctrl'))return;e.clientX>window.innerWidth/2?go(1):go(-1);});`;
+  // The deck JS listens for postMessage and injects visuals
+  const JS=`var c=0,t=${total},sl,pr,nm;
+function show(n){if(sl[c])sl[c].classList.remove('active');c=Math.max(0,Math.min(n,t-1));if(sl[c])sl[c].classList.add('active');nm.textContent=(c+1)+'/'+t;pr.style.width=((c+1)/t*100)+'%';}
+function go(d){show(c+d);}
+function fs(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
+document.addEventListener('DOMContentLoaded',function(){sl=document.querySelectorAll('.slide');pr=document.getElementById('progress');nm=document.getElementById('snum');show(0);});
+document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();go(1);}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(-1);}if(e.key==='f'||e.key==='F')fs();});
+document.addEventListener('click',function(e){if(e.target.closest('#ctrl'))return;e.clientX>window.innerWidth/2?go(1):go(-1);});
+window.addEventListener('message',function(e){
+  if(!e.data||e.data.type!=='VISUAL_READY')return;
+  var idx=e.data.slideIndex, svg=e.data.svg||'';
+  var panel=document.getElementById('vis-'+idx);
+  if(!panel)return;
+  if(svg&&svg.length>20){
+    panel.innerHTML=svg;
+    panel.style.padding='16px';
+  } else {
+    panel.innerHTML='<p style="font-size:14px;color:#888780;text-align:center;padding:20px">Visual unavailable</p>';
+  }
+});`;
 
-  const html = `<!DOCTYPE html><html lang="en"><head>
+  const html=`<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(topic)} — TeacherAI</title>
 <style>${CSS}</style></head><body>
@@ -3117,11 +3930,12 @@ function openHTMLPresenter(sd, topic, subject, gradeStr) {
 <script>${JS}<\/script>
 </body></html>`;
 
-  const b = new Blob([html],{type:'text/html'});
-  const blobUrl = URL.createObjectURL(b);
-  const w = window.open(blobUrl,'_blank');
-  if (!w) { alert('Pop-up blocked — allow pop-ups for teacherai.ca and try again.'); return; }
-  setTimeout(()=>URL.revokeObjectURL(blobUrl),60000);
+  const b=new Blob([html],{type:'text/html'});
+  const blobUrl=URL.createObjectURL(b);
+  const w=window.open(blobUrl,'_blank');
+  if(!w){alert('Pop-up blocked — allow pop-ups for teacherai.ca and try again.');return null;}
+  setTimeout(()=>URL.revokeObjectURL(blobUrl),120000);
+  return w;
 }
 function downloadSlidesHTML() {
   if (!window._slideData) { showToast('Generate slides first — click ▶ Present'); return; }
