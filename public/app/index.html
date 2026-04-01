@@ -542,7 +542,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <input type="checkbox" id="splitToggle" style="display:none;">
       <button id="addGradeBtn" style="display:none;"></button>
 
-      <!-- Row 1: Class · Subject · Duration -->
+      <!-- Row 1: Class · Subject -->
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
         <div class="fi" id="classSelectorRow" style="display:none;flex:1.5;min-width:140px;">
           <label>Class</label>
@@ -553,20 +553,9 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <select id="subj" onchange="onSubjectChange()">
             <option>Language / Literacy</option>
             <option>Mathematics</option>
-            <option>Science &amp; Technology</option>
-            <option>Social Studies</option>
-            <option>Health &amp; PE</option>
-            <option>The Arts</option>
           </select>
         </div>
-        <div class="fi" style="flex:1;min-width:110px;">
-          <label>Duration</label>
-          <select id="dur">
-            <option>1 lesson</option>
-            <option>3 lessons</option>
-            <option>5 lessons</option>
-          </select>
-        </div>
+<input type="hidden" id="dur" value="1 lesson">
       </div>
       <div id="classAutoFillNote" style="display:none;"></div>
 
@@ -599,7 +588,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       </div>
 
       <!-- Subject note for non-literacy subjects -->
-      <div id="subjectNote" style="display:none;"></div>
+      <div id="subjectNote" style="display:none!important;"></div>
 
       <!-- Row 4: What to generate -->
       <div style="margin-bottom:16px;">
@@ -1824,10 +1813,7 @@ function onSubjectChange() {
       'Health & PE':'💪 Ontario Health & Physical Education curriculum.',
       'The Arts':'🎨 Ontario The Arts curriculum — Visual Arts, Music, Drama, Dance.'
     };
-    if (subjectNote) {
-      subjectNote.style.display='block';
-      subjectNote.innerHTML=`<div class="ban ban-b" style="margin-bottom:12px;font-size:.78rem;"><span>ℹ️</span><span>${notes[subj]||''} Lesson will be generated using Ontario curriculum knowledge.</span></div>`;
-    }
+    // subjectNote removed — banner hidden to reduce UI clutter
   }
 }
 
