@@ -1,0 +1,779 @@
+[
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "assess ways in which animals and plants depend on each other and on their environment to meet their basic needs",
+    "band": "1"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "describe the basic needs of plants and animals, including air, water, food, shelter, and space",
+    "band": "1"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "identify the different ways in which plants and animals adapt to changes in their environments",
+    "band": "1"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "describe how plants and animals go through a cycle of life, including the processes of growth, reproduction, and death",
+    "band": "1"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "assess the impact of human activities on the use of materials that have different properties",
+    "band": "1"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "describe and compare the properties of materials (e.g., hard/soft, rough/smooth, heavy/light, transparent/opaque)",
+    "band": "1"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "identify objects that are made from one or more materials, and explain why specific materials are used for specific purposes",
+    "band": "1"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "assess the environmental impact of producing and disposing of structures built by humans",
+    "band": "1"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "identify structures in the natural environment and the built environment",
+    "band": "1"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "describe the function of various structures and identify the materials used to build them",
+    "band": "1"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "assess ways in which human activities affect seasonal changes and the living things that depend on seasonal patterns",
+    "band": "1"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "describe changes in the sky and weather from season to season",
+    "band": "1"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "identify the four seasons and describe how each season affects plants, animals, and human activities",
+    "band": "1"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "assess the impact of human activities on growth and changes in plants",
+    "band": "2"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "describe the basic needs of plants and demonstrate understanding of how plants meet those needs",
+    "band": "2"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "identify the parts of a plant (root, stem, leaf, flower, fruit, seed) and describe their functions",
+    "band": "2"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "describe the life cycle of a plant and explain how plants reproduce",
+    "band": "2"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "assess how changes in the properties of materials can be used to benefit society",
+    "band": "2"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "identify and describe reversible changes (e.g., bending, freezing, melting) and non-reversible changes (e.g., burning, cooking) in materials",
+    "band": "2"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "describe the three states of matter (solid, liquid, gas) and give examples of each",
+    "band": "2"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "assess the environmental impact of human structures and technologies on wildlife",
+    "band": "2"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "identify structures that are built to carry a load and explain the forces acting on them",
+    "band": "2"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "identify the properties of materials used to build strong and stable structures",
+    "band": "2"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "assess the impact of human activities on air and water quality",
+    "band": "2"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "describe properties of air and water and explain why they are important to living things",
+    "band": "2"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "describe the water cycle, including evaporation, condensation, and precipitation",
+    "band": "2"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "assess ways in which humans and other living things depend on natural habitats and communities",
+    "band": "3"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "identify and describe different types of habitats and the living things that depend on each",
+    "band": "3"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "classify living things in a local habitat as producers, consumers, or decomposers",
+    "band": "3"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "demonstrate understanding of food chains as a model of energy flow between producers and consumers",
+    "band": "3"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "assess environmental impacts of the use of materials with specific properties",
+    "band": "3"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "compare the properties of liquids and solids and identify examples of each",
+    "band": "3"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "identify materials that are magnetic and explain how magnets can be used to separate materials",
+    "band": "3"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "assess the impact of strong and stable structures on society and the environment",
+    "band": "3"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "identify structures that serve the same function and compare their designs",
+    "band": "3"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "demonstrate understanding of what makes structures strong and stable",
+    "band": "3"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "assess the impact of human activities on soils",
+    "band": "3"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "describe the properties and components of soil and explain why soil is important to plants",
+    "band": "3"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "classify different types of soils (e.g., sand, clay, loam) based on their properties",
+    "band": "3"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "assess the impact of human activities on habitats and communities of plants and animals",
+    "band": "4"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "demonstrate understanding of the concepts of habitat and community",
+    "band": "4"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "describe ways in which plants and animals adapt to their environment",
+    "band": "4"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "classify plants and animals according to their roles in a food chain or food web",
+    "band": "4"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "assess how understanding of the properties of rocks and minerals is used in society",
+    "band": "4"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "compare the physical properties of rocks and minerals (e.g., colour, lustre, hardness, texture)",
+    "band": "4"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "describe how rocks are formed (igneous, sedimentary, metamorphic) and how they change over time",
+    "band": "4"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "assess the impact of pulleys and gears on society and the environment",
+    "band": "4"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "demonstrate understanding of how pulleys and gears act as simple machines to change force and speed",
+    "band": "4"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "identify examples of pulleys and gears in everyday devices and explain their function",
+    "band": "4"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "assess the impact of human activities on the natural environment",
+    "band": "4"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "identify and describe properties of air, water, and soil and explain their importance to living things",
+    "band": "4"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "describe the water cycle and explain how the sun drives the water cycle",
+    "band": "4"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "assess the impact of human activities on biodiversity and the sustainability of ecosystems",
+    "band": "5"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "demonstrate understanding of biodiversity as the variety of life on Earth",
+    "band": "5"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "classify organisms using the hierarchical classification system (kingdom, phylum, class, order, family, genus, species)",
+    "band": "5"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "describe the interdependence of organisms in an ecosystem and the impact of changes on biodiversity",
+    "band": "5"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "assess the impact on society and the environment of technologies that use the properties of matter",
+    "band": "5"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "demonstrate understanding of the particle theory of matter to explain the properties of solids, liquids, and gases",
+    "band": "5"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "describe and explain physical changes (reversible) and chemical changes (irreversible) in matter",
+    "band": "5"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "assess the impact of simple machines on society and the environment",
+    "band": "5"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "identify and describe the six types of simple machines: lever, wheel and axle, pulley, inclined plane, wedge, screw",
+    "band": "5"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "explain how simple machines make work easier by changing the direction or size of a force",
+    "band": "5"
+  },
+  {
+    "code": "D2.3",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "identify simple machines in compound machines and explain how they work together",
+    "band": "5"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "assess the impact of human activities on the conservation of energy and resources",
+    "band": "5"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "identify a variety of forms of energy, and describe how each form is used in everyday life",
+    "band": "5"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "demonstrate understanding of the law of conservation of energy",
+    "band": "5"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "describe how energy is stored as potential energy and transformed in a variety of everyday situations",
+    "band": "5"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "assess the impact of human activities and technologies on biodiversity and on the sustainability of ecosystems",
+    "band": "6"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "describe the complementary processes of photosynthesis and cellular respiration",
+    "band": "6"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "identify the organelles in a plant cell and an animal cell and describe their functions",
+    "band": "6"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "explain how biodiversity contributes to the sustainability of ecosystems",
+    "band": "6"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "assess the social and environmental impact of electrical energy production and consumption",
+    "band": "6"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "describe the properties of static and current electricity",
+    "band": "6"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "build and describe a simple series circuit and a parallel circuit",
+    "band": "6"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "explain how electrical energy can be transformed into other forms of energy",
+    "band": "6"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "assess the impact of flight technology on society and the environment",
+    "band": "6"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "explain the four forces of flight: lift, weight, thrust, and drag",
+    "band": "6"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "describe the Bernoulli principle and explain how it relates to flight",
+    "band": "6"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "assess the impact of space exploration and technology on society and the environment",
+    "band": "6"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "describe the composition of the solar system and identify the characteristics of the planets",
+    "band": "6"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "explain the effects of the relative positions and motions of Earth, the Moon, and the Sun",
+    "band": "6"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "assess the impact of human activities on interactions within ecosystems",
+    "band": "7"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "demonstrate understanding of the interactions between biotic and abiotic components of ecosystems",
+    "band": "7"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "describe the processes of photosynthesis and cellular respiration and explain their role in ecosystems",
+    "band": "7"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "explain how matter and energy flow through ecosystems using food webs",
+    "band": "7"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "assess the social and environmental impact of the use of pure substances and mixtures",
+    "band": "7"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "identify physical and chemical properties of pure substances and mixtures",
+    "band": "7"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "distinguish between pure substances (elements and compounds) and mixtures (mechanical and solutions)",
+    "band": "7"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "describe separation techniques for mixtures based on physical properties",
+    "band": "7"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "assess the impact of structures and mechanisms on society and the environment",
+    "band": "7"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "explain how forces and structure relate to achieve function in mechanical systems",
+    "band": "7"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "identify and describe the mechanical advantage of gears, pulleys, and levers in compound machines",
+    "band": "7"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "assess the impact of human activities on the quality and sustainability of water systems",
+    "band": "7"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "describe the properties and distribution of water on Earth's surface and in the atmosphere",
+    "band": "7"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "explain the role of the water cycle in the distribution of water on Earth",
+    "band": "7"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "describe factors that affect the water quality of local water systems",
+    "band": "7"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "assess the impact of scientific discoveries and technologies on human cells and body systems",
+    "band": "8"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "identify the major organelles in animal cells and describe their functions",
+    "band": "8"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "describe the structure and function of the main human body systems and explain how they work together",
+    "band": "8"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "overall": "Life Systems",
+    "desc": "explain how cells, tissues, organs, and organ systems are organized in the human body",
+    "band": "8"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "assess the social and environmental impact of the use of fluids",
+    "band": "8"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "describe the properties of fluids, including viscosity and density",
+    "band": "8"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "explain Pascal's law and describe how it applies to hydraulic and pneumatic systems",
+    "band": "8"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "overall": "Matter and Energy",
+    "desc": "explain Archimedes' principle and describe how it applies to flotation",
+    "band": "8"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "assess the impact of space technology on society and the environment",
+    "band": "8"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "describe optical devices and explain how they use properties of light",
+    "band": "8"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "overall": "Structures and Mechanisms",
+    "desc": "explain the wave properties of light including reflection, refraction, and dispersion",
+    "band": "8"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "assess the impact of human activities on Earth's climate systems",
+    "band": "8"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "describe Earth's four major systems (geosphere, hydrosphere, atmosphere, biosphere) and their interactions",
+    "band": "8"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "explain factors that affect climate and describe the causes and effects of climate change",
+    "band": "8"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "overall": "Earth and Space Systems",
+    "desc": "identify ways to reduce the impact of climate change on Earth's systems",
+    "band": "8"
+  }
+]
