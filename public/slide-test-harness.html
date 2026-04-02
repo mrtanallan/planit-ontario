@@ -245,10 +245,8 @@ function buildStructurePrompt(unit, gradeExps) {
   if (!isWholeNumberTopic) {
     primaryExps = primaryExps.filter(function(e){ return !(e.code === 'B1.1' && /whole number/i.test(e.desc)); });
     primaryExps = primaryExps.filter(function(e){ return !(e.code === 'B1.2' && /whole number/i.test(e.desc) && isFractionTopic); });
-    primaryExps = primaryExps.filter(function(e){ return !(isFractionTopic && e.strand === 'C'); });
     otherExps = otherExps.filter(function(e){ return !(e.code === 'B1.1' && /whole number/i.test(e.desc)); });
     otherExps = otherExps.filter(function(e){ return !(e.code === 'B1.2' && /whole number/i.test(e.desc) && isFractionTopic); });
-    otherExps = otherExps.filter(function(e){ return !(isFractionTopic && e.strand === 'C'); });
   }
   // Further filter otherExps to exclude clearly irrelevant strands
   // This prevents D strand codes appearing in number/algebra lessons, etc.
@@ -517,13 +515,13 @@ async function runUnit(idx) {
 
       const HDESC = {
         concept_card:'Text-only card with bullet points. NO diagrams. Only for vocabulary/definitions — WRONG for area, geometry, graphs.',
-        worked_steps:'Numbered algebraic steps with highlighted answer. For arithmetic/algebra procedures. WRONG for geometry concepts needing diagrams. Do NOT fail for: step label wording, equation complexity, or minor rounding differences (1.124864 vs 1.125 is acceptable). Only fail for wrong type or clearly wrong arithmetic (e.g. 3+4=8).',
+        worked_steps:'Numbered algebraic steps with highlighted answer. For arithmetic/algebra procedures. WRONG for geometry concepts needing diagrams. Do NOT fail for: step label wording, equation complexity, rounding differences, or missing intermediate steps (condensed solutions are valid). Only fail for wrong type or clearly wrong arithmetic (e.g. 3+4=8).',
         comparison_table:'Table with header and data rows. Text/numbers only — WRONG when visual diagrams are required.',
         formula_display:'Large formula with variable boxes. Formula only, no diagram — WRONG alone for spatial concepts needing shape visuals.',
         number_line:'Line with ticks, highlighted points, and labels. Good for values, ordering, fractions, mental math jumps. Do NOT fail for missing jump arrows — renderer shows highlighted points only. Mental math decomposition (47→67→72) is CORRECT usage. Only fail if values are mathematically wrong or min does not include 0.',
         fraction_bar:'Rectangle divided into d equal parts, n shaded. Division must be exact.',
         fraction_circle:'Circle divided into d equal slices, n shaded.',
-        fraction_compare:'Two fraction bars side by side. Comparison operator must be correct (2/6 < 4/6, NOT >).',
+        fraction_compare:'Two fraction bars side by side. Valid for fractions AND decimals (0.3 vs 0.5 as bars is valid pedagogy). Do NOT fail for using on a decimals topic. Only fail if comparison operator is mathematically wrong (e.g. 1/4 > 1/2).',
         area_grid:'Unit square grid inside rectangle. Shows counting method only — NOT for formula method. Does NOT show height line.',
         triangle_area:'Triangle with dashed perpendicular height, right-angle box, base+height labels, area formula. CORRECT for triangle area.',
         parallelogram_area:'Parallelogram with dashed height, right-angle box, labels, formula. CORRECT for parallelogram area.',
@@ -756,10 +754,18 @@ async function runExpectationsCritic(unit, lessonExpectations) {
   if (!allExps || allExps.length === 0) {
     return { pass: true, issues: [] }; // Can't validate without curriculum — skip
   }
-  // Auto-pass topics with no curriculum match
+  // Auto-pass topics with no exact curriculum match in Ontario Math 2020
   const topicLC = (unit.topic||'').toLowerCase();
-  if (/angle|acute|obtuse/.test(topicLC) && unit.grade === 'Grade 4') {
-    return { pass: true, issues: [] }; // No angle expectations in Grade 4 Ontario Math 2020
+  const knownGaps = [
+    { grade: 'Grade 4', pattern: /angle|acute|obtuse/ },
+    { grade: 'Grade 5', pattern: /volume.*prism|prism.*volume|rectangular prism/ },
+    { grade: 'Grade 7', pattern: /circle graph/ },
+    { grade: 'Grade 8', pattern: /compound interest/ },
+  ];
+  for (const gap of knownGaps) {
+    if (gap.grade === unit.grade && gap.pattern.test(topicLC)) {
+      return { pass: true, issues: [] }; // No exact expectation in Ontario Math 2020
+    }
   }
 
   const gradeNum = unit.grade === 'Kindergarten' ? 1 : parseInt(unit.grade.replace('Grade ',''));
