@@ -2776,12 +2776,16 @@ async function generateSlideData(callerBtn) {
       '== DATA: bar_graph({title:"T",labels:["A","B","C"],values:[12,8,10],y_label:"Count"}) | line_graph({title:"T",labels:["Mon","Tue","Wed"],values:[12,15,11],y_label:"°C"}) | pie_chart({title:"T",slices:[{label:"A",value:50,color:"#1D9E75"},{label:"B",value:30,color:"#F5C842"},{label:"C",value:20,color:"#E07B39"}]}) | pictograph({title:"T",rows:[{label:"Jan",count:4},{label:"Feb",count:6}],symbol:"🌟",scale:2,scale_label:"=2"}) | double_bar({title:"T",labels:["A","B"],series:[{name:"Gr4",values:[8,5],color:"#1D9E75"},{name:"Gr5",values:[6,9],color:"#E07B39"}]}) | probability_scale({events:[{label:"Impossible",value:0},{label:"Flip heads",value:0.5},{label:"Certain",value:1}]}) | stem_leaf({title:"T",stems:[{stem:6,leaves:[2,5,8]},{stem:7,leaves:[0,3,7]}]}) | scatter_plot({points:[{x:2,y:4},{x:4,y:7},{x:6,y:9}],x_max:10,y_max:12,x_label:\"Hours\",y_label:\"Score\",line_of_best_fit:true})',
       '== SPATIAL: grouped_objects({groups:3,per_group:4,label:"3 groups of 4",operator:"×"}) | measurement_bar({unit_name:"paperclip",count:5,object:"pencil"}) | angle_types({types:[{degrees:45,label:"Acute",desc:"Less than 90°",color:"#1D9E75"},{degrees:90,label:"Right",desc:"Exactly 90°",color:"#1D3461"},{degrees:130,label:"Obtuse",desc:"Greater than 90°",color:"#E07B39"}]}) | area_grid({cols:6,rows:4,label_top:"6cm",label_right:"4cm",area_label:"A=24cm²"}) | triangle_area({base:8,height:6,units:"cm",area_label:"A=(8×6)÷2=24cm²"}) | parallelogram_area({base:10,height:6,units:"cm",area_label:"A=10×6=60cm²"}) | perimeter_shape({shape:"rectangle",sides:{top:"6cm",bottom:"6cm",left:"4cm",right:"4cm"},perimeter_label:"P=20cm"}) | circle_diagram({radius:5,show_diameter:true,radius_label:"r=5cm",diameter_label:"d=10cm",formula:"C=πd≈31.4cm"}) | angle_diagram({degrees:60,label:"60°",type:"acute"}) | transform_translate({shape:"rectangle",shape_w:3,shape_h:2,start_col:1,start_row:3,dx:4,dy:0,cols:12,rows:8}) | transform_reflect({shape:"right_triangle",shape_w:3,shape_h:3,col:1,row:1,axis:"vertical",axis_col:5,cols:12,rows:8}) | transform_rotate({shape:"rectangle",shape_w:4,shape_h:2,col:2,row:4,degrees:90,direction:"clockwise",pivot_col:2,pivot_row:4,cols:12,rows:8}) | transform_overview({shape:"rectangle"}) | labelled_shape({shape:"triangle",sides:["8cm","6cm","10cm"],angles:["90°","53°","37°"]}) | pythagorean({a:3,b:4,c:5,units:"cm"}) | isometric_box({l:6,w:4,h:3,unit:"cm",volume_label:"V=72cm³"})',
       '== FINANCIAL: money_display({amount:2.75,breakdown:[{coin:"toonie",count:1},{coin:"quarter",count:3}]}) | budget_bar({income:500,expenses:[{label:"Food",amount:200},{label:"Transport",amount:80}]})',
+      '== LITERACY: anchor_chart({title:"Fact vs Opinion",left_label:"Facts",right_label:"Opinions",left_items:["Snow is white","Dogs have fur"],right_items:["Dogs are the best","Winter is awful"],color:"#1D9E75"}) | story_map({title:"Story Map",characters:"Maya, her dog",setting:"A forest in autumn",problem:"Maya\'s dog gets lost",solution:"She follows his paw prints home"}) | reading_strategy({strategy_name:"Visualizing",before:["Preview the title and pictures","Predict what the text is about"],during:["Create mental images as you read","Notice details that help you see the scene"],after:["Draw or describe your mental image","Compare with a partner"]}) | sentence_frames({title:"Discussion Sentence Frames",frames:[{stem:"I think... because...",example:"I think the character was brave because she didn\'t give up."},{stem:"I agree/disagree with ___ because...",example:"I agree with Maya because the text says..."},{stem:"This connects to...",example:"This connects to when I..."}],color:"#6B63D4"}) | word_web({center_word:"Resilience",connections:[{label:"Definition",detail:"bouncing back from difficulty"},{label:"Example",detail:"trying again after failing"},{label:"Synonym",detail:"perseverance"},{label:"Sentence",detail:"She showed resilience."}],color:"#E07B39"}) | writing_process({title:"The Writing Process"})',
+      '== SCIENCE: cycle_diagram({title:"Water Cycle",steps:[{label:"Evaporation",description:"Water heats up",color:"#E07B39"},{label:"Condensation",description:"Forms clouds",color:"#6B63D4"},{label:"Precipitation",description:"Rain or snow",color:"#1D9E75"},{label:"Collection",description:"Back to ground",color:"#1D3461"}],center_label:"Water Cycle"}) | food_chain({title:"Forest Food Chain",organisms:[{name:"Sun",role:"Energy Source",emoji:"☀️",color:"#F5C842"},{name:"Grass",role:"Producer",emoji:"🌿",color:"#1D9E75"},{name:"Rabbit",role:"Primary Consumer",emoji:"🐇",color:"#E07B39"},{name:"Fox",role:"Secondary Consumer",emoji:"🦊",color:"#6B63D4"}]}) | science_diagram({title:"Parts of a Flower",subject:"🌸",labels:[{text:"Petal",position:"top-left"},{text:"Stamen",position:"top-right"},{text:"Pistil",position:"top"},{text:"Sepal",position:"bottom-left"},{text:"Stem",position:"bottom"},{text:"Roots",position:"bottom-right"}],color:"#1D9E75"})',
       '== UNIVERSAL: comparison_table({headers:["Shape","Formula","Example"],rows:[["Rectangle","l×w","6×4=24cm²"]]}) | concept_card({title:"Types",items:[{name:"Equilateral",detail:"3 equal sides"}]}) | venn_diagram({left_label:"A",right_label:"B",overlap_label:"Both",left_items:["only A"],right_items:["only B"],overlap_items:["shared"]})',
       'RULES:',
       '- learning_goals: exactly 2-3',
       '- vocabulary: 3-5 words',
       '- content_slides: exactly 4 — choose type that best shows the concept',
-      isMath ? '- MATH SLIDE SEQUENCE: slide1=formula/concept intro, slide2=worked_steps or visual model, slide3=labelled diagram or data visual, slide4=comparison_table or harder worked_steps' : '- Use concept_card, comparison_table, or venn_diagram for literacy/science concepts',
+      isMath ? '- MATH SLIDE SEQUENCE: slide1=formula/concept intro, slide2=worked_steps or visual model, slide3=labelled diagram or data visual, slide4=comparison_table or harder worked_steps'
+      : (subject||'').toLowerCase().includes('science') ? '- SCIENCE SLIDE SEQUENCE: slide1=science_diagram or cycle_diagram (introduce concept), slide2=food_chain or cycle_diagram (process/system), slide3=comparison_table or anchor_chart (compare/classify), slide4=concept_card or worked_steps (consolidate). NEVER use math renderers for science.'
+      : '- LITERACY SLIDE SEQUENCE: slide1=anchor_chart or word_web (introduce concept), slide2=story_map or reading_strategy (apply strategy), slide3=sentence_frames (language support), slide4=writing_process or anchor_chart (consolidate). Also valid: concept_card, comparison_table, venn_diagram. NEVER use math renderers for literacy.',
       '- discussion_questions: exactly 3',
       '- All content age-appropriate for grade '+(gradeStr||'Elementary'),
       '- visual_params must use REAL numbers appropriate for the grade — no placeholders',
@@ -2797,6 +2801,20 @@ async function generateSlideData(callerBtn) {
       '- CRITICAL: visual_type must be an exact type name. NEVER use strand names (NUMBER/ALGEBRA/DATA/SPATIAL/FINANCIAL) as visual_type.',
       '- Return ONLY the JSON object with no markdown fences and no text before or after it.',
       '- VISUAL TYPE SELECTION — read before choosing:',
+      '  SCIENCE TOPIC MAPPINGS:',
+      '  * Water cycle / rock cycle / life cycle / seasons / carbon cycle: cycle_diagram.',
+      '  * Food chains / food webs / energy flow: food_chain.',
+      '  * Labeled organism / plant parts / animal parts / cell / body system: science_diagram.',
+      '  * Classification / living vs non-living / sorting: anchor_chart (two-column).',
+      '  * Scientific method / inquiry process: reading_strategy (Question/Predict/Test or similar).',
+      '  * States of matter / properties comparison: comparison_table or anchor_chart.',
+      '  LITERACY TOPIC MAPPINGS:',
+      '  * Story elements / narrative / fiction: story_map for slide 1.',
+      '  * Vocabulary / word study / new terms: word_web for slide 1.',
+      '  * Reading comprehension strategies: reading_strategy (before/during/after).',
+      '  * Writing process / composition / genres: writing_process for slide 1.',
+      '  * Grammar / literary devices / compare-contrast: anchor_chart (T-chart).',
+      '  * Discussion / ELL support / sentence starters: sentence_frames.',
       '  UNIT-SPECIFIC SLIDE OVERRIDES (highest priority — override everything else):',
       '  * Grade 4, Area of Rectangles: slide 1 = labelled_shape (show the rectangle). slide 2 = area_grid (counting method). slide 3 = worked_steps (formula A=l×w). slide 4 = worked_steps (practice problem). NEVER area_grid on slide 1. NEVER worked_steps on slide 1.',
       '  * Grade 5, Volume of Rectangular Prisms: ALL slides must use isometric_box. NEVER labelled_shape (it renders 2D rectangles, not 3D prisms). NEVER formula_display alone.',
@@ -4113,6 +4131,521 @@ const SVG_RENDERERS = {
       ${leftItems}${overlapItems}${rightItems}
     </svg>`;
   },
+  // ── LITERACY RENDERERS ─────────────────────────────────────────────────────
+
+  // anchor_chart — T-chart or two-column anchor chart (K-8 literacy)
+  // params: title, left_label, right_label, left_items[], right_items[], color
+  anchor_chart(p) {
+    const title = p.title || '';
+    const leftLabel = p.left_label || 'Column A';
+    const rightLabel = p.right_label || 'Column B';
+    const leftItems = (p.left_items || []).slice(0, 6);
+    const rightItems = (p.right_items || []).slice(0, 6);
+    const accentColor = p.color || '#1D9E75';
+
+    const W = 500, titleH = 44, headerH = 36, oy = titleH + 8;
+    const colW = Math.floor((W - 20) / 2);
+    const itemH = 34;
+    const maxItems = Math.max(leftItems.length, rightItems.length, 1);
+    const bodyH = maxItems * itemH + 12;
+    const totalH = Math.min(oy + headerH + bodyH + 16, 310);
+
+    // Title bar
+    const titleSVG = title
+      ? `<rect x="0" y="0" width="${W}" height="${titleH}" rx="0" fill="${accentColor}"/>
+         <text x="${W/2}" y="${titleH - 11}" text-anchor="middle" font-size="16" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>`
+      : '';
+
+    // Column headers
+    const headerSVG = `
+      <rect x="10" y="${oy}" width="${colW}" height="${headerH}" rx="4" fill="${accentColor}" opacity="0.85"/>
+      <text x="${10 + colW/2}" y="${oy + 23}" text-anchor="middle" font-size="13" font-weight="700" fill="white" font-family="Arial,sans-serif">${leftLabel}</text>
+      <rect x="${10 + colW + 4}" y="${oy}" width="${colW}" height="${headerH}" rx="4" fill="${accentColor}" opacity="0.6"/>
+      <text x="${10 + colW + 4 + colW/2}" y="${oy + 23}" text-anchor="middle" font-size="13" font-weight="700" fill="white" font-family="Arial,sans-serif">${rightLabel}</text>`;
+
+    // Centre dividing line
+    const dividerX = 10 + colW + 2;
+    const divider = `<line x1="${dividerX}" y1="${oy + headerH}" x2="${dividerX}" y2="${oy + headerH + bodyH}" stroke="${accentColor}" stroke-width="2" opacity="0.3"/>`;
+
+    // Rows
+    let rows = '';
+    for (let i = 0; i < maxItems; i++) {
+      const rowY = oy + headerH + i * itemH;
+      const bg = i % 2 === 0 ? '#F4F3EF' : 'white';
+      const lText = leftItems[i] || '';
+      const rText = rightItems[i] || '';
+      rows += `
+        <rect x="10" y="${rowY + 2}" width="${colW}" height="${itemH - 2}" fill="${bg}" rx="2"/>
+        <rect x="${10 + colW + 4}" y="${rowY + 2}" width="${colW}" height="${itemH - 2}" fill="${bg}" rx="2"/>
+        <foreignObject x="14" y="${rowY + 2}" width="${colW - 8}" height="${itemH - 2}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="height:${itemH - 2}px;display:flex;align-items:center;font-family:Arial,sans-serif;font-size:12px;color:#1D3461;padding:0 4px;line-height:1.3;word-wrap:break-word">${lText}</div>
+        </foreignObject>
+        <foreignObject x="${10 + colW + 8}" y="${rowY + 2}" width="${colW - 8}" height="${itemH - 2}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="height:${itemH - 2}px;display:flex;align-items:center;font-family:Arial,sans-serif;font-size:12px;color:#1D3461;padding:0 4px;line-height:1.3;word-wrap:break-word">${rText}</div>
+        </foreignObject>`;
+    }
+
+    return `<svg viewBox="0 0 ${W} ${totalH}" width="100%" height="100%">
+      ${titleSVG}${headerSVG}${divider}${rows}
+    </svg>`;
+  },
+
+  // story_map — story elements organizer (Character/Setting/Problem/Solution)
+  // params: title, elements[{label, content, color}], or use defaults
+  story_map(p) {
+    const title = p.title || 'Story Map';
+    const defaults = [
+      { label: 'Characters', content: p.characters || '', color: '#1D9E75' },
+      { label: 'Setting',    content: p.setting    || '', color: '#E07B39' },
+      { label: 'Problem',    content: p.problem    || '', color: '#6B63D4' },
+      { label: 'Solution',   content: p.solution   || '', color: '#F5C842' },
+    ];
+    const elements = p.elements
+      ? p.elements.slice(0, 4).map((e, i) => ({ ...defaults[i], ...e }))
+      : defaults;
+
+    const W = 500, titleH = 40;
+    const cols = 2, rows = Math.ceil(elements.length / cols);
+    const boxW = Math.floor((W - 30) / cols);
+    const boxH = 96;
+    const gap = 10;
+    const totalH = titleH + rows * (boxH + gap) + gap + 10;
+
+    const titleSVG = `
+      <rect x="0" y="0" width="${W}" height="${titleH}" fill="#1D3461"/>
+      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="16" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>`;
+
+    const boxes = elements.map((el, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const bx = 10 + col * (boxW + gap);
+      const by = titleH + gap + row * (boxH + gap);
+      const labelColor = el.color || '#1D9E75';
+      const isDark = labelColor === '#1D3461' || labelColor === '#6B63D4';
+      return `
+        <rect x="${bx}" y="${by}" width="${boxW}" height="${boxH}" rx="8" fill="white" stroke="${labelColor}" stroke-width="2.5"/>
+        <rect x="${bx}" y="${by}" width="${boxW}" height="28" rx="8" fill="${labelColor}"/>
+        <rect x="${bx}" y="${by + 18}" width="${boxW}" height="10" fill="${labelColor}"/>
+        <text x="${bx + boxW/2}" y="${by + 19}" text-anchor="middle" font-size="13" font-weight="700" fill="${isDark ? 'white' : '#1D3461'}" font-family="Arial,sans-serif">${el.label}</text>
+        <foreignObject x="${bx + 6}" y="${by + 30}" width="${boxW - 12}" height="${boxH - 36}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:12px;color:#1D3461;line-height:1.4;word-wrap:break-word;height:${boxH - 36}px;overflow:hidden">${el.content}</div>
+        </foreignObject>`;
+    }).join('');
+
+    return `<svg viewBox="0 0 ${W} ${Math.min(totalH, 310)}" width="100%" height="100%">
+      ${titleSVG}${boxes}
+    </svg>`;
+  },
+
+  // reading_strategy — Before/During/After reading scaffold
+  // params: strategy_name, before[], during[], after[]
+  reading_strategy(p) {
+    const name = p.strategy_name || 'Reading Strategy';
+    const sections = [
+      { label: 'Before Reading',  icon: '👁', items: (p.before  || []).slice(0, 4), color: '#E07B39' },
+      { label: 'During Reading',  icon: '📖', items: (p.during  || []).slice(0, 4), color: '#1D9E75' },
+      { label: 'After Reading',   icon: '💬', items: (p.after   || []).slice(0, 4), color: '#6B63D4' },
+    ];
+
+    const W = 500, titleH = 40, colW = Math.floor((W - 28) / 3), gap = 6;
+    const minItemH = 28;
+    const maxItems = Math.max(...sections.map(s => s.items.length), 1);
+    const bodyH = 34 + maxItems * minItemH + 12;
+    const totalH = Math.min(titleH + bodyH + 16, 310);
+
+    const titleSVG = `
+      <rect x="0" y="0" width="${W}" height="${titleH}" fill="#1D3461"/>
+      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="15" font-weight="900" fill="white" font-family="Arial,sans-serif">${name}</text>`;
+
+    const cols = sections.map((sec, i) => {
+      const cx = 8 + i * (colW + gap);
+      const cy = titleH + 8;
+
+      // Column header
+      const header = `
+        <rect x="${cx}" y="${cy}" width="${colW}" height="32" rx="6" fill="${sec.color}"/>
+        <text x="${cx + colW/2}" y="${cy + 21}" text-anchor="middle" font-size="13" font-weight="700" fill="white" font-family="Arial,sans-serif">${sec.icon} ${sec.label}</text>`;
+
+      // Items
+      const items = sec.items.map((item, j) => {
+        const iy = cy + 36 + j * minItemH;
+        return `
+          <rect x="${cx}" y="${iy}" width="${colW}" height="${minItemH - 2}" rx="4" fill="${j % 2 === 0 ? '#F4F3EF' : 'white'}"/>
+          <foreignObject x="${cx + 4}" y="${iy}" width="${colW - 8}" height="${minItemH - 2}">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;color:#1D3461;display:flex;align-items:center;height:${minItemH - 2}px;line-height:1.3;word-wrap:break-word;padding:0 2px">${item}</div>
+          </foreignObject>`;
+      }).join('');
+
+      return header + items;
+    }).join('');
+
+    return `<svg viewBox="0 0 ${W} ${totalH}" width="100%" height="100%">
+      ${titleSVG}${cols}
+    </svg>`;
+  },
+
+  // sentence_frames — sentence stems for writing/discussion support
+  // params: title, frames[{stem, example}], color
+  sentence_frames(p) {
+    const title = p.title || 'Sentence Frames';
+    const frames = (p.frames || []).slice(0, 5);
+    const accentColor = p.color || '#6B63D4';
+
+    const W = 500, titleH = 40, frameH = 52, gap = 6;
+    const totalH = Math.min(titleH + frames.length * (frameH + gap) + 16, 310);
+
+    const titleSVG = `
+      <rect x="0" y="0" width="${W}" height="${titleH}" fill="${accentColor}"/>
+      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="15" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>`;
+
+    const framesSVG = frames.map((f, i) => {
+      const fy = titleH + 8 + i * (frameH + gap);
+      const stem = f.stem || f || '';
+      const example = f.example || '';
+      return `
+        <rect x="10" y="${fy}" width="${W - 20}" height="${frameH}" rx="8" fill="white" stroke="${accentColor}" stroke-width="1.5" opacity="${0.5 + i * 0.1}"/>
+        <rect x="10" y="${fy}" width="6" height="${frameH}" rx="4" fill="${accentColor}"/>
+        <foreignObject x="22" y="${fy + 4}" width="${W - 36}" height="${example ? 28 : frameH - 8}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#1D3461;line-height:1.4;word-wrap:break-word">${stem}</div>
+        </foreignObject>
+        ${example ? `<foreignObject x="22" y="${fy + 30}" width="${W - 36}" height="20">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;color:#5F5E5A;font-style:italic;line-height:1.3">${example}</div>
+        </foreignObject>` : ''}`;
+    }).join('');
+
+    return `<svg viewBox="0 0 ${W} ${totalH}" width="100%" height="100%">
+      ${titleSVG}${framesSVG}
+    </svg>`;
+  },
+
+  // word_web — central word with radiating connections
+  // params: center_word, connections[{label, detail}], color
+  word_web(p) {
+    const centerWord = p.center_word || p.word || 'Word';
+    const connections = (p.connections || []).slice(0, 6);
+    const accentColor = p.color || '#1D9E75';
+
+    const W = 500, H = 300;
+    const cx = W / 2, cy = H / 2;
+    const centerR = 46;
+    const orbitR = 105;
+
+    // Angles: spread connections evenly, starting from top
+    const count = connections.length || 1;
+    const angleStep = (2 * Math.PI) / count;
+    const startAngle = -Math.PI / 2;
+
+    const nodesSVG = connections.map((conn, i) => {
+      const angle = startAngle + i * angleStep;
+      const nx = cx + orbitR * Math.cos(angle);
+      const ny = cy + orbitR * Math.sin(angle);
+      const label = conn.label || conn || '';
+      const detail = conn.detail || '';
+      const nodeW = 88, nodeH = detail ? 44 : 32;
+
+      // Line from center to node
+      // Shorten line so it doesn't overlap the circles
+      const dx = nx - cx, dy = ny - cy;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const lx1 = cx + (dx/dist) * (centerR + 4);
+      const ly1 = cy + (dy/dist) * (centerR + 4);
+      const lx2 = nx - (dx/dist) * (nodeH/2 + 4);
+      const ly2 = ny - (dy/dist) * (nodeH/2 + 4);
+
+      return `
+        <line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="${accentColor}" stroke-width="2" opacity="0.5" stroke-dasharray="4,3"/>
+        <rect x="${nx - nodeW/2}" y="${ny - nodeH/2}" width="${nodeW}" height="${nodeH}" rx="8" fill="white" stroke="${accentColor}" stroke-width="2"/>
+        <foreignObject x="${nx - nodeW/2 + 4}" y="${ny - nodeH/2 + 2}" width="${nodeW - 8}" height="${nodeH - 4}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:#1D3461;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;height:${nodeH - 4}px;word-wrap:break-word;line-height:1.3">
+            <span>${label}</span>
+            ${detail ? `<span style="font-weight:400;font-size:10px;color:#5F5E5A">${detail}</span>` : ''}
+          </div>
+        </foreignObject>`;
+    }).join('');
+
+    // Center circle
+    const centerSVG = `
+      <circle cx="${cx}" cy="${cy}" r="${centerR}" fill="${accentColor}"/>
+      <foreignObject x="${cx - centerR + 4}" y="${cy - centerR + 4}" width="${(centerR - 4)*2}" height="${(centerR - 4)*2}">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Arial Black',Arial,sans-serif;font-size:13px;font-weight:900;color:white;text-align:center;display:flex;align-items:center;justify-content:center;width:${(centerR-4)*2}px;height:${(centerR-4)*2}px;word-wrap:break-word;line-height:1.2">${centerWord}</div>
+      </foreignObject>`;
+
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">
+      <rect width="${W}" height="${H}" fill="#F4F3EF" rx="0"/>
+      ${nodesSVG}${centerSVG}
+    </svg>`;
+  },
+
+  // writing_process — sequential process steps with arrows (writing process, inquiry cycle, etc.)
+  // params: title, steps[{label, description, color}]
+  writing_process(p) {
+    const title = p.title || 'The Writing Process';
+    const defaultColors = ['#E07B39','#1D9E75','#6B63D4','#F5C842','#1D3461'];
+    const defaultSteps = [
+      { label: 'Pre-Writing',  description: 'Plan and gather ideas',        color: defaultColors[0] },
+      { label: 'Drafting',     description: 'Write your first draft',        color: defaultColors[1] },
+      { label: 'Revising',     description: 'Improve content and ideas',     color: defaultColors[2] },
+      { label: 'Editing',      description: 'Fix grammar and spelling',       color: defaultColors[3] },
+      { label: 'Publishing',   description: 'Share your final writing',       color: defaultColors[4] },
+    ];
+    const steps = (p.steps || defaultSteps).slice(0, 5);
+    const count = steps.length;
+
+    const W = 500, titleH = 38;
+    const stepW = Math.floor((W - 20 - (count - 1) * 8) / count);
+    const stepH = 100;
+    const oy = titleH + 12;
+    const totalH = oy + stepH + 16;
+
+    const titleSVG = `
+      <rect x="0" y="0" width="${W}" height="${titleH}" fill="#1D3461"/>
+      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="15" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>`;
+
+    const stepsSVG = steps.map((step, i) => {
+      const sx = 10 + i * (stepW + 8);
+      const color = step.color || defaultColors[i % defaultColors.length];
+      const label = step.label || '';
+      const desc = step.description || step.desc || '';
+      const isDark = color === '#1D3461';
+
+      // Arrow connector (not on last step)
+      const arrow = i < count - 1
+        ? `<polygon points="${sx + stepW + 1},${oy + stepH/2 - 8} ${sx + stepW + 7},${oy + stepH/2} ${sx + stepW + 1},${oy + stepH/2 + 8}" fill="${color}" opacity="0.7"/>`
+        : '';
+
+      return `
+        <rect x="${sx}" y="${oy}" width="${stepW}" height="${stepH}" rx="8" fill="${color}"/>
+        <text x="${sx + stepW/2}" y="${oy + 22}" text-anchor="middle" font-size="20" font-family="Arial,sans-serif">${i + 1}</text>
+        <foreignObject x="${sx + 4}" y="${oy + 28}" width="${stepW - 8}" height="38">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Arial Black',Arial,sans-serif;font-size:11px;font-weight:900;color:${isDark ? 'white' : '#1D3461'};text-align:center;word-wrap:break-word;line-height:1.3">${label}</div>
+        </foreignObject>
+        <foreignObject x="${sx + 4}" y="${oy + 64}" width="${stepW - 8}" height="32">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;color:${isDark ? 'rgba(255,255,255,0.85)' : 'rgba(29,52,97,0.8)'};text-align:center;word-wrap:break-word;line-height:1.3">${desc}</div>
+        </foreignObject>
+        ${arrow}`;
+    }).join('');
+
+    return `<svg viewBox="0 0 ${W} ${Math.min(totalH, 210)}" width="100%" height="100%">
+      ${titleSVG}${stepsSVG}
+    </svg>`;
+  },
+
+  // ── SCIENCE RENDERERS ──────────────────────────────────────────────────────
+
+  // cycle_diagram — circular flow diagram (water cycle, rock cycle, life cycle, seasons)
+  // params: title, steps[{label, description, color}], center_label
+  cycle_diagram(p) {
+    const title = p.title || 'Cycle Diagram';
+    const centerLabel = p.center_label || '';
+    const defaultColors = ['#1D9E75','#E07B39','#6B63D4','#F5C842','#1D3461','#3BBFAD'];
+    const steps = (p.steps || []).slice(0, 6);
+    const count = steps.length;
+    if (count < 2) return '<svg viewBox="0 0 500 300" width="100%" height="100%"><text x="250" y="150" text-anchor="middle" font-size="16" fill="#888">Add at least 2 steps</text></svg>';
+
+    const W = 500, H = 300;
+    const cx = W / 2, cy = H / 2;
+    const orbitR = Math.min(cx, cy) - 68;
+    const nodeR = 44;
+    const angleStep = (2 * Math.PI) / count;
+    const startAngle = -Math.PI / 2; // top
+
+    // Node positions
+    const positions = steps.map((_, i) => ({
+      x: cx + orbitR * Math.cos(startAngle + i * angleStep),
+      y: cy + orbitR * Math.sin(startAngle + i * angleStep),
+    }));
+
+    // Draw curved arrows between consecutive nodes (and last back to first)
+    const arrows = positions.map((pos, i) => {
+      const next = positions[(i + 1) % count];
+      // Midpoint control point — curve outward slightly
+      const midX = (pos.x + next.x) / 2;
+      const midY = (pos.y + next.y) / 2;
+      const dx = midX - cx, dy = midY - cy;
+      const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      const curveFactor = 0.28;
+      const cpX = midX + dx/dist * orbitR * curveFactor;
+      const cpY = midY + dy/dist * orbitR * curveFactor;
+
+      // Shorten endpoints to not overlap node circles
+      const shrink = nodeR + 5;
+      const d1x = pos.x - cpX, d1y = pos.y - cpY;
+      const d1 = Math.sqrt(d1x*d1x + d1y*d1y) || 1;
+      const d2x = next.x - cpX, d2y = next.y - cpY;
+      const d2 = Math.sqrt(d2x*d2x + d2y*d2y) || 1;
+      const x1 = pos.x - (d1x/d1)*shrink;
+      const y1 = pos.y - (d1y/d1)*shrink;
+      const x2 = next.x - (d2x/d2)*shrink;
+      const y2 = next.y - (d2y/d2)*shrink;
+
+      const color = steps[i].color || defaultColors[i % defaultColors.length];
+      return `<path d="M${x1},${y1} Q${cpX},${cpY} ${x2},${y2}" fill="none" stroke="${color}" stroke-width="2.5" marker-end="url(#arr${i})" opacity="0.8"/>
+        <defs><marker id="arr${i}" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><polygon points="0 0, 7 3, 0 6" fill="${color}"/></marker></defs>`;
+    }).join('');
+
+    // Draw nodes
+    const nodes = steps.map((step, i) => {
+      const { x, y } = positions[i];
+      const color = step.color || defaultColors[i % defaultColors.length];
+      const label = step.label || '';
+      const desc = step.description || step.desc || '';
+      return `
+        <circle cx="${x}" cy="${y}" r="${nodeR}" fill="${color}"/>
+        <foreignObject x="${x - nodeR + 4}" y="${y - nodeR + 4}" width="${(nodeR-4)*2}" height="${(nodeR-4)*2}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="width:${(nodeR-4)*2}px;height:${(nodeR-4)*2}px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:Arial,sans-serif;color:white;line-height:1.25">
+            <div style="font-size:11px;font-weight:900;word-wrap:break-word">${label}</div>
+            ${desc ? `<div style="font-size:9px;opacity:0.85;margin-top:2px;word-wrap:break-word">${desc}</div>` : ''}
+          </div>
+        </foreignObject>`;
+    }).join('');
+
+    // Center label
+    const center = centerLabel
+      ? `<circle cx="${cx}" cy="${cy}" r="36" fill="white" stroke="#D0D0D0" stroke-width="1.5"/>
+         <foreignObject x="${cx-30}" y="${cy-16}" width="60" height="32">
+           <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:#1D3461;text-align:center;word-wrap:break-word;line-height:1.3">${centerLabel}</div>
+         </foreignObject>`
+      : '';
+
+    // Title
+    const titleSVG = `<text x="${W/2}" y="18" text-anchor="middle" font-size="14" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${title}</text>`;
+
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">
+      <rect width="${W}" height="${H}" fill="#F4F3EF"/>
+      ${titleSVG}${arrows}${nodes}${center}
+    </svg>`;
+  },
+
+  // food_chain — linear food chain with arrows (producer → primary → secondary → tertiary)
+  // params: title, organisms[{name, role, emoji}]
+  food_chain(p) {
+    const title = p.title || 'Food Chain';
+    const defaultOrganisms = [
+      { name: 'Sun',          role: 'Energy Source', emoji: '☀️', color: '#F5C842' },
+      { name: 'Grass',        role: 'Producer',      emoji: '🌿', color: '#1D9E75' },
+      { name: 'Rabbit',       role: 'Primary Consumer', emoji: '🐇', color: '#E07B39' },
+      { name: 'Fox',          role: 'Secondary Consumer', emoji: '🦊', color: '#6B63D4' },
+    ];
+    const organisms = (p.organisms || defaultOrganisms).slice(0, 6);
+    const count = organisms.length;
+
+    const W = 500, H = 280;
+    const nodeW = Math.min(Math.floor((W - 20) / count) - 8, 82);
+    const nodeH = 110;
+    const gap = Math.floor((W - 20 - count * nodeW) / (count - 1));
+    const oy = (H - nodeH) / 2 + 20;
+    const titleY = 20;
+
+    const titleSVG = `<text x="${W/2}" y="${titleY}" text-anchor="middle" font-size="14" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${title}</text>`;
+
+    const nodesSVG = organisms.map((org, i) => {
+      const nx = 10 + i * (nodeW + gap);
+      const color = org.color || '#1D9E75';
+      const emoji = org.emoji || '🌿';
+      const name = org.name || '';
+      const role = org.role || '';
+
+      // Arrow to next node
+      const arrowX1 = nx + nodeW + 2;
+      const arrowX2 = nx + nodeW + gap - 2;
+      const arrowY = oy + nodeH/2;
+      const arrow = i < count - 1
+        ? `<line x1="${arrowX1}" y1="${arrowY}" x2="${arrowX2 - 6}" y2="${arrowY}" stroke="#888780" stroke-width="2.5"/>
+           <polygon points="${arrowX2 - 6},${arrowY - 5} ${arrowX2},${arrowY} ${arrowX2 - 6},${arrowY + 5}" fill="#888780"/>`
+        : '';
+
+      return `
+        <rect x="${nx}" y="${oy}" width="${nodeW}" height="${nodeH}" rx="10" fill="white" stroke="${color}" stroke-width="2.5"/>
+        <rect x="${nx}" y="${oy}" width="${nodeW}" height="32" rx="10" fill="${color}"/>
+        <rect x="${nx}" y="${oy + 22}" width="${nodeW}" height="10" fill="${color}"/>
+        <text x="${nx + nodeW/2}" y="${oy + 22}" text-anchor="middle" font-size="20" font-family="Arial,sans-serif">${emoji}</text>
+        <foreignObject x="${nx + 3}" y="${oy + 34}" width="${nodeW - 6}" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:900;color:#1D3461;text-align:center;word-wrap:break-word;line-height:1.3">${name}</div>
+        </foreignObject>
+        <foreignObject x="${nx + 3}" y="${oy + 70}" width="${nodeW - 6}" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;color:#5F5E5A;text-align:center;word-wrap:break-word;line-height:1.3;font-style:italic">${role}</div>
+        </foreignObject>
+        ${arrow}`;
+    }).join('');
+
+    // Energy flow label
+    const flowLabel = `<text x="${W/2}" y="${H - 8}" text-anchor="middle" font-size="11" fill="#888780" font-family="Arial,sans-serif" font-style="italic">Energy flows →</text>`;
+
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">
+      <rect width="${W}" height="${H}" fill="#F4F3EF"/>
+      ${titleSVG}${nodesSVG}${flowLabel}
+    </svg>`;
+  },
+
+  // science_diagram — labeled organism/object with callout labels
+  // params: title, subject (emoji or short text), labels[{text, position}]
+  //         positions: top-left, top-right, top, bottom-left, bottom-right, bottom, left, right
+  science_diagram(p) {
+    const title = p.title || '';
+    const subject = p.subject || '🌱';
+    const labels = (p.labels || []).slice(0, 8);
+    const accentColor = p.color || '#1D9E75';
+
+    const W = 500, H = 300;
+    const cx = W / 2, cy = H / 2 + 8;
+    const subjectR = 52; // central illustration area radius
+
+    // Fixed callout positions around the subject
+    const POSITIONS = {
+      'top':          { x: cx,       y: cy - 120, tx: 0,   ty: -8  },
+      'top-left':     { x: cx - 110, y: cy - 88,  tx: 0,   ty: -8  },
+      'top-right':    { x: cx + 110, y: cy - 88,  tx: 0,   ty: -8  },
+      'left':         { x: cx - 140, y: cy,        tx: 0,   ty: 6   },
+      'right':        { x: cx + 140, y: cy,        tx: 0,   ty: 6   },
+      'bottom-left':  { x: cx - 110, y: cy + 88,  tx: 0,   ty: 6   },
+      'bottom-right': { x: cx + 110, y: cy + 88,  tx: 0,   ty: 6   },
+      'bottom':       { x: cx,       y: cy + 120, tx: 0,   ty: 6   },
+    };
+
+    // Auto-assign positions if not specified
+    const autoPositions = ['top-left','top-right','bottom-left','bottom-right','top','bottom','left','right'];
+
+    const labelsSVG = labels.map((lbl, i) => {
+      const text = lbl.text || lbl || '';
+      const posKey = lbl.position || autoPositions[i % autoPositions.length];
+      const pos = POSITIONS[posKey] || POSITIONS[autoPositions[i % autoPositions.length]];
+
+      // Line from subject edge to label
+      const dx = pos.x - cx, dy = pos.y - cy;
+      const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      const lx1 = cx + (dx/dist) * (subjectR + 4);
+      const ly1 = cy + (dy/dist) * (subjectR + 4);
+      const lx2 = pos.x - (dx/dist) * 22;
+      const ly2 = pos.y - (dy/dist) * 14;
+
+      const labelW = 90, labelH = 28;
+      const lbx = pos.x - labelW/2;
+      const lby = pos.y - labelH/2;
+
+      return `
+        <line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="${accentColor}" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>
+        <circle cx="${lx2}" cy="${ly2}" r="3" fill="${accentColor}" opacity="0.7"/>
+        <rect x="${lbx}" y="${lby}" width="${labelW}" height="${labelH}" rx="5" fill="${accentColor}" opacity="0.9"/>
+        <foreignObject x="${lbx + 4}" y="${lby + 2}" width="${labelW - 8}" height="${labelH - 4}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:white;text-align:center;display:flex;align-items:center;justify-content:center;height:${labelH - 4}px;word-wrap:break-word;line-height:1.2">${text}</div>
+        </foreignObject>`;
+    }).join('');
+
+    // Central subject
+    const subjectSVG = `
+      <circle cx="${cx}" cy="${cy}" r="${subjectR}" fill="white" stroke="${accentColor}" stroke-width="3"/>
+      <text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="44" font-family="Arial,sans-serif">${subject}</text>`;
+
+    const titleSVG = title
+      ? `<text x="${W/2}" y="20" text-anchor="middle" font-size="14" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${title}</text>`
+      : '';
+
+    return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">
+      <rect width="${W}" height="${H}" fill="#F4F3EF"/>
+      ${titleSVG}${labelsSVG}${subjectSVG}
+    </svg>`;
+  },
+
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
