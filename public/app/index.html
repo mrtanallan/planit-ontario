@@ -1923,8 +1923,13 @@ async function generate() {
   }
   // Filter B1.1 (whole numbers) from topics that aren't about whole numbers
   const isWholeNumberTopic2 = /count|whole number|place value|composing|decomposing/.test(topicLower2);
-  const filterB11 = e => isWholeNumberTopic2 || !(e.code === 'B1.1' && /whole number/i.test(e.desc));
-  const primaryExps2 = relevantExps.filter(e => e.strand === primaryStrand2).filter(filterB11);
+  const isFractionTopic2 = /fraction|equal part|numerator|denominator/.test(topicLower2);
+  const filterB11 = e => {
+    if (e.code === 'B1.1' && /whole number/i.test(e.desc) && !isWholeNumberTopic2) return false;
+    if (e.code === 'B1.2' && /whole number/i.test(e.desc) && isFractionTopic2) return false;
+    return true;
+  };
+    const primaryExps2 = relevantExps.filter(e => e.strand === primaryStrand2).filter(filterB11);
   const otherExps2 = relevantExps.filter(e => e.strand !== primaryStrand2).filter(filterB11);
   const sortedExps2 = [...primaryExps2, ...otherExps2].slice(0,15);
   const expContext = sortedExps2.length
@@ -2788,8 +2793,8 @@ async function generateSlideData(callerBtn) {
       '- VISUAL TYPE SELECTION — read before choosing:',
       '  UNIT-SPECIFIC SLIDE OVERRIDES (highest priority — override everything else):',
       '  * Grade 4, Area of Rectangles: slide 1 = labelled_shape (show the rectangle). slide 2 = area_grid (counting method). slide 3 = worked_steps (formula A=l×w). slide 4 = worked_steps (practice problem). NEVER area_grid on slide 1. NEVER worked_steps on slide 1.',
-      '  * Grade 5, Volume of Rectangular Prisms: slide 1 must use isometric_box with volume_label. NEVER formula_display alone.',
-      '  * Grade 6, Area of Triangles and Parallelograms: slide 1 use triangle_area. Slide 2 use parallelogram_area. Slide 3 use triangle_area. NEVER comparison_table or area_grid for geometric relationship slides.',
+      '  * Grade 5, Volume of Rectangular Prisms: ALL slides must use isometric_box. NEVER labelled_shape (it renders 2D rectangles, not 3D prisms). NEVER formula_display alone.',
+      '  * Grade 6, Area of Triangles and Parallelograms: use triangle_area for triangle slides and parallelogram_area for parallelogram slides. One slide per shape IS the correct approach — do not try to show both in one renderer. Comparison is achieved across adjacent slides.',
       '  * Grade 4, Probability: probability_scale value field must be one of EXACTLY these: 0, 0.25, 0.5, 0.75, 1. Labels must be ONLY: Impossible, Unlikely, Equally Likely, Likely, Certain. NO other decimal values.',
       '  * Grade 2, Measurement: use measurement_bar for measuring slides. NEVER comparison_table.',
       '  * Grade 3, Fractions: slide 1 use fraction_circle. Slide 2 use fraction_bar. Slide 3 use fraction_compare. NEVER comparison_table.',
@@ -2798,7 +2803,8 @@ async function generateSlideData(callerBtn) {
       '  EXPLICIT TOPIC MAPPINGS — these override all other rules:',
       '  * 2D shapes / 3D shapes / shape identification / counting corners or sides on shapes (any grade): shape_grid. NEVER counting_dots or ten_frame.',
       '  * Pythagorean theorem (any slide): pythagorean. NEVER worked_steps or concept_card for the main visual.',
-      '  * Circle area/circumference: circle_diagram (shows radius/diameter/formula). NEVER formula_display alone.',
+      '  * Circle area/circumference: circle_diagram (shows radius/diameter/formula). NEVER formula_display or worked_steps alone.',
+      '  * Grade 7, Circle Area and Circumference: slide 1 = circle_diagram with formula. slide 2 = worked_steps for calculation. NEVER worked_steps as slide 1 for circle area.',
       '  * Volume (any grade): isometric_box with volume_label param. NEVER formula_display alone.',
       '  * place_value: use ONLY for showing a SINGLE number place value. NEVER for addition or subtraction.',
       '  * area_grid area_label: write ONLY a label like "A = 24 cm²". Do NOT put a formula equation like "4 × 3 = 12" as it contradicts the counting-method renderer.',
@@ -2846,6 +2852,7 @@ async function generateSlideData(callerBtn) {
       '  * t_table: does every row satisfy the rule exactly?',
       '  * coordinate_graph points: do they make sense for the concept being shown?',
       '  * area_label in triangle_area: verify (base × height) ÷ 2 = stated answer',
+      '  * array label: must show rows×cols=total (e.g. "3×4=12"). NEVER rows+cols ("3+4=7" is wrong).',
       '  * volume_label in isometric_box: verify l × w × h = stated answer',
       '- Pure JSON only, no markdown, no comments'
     ].filter(Boolean).join('\n');
