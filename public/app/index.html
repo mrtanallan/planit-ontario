@@ -2760,7 +2760,7 @@ async function generateSlideData(callerBtn) {
       '',
       '── VISUAL TYPES (use exact names) ──',
       '== NUMBER: place_value({digits:{hundreds:3,tens:2,ones:4},highlight:"tens"}) | array({rows:4,cols:6,label:"4×6=24"}) | fraction_bar({numerator:3,denominator:4,label:"3/4"}) | fraction_compare({fractions:[{n:1,d:2,label:"1/2"},{n:3,d:4,label:"3/4"}]}) | fraction_circle({numerator:1,denominator:2,label:"1/2"}) | fraction_circle_compare({fractions:[{n:1,d:2},{n:1,d:3},{n:1,d:4}],comparison:"1/2>1/3>1/4"}) | number_line({min:0,max:10,step:1,highlights:[{value:3,label:"3"}]}) | integer_line({min:-5,max:5,highlights:[{value:-2,label:"-2"}]}) | percent_bar({percent:75,label:"75%",part_label:"75",whole_label:"100"})',
-      '== EARLY GRADES K-1 ONLY: counting_dots({count:7,label:"Count the dots!"}) | ten_frame({filled:7,label:"Show 7"}) | shape_grid({shapes:[{name:"Circle",color:"#1D9E75"},{name:"Square",color:"#E07B39"},{name:"Triangle",color:"#F5C842"},{name:"Rectangle",color:"#6B63D4"}],properties:["0 sides","4 equal sides","3 sides","4 sides"]}) | sort_diagram({left_label:"Has corners",right_label:"No corners",left_items:["Square","Triangle","Rectangle"],right_items:["Circle"],rule:"Corners"})',
+      '== EARLY GRADES K-1 ONLY: counting_dots({count:7,label:"Count the dots!"}) | ten_frame({filled:7,label:"Show 7"}) | shape_grid({shapes:[{name:"Circle",color:"#1D9E75"},{name:"Square",color:"#E07B39"},{name:"Triangle",color:"#F5C842"},{name:"Rectangle",color:"#6B63D4"}],properties:["0 sides","4 equal sides","3 sides","4 sides"]}) | sort_diagram({left_label:"Has corners",right_label:"No corners",left_items:["Square","Triangle","Rectangle"],right_items:["Circle"],rule:"Corners"}) | three_d_shapes({shapes:[{name:"Cube",color:"#1D9E75"},{name:"Sphere",color:"#E07B39"},{name:"Cylinder",color:"#F5C842"},{name:"Cone",color:"#6B63D4"}]})',
       '== ALGEBRA: worked_steps({problem:"2x+3=11",steps:[{label:"Subtract 3",work:"2x=8"},{label:"Divide by 2",work:"x=4"}],answer:"x=4"}) | formula_display({formula:"A=l×w",variables:[{symbol:"A",meaning:"Area",unit:"cm²"},{symbol:"l",meaning:"length",unit:"cm"},{symbol:"w",meaning:"width",unit:"cm"}]}) | balance_scale({left:"2x+3",right:"11",solution:"x=4"}) | pattern_row({items:["▲","■","▲","■"],rule:"Repeating",next:"▲"}) | t_table({headers:["x","y"],rows:[[0,2],[1,4],[2,6]],rule:"y=2x"}) | coordinate_graph({points:[{x:1,y:2,label:"(1,2)"},{x:3,y:6,label:"(3,6)"}],line:true,x_max:8,y_max:10})',
       '== DATA: bar_graph({title:"T",labels:["A","B","C"],values:[12,8,10],y_label:"Count"}) | line_graph({title:"T",labels:["Mon","Tue","Wed"],values:[12,15,11],y_label:"°C"}) | pie_chart({title:"T",slices:[{label:"A",value:50,color:"#1D9E75"},{label:"B",value:30,color:"#F5C842"},{label:"C",value:20,color:"#E07B39"}]}) | pictograph({title:"T",rows:[{label:"Jan",count:4},{label:"Feb",count:6}],symbol:"🌟",scale:2,scale_label:"=2"}) | double_bar({title:"T",labels:["A","B"],series:[{name:"Gr4",values:[8,5],color:"#1D9E75"},{name:"Gr5",values:[6,9],color:"#E07B39"}]}) | probability_scale({events:[{label:"Impossible",value:0},{label:"Flip heads",value:0.5},{label:"Certain",value:1}]}) | stem_leaf({title:"T",stems:[{stem:6,leaves:[2,5,8]},{stem:7,leaves:[0,3,7]}]}) | scatter_plot({points:[{x:2,y:4},{x:4,y:7},{x:6,y:9}],x_max:10,y_max:12,x_label:\"Hours\",y_label:\"Score\",line_of_best_fit:true})',
       '== SPATIAL: grouped_objects({groups:3,per_group:4,label:"3 groups of 4",operator:"×"}) | measurement_bar({unit_name:"paperclip",count:5,object:"pencil"}) | angle_types({types:[{degrees:45,label:"Acute",desc:"Less than 90°",color:"#1D9E75"},{degrees:90,label:"Right",desc:"Exactly 90°",color:"#1D3461"},{degrees:130,label:"Obtuse",desc:"Greater than 90°",color:"#E07B39"}]}) | area_grid({cols:6,rows:4,label_top:"6cm",label_right:"4cm",area_label:"A=24cm²"}) | triangle_area({base:8,height:6,units:"cm",area_label:"A=(8×6)÷2=24cm²"}) | parallelogram_area({base:10,height:6,units:"cm",area_label:"A=10×6=60cm²"}) | perimeter_shape({shape:"rectangle",sides:{top:"6cm",bottom:"6cm",left:"4cm",right:"4cm"},perimeter_label:"P=20cm"}) | circle_diagram({radius:5,show_diameter:true,radius_label:"r=5cm",diameter_label:"d=10cm",formula:"C=πd≈31.4cm"}) | angle_diagram({degrees:60,label:"60°",type:"acute"}) | transform_translate({shape:"rectangle",shape_w:3,shape_h:2,start_col:1,start_row:3,dx:4,dy:0,cols:12,rows:8}) | transform_reflect({shape:"right_triangle",shape_w:3,shape_h:3,col:1,row:1,axis:"vertical",axis_col:5,cols:12,rows:8}) | transform_rotate({shape:"rectangle",shape_w:4,shape_h:2,col:2,row:4,degrees:90,direction:"clockwise",pivot_col:2,pivot_row:4,cols:12,rows:8}) | transform_overview({shape:"rectangle"}) | labelled_shape({shape:"triangle",sides:["8cm","6cm","10cm"],angles:["90°","53°","37°"]}) | pythagorean({a:3,b:4,c:5,units:"cm"}) | isometric_box({l:6,w:4,h:3,unit:"cm",volume_label:"V=72cm³"})',
@@ -2823,7 +2823,7 @@ async function generateSlideData(callerBtn) {
       '  For KINDERGARTEN and GRADE 1 — STRICT RULES:',
       '  * Counting lessons (count to 10, count objects): counting_dots or ten_frame.',
       '  * 2D shape identification/properties including counting corners, counting sides, shape hunt, shape properties: shape_grid. NEVER counting_dots, ten_frame, or concept_card for ANY shape topic.',
-      '  * 3D shape identification: shape_grid (use 3D shape names in params: Sphere, Cube, Cylinder, Cone). NEVER concept_card for 3D shapes.',
+      '  * 3D shape identification: three_d_shapes({shapes:[{name:"Cube"},{name:"Sphere"},{name:"Cylinder"},{name:"Cone"}]}). NEVER shape_grid or concept_card for 3D shape lessons.',
       '  * Grade 1, Repeating Patterns: ALL slides must use pattern_row or sort_diagram. NEVER shape_grid for any Grade 1 Repeating Patterns slide.',
       '  * Sorting and classifying: sort_diagram. NEVER shape_grid for sorting.',
       '  * Repeating patterns / colour patterns: pattern_row. NEVER shape_grid.',
@@ -3281,6 +3281,61 @@ const SVG_RENDERERS = {
       ${svgShapes}${propRows}
     </svg>`;
   },
+
+  // 3d_shapes — K/Gr1 3D object identification with isometric-style drawings
+  three_d_shapes(p) {
+    const shapes = p.shapes || [
+      {name:'Cube', color:'#1D9E75'},
+      {name:'Sphere', color:'#E07B39'},
+      {name:'Cylinder', color:'#F5C842'},
+      {name:'Cone', color:'#6B63D4'},
+    ];
+    const count = Math.min(shapes.length, 4);
+    const cw = 110, ch = 100, gap = 10;
+    const totalW = count*cw + (count-1)*gap;
+    const ox = Math.round((500-totalW)/2);
+    const oy = 30;
+
+    const drawShape = (s, x) => {
+      const cx = x + cw/2, cy = oy + ch/2;
+      const fill = s.color || '#1D9E75';
+      const name = (s.name||'').toLowerCase();
+      let svg = '';
+      if (name.includes('cube')) {
+        const sz=38, dx=14, dy=10;
+        svg = `<polygon points="${cx-sz},${cy} ${cx},${cy-dy} ${cx+sz+dx},${cy-dy} ${cx+dx},${cy}" fill="${fill}" opacity="0.9"/>
+          <polygon points="${cx+dx},${cy} ${cx+sz+dx},${cy-dy} ${cx+sz+dx},${cy+sz} ${cx+dx},${cy+sz}" fill="${fill}" opacity="0.7"/>
+          <polygon points="${cx-sz},${cy} ${cx+dx},${cy} ${cx+dx},${cy+sz} ${cx-sz},${cy+sz}" fill="${fill}" opacity="0.8"/>
+          <polygon points="${cx-sz},${cy} ${cx},${cy-dy} ${cx+sz+dx},${cy-dy} ${cx+dx},${cy}" fill="none" stroke="white" stroke-width="1.5"/>`;
+      } else if (name.includes('sphere')) {
+        svg = `<circle cx="${cx}" cy="${cy}" r="36" fill="${fill}" opacity="0.85"/>
+          <ellipse cx="${cx-6}" cy="${cy-12}" rx="12" ry="8" fill="white" opacity="0.3"/>`;
+      } else if (name.includes('cylinder')) {
+        svg = `<ellipse cx="${cx}" cy="${cy-24}" rx="28" ry="10" fill="${fill}" opacity="0.7"/>
+          <rect x="${cx-28}" y="${cy-24}" width="56" height="48" fill="${fill}" opacity="0.85"/>
+          <ellipse cx="${cx}" cy="${cy+24}" rx="28" ry="10" fill="${fill}" opacity="0.9"/>
+          <ellipse cx="${cx}" cy="${cy-24}" rx="28" ry="10" fill="${fill}" opacity="0.95"/>`;
+      } else if (name.includes('cone')) {
+        svg = `<polygon points="${cx},${cy-44} ${cx-30},${cy+28} ${cx+30},${cy+28}" fill="${fill}" opacity="0.85"/>
+          <ellipse cx="${cx}" cy="${cy+28}" rx="30" ry="10" fill="${fill}" opacity="0.9"/>`;
+      } else {
+        // Default: cube
+        const sz=34;
+        svg = `<rect x="${cx-sz}" y="${cy-sz}" width="${sz*2}" height="${sz*2}" rx="6" fill="${fill}" opacity="0.85"/>`;
+      }
+      return svg + `<text x="${cx}" y="${oy+ch+22}" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${s.name}</text>`;
+    };
+
+    const svgShapes = shapes.slice(0,4).map((s,i) => {
+      const x = ox + i*(cw+gap);
+      return drawShape(s, x);
+    }).join('');
+
+    return `<svg viewBox="0 0 500 ${oy+ch+40}" width="100%" height="100%">
+      ${svgShapes}
+    </svg>`;
+  },
+
 
   sort_diagram(p) {
     // Two labeled groups with items sorted into each — K/Gr1 sorting & classifying
