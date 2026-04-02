@@ -7,7 +7,7 @@ export const config = { runtime: 'edge' };
 
 const FAL_KEY = process.env.FAL_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 // ── Supabase image cache ──────────────────────────────────────────────────────
 async function getCachedImage(cacheKey) {
