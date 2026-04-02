@@ -1931,7 +1931,12 @@ async function generate() {
   };
     const primaryExps2 = relevantExps.filter(e => e.strand === primaryStrand2).filter(filterB11);
   const otherExps2 = relevantExps.filter(e => e.strand !== primaryStrand2).filter(filterB11);
-  const sortedExps2 = [...primaryExps2, ...otherExps2].slice(0,15);
+  // Exclude clearly irrelevant strands from other exps
+  const irrelevantStrands2 = primaryStrand2 === 'B' || primaryStrand2 === 'C' ? ['D','E'] :
+    primaryStrand2 === 'E' ? ['D','F'] : primaryStrand2 === 'D' ? ['E','F'] :
+    primaryStrand2 === 'F' ? ['D','E'] : [];
+  const filteredOtherExps2 = otherExps2.filter(e => !irrelevantStrands2.includes(e.strand));
+  const sortedExps2 = [...primaryExps2, ...filteredOtherExps2].slice(0,12);
   const expContext = sortedExps2.length
     ? (isMathSubj
         ? 'ONTARIO MATH CURRICULUM EXPECTATIONS FOR '+grades.join('/')+' — choose 2-4 from '+primaryStrand2+' strand first (most relevant to this topic):\n'
@@ -2840,7 +2845,7 @@ async function generateSlideData(callerBtn) {
       '  labelled_shape = sides and angles only. NEVER for area — area requires triangle_area.',
       '  For Pythagorean theorem: pythagorean type (NOT formula_display or worked_steps as main visual).',
       '  For transformations: always transform_translate/reflect/rotate/overview.',
-      '  For circle graphs: pie_chart. For probability: probability_scale.',
+      '  For circle graphs: pie_chart. For probability: probability_scale. For circle graph expectations: use D1.2 not D1.3 (D1.3 is continuous data/scatter plots, wrong for circle graphs).',
       '  For coordinate geometry: coordinate_graph with points array including label field.',
       '- PARAM VERIFICATION before submitting: check every calculation is correct, comparison operators are right (1/4 < 1/2), t_table rule matches all rows, pie_chart slices sum to 100.',
       '- BEFORE SUBMITTING: verify every calculation in your params. Check:',
@@ -2852,7 +2857,7 @@ async function generateSlideData(callerBtn) {
       '  * t_table: does every row satisfy the rule exactly?',
       '  * coordinate_graph points: do they make sense for the concept being shown?',
       '  * area_label in triangle_area: verify (base × height) ÷ 2 = stated answer',
-      '  * array label: must show rows×cols=total (e.g. "3×4=12"). NEVER rows+cols ("3+4=7" is wrong).',
+      '  * array label: must show rows×cols=total (e.g. "3×4=12"). NEVER rows+cols. BEFORE SUBMITTING: verify label arithmetic. 6×8=48, 3×5=15, 4×4=16.',
       '  * volume_label in isometric_box: verify l × w × h = stated answer',
       '- Pure JSON only, no markdown, no comments'
     ].filter(Boolean).join('\n');
@@ -4041,15 +4046,39 @@ const SVG_RENDERERS = {
   comparison_table(p) {
     const hdrs=p.headers||[], rows=p.rows||[];
     const cols=Math.max(hdrs.length,...rows.map(r=>r.length));
-    const cw=Math.floor(460/cols), rh=44, oy=10;
+    const cw=Math.floor(460/cols);
+
+    // Use foreignObject for proper text wrapping in cells
+    const fo = (x,y,w,h,text,bold,color) => {
+      const fw=bold?'700':'400';
+      return `<foreignObject x="${x}" y="${y}" width="${w}" height="${h}">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:Arial,sans-serif;font-size:12px;font-weight:${fw};color:${color};padding:2px 4px;box-sizing:border-box;overflow:hidden;word-wrap:break-word;line-height:1.3">${String(text)}</div>
+      </foreignObject>`;
+    };
+
+    const hdrH=38, oy=8;
     const thCells=hdrs.map((h,i)=>`
-      <rect x="${20+i*cw}" y="${oy}" width="${cw-4}" height="36" rx="4" fill="#1D9E75"/>
-      <text x="${20+i*cw+cw/2-2}" y="${oy+23}" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Arial,sans-serif">${h}</text>`).join('');
-    const dataRows=rows.map((row,ri)=>row.map((cell,ci)=>`
-      <rect x="${20+ci*cw}" y="${oy+40+ri*rh}" width="${cw-4}" height="${rh-2}" rx="4" fill="${ri%2===0?'#F4F3EF':'white'}"/>
-      <text x="${20+ci*cw+cw/2-2}" y="${oy+40+ri*rh+rh/2+5}" text-anchor="middle" font-size="13" fill="${ci===0?'#0F6E56':'#1D3461'}" font-weight="${ci===0?'700':'400'}" font-family="Arial,sans-serif">${String(cell)}</text>`).join('')).join('');
-    const totalH=oy+40+rows.length*rh+20;
-    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">${thCells}${dataRows}</svg>`;
+      <rect x="${20+i*cw}" y="${oy}" width="${cw-3}" height="${hdrH}" rx="4" fill="#1D9E75"/>
+      ${fo(20+i*cw, oy, cw-3, hdrH, h, true, 'white')}`).join('');
+
+    // Dynamic row height based on content length
+    const getRowH = (row) => {
+      const maxLen = Math.max(...row.map(c=>String(c).length));
+      return maxLen > 25 ? 56 : maxLen > 15 ? 48 : 40;
+    };
+
+    let curY = oy + hdrH + 4;
+    const dataRows = rows.map((row, ri) => {
+      const rh = getRowH(row);
+      const cells = row.map((cell,ci) => `
+        <rect x="${20+ci*cw}" y="${curY}" width="${cw-3}" height="${rh-2}" rx="4" fill="${ri%2===0?'#F4F3EF':'white'}"/>
+        ${fo(20+ci*cw, curY, cw-3, rh-2, cell, ci===0, ci===0?'#0F6E56':'#1D3461')}`).join('');
+      curY += rh;
+      return cells;
+    }).join('');
+
+    const totalH = curY + 16;
+    return `<svg viewBox="0 0 500 ${Math.min(totalH, 320)}" width="100%" height="100%">${thCells}${dataRows}</svg>`;
   },
 
   concept_card(p) {
