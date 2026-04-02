@@ -292,7 +292,13 @@ function buildStructurePrompt(unit, gradeExps) {
     '* Volume: isometric_box with volume_label. NEVER formula_display alone.\n' +
     '* place_value: single number only. NEVER for addition/subtraction.\n' +
     '* area_grid area_label: write label only like "A=24cm2", NOT a formula equation.\n' +
-    '* ten_frame filled: set to TOTAL/RESULT being shown, not first addend. 7+2=9 → filled:9.\n' +
+    '* ten_frame filled: set to TOTAL/RESULT. MAXIMUM value 10. Never set filled above 10.\n' +
+    '* area_grid: counting method ONLY. If concept says "formula" or "length x width", use labelled_shape or isometric_box.\n' +
+    '* Compound interest growth: line_graph. NEVER budget_bar.\n' +
+    '* Linear vs non-linear: coordinate_graph. NEVER comparison_table.\n' +
+    '* Triangle = half parallelogram: triangle_area + parallelogram_area slides. NEVER area_grid.\n' +
+    '* pictograph symbol: match data category (pets=paw, fruits=apple). NEVER star unless topic is stars.\n' +
+    '* probability_scale Grade 3-4: qualitative labels only (Impossible/Unlikely/Likely/Certain). No decimals.\n' +
     '* Addition/subtraction: number_line or array. NOT place_value.\n' +
     (isEarlyGrade ? '* K and Grade 1: counting_dots, ten_frame, shape_grid, sort_diagram. NEVER concept_card or worked_steps.\n' : '') +
     'CRITICAL: visual_type must be exact type name above. NEVER use NUMBER/ALGEBRA/DATA/SPATIAL/FINANCIAL.\n' +
@@ -485,10 +491,10 @@ async function runUnit(idx) {
 
       const HDESC = {
         concept_card:'Text-only card with bullet points. NO diagrams. Only for vocabulary/definitions — WRONG for area, geometry, graphs.',
-        worked_steps:'Numbered algebraic steps with highlighted answer. For arithmetic/algebra procedures only — WRONG for geometry concepts needing diagrams.',
+        worked_steps:'Numbered algebraic steps with highlighted answer. For arithmetic/algebra procedures. WRONG for geometry concepts needing diagrams. Do NOT fail for equation complexity — Grade 5 can handle multi-step equations. Only fail for wrong type or clearly incorrect arithmetic.',
         comparison_table:'Table with header and data rows. Text/numbers only — WRONG when visual diagrams are required.',
         formula_display:'Large formula with variable boxes. Formula only, no diagram — WRONG alone for spatial concepts needing shape visuals.',
-        number_line:'Line with ticks, highlighted points, and labels. Good for showing values, ordering, fractions. Do NOT fail for missing jump arrows or step markers — the renderer shows highlighted points only. Only fail if the highlighted values are mathematically wrong or min does not include 0.',
+        number_line:'Line with ticks, highlighted points, and labels. Good for values, ordering, fractions, mental math jumps. Do NOT fail for missing jump arrows — renderer shows highlighted points only. Mental math decomposition (47→67→72) is CORRECT usage. Only fail if values are mathematically wrong or min does not include 0.',
         fraction_bar:'Rectangle divided into d equal parts, n shaded. Division must be exact.',
         fraction_circle:'Circle divided into d equal slices, n shaded.',
         fraction_compare:'Two fraction bars side by side. Comparison operator must be correct (2/6 < 4/6, NOT >).',
@@ -505,7 +511,7 @@ async function runUnit(idx) {
         line_graph:'Connected points with axis labels and value labels.',
         pie_chart:'Circle with labelled slices. Percentages/values shown. Do NOT fail if slices sum to 100 — that is correct for percentages. Only fail if slices clearly do NOT sum to 100 or if wrong type for concept.',
         coordinate_graph:'X/Y axes with grid, plotted points labelled with coordinates, axis arrows.',
-        t_table:'Two-column table x/y with rule stated.',
+        t_table:'Two-column table x/y with rule stated. Do NOT fail for imprecise rule wording — only fail if the actual data values in the rows are mathematically wrong.',
         pictograph:'Symbol rows with category labels and scale. Same symbol type throughout.',
         probability_scale:'0-to-1 line with events placed at probability values.',
         angle_diagram:'Two rays with arc and degree measurement.',
@@ -522,11 +528,11 @@ async function runUnit(idx) {
         ten_frame:'2x5 grid with filled and empty cells. filled = the NUMBER BEING SHOWN. For 10-3=7, filled:7 is CORRECT (shows the result 7). For showing 9+1, filled:9 shows the starting amount. Do NOT fail when filled matches the result of an operation — that is correct usage.',
         shape_grid:'4 basic 2D shapes drawn (circle, square, triangle, rectangle) with name labels and optional property descriptions. For K-Gr1 shape lessons.',
         grouped_objects:'Equal groups of dots in colored boxes showing multiplication/division. CORRECT for multiplication and division concepts. params: groups, per_group, label, operator.',
-        measurement_bar:'Object above ruler made of non-standard units (paperclips, blocks). CORRECT for measurement with non-standard units. params: unit_name, count, object.',
+        measurement_bar:'Object above ruler of non-standard units. For measurement lessons. Do NOT fail for object param being a ruler or measuring tool — any concrete object is valid. Only fail if wrong type for concept.',
         angle_types:'Three angles side by side — acute, right, obtuse — with labels and degree values. CORRECT for angle classification comparison slides. params: types array.',
         sort_diagram:'Two labeled groups with items in each. For sorting/classifying.',
         grouped_objects:'Equal groups of dots showing multiplication/division. CORRECT for mult/div. params: groups, per_group, label.',
-        measurement_bar:'Object above ruler of non-standard units. CORRECT for measurement. params: unit_name, count, object.',
+        measurement_bar:'Object above ruler of non-standard units. For measurement lessons. Do NOT fail for object param being a ruler or measuring tool — any concrete object is valid. Only fail if wrong type for concept.',
         angle_types:'Three angles (acute, right, obtuse) side by side. CORRECT for angle comparison. params: types array.',
       };
 
