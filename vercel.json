@@ -1,11 +1,13 @@
 {
-  "routes": [
-    { "src": "/api/generate", "dest": "/api/generate.js" },
-    { "src": "/api/worksheet", "dest": "/api/worksheet.js" },
-    { "src": "/ws(.*)", "dest": "/public/worksheet.html" },
-    { "src": "/app(.*)", "dest": "/public/app/index.html" },
-    { "src": "/privacy", "dest": "/public/privacy.html" },
-    { "src": "/terms", "dest": "/public/terms.html" },
-    { "src": "/(.*)", "dest": "/public/index.html" }
+  "rewrites": [
+    { "source": "/api/generate", "destination": "/api/generate.js" },
+    { "source": "/api/worksheet", "destination": "/api/worksheet.js" },
+    { "source": "/api/generate-image", "destination": "/api/generate-image.js" },
+    { "source": "/ws/:path*", "destination": "/public/worksheet.html" },
+    { "source": "/app/:path*", "destination": "/public/app/index.html" },
+    { "source": "/app", "destination": "/public/app/index.html" },
+    { "source": "/privacy", "destination": "/public/privacy.html" },
+    { "source": "/terms", "destination": "/public/terms.html" },
+    { "source": "/", "destination": "/public/landing.html" }
   ]
 }
