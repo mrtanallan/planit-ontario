@@ -109,8 +109,8 @@ async function getWikimediaImage(topic) {
   url.searchParams.set('format', 'json');
   url.searchParams.set('generator', 'search');
   url.searchParams.set('gsrnamespace', '6');
-  url.searchParams.set('gsrsearch', `${query} science`);
-  url.searchParams.set('gsrlimit', '12');
+  url.searchParams.set('gsrsearch', query);  // use topic directly, no extra keywords
+  url.searchParams.set('gsrlimit', '20');    // more candidates for better filtering
   url.searchParams.set('prop', 'imageinfo');
   url.searchParams.set('iiprop', 'url|size|mime|extmetadata');
   url.searchParams.set('iiurlwidth', '800');
@@ -134,11 +134,14 @@ async function getWikimediaImage(topic) {
     if (ratio > 4 || ratio < 0.4) return null;
     const license = (info.extmetadata?.LicenseShortName?.value || '').toLowerCase();
     if (license && !license.includes('cc') && !license.includes('public domain')) return null;
+    const title = (p.title || '').replace('File:', '').toLowerCase();
+    const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    const titleMatchScore = queryWords.filter(w => title.includes(w)).length * 3;
     return {
       url: info.thumburl || info.url,
       title: (p.title || '').replace('File:', ''),
       license: info.extmetadata?.LicenseShortName?.value || 'CC',
-      score: (info.width > info.height ? 2 : 0) + (info.width > 500 ? 1 : 0),
+      score: titleMatchScore + (info.width > info.height ? 2 : 0) + (info.width > 500 ? 1 : 0),
     };
   }).filter(Boolean);
 
