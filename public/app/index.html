@@ -1461,12 +1461,13 @@ function showApp() {
     r.addEventListener('change', function() {
       if (!this.checked) return;
       localStorage.setItem('teacherai_tab', this.id);
+      window.scrollTo(0,0);
       if (this.id==='tr-plan')    { renderClassSelector(); updateWelcomeBanner(); resetWorkflow(); }
       if (this.id==='tr-assess')  { loadUserData().then(() => { renderTracker(); loadSubmissions(); renderAssessClassTabs(); const v=localStorage.getItem('teacherai_tracker_view')||'grade'; switchTrackerView(v); }); }
       if (this.id==='tr-rc')      { populateRCFilters().then(() => loadSavedRCPage()); }
       if (this.id==='tr-account') { loadAccountPage(); }
       if (this.id==='tr-roster')  { renderClassTabs(); renderR(); }
-      if (this.id==='tr-lessons') { renderLessonsList(); }
+      if (this.id==='tr-lessons') { renderLessonsList(); window.scrollTo(0,0); }
     });
   });
   resetWorkflow();
