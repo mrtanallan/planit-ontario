@@ -6,6 +6,7 @@
 <title>TeacherAI — Ontario's AI Teaching Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
 /* ============================================================
@@ -809,12 +810,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         </select>
       </div>
       <div class="fi">
-        <label>Duration</label>
-        <select id="u-duration">
-          <option value="6">2 weeks — 6 lessons</option>
-          <option value="9" selected>3 weeks — 9 lessons</option>
-          <option value="12">4 weeks — 12 lessons</option>
-        </select>
+        <label>Number of Lessons</label>
+        <input type="number" id="u-duration" value="8" min="2" max="12"
+          style="font-family:DM Sans,sans-serif;font-size:.88rem;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;background:var(--paper);width:100%;outline:none;"
+          onchange="this.value=Math.min(12,Math.max(2,parseInt(this.value)||8))">
       </div>
       <div class="fi full">
         <label>Unit Focus / Big Idea</label>
@@ -2538,7 +2537,7 @@ function buildEditBlocks(outputs, gradeDesc, subj, topic, expectations) {
 
     const slideBtns = k==='lesson_plan' ? `
       <button class="btn b-sage b-sm" onclick="presentSlides(event)" style="white-space:nowrap;">▶ Present</button>
-      <button class="btn b-out b-sm" onclick="downloadSlidesHTML()" style="white-space:nowrap;" title="Download as HTML">⬇ Save Slides</button>
+      <button class="btn b-out b-sm" onclick="downloadPPTX()" style="white-space:nowrap;" title="Download as PowerPoint / Google Slides">⬇ Download Slides</button>
       <button class="btn b-out b-sm" id="gSlidesBtn" onclick="exportToGoogleSlides()" style="white-space:nowrap;display:none;" title="Export to Google Slides">🔗 Google Slides</button>` : '';
 
     const wsLinkBtns = isWS ? (k.match(/student_worksheet_[A-D]$/) ? `
@@ -5516,6 +5515,309 @@ function downloadSlidesHTML() {
 }
 
 // ============================================================
+// SVG → PNG helper (for PPTX export)
+// ============================================================
+function svgToPng(svgHtml, width=960, height=540) {
+  return new Promise((resolve, reject) => {
+    // Ensure SVG has explicit width/height
+    let svg = svgHtml.trim();
+    if (!svg.includes('xmlns')) {
+      svg = svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    }
+    // Force dimensions so canvas renders correctly
+    svg = svg.replace(/<svg([^>]*)>/, (match, attrs) => {
+      const noW = attrs.replace(/width="[^"]*"/, '').replace(/height="[^"]*"/, '');
+      return `<svg${noW} width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
+    });
+
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+    img.src = url;
+  });
+}
+
+// ============================================================
+// PPTX EXPORT — downloads as .pptx, openable in Google Slides
+// ============================================================
+async function downloadPPTX() {
+  if (!window._slideData) {
+    // Generate slides first if not done yet
+    const btn = document.querySelector('[onclick="downloadPPTX()"]');
+    if (btn) { btn.disabled=true; btn.textContent='⏳ Building...'; }
+    const ok = await generateSlideData(null);
+    if (btn) { btn.disabled=false; btn.textContent='⬇ Download Slides'; }
+    if (!ok || !window._slideData) return;
+  }
+
+  const btn = document.querySelector('[onclick="downloadPPTX()"]');
+  if (btn) { btn.disabled=true; btn.textContent='⏳ Creating PPTX...'; }
+
+  try {
+    const {sd, topic, subject, gradeStr, slideImgs=[], mindsonImg=null} = window._slideData;
+
+    const pptx = new PptxGenJS();
+    pptx.layout = 'LAYOUT_WIDE'; // 13.33" x 7.5" — standard widescreen
+
+    // ── Design tokens ───────────────────────────────────────
+    const NAVY  = '1D3461';
+    const TEAL  = '3BBFAD';
+    const YELLOW= 'F5C842';
+    const GREY  = 'F4F3EF';
+    const WHITE = 'FFFFFF';
+    const MUTED = '888780';
+
+    function addHeader(slide, title, bgColor=TEAL) {
+      // Header bar
+      slide.addShape(pptx.ShapeType.rect, { x:0, y:0, w:'100%', h:0.7, fill:{color:bgColor} });
+      slide.addText(title, { x:0.5, y:0.05, w:12, h:0.6, fontSize:20, bold:true, color:WHITE, fontFace:'Arial' });
+    }
+
+    function safeText(s) { return String(s||'').replace(/[^ -~
+]/g, ' ').trim(); }
+
+    // ── SLIDE 1: Title ───────────────────────────────────────
+    const sTitle = pptx.addSlide();
+    sTitle.background = { color: NAVY };
+    sTitle.addShape(pptx.ShapeType.rect, { x:0, y:0, w:0.08, h:'100%', fill:{color:TEAL} });
+    sTitle.addText(safeText(topic), {
+      x:0.7, y:1.8, w:12, h:1.4,
+      fontSize:40, bold:true, color:WHITE, fontFace:'Arial Black',
+      wrap:true, valign:'middle'
+    });
+    sTitle.addText(safeText((gradeStr?gradeStr+' · ':'')+subject), {
+      x:0.7, y:3.3, w:10, h:0.5, fontSize:18, color:'9BB3D4', fontFace:'Arial'
+    });
+    sTitle.addText('teacherai.ca · Ontario Curriculum', {
+      x:0.7, y:6.8, w:10, h:0.4, fontSize:10, color:'4A6080', fontFace:'Courier New'
+    });
+
+    // ── SLIDE 2: Learning Goals ──────────────────────────────
+    const sGoals = pptx.addSlide();
+    sGoals.background = { color: GREY };
+    addHeader(sGoals, 'Learning Goals');
+    sGoals.addText('By the end of this lesson, we will...', {
+      x:0.5, y:0.85, w:12, h:0.4, fontSize:11, color:MUTED,
+      bold:true, fontFace:'Arial', charSpacing:1
+    });
+    const goals = (sd.learning_goals||[]).slice(0,3);
+    const goalColors = [YELLOW, TEAL, 'E07B39'];
+    goals.forEach((g, i) => {
+      const yPos = 1.35 + i * 1.5;
+      sGoals.addShape(pptx.ShapeType.rect, { x:0.5, y:yPos, w:0.55, h:0.55, fill:{color:goalColors[i]}, rounding:true });
+      sGoals.addText(String(i+1), { x:0.5, y:yPos, w:0.55, h:0.55, fontSize:20, bold:true, color:i===0?'2C2C2A':WHITE, align:'center', valign:'middle' });
+      sGoals.addShape(pptx.ShapeType.rect, { x:1.2, y:yPos-0.1, w:11.5, h:0.75, fill:{color:WHITE}, shadow:{type:'outer', blur:4, offset:2, angle:45, color:'CCCCCC'} });
+      sGoals.addText(safeText(g), { x:1.35, y:yPos-0.05, w:11.2, h:0.65, fontSize:16, color:NAVY, fontFace:'Arial', wrap:true, valign:'middle' });
+    });
+
+    // ── SLIDE 3: Minds On ────────────────────────────────────
+    if (sd.minds_on) {
+      const sMO = pptx.addSlide();
+      sMO.background = { color: GREY };
+      addHeader(sMO, 'Minds On!', 'E07B39');
+      const moWidth = mindsonImg ? 8.5 : 12.5;
+      if (sd.minds_on.hook) {
+        sMO.addText(safeText(sd.minds_on.hook), {
+          x:0.5, y:0.85, w:moWidth, h:1.2,
+          fontSize:18, color:NAVY, fontFace:'Arial', wrap:true, bold:true
+        });
+      }
+      if (sd.minds_on.prompt) {
+        sMO.addShape(pptx.ShapeType.rect, { x:0.5, y:2.1, w:moWidth, h:1.8, fill:{color:NAVY} });
+        sMO.addText('💭  ' + safeText(sd.minds_on.prompt), {
+          x:0.65, y:2.2, w:moWidth-0.3, h:1.6,
+          fontSize:16, color:WHITE, fontFace:'Arial', wrap:true, valign:'middle'
+        });
+      }
+      // Note about image
+      if (mindsonImg) {
+        sMO.addText('[Image: ' + safeText(topic) + ']', {
+          x:9.2, y:0.85, w:4, h:5.5,
+          fontSize:11, color:MUTED, align:'center', valign:'middle',
+          fontFace:'Arial', italic:true,
+          fill:{color:'E8E8E4'}, shape:pptx.ShapeType.rect
+        });
+      }
+    }
+
+    // ── SLIDE 4: Vocabulary ──────────────────────────────────
+    const vocabWords = (sd.vocabulary||[]).slice(0,4);
+    if (vocabWords.length) {
+      const sVocab = pptx.addSlide();
+      sVocab.background = { color: GREY };
+      addHeader(sVocab, 'Key Vocabulary');
+      const vColors = [TEAL, YELLOW, 'E07B39', '6B63D4'];
+      const cols = vocabWords.length <= 2 ? 1 : 2;
+      vocabWords.forEach((v, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = 0.4 + col * 6.5;
+        const y = 1.0 + row * 2.6;
+        const w = cols === 1 ? 12.5 : 6.0;
+        sVocab.addShape(pptx.ShapeType.rect, { x, y, w, h:2.3, fill:{color:WHITE}, line:{color:'DDDDDD',width:1} });
+        sVocab.addShape(pptx.ShapeType.rect, { x, y, w, h:0.08, fill:{color:vColors[i%4]} });
+        sVocab.addText(safeText(v.word), { x:x+0.15, y:y+0.15, w:w-0.3, h:0.55, fontSize:18, bold:true, color:NAVY, fontFace:'Arial' });
+        sVocab.addText(safeText(v.definition), { x:x+0.15, y:y+0.7, w:w-0.3, h:0.8, fontSize:13, color:'5F5E5A', fontFace:'Arial', wrap:true });
+        if (v.example) sVocab.addText('"' + safeText(v.example) + '"', { x:x+0.15, y:y+1.55, w:w-0.3, h:0.55, fontSize:11, color:MUTED, italic:true, fontFace:'Arial', wrap:true });
+      });
+    }
+
+    // ── SLIDES 5–8: Content slides (SVG → PNG via canvas) ───
+    // Ensure SVGs are rendered — may not be if teacher skipped Present step
+    (sd.content_slides||[]).slice(0,4).forEach(cs => {
+      if (!cs.svg_html && cs.visual_type && cs.visual_params) {
+        const rendered = renderHardcoded(cs.visual_type, cs.visual_params);
+        if (rendered) cs.svg_html = rendered;
+      }
+    });
+    const contentSlides2 = (sd.content_slides||[]).slice(0,4);
+    const total2 = Math.min(contentSlides2.length, 4);
+    for (let i = 0; i < contentSlides2.length && i < 4; i++) {
+      const cs = contentSlides2[i];
+      const s = pptx.addSlide();
+      s.background = { color: GREY };
+      addHeader(s, safeText(cs.title||'Key Concept'));
+      s.addText(`${i+1}/${total2}`, {
+        x:12.3, y:0.12, w:0.8, h:0.45, fontSize:10, color:WHITE,
+        fontFace:'Courier New', align:'right'
+      });
+      // Key point (left column)
+      s.addShape(pptx.ShapeType.rect, { x:0.35, y:0.85, w:4.6, h:3.0, fill:{color:WHITE}, line:{color:TEAL, width:4} });
+      s.addText(safeText(cs.key_point||''||cs.title||'Key point'), {
+        x:0.5, y:0.92, w:4.3, h:2.85,
+        fontSize:15, color:NAVY, fontFace:'Arial', wrap:true, valign:'middle'
+      });
+      if (cs.teacher_note) {
+        s.addShape(pptx.ShapeType.rect, { x:0.35, y:4.0, w:4.6, h:1.4, fill:{color:'FFF8E1'}, line:{color:YELLOW, width:1} });
+        s.addText('Teacher note: ' + safeText(cs.teacher_note), {
+          x:0.5, y:4.08, w:4.3, h:1.25,
+          fontSize:10, color:'5F5E5A', italic:true, fontFace:'Arial', wrap:true
+        });
+      }
+      // Visual area (right) — try to rasterize SVG, fallback to placeholder
+      const svgHtml = cs.svg_html || '';
+      let pngData = null;
+      if (svgHtml && svgHtml.includes('<svg')) {
+        try { pngData = await svgToPng(svgHtml, 960, 540); } catch(e) { console.warn('SVG→PNG failed for slide '+i, e); }
+      }
+      if (pngData) {
+        s.addImage({ data: pngData, x:5.1, y:0.82, w:8.1, h:5.95 });
+      } else {
+        // Fallback: white box with label
+        const vtype = cs.visual_type || 'diagram';
+        s.addShape(pptx.ShapeType.rect, { x:5.1, y:0.82, w:8.1, h:5.95, fill:{color:WHITE}, line:{color:'DDDDDD', width:1} });
+        s.addText('[' + safeText(vtype.replace(/_/g,' ')) + ']
+Add your diagram here', {
+          x:5.2, y:3.0, w:7.9, h:1.6,
+          fontSize:13, color:'BBBBBB', align:'center', valign:'middle',
+          fontFace:'Arial', italic:true, wrap:true
+        });
+      }
+    }
+
+    // ── SLIDE: Practice ──────────────────────────────────────
+    const pp = sd.practice_problem;
+    if (pp) {
+      const sPrac = pptx.addSlide();
+      sPrac.background = { color: GREY };
+      addHeader(sPrac, 'Practice', NAVY);
+      sPrac.addShape(pptx.ShapeType.rect, { x:0.4, y:0.85, w:12.5, h:1.5, fill:{color:NAVY} });
+      sPrac.addText('YOUR TURN', { x:0.6, y:0.9, w:3, h:0.4, fontSize:10, bold:true, color:TEAL, charSpacing:2, fontFace:'Arial' });
+      sPrac.addText(safeText(pp.question||''), { x:0.6, y:1.3, w:12.1, h:0.9, fontSize:18, color:WHITE, fontFace:'Arial', wrap:true });
+      const steps = pp.solution_steps||[];
+      steps.slice(0,5).forEach((step, i) => {
+        const y = 2.55 + i * 0.75;
+        sPrac.addShape(pptx.ShapeType.ellipse, { x:0.4, y, w:0.38, h:0.38, fill:{color:TEAL} });
+        sPrac.addText(String(i+1), { x:0.4, y, w:0.38, h:0.38, fontSize:12, bold:true, color:WHITE, align:'center', valign:'middle' });
+        sPrac.addText(safeText(step), { x:0.9, y:y+0.02, w:12, h:0.38, fontSize:14, color:'2C2C2A', fontFace:'Arial', wrap:true });
+      });
+    }
+
+    // ── SLIDE: Discussion ────────────────────────────────────
+    const dqs = (sd.discussion_questions||[]).slice(0,3);
+    if (dqs.length) {
+      const sDisc = pptx.addSlide();
+      sDisc.background = { color: GREY };
+      addHeader(sDisc, 'Discussion', '6B63D4');
+      const dColors = [TEAL, YELLOW, '6B63D4'];
+      const dBg = ['E1F5EE', 'FFF8E1', 'EDE7F6'];
+      const dLabels = ['Recall', 'Apply', 'Evaluate'];
+      dqs.forEach((q, i) => {
+        const y = 0.9 + i * 1.9;
+        sDisc.addShape(pptx.ShapeType.rect, { x:0.4, y, w:12.5, h:1.7, fill:{color:dBg[i]}, line:{color:dColors[i],width:4} });
+        sDisc.addText(dLabels[i].toUpperCase(), { x:0.6, y:y+0.1, w:3, h:0.35, fontSize:9, bold:true, color:dColors[i], charSpacing:2 });
+        sDisc.addText(safeText(q), { x:0.6, y:y+0.45, w:12.1, h:1.1, fontSize:15, color:NAVY, fontFace:'Arial', wrap:true });
+      });
+    }
+
+    // ── SLIDE: Exit Ticket ───────────────────────────────────
+    const et = typeof sd.exit_ticket==='object' ? sd.exit_ticket : {question:sd.exit_ticket||'', answer_hint:''};
+    if (et.question) {
+      const sExit = pptx.addSlide();
+      sExit.background = { color: NAVY };
+      sExit.addShape(pptx.ShapeType.rect, { x:0, y:0, w:0.08, h:'100%', fill:{color:TEAL} });
+      sExit.addShape(pptx.ShapeType.rect, { x:2.5, y:0.7, w:8.4, h:0.5, fill:{color:TEAL}, rounding:true });
+      sExit.addText('SHOW WHAT YOU KNOW', { x:2.5, y:0.72, w:8.4, h:0.45, fontSize:11, bold:true, color:WHITE, align:'center', charSpacing:2 });
+      sExit.addShape(pptx.ShapeType.rect, { x:1.5, y:1.45, w:10.4, h:2.8, fill:{color:'1A2E50'}, line:{color:'3A5A80',width:1} });
+      sExit.addText(safeText(et.question), {
+        x:1.7, y:1.6, w:10.0, h:2.5,
+        fontSize:22, color:WHITE, fontFace:'Arial', wrap:true, align:'center', valign:'middle'
+      });
+      if (et.answer_hint) sExit.addText('Hint: ' + safeText(et.answer_hint), { x:1.5, y:4.4, w:10.4, h:0.5, fontSize:12, color:'6080A0', italic:true, align:'center' });
+      // Name/Date/Class lines
+      ['Name:', 'Date:', 'Class:'].forEach((lbl, i) => {
+        const x = 1.5 + i * 3.8;
+        sExit.addShape(pptx.ShapeType.line, { x, y:6.5, w:3.2, h:0, line:{color:'3A5A80',width:1} });
+        sExit.addText(lbl, { x, y:6.55, w:3.2, h:0.4, fontSize:11, color:'4A6080', align:'center' });
+      });
+    }
+
+    // ── Notice slide ─────────────────────────────────────────
+    const sNotice = pptx.addSlide();
+    sNotice.background = { color: WHITE };
+    sNotice.addShape(pptx.ShapeType.rect, { x:0, y:0, w:'100%', h:0.5, fill:{color:TEAL} });
+    sNotice.addText('Opening in Google Slides', { x:0.5, y:0.08, w:12, h:0.35, fontSize:16, bold:true, color:WHITE });
+    sNotice.addText('How to open this file in Google Slides:', { x:0.8, y:0.8, w:12, h:0.5, fontSize:18, bold:true, color:NAVY });
+    const steps2 = [
+      '1.  Go to drive.google.com',
+      '2.  Drag and drop this .pptx file into Google Drive',
+      '3.  Right-click the file → Open with → Google Slides',
+      '4.  The presentation will open fully editable',
+      '5.  All text, colours, and layouts are editable — swap in your own images where indicated'
+    ];
+    steps2.forEach((step, i) => {
+      sNotice.addText(step, { x:0.8, y:1.55 + i * 0.82, w:12, h:0.7, fontSize:15, color:'2C2C2A', fontFace:'Arial' });
+    });
+    sNotice.addText('Generated by TeacherAI · teacherai.ca · Ontario Curriculum', {
+      x:0.5, y:6.9, w:12.5, h:0.4, fontSize:10, color:MUTED, align:'center', italic:true
+    });
+
+    // ── Save ─────────────────────────────────────────────────
+    const filename = (topic||'lesson').replace(/[^a-zA-Z0-9 ]/g,'').replace(/\s+/g,'-').toLowerCase();
+    await pptx.writeFile({ fileName: `teacherai-${filename}.pptx` });
+    showToast('✅ Downloaded! Drag into Google Drive → open with Google Slides', 5000);
+
+  } catch(err) {
+    console.error('PPTX error:', err);
+    alert('Could not create PPTX: ' + err.message);
+  } finally {
+    if (btn) { btn.disabled=false; btn.textContent='⬇ Download Slides'; }
+  }
+}
+
+// ============================================================
 // GOOGLE SLIDES EXPORT
 // ============================================================
 function initGoogleSlides() {
@@ -6948,14 +7250,13 @@ async function generateUnit() {
   // Load curriculum for expectations
   await loadCurriculum(subj);
 
-  const numLessons = parseInt(duration);
-  const weeks = numLessons === 6 ? 2 : numLessons === 9 ? 3 : 4;
+  const numLessons = Math.min(12, Math.max(2, parseInt(duration) || 8));
   const gradeExpectations = getExpectationsForGrade(subj, [grade]);
 
-  const prompt = `You are an expert Ontario K-8 curriculum specialist. Generate a complete ${weeks}-week unit plan for Grade ${grade} ${subj}.
+  const prompt = `You are an expert Ontario K-8 curriculum specialist. Generate a complete unit plan for Grade ${grade} ${subj}.
 
 UNIT: "${topic}"
-LESSONS: ${numLessons} lessons total (1 per day, ~60 min each)
+LESSONS: ${numLessons} lessons total (~60 min each)
 ${ctx ? `CLASS CONTEXT: ${ctx}` : ''}
 
 Return ONLY valid JSON in this exact structure — no markdown, no extra text:
