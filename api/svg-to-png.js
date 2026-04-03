@@ -1,6 +1,4 @@
-// api/svg-to-png.js — server-side SVG to PNG conversion
-// Uses @resvg/resvg-js — fast Rust-based SVG renderer, no browser needed
-// Install: this uses Vercel's built-in Node runtime, resvg-js is auto-installed
+// api/svg-to-png.js — server-side SVG to PNG conversion using @resvg/resvg-js
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -18,13 +16,23 @@ module.exports = async function handler(req, res) {
     const w = parseInt(width) || 960;
     const h = parseInt(height) || 540;
 
-    // Ensure SVG has proper dimensions
     let svgStr = svg.trim();
+
+    // resvg does not support foreignObject — remove them with their content
+    svgStr = svgStr.replace(/<foreignObject[^>]*>[\s\S]*?<\/foreignObject>/gi, '');
+
+    // Ensure xmlns
     if (!svgStr.includes('xmlns')) {
       svgStr = svgStr.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
     }
+
+    // Force dimensions
     svgStr = svgStr.replace(/<svg([^>]*)>/, function(match, attrs) {
-      const a = attrs.replace(/width="[^"]*"/, '').replace(/height="[^"]*"/, '');
+      const a = attrs
+        .replace(/width="[^"]*"/, '')
+        .replace(/height="[^"]*"/, '')
+        .replace(/width='[^']*'/, '')
+        .replace(/height='[^']*'/, '');
       return `<svg${a} width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">`;
     });
 
@@ -40,7 +48,8 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ png: base64 });
 
   } catch (err) {
-    console.error('svg-to-png error:', err);
-    return res.status(500).json({ error: err.message });
+    console.error('svg-to-png error:', err.message);
+    // Return 200 with empty so client falls back to placeholder gracefully
+    return res.status(200).json({ png: null, error: err.message });
   }
 };
