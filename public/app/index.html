@@ -1440,6 +1440,15 @@ function handleOAuthRedirect() {
 }
 
 function showApp() {
+  // Restore slide data if teacher navigated away
+  try {
+    var cached = sessionStorage.getItem('teacherai_slidedata');
+    if (cached && !window._slideData) {
+      window._slideData = JSON.parse(cached);
+      var pb = document.getElementById('pptxBtn');
+      if (pb) { pb.disabled = false; pb.style.opacity = '1'; pb.style.cursor = 'pointer'; }
+    }
+  } catch(e) {}
   document.getElementById('authScreen').style.display='none';
   document.getElementById('appScreen').style.display='block';
   document.getElementById('navEmail').textContent = currentUser.email;
@@ -2409,6 +2418,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
 
     genC = {};
     window._slideData = null; // clear cached slides — new lesson generated
+    try { sessionStorage.removeItem('teacherai_slidedata'); } catch(e) {}
     var pb2 = document.getElementById('pptxBtn');
     if (pb2) { pb2.disabled = true; pb2.style.opacity = '.4'; pb2.style.cursor = 'not-allowed'; pb2.title = 'Generate slides first by clicking Present'; }
     outputKeys.forEach(k => { genC[k] = {orig:parsed[k]||'', cur:parsed[k]||''}; });
@@ -3170,6 +3180,8 @@ async function generateSlideData(callerBtn) {
     const isScience = (subject||'').toLowerCase().includes('science');
 
     window._slideData = {sd, topic, subject, gradeStr, detectedTheme};
+    // Persist slide data across tab navigation
+    try { sessionStorage.setItem('teacherai_slidedata', JSON.stringify({sd, topic, subject, gradeStr, detectedTheme})); } catch(e) {}
     // Enable Download Slides button now that slide data exists
     var pb = document.getElementById('pptxBtn');
     if (pb) { pb.disabled = false; pb.style.opacity = '1'; pb.style.cursor = 'pointer'; pb.title = 'Download as PowerPoint for Google Slides'; }
