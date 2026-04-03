@@ -50,7 +50,22 @@ async function generateAIImage(topic, subject, grade, theme) {
     ? 'flat vector illustration, geometric, educational'
     : 'colourful illustration, storybook style, cheerful';
 
-  const prompt = `${style}, ${topic}${themeStr}, K-8 classroom, child-friendly, no text, no words, educational illustration`;
+  // Strip topic down to visual concepts only — avoid words that appear in generated images
+  const visualTopic = topic
+    .replace(/types of|parts of|how|what are|introduction to|overview of/gi, '')
+    .trim();
+
+  const prompt = [
+    style,
+    visualTopic + themeStr,
+    'Ontario Grade ' + (gradeNum || 'K-8') + ' classroom',
+    'child-friendly illustration',
+    'painterly style, soft colours',
+    'NO TEXT of any kind',
+    'NO WORDS, NO LETTERS, NO LABELS, NO CAPTIONS, NO TITLES',
+    'NO diagrams with text',
+    'purely visual scene or illustration',
+  ].join(', ');
 
   // Use synchronous endpoint — blocks until image is ready (2-6s for Schnell)
   // This works within Vercel Hobby 10s limit for Flux Schnell (4 steps)
