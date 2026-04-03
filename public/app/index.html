@@ -5585,8 +5585,7 @@ async function downloadPPTX() {
       slide.addText(title, { x:0.5, y:0.05, w:12, h:0.6, fontSize:20, bold:true, color:WHITE, fontFace:'Arial' });
     }
 
-    function safeText(s) { return String(s||'').replace(/[^ -~
-]/g, ' ').trim(); }
+    function safeText(s) { return String(s||'').replace(/[^\x20-\x7E]/g, ' ').trim(); }
 
     // ── SLIDE 1: Title ───────────────────────────────────────
     const sTitle = pptx.addSlide();
