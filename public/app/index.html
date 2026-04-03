@@ -1911,16 +1911,25 @@ async function generate() {
   const relevantExps = getExpectations(subj, grades, []);
   // Strand-aware expectation injection — prioritize relevant strand for topic
   const topicLower2 = (topic||'').toLowerCase();
-  let primaryStrand2 = 'B'; // default number
-  if (/measure|area|perim|angle|transform|shape|volume|circle|pythag|geomet/.test(topicLower2)) primaryStrand2 = 'E';
-  else if (/interest|budget|money|financ/.test(topicLower2)) primaryStrand2 = 'F';
-  else if (/probab|graph|data|statistic|mean|median|mode|scatter/.test(topicLower2)) primaryStrand2 = 'D';
-  else if (/pattern|equat|variable|algebra|linear/.test(topicLower2)) primaryStrand2 = 'C';
-  // Also use strand from loaded strands if available
-  if (strands && strands.length) {
-    const strandMap = {'Number':'B','Algebra':'C','Data':'D','Spatial Sense':'E','Financial Literacy':'F'};
-    const mappedStrand = strandMap[strands[0]];
-    if (mappedStrand) primaryStrand2 = mappedStrand;
+  let primaryStrand2 = 'B'; // default
+  if (isMathSubj) {
+    // Math strand routing
+    if (/measure|area|perim|angle|transform|shape|volume|circle|pythag|geomet/.test(topicLower2)) primaryStrand2 = 'E';
+    else if (/interest|budget|money|financ/.test(topicLower2)) primaryStrand2 = 'F';
+    else if (/probab|graph|data|statistic|mean|median|mode|scatter/.test(topicLower2)) primaryStrand2 = 'D';
+    else if (/pattern|equat|variable|algebra|linear/.test(topicLower2)) primaryStrand2 = 'C';
+    else primaryStrand2 = 'B';
+    if (strands && strands.length) {
+      const strandMap = {'Number':'B','Algebra':'C','Data':'D','Spatial Sense':'E','Financial Literacy':'F'};
+      const mappedStrand = strandMap[strands[0]];
+      if (mappedStrand) primaryStrand2 = mappedStrand;
+    }
+  } else if ((subj||'').toLowerCase().includes('science')) {
+    // Science strand routing — B=Life Systems, C=Matter/Energy, D=Structures, E=Earth/Space
+    if (/weather|water cycle|rock|soil|space|planet|climate|earth|energy form|conservation of energy|renewable|solar|wind|season|erosion|atmosphere/.test(topicLower2)) primaryStrand2 = 'E';
+    else if (/matter|state|solid|liquid|gas|particle|chemical|physical change|mixture|solution|force|motion|electricity|circuit|light|sound|heat|flight|fluid/.test(topicLower2)) primaryStrand2 = 'C';
+    else if (/machine|structure|mechanism|pulley|gear|lever|bridge|load|strong|stable|design|technology/.test(topicLower2)) primaryStrand2 = 'D';
+    else primaryStrand2 = 'B'; // Life Systems — habitat, ecosystem, biodiversity, food chain, plant, animal, cell, body
   }
   // Filter B1.1 (whole numbers) from topics that aren't about whole numbers
   const isWholeNumberTopic2 = /count|whole number|place value|composing|decomposing/.test(topicLower2);
@@ -1941,8 +1950,11 @@ async function generate() {
   const sortedExps2 = [...primaryExps2, ...filteredOtherExps2].slice(0,12);
   const expContext = sortedExps2.length
     ? (isMathSubj
-        ? 'ONTARIO MATH CURRICULUM EXPECTATIONS FOR '+grades.join('/')+' — choose 2-4 from '+primaryStrand2+' strand first (most relevant to this topic):\n'
-          + sortedExps2.map(e=>e.code+' ['+e.strand+'] '+e.desc).join('\n')
+        ? 'ONTARIO MATH CURRICULUM EXPECTATIONS FOR GRADE '+grades.join('/')+' — choose 2-4 from '+primaryStrand2+' strand ('+({'B':'Number','C':'Algebra','D':'Data','E':'Spatial Sense','F':'Financial Literacy'})[primaryStrand2]+') first:\n'
+          + sortedExps2.map(e=>e.code+' ['+e.strand+': '+({'B':'Number','C':'Algebra','D':'Data','E':'Spatial Sense','F':'Financial Literacy'})[e.strand]+'] '+e.desc).join('\n')
+        : (subj||'').toLowerCase().includes('science')
+        ? 'ONTARIO SCIENCE & TECHNOLOGY 2022 EXPECTATIONS FOR GRADE '+grades.join('/')+' — choose 2-4 from '+primaryStrand2+' strand ('+({'B':'Life Systems','C':'Matter and Energy','D':'Structures and Mechanisms','E':'Earth and Space Systems'})[primaryStrand2]+') first. Do NOT use language or math expectations:\n'
+          + sortedExps2.map(e=>e.code+' ['+e.strand+': '+({'B':'Life Systems','C':'Matter and Energy','D':'Structures and Mechanisms','E':'Earth and Space Systems'})[e.strand]+'] '+e.desc).join('\n')
         : 'ONTARIO LANGUAGE CURRICULUM EXPECTATIONS (choose 2-4 most relevant):\n'
           + relevantExps.slice(0,15).map(e=>e.code+' '+e.desc).join('\n'))
     : '';
@@ -2915,30 +2927,54 @@ async function generateSlideData(callerBtn) {
     const imagePromises = [];
 
     const fetchMindsonImage = async () => {
+      console.log('[IMG] Starting AI image fetch for:', topic, subject);
       try {
         const r = await authFetch('/api/generate-image', {
           method: 'POST',
           body: JSON.stringify({ type: 'ai', topic, subject, grade: gradeStr, theme: detectedTheme })
         });
+        console.log('[IMG] AI image response status:', r.status, r.ok);
         if (r.ok) {
           const d = await r.json();
-          if (d.url) { window._slideData.mindsonImg = d.url; }
+          console.log('[IMG] AI image response data:', JSON.stringify(d).slice(0,200));
+          if (d.url) {
+            window._slideData.mindsonImg = d.url;
+            console.log('[IMG] mindsonImg set to:', d.url.slice(0,80));
+          } else {
+            console.warn('[IMG] No URL in AI image response:', d);
+          }
+        } else {
+          const txt = await r.text();
+          console.error('[IMG] AI image fetch failed:', r.status, txt.slice(0,200));
         }
-      } catch(e) { console.warn('Minds On image fetch failed:', e.message); }
+      } catch(e) { console.error('[IMG] AI image exception:', e.message); }
     };
 
     const fetchWikiImage = async () => {
-      if (!isScience) return;
+      if (!isScience) { console.log('[IMG] Skipping wiki — not science, subject:', subject); return; }
+      console.log('[IMG] Starting Wikimedia fetch for:', topic);
       try {
         const r = await authFetch('/api/generate-image', {
           method: 'POST',
           body: JSON.stringify({ type: 'wikimedia', topic, subject, grade: gradeStr })
         });
+        console.log('[IMG] Wiki response status:', r.status, r.ok);
         if (r.ok) {
           const d = await r.json();
-          if (d.url) { window._slideData.wikiImg = d.url; window._slideData.wikiTitle = d.title; window._slideData.wikiLicense = d.license; }
+          console.log('[IMG] Wiki response data:', JSON.stringify(d).slice(0,200));
+          if (d.url) {
+            window._slideData.wikiImg = d.url;
+            window._slideData.wikiTitle = d.title;
+            window._slideData.wikiLicense = d.license;
+            console.log('[IMG] wikiImg set to:', d.url.slice(0,80));
+          } else {
+            console.warn('[IMG] No URL in wiki response:', d);
+          }
+        } else {
+          const txt = await r.text();
+          console.error('[IMG] Wiki fetch failed:', r.status, txt.slice(0,200));
         }
-      } catch(e) { console.warn('Wikimedia image fetch failed:', e.message); }
+      } catch(e) { console.error('[IMG] Wiki exception:', e.message); }
     };
 
     // Fire both requests in parallel — don't await, they complete async
@@ -2965,6 +3001,7 @@ async function generateSlideData(callerBtn) {
     clearInterval(imgLoadTimer);
     if (callerBtn) { callerBtn.disabled=false; callerBtn.textContent='▶ Present'; }
     const {wikiImg=null, wikiTitle=null, wikiLicense=null, mindsonImg=null} = window._slideData;
+    console.log('[IMG] Opening presenter with wikiImg:', wikiImg ? wikiImg.slice(0,80) : 'NULL', 'mindsonImg:', mindsonImg ? mindsonImg.slice(0,80) : 'NULL');
     const deckWindow = openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg, mindsonImg);
 
     // ── STEP 4: Fire agent loop for any slides that didn't get a hardcoded visual ─
