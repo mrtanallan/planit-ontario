@@ -31,23 +31,11 @@ function svgToPng(svgHtml, w, h) {
 }
 
 async function downloadPPTX() {
+  console.log('[PPTX] start, _slideData:', !!window._slideData);
   if (!window._slideData) {
-    var btn2 = document.querySelector('[onclick="downloadPPTX()"]');
-    if (btn2) { btn2.disabled = true; btn2.textContent = 'Building slides...'; }
-    showToast('Building slides first — this takes about 15 seconds...');
-    try {
-      var ok = await generateSlideData(null);
-      if (!ok || !window._slideData) {
-        if (btn2) { btn2.disabled = false; btn2.textContent = 'Download Slides'; }
-        showToast('Could not generate slides — try clicking Present first');
-        return;
-      }
-    } catch(e) {
-      if (btn2) { btn2.disabled = false; btn2.textContent = 'Download Slides'; }
-      showToast('Error building slides: ' + e.message);
-      return;
-    }
-    if (btn2) { btn2.disabled = false; }
+    console.log('[PPTX] no slideData, bailing');
+    showToast('Click Present first to generate slides, then Download Slides');
+    return;
   }
 
   var btn = document.querySelector('[onclick="downloadPPTX()"]');
@@ -87,10 +75,12 @@ async function downloadPPTX() {
     return String(s || '').replace(/[^\x20-\x7E]/g, '').trim();
   }
 
+  console.log('[PPTX] creating pptx instance');
   var pptx = new PptxGenJS();
   pptx.layout = 'LAYOUT_WIDE';
 
   try {
+    console.log('[PPTX] inside try, building slides');
     // SLIDE 1: Title
     var s1 = pptx.addSlide();
     s1.background = {color: NAVY};
@@ -258,8 +248,9 @@ async function downloadPPTX() {
 
     var fname = (topic || 'lesson').replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '-').toLowerCase();
     var fname2 = 'teacherai-' + fname + '.pptx';
-    // base64 data URI — works in Safari where blob URLs fail
+    console.log('[PPTX] writing base64...');
     var pptxBase64 = await pptx.write({outputType: 'base64'});
+    console.log('[PPTX] base64 length:', pptxBase64.length);
     var dataUri = 'data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,' + pptxBase64;
     var a = document.createElement('a');
     a.href = dataUri;
@@ -270,7 +261,7 @@ async function downloadPPTX() {
     showToast('Downloaded! Drag into Google Drive and open with Google Slides', 5000);
 
   } catch(err) {
-    console.error('PPTX error:', err);
+    console.error('[PPTX] ERROR:', err);
     alert('Could not create PPTX: ' + err.message);
   }
 
