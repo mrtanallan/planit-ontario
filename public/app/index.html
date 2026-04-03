@@ -5531,33 +5531,16 @@ function downloadSlidesHTML() {
   showToast('Slides opened - use browser File > Save Page As to download');
 }
 // PPTX export
-function svgToPng(svgHtml, w, h) {
+async function svgToPng(svgHtml, w, h) {
   w = w || 960; h = h || 540;
-  return new Promise(function(resolve, reject) {
-    var svg = svgHtml.trim();
-    if (svg.indexOf('xmlns') === -1) {
-      svg = svg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
-    }
-    svg = svg.replace(/<svg([^>]*)>/, function(match, attrs) {
-      var a = attrs.replace(/width="[^"]*"/, '').replace(/height="[^"]*"/, '');
-      return '<svg' + a + ' width="' + w + '" height="' + h + '" xmlns="http://www.w3.org/2000/svg">';
-    });
-    var blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
-    var url = URL.createObjectURL(blob);
-    var img = new Image();
-    img.onload = function() {
-      var canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      var ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, w, h);
-      ctx.drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL('image/png'));
-    };
-    img.onerror = function(e) { URL.revokeObjectURL(url); reject(e); };
-    img.src = url;
+  var res = await fetch('/api/svg-to-png', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({svg: svgHtml, width: w, height: h})
   });
+  if (!res.ok) throw new Error('svg-to-png failed: ' + res.status);
+  var data = await res.json();
+  return 'data:image/png;base64,' + data.png;
 }
 
 function loadPptxGen() {
@@ -5708,14 +5691,19 @@ async function downloadPPTX() {
       var svgHtml = cs.svg_html || '';
       var pngData = null;
       if (svgHtml && svgHtml.indexOf('<svg') !== -1) {
-        try { pngData = await svgToPng(svgHtml, 960, 540); } catch(ex) { console.warn('svg fail', ex); }
+        try {
+          pngData = await svgToPng(svgHtml, 960, 540);
+        } catch(ex) {
+          console.warn('[PPTX] svg-to-png failed:', ex.message);
+        }
       }
       if (pngData) {
         sc.addImage({data: pngData, x:5.1, y:0.82, w:8.1, h:5.95});
       } else {
         var vtype = safe((cs.visual_type || 'diagram').replace(/_/g, ' '));
-        sc.addShape(pptx.ShapeType.rect, {x:5.1, y:0.82, w:8.1, h:5.95, fill:{color:WHITE}, line:{color:'DDDDDD', width:1}});
-        sc.addText('[' + vtype + '] - Add diagram here', {x:5.2, y:3.0, w:7.9, h:1.6, fontSize:13, color:'BBBBBB', align:'center', valign:'middle', fontFace:'Arial', italic:true, wrap:true});
+        sc.addShape(pptx.ShapeType.rect, {x:5.1, y:0.82, w:8.1, h:5.95, fill:{color:'F8F8F8'}, line:{color:'DDDDDD', width:1}});
+        sc.addText(vtype, {x:5.2, y:2.5, w:7.9, h:0.6, fontSize:14, color:'AAAAAA', align:'center', fontFace:'Arial', bold:true});
+        sc.addText('Add your diagram here', {x:5.2, y:3.2, w:7.9, h:0.5, fontSize:11, color:'BBBBBB', align:'center', fontFace:'Arial', italic:true});
       }
     }
 
