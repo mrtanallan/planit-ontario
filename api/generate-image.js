@@ -1,9 +1,7 @@
 // api/generate-image.js — TeacherAI image generation
-// type=ai        → fal.ai Flux Schnell
-// type=wikimedia → Wikimedia Commons (free, no key)
-
-// Node.js runtime — 30s timeout (edge only gets 10s, too tight for image gen)
-export const config = { maxDuration: 30 };
+// Uses fal.ai queue API to avoid Vercel 10s timeout on Hobby plan
+// type=ai        → fal.ai Flux Schnell (submit → poll)
+// type=wikimedia → Wikimedia Commons (instant, no key needed)
 
 const FAL_KEY = process.env.FAL_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -38,51 +36,69 @@ async function setCache(key, url) {
   } catch { /* non-fatal */ }
 }
 
-// ── fal.ai Flux Schnell ───────────────────────────────────────────────────────
+// ── fal.ai — submit job then poll until done ──────────────────────────────────
 async function generateAIImage(topic, subject, grade, theme) {
   if (!FAL_KEY) throw new Error('FAL_API_KEY not set');
 
   const subjectLower = (subject || '').toLowerCase();
   const themeStr = theme ? `, ${theme} themed` : '';
-  const gradeNum = (grade || '').replace('Grade ', '');
+  const gradeNum = (grade || '').replace('Grade ', '').replace('Gr. ', '');
 
   const style = subjectLower.includes('science')
-    ? 'scientific illustration, educational, detailed, nature'
+    ? 'scientific illustration, educational, detailed, nature photography style'
     : subjectLower.includes('math')
-    ? 'flat vector illustration, geometric, clean, educational poster'
-    : 'warm colourful illustration, storybook style, inviting';
+    ? 'flat vector illustration, geometric shapes, clean lines, educational'
+    : 'warm colourful illustration, storybook style, inviting, cheerful';
 
-  const prompt = `${style}, ${topic}${themeStr}, Grade ${gradeNum || 'K-8'} Ontario classroom, child-friendly, no text, no letters, no words, professional educational illustration`;
+  const prompt = `${style}, ${topic}${themeStr}, elementary school classroom, child-friendly, age-appropriate, no text, no letters, no words, professional educational illustration, bright colours`;
 
-  // fal.ai REST API — params inside "input" wrapper
-  const res = await fetch('https://fal.run/fal-ai/flux/schnell', {
+  const falHeaders = {
+    Authorization: `Key ${FAL_KEY}`,
+    'Content-Type': 'application/json',
+  };
+
+  // Step 1: Submit to queue (returns immediately)
+  const submitRes = await fetch('https://queue.fal.run/fal-ai/flux/schnell', {
     method: 'POST',
-    headers: {
-      Authorization: `Key ${FAL_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers: falHeaders,
     body: JSON.stringify({
-      input: {
-        prompt,
-        image_size: 'landscape_4_3',
-        num_inference_steps: 4,
-        num_images: 1,
-        enable_safety_checker: true,
-      }
+      prompt,
+      image_size: 'landscape_4_3',
+      num_inference_steps: 4,
+      num_images: 1,
+      enable_safety_checker: true,
     }),
   });
 
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`fal.ai ${res.status}: ${txt.slice(0, 300)}`);
+  if (!submitRes.ok) {
+    const txt = await submitRes.text();
+    throw new Error(`fal.ai submit ${submitRes.status}: ${txt.slice(0, 200)}`);
   }
 
-  const data = await res.json();
-  const url = data?.images?.[0]?.url
-    || data?.image?.url
-    || data?.output?.images?.[0]?.url;
-  if (!url) throw new Error(`No URL in fal.ai response: ${JSON.stringify(data).slice(0, 200)}`);
-  return url;
+  const { request_id } = await submitRes.json();
+  if (!request_id) throw new Error('No request_id from fal.ai queue');
+
+  // Step 2: Poll for result — up to 8 seconds, 1s intervals
+  for (let attempt = 0; attempt < 8; attempt++) {
+    await new Promise(r => setTimeout(r, 1000));
+
+    const resultRes = await fetch(
+      `https://queue.fal.run/fal-ai/flux/schnell/requests/${request_id}`,
+      { headers: falHeaders }
+    );
+
+    if (!resultRes.ok) continue;
+    const data = await resultRes.json();
+
+    // Check status
+    if (data.status === 'COMPLETED' || data.images) {
+      const url = data.images?.[0]?.url || data.output?.images?.[0]?.url;
+      if (url) return url;
+    }
+    if (data.status === 'FAILED') throw new Error('fal.ai generation failed');
+  }
+
+  throw new Error('fal.ai timed out after 8 polls');
 }
 
 // ── Wikimedia Commons ─────────────────────────────────────────────────────────
@@ -162,13 +178,17 @@ export default async function handler(req) {
 
   try {
     const cached = await getCached(cacheKey);
-    if (cached) return new Response(JSON.stringify({ url: cached, cached: true }), { status: 200, headers: hdrs });
+    if (cached) {
+      return new Response(JSON.stringify({ url: cached, cached: true }), { status: 200, headers: hdrs });
+    }
 
     let imageUrl, meta = {};
 
     if (type === 'wikimedia') {
       const result = await getWikimediaImage(topic);
-      if (!result) return new Response(JSON.stringify({ url: null, reason: 'no match' }), { status: 200, headers: hdrs });
+      if (!result) {
+        return new Response(JSON.stringify({ url: null, reason: 'no wikimedia match' }), { status: 200, headers: hdrs });
+      }
       imageUrl = result.url;
       meta = { title: result.title, license: result.license };
     } else {
