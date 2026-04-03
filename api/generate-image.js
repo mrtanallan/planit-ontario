@@ -45,19 +45,18 @@ async function generateAIImage(topic, subject, grade, theme) {
   const gradeNum = (grade || '').replace(/Grade\s*/i, '').replace(/Gr\.\s*/i, '');
 
   const style = subjectLower.includes('science')
-    ? 'scientific illustration, educational, detailed, nature photography style'
+    ? 'scientific illustration, educational, nature'
     : subjectLower.includes('math')
-    ? 'flat vector illustration, geometric shapes, clean lines, educational'
-    : 'warm colourful illustration, storybook style, inviting, cheerful';
+    ? 'flat vector illustration, geometric, educational'
+    : 'colourful illustration, storybook style, cheerful';
 
-  const prompt = `${style}, ${topic}${themeStr}, elementary school classroom, child-friendly, age-appropriate, no text, no letters, no words, professional educational illustration, bright colours`;
+  const prompt = `${style}, ${topic}${themeStr}, K-8 classroom, child-friendly, no text, no words, educational illustration`;
 
-  const falHeaders = { Authorization: `Key ${FAL_KEY}`, 'Content-Type': 'application/json' };
-
-  // Submit job to queue — returns immediately with request_id
-  const submitRes = await fetch('https://queue.fal.run/fal-ai/flux/schnell', {
+  // Use synchronous endpoint — blocks until image is ready (2-6s for Schnell)
+  // This works within Vercel Hobby 10s limit for Flux Schnell (4 steps)
+  const res = await fetch('https://fal.run/fal-ai/flux/schnell', {
     method: 'POST',
-    headers: falHeaders,
+    headers: { Authorization: `Key ${FAL_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       prompt,
       image_size: 'landscape_4_3',
@@ -67,33 +66,16 @@ async function generateAIImage(topic, subject, grade, theme) {
     }),
   });
 
-  if (!submitRes.ok) {
-    const txt = await submitRes.text();
-    throw new Error(`fal.ai submit ${submitRes.status}: ${txt.slice(0, 200)}`);
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`fal.ai ${res.status}: ${txt.slice(0, 200)}`);
   }
 
-  const submitted = await submitRes.json();
-  const request_id = submitted.request_id;
-  if (!request_id) throw new Error(`No request_id. Response: ${JSON.stringify(submitted).slice(0,200)}`);
-
-  // Poll for result — up to 8 seconds
-  for (let i = 0; i < 8; i++) {
-    await new Promise(r => setTimeout(r, 1000));
-    try {
-      const pollRes = await fetch(
-        `https://queue.fal.run/fal-ai/flux/schnell/requests/${request_id}`,
-        { headers: falHeaders }
-      );
-      if (!pollRes.ok) continue;
-      const data = await pollRes.json();
-      if (data.status === 'FAILED') throw new Error('fal.ai generation failed');
-      const url = data?.images?.[0]?.url || data?.output?.images?.[0]?.url;
-      if (url) return url;
-    } catch (e) {
-      if (e.message.includes('failed')) throw e;
-    }
-  }
-  throw new Error('fal.ai timed out after 8s polling');
+  const data = await res.json();
+  // Sync endpoint returns images directly at top level
+  const url = data?.images?.[0]?.url;
+  if (!url) throw new Error(`No URL. Response keys: ${Object.keys(data).join(',')}`);
+  return url;
 }
 
 // ── Wikimedia Commons ─────────────────────────────────────────────────────────
