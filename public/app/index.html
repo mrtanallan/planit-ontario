@@ -5532,16 +5532,21 @@ function downloadSlidesHTML() {
 }
 // PPTX export
 async function svgToPng(svgHtml, w, h) {
+  // Send SVG to server for PNG conversion
   w = w || 960; h = h || 540;
-  var res = await fetch('/api/svg-to-png', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({svg: svgHtml, width: w, height: h})
-  });
-  if (!res.ok) throw new Error('svg-to-png failed: ' + res.status);
-  var data = await res.json();
-  if (!data.png) throw new Error('no image: ' + (data.error || 'unknown'));
-  return 'data:image/png;base64,' + data.png;
+  try {
+    var res = await fetch('/api/svg-to-png', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({svg: svgHtml, width: w, height: h})
+    });
+    if (!res.ok) throw new Error('status ' + res.status);
+    var data = await res.json();
+    if (!data.png) throw new Error(data.error || 'no png');
+    return 'data:image/png;base64,' + data.png;
+  } catch(e) {
+    throw new Error('svgToPng: ' + e.message);
+  }
 }
 
 async function urlToPng(url) {
