@@ -5544,24 +5544,32 @@ function loadCanvg() {
 
 async function svgToPng(svgHtml, w, h) {
   w = w || 960; h = h || 540;
-  // Use canvg — pure JS SVG renderer, no canvas taint, works in Safari
-  var cv = await loadCanvg();
-  var canvas = document.createElement('canvas');
-  canvas.width = w; canvas.height = h;
-  var ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, w, h);
-  // canvg renders SVG directly to canvas without loading external URLs
-  var v = await cv.Canvg.fromString(ctx, svgHtml, {
-    ignoreMouse: true,
-    ignoreAnimation: true,
-    ignoreDimensions: true,
-    ignoreClear: true,
-    offsetX: 0, offsetY: 0,
-    scaleWidth: w, scaleHeight: h,
-  });
-  await v.render();
-  return canvas.toDataURL('image/png');
+  try {
+    var cv = await loadCanvg();
+    var canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, w, h);
+
+    // canvg v4 API
+    var CanvgClass = cv.Canvg || cv;
+    var v = await CanvgClass.fromString(ctx, svgHtml, {
+      ignoreMouse: true,
+      ignoreAnimation: true,
+      ignoreDimensions: true,
+      ignoreClear: true,
+      scaleWidth: w,
+      scaleHeight: h,
+    });
+    await v.render();
+    var dataUrl = canvas.toDataURL('image/png');
+    console.log('[PPTX] canvg rendered, dataUrl length:', dataUrl.length);
+    return dataUrl;
+  } catch(ex) {
+    console.warn('[PPTX] canvg error:', ex.message);
+    throw ex;
+  }
 }
 
 async function urlToPng(url) {
@@ -5735,13 +5743,21 @@ async function downloadPPTX() {
 
       // Try canvg SVG->PNG first (pure JS, no canvas taint in Safari)
       if (svgHtml && svgHtml.indexOf('<svg') !== -1) {
-        try { pngData = await svgToPng(svgHtml, 960, 540); } catch(ex) { console.warn('[PPTX] canvg fail:', ex.message); }
+        try {
+          pngData = await svgToPng(svgHtml, 960, 540);
+          // Validate it's actually a PNG data URL
+          if (!pngData || !pngData.startsWith('data:image/png')) { pngData = null; }
+        } catch(ex) { console.warn('[PPTX] canvg fail:', ex.message); pngData = null; }
       }
       // Fall back to AI image
       if (!pngData && slideImgUrl) {
-        try { pngData = await urlToPng(slideImgUrl); } catch(ex) { console.warn('[PPTX] img fail:', ex.message); }
+        try {
+          pngData = await urlToPng(slideImgUrl);
+          if (!pngData || !pngData.startsWith('data:')) { pngData = null; }
+        } catch(ex) { console.warn('[PPTX] img fail:', ex.message); pngData = null; }
       }
       if (pngData) {
+        console.log('[PPTX] adding image, length:', pngData.length);
         sc.addImage({data: pngData, x:5.1, y:0.82, w:8.1, h:5.95});
       } else {
         var vtype = safe((cs.visual_type || 'diagram').replace(/_/g, ' '));
