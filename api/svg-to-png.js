@@ -1,4 +1,4 @@
-// api/svg-to-png.js — SVG to PNG + image URL to base64
+// api/svg-to-png.js v3 — foreignObject text conversion + image URL fetch
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
