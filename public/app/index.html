@@ -5531,22 +5531,37 @@ function downloadSlidesHTML() {
   showToast('Slides opened - use browser File > Save Page As to download');
 }
 // PPTX export
+function loadCanvg() {
+  return new Promise(function(resolve, reject) {
+    if (window.canvg) { resolve(window.canvg); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/canvg@4.0.2/lib/umd.js';
+    s.onload = function() { resolve(window.canvg); };
+    s.onerror = function() { reject(new Error('Failed to load canvg')); };
+    document.head.appendChild(s);
+  });
+}
+
 async function svgToPng(svgHtml, w, h) {
-  // Send SVG to server for PNG conversion
   w = w || 960; h = h || 540;
-  try {
-    var res = await fetch('/api/svg-to-png', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({svg: svgHtml, width: w, height: h})
-    });
-    if (!res.ok) throw new Error('status ' + res.status);
-    var data = await res.json();
-    if (!data.png) throw new Error(data.error || 'no png');
-    return 'data:image/png;base64,' + data.png;
-  } catch(e) {
-    throw new Error('svgToPng: ' + e.message);
-  }
+  // Use canvg — pure JS SVG renderer, no canvas taint, works in Safari
+  var cv = await loadCanvg();
+  var canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, w, h);
+  // canvg renders SVG directly to canvas without loading external URLs
+  var v = await cv.Canvg.fromString(ctx, svgHtml, {
+    ignoreMouse: true,
+    ignoreAnimation: true,
+    ignoreDimensions: true,
+    ignoreClear: true,
+    offsetX: 0, offsetY: 0,
+    scaleWidth: w, scaleHeight: h,
+  });
+  await v.render();
+  return canvas.toDataURL('image/png');
 }
 
 async function urlToPng(url) {
@@ -5716,34 +5731,23 @@ async function downloadPPTX() {
       }
       var svgHtml = cs.svg_html || '';
       var slideImgUrl = slideImgs[ci] || null;
+      var pngData = null;
 
-      // Try embedding SVG natively in PPTX — renders perfectly in PowerPoint/Google Slides
+      // Try canvg SVG->PNG first (pure JS, no canvas taint in Safari)
       if (svgHtml && svgHtml.indexOf('<svg') !== -1) {
-        try {
-          // Clean SVG for pptxgenjs native embedding
-          var cleanSvg = svgHtml.trim();
-          if (!cleanSvg.includes('xmlns')) {
-            cleanSvg = cleanSvg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
-          }
-          sc.addImage({data: 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(cleanSvg))), x:5.1, y:0.82, w:8.1, h:5.95, type:'svg'});
-          continue;
-        } catch(ex) {
-          console.warn('[PPTX] native svg failed:', ex.message);
-        }
+        try { pngData = await svgToPng(svgHtml, 960, 540); } catch(ex) { console.warn('[PPTX] canvg fail:', ex.message); }
       }
-
-      // Fall back to AI image URL if available
-      if (slideImgUrl) {
-        try {
-          var pngData = await urlToPng(slideImgUrl);
-          if (pngData) { sc.addImage({data: pngData, x:5.1, y:0.82, w:8.1, h:5.95}); continue; }
-        } catch(ex) { console.warn('[PPTX] img fail:', ex.message); }
+      // Fall back to AI image
+      if (!pngData && slideImgUrl) {
+        try { pngData = await urlToPng(slideImgUrl); } catch(ex) { console.warn('[PPTX] img fail:', ex.message); }
       }
-
-      // Final fallback: placeholder
-      var vtype = safe((cs.visual_type || 'diagram').replace(/_/g, ' '));
-      sc.addShape(pptx.ShapeType.rect, {x:5.1, y:0.82, w:8.1, h:5.95, fill:{color:'F8F8F8'}, line:{color:'DDDDDD', width:1}});
-      sc.addText(vtype, {x:5.2, y:2.5, w:7.9, h:0.6, fontSize:14, color:'AAAAAA', align:'center', fontFace:'Arial', bold:true});
+      if (pngData) {
+        sc.addImage({data: pngData, x:5.1, y:0.82, w:8.1, h:5.95});
+      } else {
+        var vtype = safe((cs.visual_type || 'diagram').replace(/_/g, ' '));
+        sc.addShape(pptx.ShapeType.rect, {x:5.1, y:0.82, w:8.1, h:5.95, fill:{color:'F8F8F8'}, line:{color:'DDDDDD', width:1}});
+        sc.addText(vtype, {x:5.2, y:2.5, w:7.9, h:0.6, fontSize:14, color:'AAAAAA', align:'center', fontFace:'Arial', bold:true});
+      }
     }
 
     // SLIDE: Practice
