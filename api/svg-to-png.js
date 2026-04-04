@@ -1,4 +1,4 @@
-// api/svg-to-png.js v4 — uses canvas-based approach with jimp fallback
+// api/svg-to-png.js v5 — uses sharp (pre-installed on Vercel via Next.js)
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -23,14 +23,14 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ png: base64, mime });
     }
 
-    // Mode 2: SVG to PNG
+    // Mode 2: SVG to PNG via sharp
     if (!svg || typeof svg !== 'string') {
       return res.status(400).json({ error: 'svg or imageUrl required' });
     }
 
     let svgStr = svg.trim();
 
-    // Convert foreignObject to SVG text
+    // Convert foreignObject to native SVG text elements
     svgStr = svgStr.replace(
       /<foreignObject\s+([^>]*)>([\s\S]*?)<\/foreignObject>/gi,
       function(match, attrStr, inner) {
@@ -61,7 +61,6 @@ module.exports = async function handler(req, res) {
           return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
         };
 
-        // Wrap text into lines
         const charsPerLine = Math.max(1, Math.floor(fw / (fontSize * 0.58)));
         const words = rawText.split(' ');
         const lines = [];
@@ -83,7 +82,7 @@ module.exports = async function handler(req, res) {
         return lines.map(function(l, i) {
           return '<text x="' + cx + '" y="' + (startY + i * lineH) + '"' +
             ' text-anchor="middle"' +
-            ' font-family="DejaVu Sans,Arial,sans-serif"' +
+            ' font-family="sans-serif"' +
             ' font-size="' + fontSize + '"' +
             (isBold ? ' font-weight="bold"' : '') +
             ' fill="' + escaped(color) + '">' +
@@ -92,12 +91,13 @@ module.exports = async function handler(req, res) {
       }
     );
 
+    // Remove xhtml namespace
+    svgStr = svgStr.replace(/xmlns="http:\/\/www\.w3\.org\/1999\/xhtml"/g, '');
+
     // Ensure SVG namespace
     if (!svgStr.includes('xmlns="http://www.w3.org/2000/svg"')) {
       svgStr = svgStr.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
     }
-    // Remove xhtml namespace
-    svgStr = svgStr.replace(/xmlns="http:\/\/www\.w3\.org\/1999\/xhtml"/g, '');
 
     // Force dimensions
     svgStr = svgStr.replace(/<svg([^>]*)>/, function(match, attrs) {
@@ -107,19 +107,13 @@ module.exports = async function handler(req, res) {
       return '<svg' + a + ' width="' + w + '" height="' + h + '">';
     });
 
-    const { Resvg } = require('@resvg/resvg-js');
-    const resvg = new Resvg(svgStr, {
-      fitTo: { mode: 'width', value: w },
-      background: 'white',
-      font: {
-        loadSystemFonts: true,
-        fontFiles: ['/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'],
-        defaultFontFamily: 'DejaVu Sans',
-      },
-    });
-    const pngData = resvg.render();
-    const base64 = pngData.asPng().toString('base64');
+    const sharp = require('sharp');
+    const pngBuffer = await sharp(Buffer.from(svgStr))
+      .resize(w, h, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .png()
+      .toBuffer();
 
+    const base64 = pngBuffer.toString('base64');
     return res.status(200).json({ png: base64 });
 
   } catch (err) {
