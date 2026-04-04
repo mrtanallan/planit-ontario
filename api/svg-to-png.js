@@ -108,23 +108,27 @@ module.exports = async function handler(req, res) {
     });
 
     const sharp = require('sharp');
-    // Read font file and embed in SVG so sharp/libvips can render text
-    let fontB64 = '';
+    // Embed Poppins font for text rendering
+    const fs = require('fs');
+    const fontPaths = {
+      regular: '/usr/share/fonts/truetype/google-fonts/Poppins-Regular.ttf',
+      bold: '/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf'
+    };
+    let fontDefs = '';
     try {
-      const fs = require('fs');
-      const fontPath = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf';
-      const fontBuf = fs.readFileSync(fontPath);
-      fontB64 = fontBuf.toString('base64');
+      const reg = fs.readFileSync(fontPaths.regular).toString('base64');
+      const bold = fs.readFileSync(fontPaths.bold).toString('base64');
+      fontDefs = '<defs><style>' +
+        '@font-face{font-family:"AppFont";font-weight:normal;src:url("data:font/truetype;base64,' + reg + '")}' +
+        '@font-face{font-family:"AppFont";font-weight:bold;src:url("data:font/truetype;base64,' + bold + '")}' +
+        '</style></defs>';
     } catch(fe) {
-      console.log('font read failed:', fe.message);
+      console.log('font load failed:', fe.message);
     }
-
-    // Inject font-face into SVG if we have the font
-    if (fontB64) {
-      const fontFace = '<defs><style>@font-face{font-family:"DejaVu Sans";src:url("data:font/truetype;base64,' + fontB64 + '")}</style></defs>';
-      svgStr = svgStr.replace(/<svg([^>]*)>/, '<svg$1>' + fontFace);
-      // Update text elements to use the embedded font
-      svgStr = svgStr.replace(/font-family="[^"]*"/g, 'font-family="DejaVu Sans"');
+    if (fontDefs) {
+      svgStr = svgStr.replace(/<svg([^>]*)>/, '<svg$1>' + fontDefs);
+      svgStr = svgStr.replace(/font-family="[^"]*"/g, 'font-family="AppFont"');
+      svgStr = svgStr.replace(/font-family='[^']*'/g, "font-family='AppFont'");
     }
 
     const pngBuffer = await sharp(Buffer.from(svgStr))
