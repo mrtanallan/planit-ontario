@@ -5716,22 +5716,34 @@ async function downloadPPTX() {
       }
       var svgHtml = cs.svg_html || '';
       var slideImgUrl = slideImgs[ci] || null;
-      var pngData = null;
-      // Try SVG first, then fall back to AI image URL
+
+      // Try embedding SVG natively in PPTX — renders perfectly in PowerPoint/Google Slides
       if (svgHtml && svgHtml.indexOf('<svg') !== -1) {
-        try { pngData = await svgToPng(svgHtml, 960, 540); } catch(ex) { console.warn('[PPTX] svg fail:', ex.message); }
+        try {
+          // Clean SVG for pptxgenjs native embedding
+          var cleanSvg = svgHtml.trim();
+          if (!cleanSvg.includes('xmlns')) {
+            cleanSvg = cleanSvg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+          }
+          sc.addImage({data: 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(cleanSvg))), x:5.1, y:0.82, w:8.1, h:5.95, type:'svg'});
+          continue;
+        } catch(ex) {
+          console.warn('[PPTX] native svg failed:', ex.message);
+        }
       }
-      if (!pngData && slideImgUrl) {
-        try { pngData = await urlToPng(slideImgUrl); } catch(ex) { console.warn('[PPTX] img fail:', ex.message); }
+
+      // Fall back to AI image URL if available
+      if (slideImgUrl) {
+        try {
+          var pngData = await urlToPng(slideImgUrl);
+          if (pngData) { sc.addImage({data: pngData, x:5.1, y:0.82, w:8.1, h:5.95}); continue; }
+        } catch(ex) { console.warn('[PPTX] img fail:', ex.message); }
       }
-      if (pngData) {
-        sc.addImage({data: pngData, x:5.1, y:0.82, w:8.1, h:5.95});
-      } else {
-        var vtype = safe((cs.visual_type || 'diagram').replace(/_/g, ' '));
-        sc.addShape(pptx.ShapeType.rect, {x:5.1, y:0.82, w:8.1, h:5.95, fill:{color:'F8F8F8'}, line:{color:'DDDDDD', width:1}});
-        sc.addText(vtype, {x:5.2, y:2.5, w:7.9, h:0.6, fontSize:14, color:'AAAAAA', align:'center', fontFace:'Arial', bold:true});
-        sc.addText('Add your diagram here', {x:5.2, y:3.2, w:7.9, h:0.5, fontSize:11, color:'BBBBBB', align:'center', fontFace:'Arial', italic:true});
-      }
+
+      // Final fallback: placeholder
+      var vtype = safe((cs.visual_type || 'diagram').replace(/_/g, ' '));
+      sc.addShape(pptx.ShapeType.rect, {x:5.1, y:0.82, w:8.1, h:5.95, fill:{color:'F8F8F8'}, line:{color:'DDDDDD', width:1}});
+      sc.addText(vtype, {x:5.2, y:2.5, w:7.9, h:0.6, fontSize:14, color:'AAAAAA', align:'center', fontFace:'Arial', bold:true});
     }
 
     // SLIDE: Practice
