@@ -6477,7 +6477,13 @@ function renderExpInAssess() {
   const allCovered = {};
   filteredLessons.forEach(l => {
     if (!l.expectations||!Array.isArray(l.expectations)) return;
-    l.expectations.forEach(e => { if(!allCovered[e.code]) allCovered[e.code]={exp:e,count:0,lessons:[]}; allCovered[e.code].count++; allCovered[e.code].lessons.push(l.topic||'Untitled'); });
+    l.expectations.forEach(e => {
+      // Key by code+grade so Gr3 and Gr4 expectations with same code stay distinct
+      const key = e.code + (e.grade ? '::'+e.grade : e.band ? '::'+e.band : '');
+      if (!allCovered[key]) allCovered[key] = {exp:e, count:0, lessons:[]};
+      allCovered[key].count++;
+      allCovered[key].lessons.push({topic: l.topic||'Untitled', grade: e.grade||null});
+    });
   });
   const isMath = filteredLessons.some(l => l.subject === 'Mathematics');
   const isScience = filteredLessons.some(l => (l.subject||'').toLowerCase().includes('science'));
@@ -6507,10 +6513,14 @@ function renderExpInAssess() {
       html+=`<div style="margin-bottom:16px;"><div style="font-family:DM Mono,monospace;font-size:.65rem;letter-spacing:1px;text-transform:uppercase;color:var(--sage);margin-bottom:8px;font-weight:600;">${strandNames[strand]||'Strand '+strand}</div><div style="display:flex;flex-wrap:wrap;gap:6px;">`;
       byStrand[strand].forEach(item => {
         const chipId = 'expchip_'+item.exp.code.replace('.','_')+'_'+strand;
-        const lessonList = item.lessons.map(l=>`<div style="font-size:.72rem;padding:2px 0;border-bottom:1px solid #A8C4AB20;">📅 ${l}</div>`).join('');
+        const lessonList = item.lessons.map(l=>{
+          const gradeTag = l.grade ? `<span style="font-family:'DM Mono',monospace;font-size:.58rem;padding:1px 5px;border-radius:4px;background:var(--amber-l);color:var(--amber);font-weight:600;margin-left:4px;">${l.grade.replace('Grade ','Gr.')}</span>` : '';
+          return `<div style="display:flex;align-items:center;gap:4px;font-size:.72rem;padding:2px 0;border-bottom:1px solid #A8C4AB20;">📅 ${l.topic}${gradeTag}</div>`;
+        }).join('');
         html+=`<div style="background:var(--sage-l);border:1px solid #A8C4AB;border-radius:6px;padding:5px 10px;font-size:.78rem;cursor:pointer;" onclick="const d=document.getElementById('${chipId}');if(d)d.style.display=d.style.display==='none'?'block':'none';">
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
             <span style="font-family:DM Mono,monospace;font-weight:600;color:var(--sage);">${item.exp.code}</span>
+            ${item.exp.grade ? `<span style="font-family:'DM Mono',monospace;font-size:.6rem;padding:1px 6px;border-radius:4px;background:var(--amber-l);color:var(--amber);font-weight:600;">${item.exp.grade.replace('Grade ','Gr.')}</span>` : item.exp.band ? `<span style="font-family:'DM Mono',monospace;font-size:.6rem;padding:1px 6px;border-radius:4px;background:var(--amber-l);color:var(--amber);font-weight:600;">${item.exp.band}</span>` : ''}
             <span>${item.exp.desc||''}</span>
             ${item.count>1?`<span style="font-family:DM Mono,monospace;font-size:.62rem;color:var(--muted);">×${item.count}</span>`:''}
             <span style="font-family:DM Mono,monospace;font-size:.55rem;color:var(--sage);opacity:.7;margin-left:auto;">▾</span>
