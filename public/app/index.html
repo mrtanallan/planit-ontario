@@ -1069,7 +1069,12 @@ async function loadCurriculum(subject) {
     return;
   }
   try {
-    const res = await fetch(`/data/curriculum_${key}.json`);
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    let res;
+    try { res = await fetch(`/data/curriculum_${key}.json`, {signal: ctrl.signal}); }
+    catch(fe) { clearTimeout(t); console.warn('Curriculum fetch failed:', key, fe.message); return; }
+    clearTimeout(t);
     if (!res.ok) { console.warn('Curriculum not found:', key); return; }
     const data = await res.json();
     _curriculumCache[key] = data;
@@ -1236,12 +1241,18 @@ async function authFetch(url, options={}) {
   }
 }
 
-async function retryAuthFetch(url, options, maxRetries=3) {
+async function retryAuthFetch(url, options, maxRetries=2) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const res = await authFetch(url, options);
-    if (res.status !== 529) return res;
-    const data = await res.clone().json().catch(() => ({}));
-    if (!data?.error?.type === 'overloaded_error' || attempt === maxRetries) return res;
+    let res;
+    try { res = await authFetch(url, options); }
+    catch(e) {
+      // Don't retry on timeout — surface immediately
+      if (e.message && e.message.includes('timed out')) throw e;
+      if (attempt === maxRetries) throw e;
+      await new Promise(r => setTimeout(r, 2000));
+      continue;
+    }
+    if (res.status !== 529 || attempt === maxRetries) return res;
     const wait = [3000,6000,12000][attempt] || 12000;
     setProgress(null,'High demand — retrying shortly...');
     await new Promise(r => setTimeout(r, wait));
@@ -7344,8 +7355,6 @@ async function generateUnitAssessment(uid, type) {
       instruction: `Generate a written unit test with 10-14 questions using EXACTLY this format for every question:
 
 ## ${unit.topic} — Unit Test
-**Name:** [TEXT BOX]
-**Date:** [TEXT BOX]
 
 ## Part 1: Multiple Choice
 Use this format for each MC question:
