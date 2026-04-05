@@ -5564,8 +5564,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#111;font-family:Ari
 function show(n){if(sl[c])sl[c].classList.remove('active');c=Math.max(0,Math.min(n,t-1));if(sl[c])sl[c].classList.add('active');nm.textContent=(c+1)+'/'+t;pr.style.width=((c+1)/t*100)+'%';}
 function go(d){show(c+d);}
 function fs(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
-function init(){sl=document.querySelectorAll('.slide');pr=document.getElementById('progress');nm=document.getElementById('snum');if(sl.length)show(0);}
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+function init(){sl=document.querySelectorAll('.slide');pr=document.getElementById('progress');nm=document.getElementById('snum');if(sl.length){show(0);}else{setTimeout(function(){sl=document.querySelectorAll('.slide');if(sl.length)show(0);},50);}}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{setTimeout(init,0);}
 document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();go(1);}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(-1);}if(e.key==='f'||e.key==='F')fs();});
 document.addEventListener('click',function(e){if(e.target.closest('#ctrl'))return;e.clientX>window.innerWidth/2?go(1):go(-1);});
 window.addEventListener('message',function(e){
@@ -6846,7 +6846,7 @@ async function loadLesson(id) {
   if (!lesson) return;
   const content = lesson.content || {};
   genC = {};
-  Object.keys(content).forEach(k => { if (typeof content[k]==='string') genC[k]={orig:content[k],cur:content[k]}; });
+  Object.keys(content).forEach(k => { if (!k.startsWith('_') && typeof content[k]==='string') genC[k]={orig:content[k],cur:content[k]}; });
   genC['_expectations'] = lesson.expectations || [];
   curSess = { id:null, date:new Date().toLocaleDateString('en-CA'), subject:lesson.subject||'Language / Literacy', strand:'General', grades:lesson.grades||[], task:lesson.topic||'', marks:{} };
   window._curSessGrades = lesson.grades || [];
@@ -6864,7 +6864,7 @@ async function loadLesson(id) {
     }
   }
   const gradeDesc = (lesson.grades||[]).length > 1 ? (lesson.grades||[]).join(' / ')+' split class' : (lesson.grades||[])[0]||'';
-  const displayKeys = Object.keys(content).filter(k => k!=='expectations' && !k.startsWith('answer_key'));
+  const displayKeys = Object.keys(content).filter(k => k!=='expectations' && !k.startsWith('answer_key') && !k.startsWith('_'));
   const answerKeyKeys = Object.keys(content).filter(k => k.startsWith('answer_key'));
   buildEditBlocks([...displayKeys, ...answerKeyKeys], gradeDesc, lesson.subject||'', lesson.topic||'', lesson.expectations||[]);
   buildShareCards(displayKeys.filter(k => SHAREABLE.includes(k)));
