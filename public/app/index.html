@@ -1344,7 +1344,7 @@ function handleOAuthRedirect() {
   }
   if (params.get('upgrade') === 'cancel') {
     window.history.replaceState({}, '', window.location.pathname);
-    showToast('Upgrade cancelled — you're still on the free plan.', 4000);
+    showToast('Upgrade cancelled — you are still on the free plan.', 4000);
   }
 }
 
