@@ -2435,7 +2435,7 @@ function buildEditBlocks(outputs, gradeDesc, subj, topic, expectations) {
 
     const slideBtns = k==='lesson_plan' ? `
       <button class="btn b-sage b-sm" onclick="presentSlides(event)" style="white-space:nowrap;">▶ Present</button>
-      <button class="btn b-out b-sm" onclick="downloadSlidesHTML()" style="white-space:nowrap;" title="Download as HTML">⬇ Save Slides</button>
+      <button class="btn b-out b-sm" onclick="downloadSlidesPPTX()" style="white-space:nowrap;" title="Download as PPTX">⬇ Download PPTX</button>
       <button class="btn b-out b-sm" id="gSlidesBtn" onclick="exportToGoogleSlides()" style="white-space:nowrap;display:none;" title="Export to Google Slides">🔗 Google Slides</button>` : '';
 
     const wsLinkBtns = isWS ? (k.match(/student_worksheet_[A-D]$/) ? `
@@ -2668,7 +2668,11 @@ function renderWS(text) {
   // Pre-process: merge circle-one options that end up on separate lines
   const mergedLines = [];
   for (let i=0; i<lines.length; i++) {
-    const line = lines[i]; const nextLine = lines[i+1]||'';
+    let line = lines[i]; const nextLine = lines[i+1]||'';
+    // Normalise emoji number prefixes (1️⃣ 2️⃣ etc) → plain "1. " format
+    line = line.replace(/^([1-9]|1[0-2])️⃣\s*/,'$1. ');
+    // Normalise boxed number prefixes [1] [2] etc
+    line = line.replace(/^\[(\d+)\]\s*/,'$1. ');
     if (line.includes('[CIRCLE ONE]') && nextLine.match(/^[A-E]\)/)) {
       const opts = [];
       let j = i+1;
@@ -2685,10 +2689,12 @@ function renderWS(text) {
 
   let h = '<div class="wsw">';
   mergedLines.forEach(line => {
+    if (line.startsWith('# '))  { h+=`<h2>${line.slice(2)}</h2>`; return; }
     if (line.startsWith('## ')) { h+=`<h2>${line.slice(3)}</h2>`; return; }
     if (line.startsWith('### ')) { h+=`<h3>${line.slice(4)}</h3>`; return; }
+    // Interactive elements — check BEFORE numbered list, so they always get rendered as inputs
     if (/\[TEXT BOX\]/i.test(line)) { const l=line.replace(/\[TEXT BOX\]/gi,'').replace(/^[-*\d.]+\s*/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\[[^\]]*\]/g,'').trim(); wsN++; h+=`${l?`<div style="font-size:.86rem;margin-bottom:2px;">${l}</div>`:''}<input class="wsi" type="text" placeholder="Write your answer here...">`;return;}
-    if (line.includes('[LARGE BOX]')) { const l=line.replace('[LARGE BOX]','').replace(/^[-*\d.]+\s*/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim(); wsN++; h+=`${l?`<div style="font-size:.86rem;margin-bottom:2px;">${l}</div>`:''}<textarea class="wst" placeholder="Write your answer here..."></textarea>`; return; }
+    if (/\[LARGE BOX\]/i.test(line)) { const l=line.replace(/\[LARGE BOX\]/gi,'').replace(/^[-*\d.]+\s*/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim(); wsN++; h+=`${l?`<div style="font-size:.86rem;margin-bottom:2px;">${l}</div>`:''}<textarea class="wst" placeholder="Write your answer here..."></textarea>`; return; }
     if (line.includes('[CIRCLE ONE:')) { const m=line.match(/\[CIRCLE ONE: (.+?)\]/); const pre=line.split('[CIRCLE ONE:')[0].replace(/^[-*\d.]+\s*/,'').trim(); if(m){wsN++;const nm='r'+wsN;h+=`${pre?`<div style="font-size:.86rem;margin-bottom:4px;">${pre}</div>`:''}<div class="wsc">${(m[1].includes(' / ')?m[1].split(' / '):m[1].split('/')).map(o=>`<label class="wscho"><input type="radio" name="${nm}"> ${o.trim()}</label>`).join('')}</div>`;return;} }
     if (line.includes('[CHECK ALL THAT APPLY:')) { const m=line.match(/\[CHECK ALL THAT APPLY: (.+?)\]/); const pre=line.split('[CHECK ALL THAT APPLY:')[0].replace(/^[-*\d.]+\s*/,'').trim(); if(m){wsN++;h+=`${pre?`<div style="font-size:.86rem;margin-bottom:4px;">${pre}</div>`:''}<div class="wsc">${(m[1].includes(' / ')?m[1].split(' / '):m[1].split('/')).map((o,oi)=>`<label class="wscho"><input type="checkbox" id="wc${wsN}-${oi}"> ${o.trim()}</label>`).join('')}</div>`;return;} }
     if (line.includes('[WORD BANK:')) { const m=line.match(/\[WORD BANK: (.+?)\]/); if(m){h+=`<div class="wswb"><div class="wswbt">📚 Word Bank</div><div class="wswbw">${m[1].split(',').map(w=>`<span class="wswbwd">${w.trim()}</span>`).join('')}</div></div>`;return;} }
@@ -2697,6 +2703,7 @@ function renderWS(text) {
       const cont=line.replace(/^\d+\.\s*/,''); const num=line.match(/^(\d+)/)[1];
       if(cont.includes('[LARGE BOX]')){wsN++;h+=`<div style="margin:7px 0;"><div style="font-size:.86rem;margin-bottom:2px;"><strong>${num}.</strong> ${cont.replace('[LARGE BOX]','').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim()}</div><textarea class="wst" placeholder="Write your answer here..."></textarea></div>`;return;}
       if(cont.includes('[TEXT BOX]')){wsN++;h+=`<div style="margin:5px 0;display:flex;align-items:flex-start;gap:6px;"><span style="font-weight:600;flex-shrink:0;">${num}.</span><div style="flex:1;"><div style="font-size:.86rem;margin-bottom:2px;">${cont.replace('[TEXT BOX]','').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim()}</div><input class="wsi" type="text" placeholder="Your answer..."></div></div>`;return;}
+      if(cont.includes('[CIRCLE ONE:')){const m=cont.match(/\[CIRCLE ONE: (.+?)\]/);const pre=cont.split('[CIRCLE ONE:')[0].replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim();if(m){wsN++;const nm='r'+wsN;h+=`<div style="margin:5px 0;"><span style="font-weight:600;">${num}.</span> ${pre?`<span>${pre}</span> `:''}<div class="wsc" style="margin-top:4px;">${(m[1].includes(' / ')?m[1].split(' / '):m[1].split('/')).map(o=>`<label class="wscho"><input type="radio" name="${nm}"> ${o.trim()}</label>`).join('')}</div></div>`;return;}}
       h+=`<div style="margin:4px 0;"><strong>${num}.</strong> ${cont.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</div>`; return;
     }
     if (line.match(/^[-*] /)) { h+=`<li style="margin-bottom:2px;">${line.slice(2).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</li>`; return; }
@@ -2725,22 +2732,48 @@ function extractWSQuestions(text) {
 // PDF DOWNLOAD
 // ============================================================
 function downloadPDF(k) {
-  const text = document.getElementById('cbb-'+k)?.innerText || genC[k]?.cur || '';
+  const rawText = genC[k]?.cur || document.getElementById('cbb-'+k)?.innerText || '';
   const topic = document.getElementById('topic')?.value || 'Lesson';
   const label = (BLABELS[k]||k).replace(/^[^\s]+\s/,'');
+
+  // Convert markdown to HTML for readable PDF
+  const htmlContent = rawText
+    .replace(/^# (.+)$/gm, '<h2 class="sec">$1</h2>')
+    .replace(/^## (.+)$/gm, '<h2 class="sec">$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^✓ (.+)$/gm, '<div class="check">✓ $1</div>')
+    .replace(/^↳ (.+)$/gm, '<div class="indent">↳ $1</div>')
+    .replace(/^→ (.+)$/gm, '<div class="arrow">→ $1</div>')
+    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<div class="num"><span>$1.</span><span>$2</span></div>')
+    .replace(/\n\n+/g, '</p><p>')
+    .replace(/\n/g, '<br>');
+
   const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${topic} — ${label}</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
-<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;background:white;color:#16120E;padding:28px 36px;max-width:800px;margin:0 auto;}
-h1{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;border-bottom:3px solid #4A7C59;padding-bottom:8px;margin-bottom:16px;}
-h2{font-family:'Fraunces',serif;font-size:1rem;font-weight:600;background:#EAF0EA;border-left:3px solid #4A7C59;padding:6px 10px;margin:14px 0 6px;border-radius:0 5px 5px 0;}
-h3{font-size:.78rem;font-weight:600;color:#4A7C59;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 4px;}
-p,li{font-size:.88rem;line-height:1.75;margin:3px 0;}ul,ol{padding-left:18px;margin:6px 0;}
-.meta{font-size:.72rem;color:#9CA3AF;margin-top:8px;border-top:1px solid #E0D8CC;padding-top:8px;}
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:white;color:#16120E;padding:32px 40px;max-width:820px;margin:0 auto;font-size:13px;line-height:1.7;}
+h1{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:600;border-bottom:3px solid #4A7C59;padding-bottom:10px;margin-bottom:20px;}
+h2.sec{font-family:'Fraunces',serif;font-size:.95rem;font-weight:600;background:#EAF0EA;border-left:4px solid #4A7C59;padding:7px 12px;margin:18px 0 8px;border-radius:0 5px 5px 0;}
+h3{font-size:.78rem;font-weight:700;color:#4A7C59;text-transform:uppercase;letter-spacing:.8px;margin:14px 0 4px;}
+h4{font-size:.85rem;font-weight:600;color:#16120E;margin:10px 0 3px;}
+p{margin:4px 0;line-height:1.7;}
+li{margin-bottom:3px;line-height:1.65;margin-left:18px;list-style:disc;}
+strong{font-weight:600;}
+.check{display:flex;align-items:flex-start;gap:8px;margin:5px 0;padding:5px 10px;background:#EAF0EA;border-radius:5px;border-left:3px solid #4A7C59;}
+.indent{margin:3px 0 3px 20px;font-size:.85rem;color:#7A726A;font-style:italic;}
+.arrow{margin:5px 0;font-weight:600;color:#2A5FA5;}
+.num{display:flex;gap:8px;margin:4px 0;}
+.num span:first-child{font-weight:600;min-width:20px;color:#4A7C59;}
+.meta{font-size:.7rem;color:#9CA3AF;margin-top:24px;border-top:1px solid #E0D8CC;padding-top:8px;}
 button{display:none;}
-@media print{body{padding:16px;}}
+@media print{body{padding:16px 20px;}}
 </style></head><body>
 <h1>${topic} — ${label}</h1>
-<div style="white-space:pre-wrap;font-size:.88rem;line-height:1.75;">${text}</div>
+<div>${htmlContent}</div>
 <div class="meta">TeacherAI · Ontario 2023 Curriculum · ${new Date().toLocaleDateString('en-CA')}</div>
 <` + `script>window.onload=()=>window.print()<\/script>
 </body></html>`;
@@ -2749,6 +2782,7 @@ button{display:none;}
   const w = window.open(url,'_blank');
   if (!w) alert('Pop-up blocked — allow pop-ups for teacherai.ca and try again.');
   setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
 }
 
 // ============================================================
@@ -5418,10 +5452,18 @@ window.addEventListener('message',function(e){
   setTimeout(()=>URL.revokeObjectURL(blobUrl),120000);
   return w;
 }
+function downloadSlidesPPTX() {
+  if (!window._slideData) { showToast('Generate slides first — click ▶ Present'); return; }
+  // Open the presenter, then trigger PPTX download inside it
+  const w = openHTMLPresenter(window._slideData.sd, window._slideData.topic, window._slideData.subject, window._slideData.gradeStr, window._slideData.wikiImg, window._slideData.mindsonImg, window._slideData.wikiTitle, window._slideData.wikiLicense, window._slideData.slideImgs||[]);
+  // Give the presenter window time to load, then click its PPTX button
+  showToast('Opening slides — click "Download PPTX" in the presenter window', 5000);
+}
+
 function downloadSlidesHTML() {
   if (!window._slideData) { showToast('Generate slides first — click ▶ Present'); return; }
   openHTMLPresenter(window._slideData.sd, window._slideData.topic, window._slideData.subject, window._slideData.gradeStr, window._slideData.wikiImg, window._slideData.mindsonImg, window._slideData.wikiTitle, window._slideData.wikiLicense, window._slideData.slideImgs||[]);
-  showToast('Slides opened — use browser File → Save Page As to download');
+  showToast('Slides opened — use the Download PPTX button in the presenter');
 }
 
 // ============================================================
