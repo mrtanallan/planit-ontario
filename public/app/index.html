@@ -5533,10 +5533,17 @@ function downloadSlidesHTML() {
 // PPTX export
 function loadCanvg() {
   return new Promise(function(resolve, reject) {
-    if (window.canvg) { resolve(window.canvg); return; }
+    // Check if already loaded
+    if (window.canvg && window.canvg.Canvg) { resolve(window.canvg); return; }
+    if (window.Canvg) { resolve({Canvg: window.Canvg}); return; }
     var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/canvg@4.0.2/lib/umd.js';
-    s.onload = function() { resolve(window.canvg); };
+    s.src = 'https://cdn.jsdelivr.net/npm/canvg@3.0.10/dist/browser/canvg.min.js';
+    s.onload = function() {
+      // v3 may export as window.canvg or window.Canvg
+      var exported = window.canvg || (window.Canvg ? {Canvg: window.Canvg} : null);
+      if (exported) { resolve(exported); }
+      else { reject(new Error('canvg loaded but no export found')); }
+    };
     s.onerror = function() { reject(new Error('Failed to load canvg')); };
     document.head.appendChild(s);
   });
@@ -5552,9 +5559,10 @@ async function svgToPng(svgHtml, w, h) {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, w, h);
 
-    // canvg v4 API
-    var CanvgClass = cv.Canvg || cv;
-    var v = await CanvgClass.fromString(ctx, svgHtml, {
+    // canvg v3 browser API
+    var CanvgClass = (cv && cv.Canvg) ? cv.Canvg : (window.canvg && window.canvg.Canvg) ? window.canvg.Canvg : null;
+    if (!CanvgClass) throw new Error('canvg.Canvg not found');
+    var v = CanvgClass.fromString(ctx, svgHtml, {
       ignoreMouse: true,
       ignoreAnimation: true,
       ignoreDimensions: true,
