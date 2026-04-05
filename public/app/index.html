@@ -2900,6 +2900,20 @@ button{display:none;}@media print{body{padding:16px 20px;}}
 <div>${htmlContent}</div>
 <div class="meta">TeacherAI · Ontario 2023 Curriculum · ${new Date().toLocaleDateString('en-CA')}</div>
 <` + `script>window.onload=()=>window.print()<\/script>
+
+<!-- SLIDE PRESENTER OVERLAY -->
+<div id="slidePresenterOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:#111;flex-direction:column;">
+  <div id="slidePresenterDeck" style="flex:1;position:relative;overflow:hidden;"></div>
+  <div id="slidePresenterCtrl" style="position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.6rem;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(16px);border-radius:40px;padding:.5rem 1rem;border:1px solid rgba(255,255,255,.1);">
+    <button onclick="slidePresenterGo(-1)" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">&#8249;</button>
+    <span id="slidePresenterNum" style="color:rgba(255,255,255,.55);font-size:.72rem;min-width:3.2rem;text-align:center;font-family:monospace;">1/1</span>
+    <button onclick="slidePresenterGo(1)" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;">&#8250;</button>
+    <button onclick="slidePresenterFullscreen()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;width:auto;padding:.3rem .85rem;height:34px;cursor:pointer;font-size:.7rem;font-family:monospace;">&#x26F6; Full</button>
+    <button onclick="closeSlidePresenter()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;width:auto;padding:.3rem .85rem;height:34px;cursor:pointer;font-size:.7rem;font-family:monospace;">✕ Close</button>
+  </div>
+  <div id="slidePresenterProgress" style="position:fixed;top:0;left:0;height:4px;background:#3BBFAD;transition:width .3s ease;z-index:300;width:0%;"></div>
+</div>
+
 </body></html>`;
   const blob = new Blob([fullHtml], {type:'text/html'});
   const url = URL.createObjectURL(blob);
@@ -5619,12 +5633,90 @@ function dlPPTX(){
 <script>${JS}<\/script>
 </body></html>`;
 
-  const b=new Blob([html],{type:'text/html'});
-  const blobUrl=URL.createObjectURL(b);
-  const w=window.open(blobUrl,'_blank');
-  if(!w){alert('Pop-up blocked — allow pop-ups for teacherai.ca and try again.');return null;}
-  setTimeout(()=>URL.revokeObjectURL(blobUrl),120000);
-  return w;
+  // Render in-page fullscreen overlay — no new tab, no pop-up blocker
+  showSlidePresenter(allSlides, total);
+  return { postMessage: (msg) => {
+    if (!msg || msg.type !== 'VISUAL_READY') return;
+    const panel = document.getElementById('vis-p-'+msg.slideIndex);
+    if (!panel) return;
+    if (msg.svg && msg.svg.length > 20) { panel.innerHTML = msg.svg; panel.style.padding = '16px'; }
+    else { panel.innerHTML = '<p style="font-size:14px;color:#888780;text-align:center;padding:20px">Visual unavailable</p>'; }
+  }, closed: false };
+}
+
+function showSlidePresenter(slides, total) {
+  const overlay = document.getElementById('slidePresenterOverlay');
+  const deck = document.getElementById('slidePresenterDeck');
+  if (!overlay || !deck) return;
+
+  // Build slide HTML inside overlay
+  deck.innerHTML = slides.map((s, i) => {
+    // Rewrite vis- IDs to vis-p- to avoid conflicts
+    return s.replace(/id="vis-(\d+)"/g, 'id="vis-p-$1"');
+  }).join('');
+
+  // Add slide class CSS if not already present
+  if (!document.getElementById('slidePresenterCSS')) {
+    const style = document.createElement('style');
+    style.id = 'slidePresenterCSS';
+    style.textContent = `
+      #slidePresenterDeck .slide{position:absolute;inset:0;opacity:0;transition:opacity .35s ease;pointer-events:none;overflow:hidden;}
+      #slidePresenterDeck .slide.active{opacity:1;pointer-events:all;}
+      #slidePresenterDeck .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+    `;
+    document.head.appendChild(style);
+  }
+
+  window._presC = 0;
+  window._presT = total;
+  window._presSl = deck.querySelectorAll('.slide');
+
+  overlay.style.display = 'flex';
+  slidePresenterShow(0);
+
+  // Keyboard handler
+  window._presKeyHandler = function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'ArrowDown') { e.preventDefault(); slidePresenterGo(1); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); slidePresenterGo(-1); }
+    if (e.key === 'Escape') closeSlidePresenter();
+    if (e.key === 'f' || e.key === 'F') slidePresenterFullscreen();
+  };
+  document.addEventListener('keydown', window._presKeyHandler);
+
+  // Click to advance
+  deck.onclick = function(e) {
+    if (e.target.closest('#slidePresenterCtrl')) return;
+    e.clientX > window.innerWidth / 2 ? slidePresenterGo(1) : slidePresenterGo(-1);
+  };
+}
+
+function slidePresenterShow(n) {
+  const sl = window._presSl;
+  const t = window._presT;
+  if (!sl) return;
+  if (sl[window._presC]) sl[window._presC].classList.remove('active');
+  window._presC = Math.max(0, Math.min(n, t - 1));
+  if (sl[window._presC]) sl[window._presC].classList.add('active');
+  const numEl = document.getElementById('slidePresenterNum');
+  const progEl = document.getElementById('slidePresenterProgress');
+  if (numEl) numEl.textContent = (window._presC + 1) + '/' + t;
+  if (progEl) progEl.style.width = ((window._presC + 1) / t * 100) + '%';
+}
+
+function slidePresenterGo(d) { slidePresenterShow(window._presC + d); }
+
+function slidePresenterFullscreen() {
+  const overlay = document.getElementById('slidePresenterOverlay');
+  if (!overlay) return;
+  if (!document.fullscreenElement) overlay.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+function closeSlidePresenter() {
+  const overlay = document.getElementById('slidePresenterOverlay');
+  if (overlay) overlay.style.display = 'none';
+  if (window._presKeyHandler) document.removeEventListener('keydown', window._presKeyHandler);
+  if (document.fullscreenElement) document.exitFullscreen?.();
 }
 function downloadSlidesPPTX() {
   if (!window._slideData) { showToast('Generate slides first — click ▶ Present'); return; }
