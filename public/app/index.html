@@ -1216,10 +1216,24 @@ async function authFetch(url, options={}) {
     }
   } catch(e) { /* use whatever session we have */ }
   const token = session?.access_token || '';
-  return fetch(url, {
-    ...options,
-    headers: { 'Content-Type':'application/json', ...(options.headers||{}), ...(token?{'Authorization':'Bearer '+token}:{}) }
-  });
+  // Timeout: 90s for generate calls, 20s for others
+  const isGenerate = url.includes('/api/generate');
+  const timeoutMs = isGenerate ? 90000 : 20000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: { 'Content-Type':'application/json', ...(options.headers||{}), ...(token?{'Authorization':'Bearer '+token}:{}) }
+    });
+    clearTimeout(timer);
+    return res;
+  } catch(e) {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') throw new Error('Request timed out after '+Math.round(timeoutMs/1000)+'s. The server may be busy — please try again.');
+    throw e;
+  }
 }
 
 async function retryAuthFetch(url, options, maxRetries=3) {
@@ -2436,7 +2450,13 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
   } catch(e) {
     clearInterval(progInterval);
     hideLoading();
-    if (e.message !== '__PLAN_LIMIT__') alert('Error: '+e.message);
+    if (e.message === '__PLAN_LIMIT__') return;
+    if (e.message && e.message.includes('timed out')) {
+      const retry = confirm('Generation timed out — the server took too long.\n\nThis sometimes happens with split-class lessons. Try again?');
+      if (retry) { setTimeout(generate, 500); return; }
+    } else {
+      alert('Error: '+e.message);
+    }
   }
   clearInterval(progInterval);
   hideLoading();
