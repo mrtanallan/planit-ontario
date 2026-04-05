@@ -7186,9 +7186,7 @@ function renderUnitCard(u, linkedLessons) {
   const subj = (u.subject || '').replace('Language / Literacy', 'Language');
   const lessons = u.lessons || [];
   const expandedCount = linkedLessons.length;
-  const typeColors = { 'Introduction':'#2A5FA5','Practice':'#4A7C59','Application':'#C47B2A','Assessment':'#B54B2A' };
   const lessonRows = lessons.map((l, i) => {
-    const typeColor = typeColors[l.type] || '#7A726A';
     const linked = linkedLessons.find(ll => ll.topic === l.title || (l.title && ll.topic && ll.topic.toLowerCase() === l.title.toLowerCase()));
     const isExpanded = !!linked;
     return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);background:${isExpanded?'var(--sage-l)':'var(--paper)'};">
@@ -7198,8 +7196,7 @@ function renderUnitCard(u, linkedLessons) {
         <div style="font-size:.78rem;color:var(--muted);line-height:1.5;">${l.focus||''}</div>
         ${isExpanded?`<div style="margin-top:5px;font-size:.72rem;color:var(--sage);font-weight:600;">✅ Expanded · <button onclick="loadLessonById('${linked.id}')" style="background:none;border:none;color:var(--sage);cursor:pointer;font-size:.72rem;font-weight:600;text-decoration:underline;padding:0;">Open lesson →</button></div>`:''}
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
-        <span style="font-family:'DM Mono',monospace;font-size:.6rem;padding:2px 7px;border-radius:10px;background:${typeColor}20;color:${typeColor};font-weight:600;">${l.type||''}</span>
+      <div style="display:flex;align-items:center;flex-shrink:0;">
         ${!isExpanded?`<button class="btn b-sage b-sm" onclick="expandUnitLesson('${u.id}','${u.subject}','${(u.grades||[]).join(',')}','${(l.title||'').replace(/'/g,"\'")}',${i})" style="font-size:.7rem;padding:3px 9px;">✨ Expand</button>`:''}
       </div>
     </div>`;
