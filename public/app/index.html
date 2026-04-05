@@ -478,7 +478,6 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <div class="nav-user">
     <span class="nav-email" id="navEmail"></span>
     <button id="gConnectBtn" onclick="connectGoogleSlides()" style="display:none;background:none;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7);border-radius:6px;padding:3px 9px;font-size:.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;" title="Connect Google Slides">🔗 Connect Google</button>
-    <button id="upgradeBtn" onclick="startUpgrade()" style="display:none;padding:5px 11px;background:#F59E0B;border:none;color:#1C1C1C;border-radius:5px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;">⚡ Upgrade</button>
     <label class="tab" for="tr-account" style="padding:5px 10px;font-size:.75rem;color:#9CA3AF;" title="Account">👤</label>
     <button class="signout-btn" onclick="signOut()">Sign Out</button>
   </div>
@@ -1309,17 +1308,6 @@ function handleOAuthRedirect() {
       window.history.replaceState({}, '', window.location.pathname);
     }, 1500);
   }
-  if (params.get('upgrade') === 'success') {
-    window.history.replaceState({}, '', window.location.pathname);
-    setTimeout(() => {
-      loadUsageMeter();
-      showToast('🎉 Welcome to Pro! Unlimited lessons unlocked.', 6000);
-    }, 1000);
-  }
-  if (params.get('upgrade') === 'cancel') {
-    window.history.replaceState({}, '', window.location.pathname);
-    showToast('Upgrade cancelled — you\'re still on the free plan.', 4000);
-  }
 }
 
 function showApp() {
@@ -1635,67 +1623,13 @@ async function loadUsageMeter() {
     const meter = document.getElementById('usageMeter');
     const countEl = document.getElementById('usageCount');
     const noteEl = document.getElementById('usageNote');
-    const upgradeBtn = document.getElementById('upgradeBtn');
-    // killSwitch mirrors STRIPE_KILL_SWITCH env var on server — set false when going paid
-    const killSwitch = true;
     if (!meter||!countEl) return;
-
-    const { data: profile } = await db.from('profiles').select('plan, lessons_this_month').eq('id', currentUser.id).single();
-    const plan = profile?.plan || 'free';
-    const used = profile?.lessons_this_month || 0;
-    const FREE_LIMIT = 5;
-
-    meter.style.display = 'block';
-
-    if (killSwitch || plan === 'beta' || plan === 'pro') {
-      const { count } = await db.from('lessons').select('*',{count:'exact',head:true}).eq('teacher_id',currentUser.id);
-      countEl.textContent = (count||0)+' lesson'+((count||0)!==1?'s':'')+' generated';
-      if (noteEl) { noteEl.textContent = plan==='pro' ? 'Pro — unlimited' : 'Unlimited — beta access'; noteEl.style.color='var(--sage)'; }
-      if (upgradeBtn) upgradeBtn.style.display = 'none';
-    } else {
-      // Free plan — show monthly usage
-      countEl.textContent = used+' / '+FREE_LIMIT+' lessons this month';
-      const remaining = FREE_LIMIT - used;
-      if (noteEl) {
-        noteEl.textContent = remaining > 0 ? remaining+' remaining — upgrade for unlimited' : 'Limit reached — upgrade to continue';
-        noteEl.style.color = remaining > 0 ? 'var(--muted)' : '#EF4444';
-      }
-      if (upgradeBtn) upgradeBtn.style.display = 'inline-block';
-    }
-  } catch(e) { console.warn('loadUsageMeter error', e); }
-}
-
-async function startUpgrade() {
-  try {
-    showToast('Opening checkout...');
-    const res = await authFetch('/api/create-checkout', { method: 'POST' });
-    const data = await res.json();
-    if (data.url) { window.location.href = data.url; }
-    else showToast('Could not start upgrade: ' + (data.error || 'Unknown error'), 5000);
-  } catch(e) {
-    showToast('Upgrade failed: ' + e.message, 5000);
-  }
-}
-
-function showUpgradePrompt(message) {
-  const killSwitch = true; // set false when going paid
-  if (killSwitch) { showToast('⚠️ ' + message, 5000); return; }
-  const existing = document.getElementById('upgradeModal');
-  if (existing) existing.remove();
-  const modal = document.createElement('div');
-  modal.id = 'upgradeModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
-  modal.innerHTML = `
-    <div style="background:white;border-radius:16px;padding:32px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2);">
-      <div style="font-size:2rem;margin-bottom:12px;">⚡</div>
-      <div style="font-weight:700;font-size:1.1rem;color:#1C1C1C;margin-bottom:8px;">You've hit your free limit</div>
-      <div style="font-size:.88rem;color:#6B7280;margin-bottom:24px;line-height:1.5;">${message}</div>
-      <button onclick="startUpgrade()" style="width:100%;padding:12px;background:#F59E0B;border:none;border-radius:10px;font-weight:700;font-size:.95rem;color:#1C1C1C;cursor:pointer;margin-bottom:10px;">⚡ Upgrade to Pro — Unlimited</button>
-      <button onclick="document.getElementById('upgradeModal').remove()" style="width:100%;padding:10px;background:none;border:1px solid #E5E7EB;border-radius:10px;font-size:.85rem;color:#6B7280;cursor:pointer;">Maybe later</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+    const { count } = await db.from('lessons').select('*',{count:'exact',head:true}).eq('teacher_id',currentUser.id);
+    const used = count||0;
+    meter.style.display='block';
+    countEl.textContent = used+' lesson'+(used!==1?'s':'')+' generated all time';
+    if (noteEl) { noteEl.textContent='Unlimited — beta access'; noteEl.style.color='var(--sage)'; }
+  } catch(e) {}
 }
 
 // ============================================================
@@ -2302,11 +2236,8 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       const status = res?.status||0;
       const errData = res ? await res.json().catch(()=>({})) : {};
       if (status===529) throw new Error('AI service is at capacity. Please try again in a minute.');
-      if (status===402 || errData?.code==='PLAN_LIMIT_REACHED') {
-        showUpgradePrompt(errData?.error || 'You\'ve reached your free plan limit.');
-        throw new Error('__PLAN_LIMIT__');
-      }
-      throw new Error(errData?.error?.message||errData?.error||'Server error '+status);
+      if (errData?.error==='monthly_limit_reached') throw new Error(errData.message||'Monthly lesson limit reached.');
+      throw new Error(errData?.error?.message||'Server error '+status);
     }
 
     const data = await res.json();
@@ -2375,7 +2306,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
   } catch(e) {
     clearInterval(progInterval);
     hideLoading();
-    if (e.message !== '__PLAN_LIMIT__') alert('Error: '+e.message);
+    alert('Error: '+e.message);
   }
   clearInterval(progInterval);
   hideLoading();
@@ -4318,15 +4249,14 @@ const SVG_RENDERERS = {
     const cols=Math.max(hdrs.length,...rows.map(r=>r.length));
     const cw=Math.floor(460/cols);
 
-    // Use foreignObject for proper text wrapping in cells
     const fo = (x,y,w,h,text,bold,color) => {
       const fw=bold?'700':'400';
       return `<foreignObject x="${x}" y="${y}" width="${w}" height="${h}">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:Arial,sans-serif;font-size:12px;font-weight:${fw};color:${color};padding:2px 4px;box-sizing:border-box;overflow:hidden;word-wrap:break-word;line-height:1.3">${String(text)}</div>
+        <div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:Arial,sans-serif;font-size:12px;font-weight:${fw};color:${color};padding:2px 6px;box-sizing:border-box;overflow:visible;word-wrap:break-word;line-height:1.35">${String(text)}</div>
       </foreignObject>`;
     };
 
-    const hdrH=38, oy=8;
+    const hdrH=40, oy=8;
     const thCells=hdrs.map((h,i)=>`
       <rect x="${20+i*cw}" y="${oy}" width="${cw-3}" height="${hdrH}" rx="4" fill="#1D9E75"/>
       ${fo(20+i*cw, oy, cw-3, hdrH, h, true, 'white')}`).join('');
@@ -4334,7 +4264,7 @@ const SVG_RENDERERS = {
     // Dynamic row height based on content length
     const getRowH = (row) => {
       const maxLen = Math.max(...row.map(c=>String(c).length));
-      return maxLen > 25 ? 56 : maxLen > 15 ? 48 : 40;
+      return maxLen > 40 ? 64 : maxLen > 25 ? 52 : maxLen > 15 ? 44 : 38;
     };
 
     let curY = oy + hdrH + 4;
@@ -4348,18 +4278,20 @@ const SVG_RENDERERS = {
     }).join('');
 
     const totalH = curY + 16;
-    return `<svg viewBox="0 0 500 ${Math.min(totalH, 320)}" width="100%" height="100%">${thCells}${dataRows}</svg>`;
+    return `<svg viewBox="0 0 500 ${totalH}" width="100%" height="100%">${thCells}${dataRows}</svg>`;
   },
 
   concept_card(p) {
     const items=(p.items||[]).slice(0,5);
-    const rh=46, oy=60, totalH=oy+items.length*rh+30;
+    const rh=52, oy=60, totalH=oy+items.length*rh+30;
     const rows=items.map((item,i)=>`
       <rect x="10" y="${oy+i*rh}" width="480" height="${rh-4}" rx="8" fill="${i%2===0?'#E8F5E9':'#F4F3EF'}"/>
       <rect x="10" y="${oy+i*rh}" width="6" height="${rh-4}" rx="3" fill="#1D9E75"/>
       <text x="26" y="${oy+i*rh+18}" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${item.name||''}</text>
-      <text x="26" y="${oy+i*rh+36}" font-size="12" fill="#5F5E5A" font-family="Arial,sans-serif">${item.detail||''}</text>`).join('');
-    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
+      <foreignObject x="26" y="${oy+i*rh+22}" width="450" height="${rh-26}">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:12px;color:#5F5E5A;line-height:1.4;word-wrap:break-word;overflow:visible">${item.detail||''}</div>
+      </foreignObject>`).join('');
+    return `<svg viewBox="0 0 500 ${Math.min(totalH,320)}" width="100%" height="100%">
       <text x="250" y="38" text-anchor="middle" font-size="18" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
       ${rows}
     </svg>`;
@@ -4395,10 +4327,10 @@ const SVG_RENDERERS = {
 
     const W = 500, titleH = 44, headerH = 36, oy = titleH + 8;
     const colW = Math.floor((W - 20) / 2);
-    const itemH = 34;
+    const itemH = 38;
     const maxItems = Math.max(leftItems.length, rightItems.length, 1);
     const bodyH = maxItems * itemH + 12;
-    const totalH = Math.min(oy + headerH + bodyH + 16, 310);
+    const totalH = oy + headerH + bodyH + 16;
 
     // Title bar
     const titleSVG = title
@@ -4428,10 +4360,10 @@ const SVG_RENDERERS = {
         <rect x="10" y="${rowY + 2}" width="${colW}" height="${itemH - 2}" fill="${bg}" rx="2"/>
         <rect x="${10 + colW + 4}" y="${rowY + 2}" width="${colW}" height="${itemH - 2}" fill="${bg}" rx="2"/>
         <foreignObject x="14" y="${rowY + 2}" width="${colW - 8}" height="${itemH - 2}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="height:${itemH - 2}px;display:flex;align-items:center;font-family:Arial,sans-serif;font-size:12px;color:#1D3461;padding:0 4px;line-height:1.3;word-wrap:break-word">${lText}</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="height:${itemH - 2}px;display:flex;align-items:center;font-family:Arial,sans-serif;font-size:12px;color:#1D3461;padding:0 4px;line-height:1.4;word-wrap:break-word;overflow:visible">${lText}</div>
         </foreignObject>
         <foreignObject x="${10 + colW + 8}" y="${rowY + 2}" width="${colW - 8}" height="${itemH - 2}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="height:${itemH - 2}px;display:flex;align-items:center;font-family:Arial,sans-serif;font-size:12px;color:#1D3461;padding:0 4px;line-height:1.3;word-wrap:break-word">${rText}</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="height:${itemH - 2}px;display:flex;align-items:center;font-family:Arial,sans-serif;font-size:12px;color:#1D3461;padding:0 4px;line-height:1.4;word-wrap:break-word;overflow:visible">${rText}</div>
         </foreignObject>`;
     }
 
@@ -4457,7 +4389,9 @@ const SVG_RENDERERS = {
     const W = 500, titleH = 40;
     const cols = 2, rows = Math.ceil(elements.length / cols);
     const boxW = Math.floor((W - 30) / cols);
-    const boxH = 96;
+    // Dynamic boxH based on longest content
+    const maxContentLen = Math.max(...elements.map(e => (e.content || '').length));
+    const boxH = maxContentLen > 80 ? 120 : maxContentLen > 40 ? 106 : 96;
     const gap = 10;
     const totalH = titleH + rows * (boxH + gap) + gap + 10;
 
@@ -4472,17 +4406,18 @@ const SVG_RENDERERS = {
       const by = titleH + gap + row * (boxH + gap);
       const labelColor = el.color || '#1D9E75';
       const isDark = labelColor === '#1D3461' || labelColor === '#6B63D4';
+      const contentH = boxH - 36;
       return `
         <rect x="${bx}" y="${by}" width="${boxW}" height="${boxH}" rx="8" fill="white" stroke="${labelColor}" stroke-width="2.5"/>
         <rect x="${bx}" y="${by}" width="${boxW}" height="28" rx="8" fill="${labelColor}"/>
         <rect x="${bx}" y="${by + 18}" width="${boxW}" height="10" fill="${labelColor}"/>
         <text x="${bx + boxW/2}" y="${by + 19}" text-anchor="middle" font-size="13" font-weight="700" fill="${isDark ? 'white' : '#1D3461'}" font-family="Arial,sans-serif">${el.label}</text>
-        <foreignObject x="${bx + 6}" y="${by + 30}" width="${boxW - 12}" height="${boxH - 36}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:12px;color:#1D3461;line-height:1.4;word-wrap:break-word;height:${boxH - 36}px;overflow:hidden">${el.content}</div>
+        <foreignObject x="${bx + 6}" y="${by + 30}" width="${boxW - 12}" height="${contentH}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:12px;color:#1D3461;line-height:1.45;word-wrap:break-word;overflow:visible">${el.content}</div>
         </foreignObject>`;
     }).join('');
 
-    return `<svg viewBox="0 0 ${W} ${Math.min(totalH, 310)}" width="100%" height="100%">
+    return `<svg viewBox="0 0 ${W} ${totalH}" width="100%" height="100%">
       ${titleSVG}${boxes}
     </svg>`;
   },
@@ -4498,10 +4433,11 @@ const SVG_RENDERERS = {
     ];
 
     const W = 500, titleH = 40, colW = Math.floor((W - 28) / 3), gap = 6;
-    const minItemH = 28;
+    // Use taller item rows — 38px gives room for two-line text
+    const itemH = 38;
     const maxItems = Math.max(...sections.map(s => s.items.length), 1);
-    const bodyH = 34 + maxItems * minItemH + 12;
-    const totalH = Math.min(titleH + bodyH + 16, 310);
+    const bodyH = 36 + maxItems * itemH + 16;
+    const totalH = titleH + bodyH;
 
     const titleSVG = `
       <rect x="0" y="0" width="${W}" height="${titleH}" fill="#1D3461"/>
@@ -4511,18 +4447,16 @@ const SVG_RENDERERS = {
       const cx = 8 + i * (colW + gap);
       const cy = titleH + 8;
 
-      // Column header
       const header = `
         <rect x="${cx}" y="${cy}" width="${colW}" height="32" rx="6" fill="${sec.color}"/>
-        <text x="${cx + colW/2}" y="${cy + 21}" text-anchor="middle" font-size="13" font-weight="700" fill="white" font-family="Arial,sans-serif">${sec.icon} ${sec.label}</text>`;
+        <text x="${cx + colW/2}" y="${cy + 21}" text-anchor="middle" font-size="12" font-weight="700" fill="white" font-family="Arial,sans-serif">${sec.icon} ${sec.label}</text>`;
 
-      // Items
       const items = sec.items.map((item, j) => {
-        const iy = cy + 36 + j * minItemH;
+        const iy = cy + 36 + j * itemH;
         return `
-          <rect x="${cx}" y="${iy}" width="${colW}" height="${minItemH - 2}" rx="4" fill="${j % 2 === 0 ? '#F4F3EF' : 'white'}"/>
-          <foreignObject x="${cx + 4}" y="${iy}" width="${colW - 8}" height="${minItemH - 2}">
-            <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;color:#1D3461;display:flex;align-items:center;height:${minItemH - 2}px;line-height:1.3;word-wrap:break-word;padding:0 2px">${item}</div>
+          <rect x="${cx}" y="${iy}" width="${colW}" height="${itemH - 2}" rx="4" fill="${j % 2 === 0 ? '#F4F3EF' : 'white'}"/>
+          <foreignObject x="${cx + 4}" y="${iy + 2}" width="${colW - 8}" height="${itemH - 4}">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;color:#1D3461;line-height:1.4;word-wrap:break-word;padding:2px 2px;overflow:visible">${item}</div>
           </foreignObject>`;
       }).join('');
 
@@ -4538,33 +4472,43 @@ const SVG_RENDERERS = {
   // params: title, frames[{stem, example}], color
   sentence_frames(p) {
     const title = p.title || 'Sentence Frames';
-    const frames = (p.frames || []).slice(0, 5);
+    const frames = (p.frames || []).slice(0, 4);
     const accentColor = p.color || '#6B63D4';
 
-    const W = 500, titleH = 40, frameH = 52, gap = 6;
-    const totalH = Math.min(titleH + frames.length * (frameH + gap) + 16, 310);
+    const W = 500, titleH = 40, gap = 8;
+    // Dynamically size each frame based on content length
+    const getFrameH = (f) => {
+      const stemLen = (f.stem || f || '').length;
+      const exLen = (f.example || '').length;
+      const stemH = stemLen > 60 ? 40 : stemLen > 30 ? 30 : 22;
+      const exH = exLen > 80 ? 36 : exLen > 40 ? 28 : exLen > 0 ? 22 : 0;
+      return stemH + exH + 20;
+    };
 
-    const titleSVG = `
-      <rect x="0" y="0" width="${W}" height="${titleH}" fill="${accentColor}"/>
-      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="15" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>`;
-
+    let curY = titleH + 10;
     const framesSVG = frames.map((f, i) => {
-      const fy = titleH + 8 + i * (frameH + gap);
       const stem = f.stem || f || '';
       const example = f.example || '';
+      const fh = getFrameH(f);
+      const stemH = fh - (example ? 28 : 10) - 10;
+      const fy = curY;
+      curY += fh + gap;
       return `
-        <rect x="10" y="${fy}" width="${W - 20}" height="${frameH}" rx="8" fill="white" stroke="${accentColor}" stroke-width="1.5" opacity="${0.5 + i * 0.1}"/>
-        <rect x="10" y="${fy}" width="6" height="${frameH}" rx="4" fill="${accentColor}"/>
-        <foreignObject x="22" y="${fy + 4}" width="${W - 36}" height="${example ? 28 : frameH - 8}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#1D3461;line-height:1.4;word-wrap:break-word">${stem}</div>
+        <rect x="10" y="${fy}" width="${W - 20}" height="${fh}" rx="8" fill="white" stroke="${accentColor}" stroke-width="1.5"/>
+        <rect x="10" y="${fy}" width="6" height="${fh}" rx="4" fill="${accentColor}"/>
+        <foreignObject x="22" y="${fy + 6}" width="${W - 36}" height="${stemH + 8}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#1D3461;line-height:1.45;word-wrap:break-word;overflow:visible">${stem}</div>
         </foreignObject>
-        ${example ? `<foreignObject x="22" y="${fy + 30}" width="${W - 36}" height="20">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;color:#5F5E5A;font-style:italic;line-height:1.3">${example}</div>
+        ${example ? `<foreignObject x="22" y="${fy + stemH + 10}" width="${W - 36}" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;color:#5F5E5A;font-style:italic;line-height:1.45;word-wrap:break-word;overflow:visible">${example}</div>
         </foreignObject>` : ''}`;
     }).join('');
 
+    const totalH = curY + 8;
     return `<svg viewBox="0 0 ${W} ${totalH}" width="100%" height="100%">
-      ${titleSVG}${framesSVG}
+      <rect x="0" y="0" width="${W}" height="${titleH}" fill="${accentColor}"/>
+      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="15" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>
+      ${framesSVG}
     </svg>`;
   },
 
@@ -4610,7 +4554,7 @@ const SVG_RENDERERS = {
         <line x1="${lx1.toFixed(1)}" y1="${ly1.toFixed(1)}" x2="${lx2.toFixed(1)}" y2="${ly2.toFixed(1)}" stroke="${accentColor}" stroke-width="2" opacity="0.5" stroke-dasharray="4,3"/>
         <rect x="${(clampedNx - nodeW/2).toFixed(1)}" y="${(clampedNy - nodeH/2).toFixed(1)}" width="${nodeW}" height="${nodeH}" rx="8" fill="white" stroke="${accentColor}" stroke-width="2"/>
         <foreignObject x="${(clampedNx - nodeW/2 + 4).toFixed(1)}" y="${(clampedNy - nodeH/2 + 3).toFixed(1)}" width="${nodeW - 8}" height="${nodeH - 6}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;color:#1D3461;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;width:${nodeW-8}px;height:${nodeH-6}px;word-wrap:break-word;overflow:hidden;line-height:1.25">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;color:#1D3461;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;width:${nodeW-8}px;height:${nodeH-6}px;word-wrap:break-word;overflow:visible;line-height:1.3">
             <span style="display:block">${label}</span>
             ${detail ? `<span style="font-weight:400;font-size:9px;color:#5F5E5A;display:block;margin-top:2px">${detail}</span>` : ''}
           </div>
@@ -4646,7 +4590,7 @@ const SVG_RENDERERS = {
 
     const W = 500, titleH = 38;
     const stepW = Math.floor((W - 20 - (count - 1) * 8) / count);
-    const stepH = 100;
+    const stepH = 110;
     const oy = titleH + 12;
     const totalH = oy + stepH + 16;
 
@@ -4661,7 +4605,6 @@ const SVG_RENDERERS = {
       const desc = step.description || step.desc || '';
       const isDark = color === '#1D3461';
 
-      // Arrow connector (not on last step)
       const arrow = i < count - 1
         ? `<polygon points="${sx + stepW + 1},${oy + stepH/2 - 8} ${sx + stepW + 7},${oy + stepH/2} ${sx + stepW + 1},${oy + stepH/2 + 8}" fill="${color}" opacity="0.7"/>`
         : '';
@@ -4669,16 +4612,16 @@ const SVG_RENDERERS = {
       return `
         <rect x="${sx}" y="${oy}" width="${stepW}" height="${stepH}" rx="8" fill="${color}"/>
         <text x="${sx + stepW/2}" y="${oy + 22}" text-anchor="middle" font-size="20" font-family="Arial,sans-serif">${i + 1}</text>
-        <foreignObject x="${sx + 4}" y="${oy + 28}" width="${stepW - 8}" height="38">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Arial Black',Arial,sans-serif;font-size:11px;font-weight:900;color:${isDark ? 'white' : '#1D3461'};text-align:center;word-wrap:break-word;line-height:1.3">${label}</div>
+        <foreignObject x="${sx + 3}" y="${oy + 28}" width="${stepW - 6}" height="42">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Arial Black',Arial,sans-serif;font-size:11px;font-weight:900;color:${isDark ? 'white' : '#1D3461'};text-align:center;word-wrap:break-word;line-height:1.35;overflow:visible">${label}</div>
         </foreignObject>
-        <foreignObject x="${sx + 4}" y="${oy + 64}" width="${stepW - 8}" height="32">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;color:${isDark ? 'rgba(255,255,255,0.85)' : 'rgba(29,52,97,0.8)'};text-align:center;word-wrap:break-word;line-height:1.3">${desc}</div>
+        <foreignObject x="${sx + 3}" y="${oy + 70}" width="${stepW - 6}" height="36">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;color:${isDark ? 'rgba(255,255,255,0.85)' : 'rgba(29,52,97,0.8)'};text-align:center;word-wrap:break-word;line-height:1.35;overflow:visible">${desc}</div>
         </foreignObject>
         ${arrow}`;
     }).join('');
 
-    return `<svg viewBox="0 0 ${W} ${Math.min(totalH, 210)}" width="100%" height="100%">
+    return `<svg viewBox="0 0 ${W} ${totalH}" width="100%" height="100%">
       ${titleSVG}${stepsSVG}
     </svg>`;
   },
@@ -4745,9 +4688,9 @@ const SVG_RENDERERS = {
       return `
         <circle cx="${x}" cy="${y}" r="${nodeR}" fill="${color}"/>
         <foreignObject x="${x - nodeR + 4}" y="${y - nodeR + 4}" width="${(nodeR-4)*2}" height="${(nodeR-4)*2}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="width:${(nodeR-4)*2}px;height:${(nodeR-4)*2}px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:Arial,sans-serif;color:white;line-height:1.25">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="width:${(nodeR-4)*2}px;height:${(nodeR-4)*2}px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:Arial,sans-serif;color:white;line-height:1.3;overflow:visible">
             <div style="font-size:11px;font-weight:900;word-wrap:break-word">${label}</div>
-            ${desc ? `<div style="font-size:9px;opacity:0.85;margin-top:2px;word-wrap:break-word">${desc}</div>` : ''}
+            ${desc ? `<div style="font-size:9px;opacity:0.9;margin-top:2px;word-wrap:break-word">${desc}</div>` : ''}
           </div>
         </foreignObject>`;
     }).join('');
@@ -4782,12 +4725,12 @@ const SVG_RENDERERS = {
     const organisms = (p.organisms || defaultOrganisms).slice(0, 6);
     const count = organisms.length;
 
-    const W = 500, H = 280;
+    const W = 500, H = 290;
     const nodeW = Math.min(Math.floor((W - 20) / count) - 8, 82);
-    const nodeH = 110;
+    const nodeH = 120;
     const gap = Math.floor((W - 20 - count * nodeW) / (count - 1));
-    const oy = (H - nodeH) / 2 + 20;
-    const titleY = 20;
+    const oy = (H - nodeH) / 2 + 16;
+    const titleY = 18;
 
     const titleSVG = `<text x="${W/2}" y="${titleY}" text-anchor="middle" font-size="14" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${title}</text>`;
 
@@ -4812,11 +4755,11 @@ const SVG_RENDERERS = {
         <rect x="${nx}" y="${oy}" width="${nodeW}" height="32" rx="10" fill="${color}"/>
         <rect x="${nx}" y="${oy + 22}" width="${nodeW}" height="10" fill="${color}"/>
         <text x="${nx + nodeW/2}" y="${oy + 22}" text-anchor="middle" font-size="20" font-family="Arial,sans-serif">${emoji}</text>
-        <foreignObject x="${nx + 3}" y="${oy + 34}" width="${nodeW - 6}" height="36">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:900;color:#1D3461;text-align:center;word-wrap:break-word;line-height:1.3">${name}</div>
+        <foreignObject x="${nx + 3}" y="${oy + 34}" width="${nodeW - 6}" height="42">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:900;color:#1D3461;text-align:center;word-wrap:break-word;line-height:1.35;overflow:visible">${name}</div>
         </foreignObject>
-        <foreignObject x="${nx + 3}" y="${oy + 70}" width="${nodeW - 6}" height="36">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;color:#5F5E5A;text-align:center;word-wrap:break-word;line-height:1.3;font-style:italic">${role}</div>
+        <foreignObject x="${nx + 3}" y="${oy + 76}" width="${nodeW - 6}" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;color:#5F5E5A;text-align:center;word-wrap:break-word;line-height:1.35;font-style:italic;overflow:visible">${role}</div>
         </foreignObject>
         ${arrow}`;
     }).join('');
@@ -4871,7 +4814,7 @@ const SVG_RENDERERS = {
       const lx2 = pos.x - (dx/dist) * 22;
       const ly2 = pos.y - (dy/dist) * 14;
 
-      const labelW = 90, labelH = 28;
+      const labelW = 100, labelH = 32;
       const lbx = pos.x - labelW/2;
       const lby = pos.y - labelH/2;
 
@@ -4879,8 +4822,8 @@ const SVG_RENDERERS = {
         <line x1="${lx1}" y1="${ly1}" x2="${lx2}" y2="${ly2}" stroke="${accentColor}" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>
         <circle cx="${lx2}" cy="${ly2}" r="3" fill="${accentColor}" opacity="0.7"/>
         <rect x="${lbx}" y="${lby}" width="${labelW}" height="${labelH}" rx="5" fill="${accentColor}" opacity="0.9"/>
-        <foreignObject x="${lbx + 4}" y="${lby + 2}" width="${labelW - 8}" height="${labelH - 4}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:white;text-align:center;display:flex;align-items:center;justify-content:center;height:${labelH - 4}px;word-wrap:break-word;line-height:1.2">${text}</div>
+        <foreignObject x="${lbx + 3}" y="${lby + 2}" width="${labelW - 6}" height="${labelH - 4}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:white;text-align:center;display:flex;align-items:center;justify-content:center;height:${labelH - 4}px;word-wrap:break-word;line-height:1.3;overflow:visible">${text}</div>
         </foreignObject>`;
     }).join('');
 
