@@ -2133,12 +2133,18 @@ async function generate() {
           + sortedExps2.map(e=>e.code+' ['+e.strand+': '+({'B':'Life Systems','C':'Matter and Energy','D':'Structures and Mechanisms','E':'Earth and Space Systems'})[e.strand]+'] '+e.desc).join('\n')
         : 'ONTARIO LANGUAGE CURRICULUM EXPECTATIONS (choose 2-4 most relevant):\n'
           + (isSplit
-            ? relevantExps.slice(0,24).map(e=>{
-                const bandLabel = e.band==='1-3'?'[Gr.1-3]':e.band==='4-6'?'[Gr.4-6]':e.band==='7-8'?'[Gr.7-8]':'';
-                // Make code unique per band so AI knows these are distinct expectations
-                const uniqueCode = e.code + (bandLabel ? '-'+bandLabel.replace(/[\[\]]/g,'') : '');
-                return uniqueCode+' '+bandLabel+' '+e.desc;
-              }).join('\n')
+            ? (() => {
+                // Group by grade band so AI sees separate lists per grade
+                const gradeOrder = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
+                const bandForGrade = g => gradeOrder.indexOf(g) <= 3 ? '1-3' : gradeOrder.indexOf(g) <= 6 ? '4-6' : '7-8';
+                const sections = grades.map(g => {
+                  const band = bandForGrade(g);
+                  const bandLabel = band==='1-3'?'[Gr.1-3]':band==='4-6'?'[Gr.4-6]':'[Gr.7-8]';
+                  const gradeExps = relevantExps.filter(e => e.band === band).slice(0,8);
+                  return `--- FOR ${g.toUpperCase()} ${bandLabel} ---\n` + gradeExps.map(e => e.code+' '+e.desc).join('\n');
+                });
+                return sections.join('\n\n');
+              })()
             : relevantExps.slice(0,15).map(e=>e.code+' '+e.desc).join('\n')))
     : '';
 
@@ -2149,7 +2155,7 @@ async function generate() {
     : expContext
       ? 'CRITICAL — You MUST choose expectations ONLY from this list. Do NOT invent codes.\n'+expContext+'\n\n'
         + (isSplit && !isMathSubj && !(subj||'').toLowerCase().includes('science')
-          ? `SPLIT CLASS REQUIREMENT: This is a ${grades.join('/')} split class. The expectations list above uses codes like C2.3-[Gr.1-3] and C2.3-[Gr.4-6] to show the SAME CODE applies to DIFFERENT GRADES. You MUST pick at least one from EACH grade band. In your JSON output, use the original code (e.g. C2.3) but set the "grade" field to the specific grade (e.g. "Grade 3" or "Grade 4"). Return 3-4 expectations total, covering ALL grades.`
+          ? `SPLIT CLASS REQUIREMENT: The list above is grouped by grade. You MUST select expectations from EACH grade section. Set the grade field on each. Return ${grades.length * 2} expectations covering ALL grades.`
           : 'Return 2-4 of these codes in the expectations array. Pick the ones most relevant to: '+topic)
       : (isMathSubj
           ? 'EXPECTATIONS: Return 2-4 Ontario Math 2020 expectations most relevant to this topic and grade.'
@@ -2278,7 +2284,12 @@ Use emoji headers. 4–6 varied activities. Start directly with the worksheet ti
     : 'Select the 2-4 most relevant expectations across strands that best match this specific topic.';
 
   const splitExpNote = isSplit
-    ? `CRITICAL SPLIT CLASS RULE: You MUST return expectations for EVERY grade in this split (${grades.join(' AND ')}). Return 1-2 expectations per grade. Each expectation MUST have a "grade" field set to the specific grade it applies to (e.g. "Grade 3" or "Grade 4"). The same curriculum code can appear twice if it covers different grade bands — this is correct and required. ${strandGuidance}`
+    ? `MANDATORY SPLIT CLASS RULE — READ CAREFULLY:
+This is a ${grades.join(' / ')} split class. The expectations list above is ALREADY SEPARATED BY GRADE.
+You MUST select AT LEAST ONE expectation from EACH grade section (${grades.map(g=>`"--- FOR ${g.toUpperCase()}"`).join(' AND ')}).
+Each expectation object MUST have "grade" set to the exact grade string (e.g. "${grades[0]}" or "${grades[1]}").
+Return ${grades.length * 2} expectations total — ${grades.length} per grade minimum.
+FAILURE TO INCLUDE EXPECTATIONS FOR ALL GRADES IS AN ERROR. ${strandGuidance}`
     : 'Return 2-5 most relevant expectations for this grade. '+strandGuidance;
 
   const prompt = `You are an expert Ontario elementary SSC teacher. Generate a classroom-ready lesson package.
@@ -2394,7 +2405,33 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     window._slideData = null; // clear cached slides — new lesson generated
     outputKeys.forEach(k => { genC[k] = {orig:parsed[k]||'', cur:parsed[k]||''}; });
     answerKeyKeys.forEach(k => { if(parsed[k]) genC[k]={orig:parsed[k],cur:parsed[k]}; });
-    const lessonExpectations = parsed.expectations || preMatchedExp || [];
+    let lessonExpectations = parsed.expectations || preMatchedExp || [];
+
+    // POST-PARSE VALIDATOR: For split classes, ensure all grades have expectations
+    if (isSplit && lessonExpectations.length > 0 && !isMathSubj) {
+      const gradeOrder2 = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
+      const bandForGrade2 = g => gradeOrder2.indexOf(g) <= 3 ? '1-3' : gradeOrder2.indexOf(g) <= 6 ? '4-6' : '7-8';
+      const missingGrades = grades.filter(g => {
+        const band = bandForGrade2(g);
+        return !lessonExpectations.some(e =>
+          (e.grade && e.grade === g) ||
+          (e.band && e.band === band)
+        );
+      });
+      if (missingGrades.length > 0) {
+        console.warn('Missing expectations for grades:', missingGrades, '— patching from curriculum');
+        await loadCurriculum(subj);
+        missingGrades.forEach(g => {
+          const band = bandForGrade2(g);
+          const fallback = (EXPECTATIONS['language'] || []).filter(e => e.band === band).slice(0,2);
+          fallback.forEach(e => {
+            if (!lessonExpectations.find(x => x.code === e.code && x.band === e.band)) {
+              lessonExpectations.push({...e, grade: g});
+            }
+          });
+        });
+      }
+    }
     genC['_expectations'] = lessonExpectations;
 
     loadUsageMeter();
