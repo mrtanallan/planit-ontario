@@ -7552,26 +7552,54 @@ function toggleUnitCard(uid) {
 async function expandUnitLesson(unitId, subject, gradesStr, title, lessonIndex) {
   const grades = gradesStr.split(',').filter(Boolean);
   showToast('Opening Plan tab — pre-filled and ready to generate...', 4000);
+
+  // Switch to Plan tab
   const planTab = document.getElementById('tr-plan');
   if (planTab) { planTab.checked = true; renderClassSelector(); resetWorkflow(); }
+
+  // Set subject
   const subjEl = document.getElementById('subj');
   if (subjEl) { subjEl.value = subject; onSubjectChange(); }
-  await new Promise(r => setTimeout(r, 100));
+
+  await new Promise(r => setTimeout(r, 150));
+
+  // Set grade pills visually
   document.querySelectorAll('#gradePillContainer .grade-pill-btn').forEach(btn => btn.classList.remove('selected'));
   grades.forEach(g => {
     const btn = document.querySelector(`#gradePillContainer .grade-pill-btn[data-grade="${g}"]`);
-    if (btn) { btn.classList.add('selected'); btn.click(); }
+    if (btn) btn.classList.add('selected');
   });
+
+  // Directly set the hidden grade selects — don't rely on .click() / syncGradePillsToSelects
+  const gradeSelectIds = ['gA','gB','gC','gD','gE','gF'];
+  gradeSelectIds.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) el.value = grades[i] || '';
+  });
+  checkScienceSplitNote();
+
+  // Set topic
   const topicEl = document.getElementById('topic');
   if (topicEl) topicEl.value = title;
+
+  // Store unit context for continuity
   window._pendingUnitPlanId = unitId;
   window._pendingUnitLessonIndex = lessonIndex;
   window._pendingUnitLessonTitle = title;
-  // Store full unit plan for continuity context injection into the prompt
   window._pendingUnitPlan = savedUnitPlans.find(u => u.id === unitId) || null;
-  await new Promise(r => setTimeout(r, 150));
+
+  await new Promise(r => setTimeout(r, 200));
+
+  // Verify grade was set before generating
+  const gA = document.getElementById('gA')?.value;
+  if (!gA) { alert('Could not set grade — please select grade manually and click Generate.'); return; }
+
   const genBtn = document.getElementById('genBtn');
-  if (genBtn) { genBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }); await new Promise(r => setTimeout(r, 300)); generate(); }
+  if (genBtn) {
+    genBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    await new Promise(r => setTimeout(r, 300));
+    generate();
+  }
 }
 
 async function loadLessonById(lessonId) {
