@@ -1157,6 +1157,7 @@ let _classIdInitialized = false;
 let savedLessons = [];
 let _rcAllStudents = [];
 let wsN = 0;
+let _pendingSlideSave = false;
 
 const AVCOLORS = ['#4A7C59','#2A5FA5','#C47B2A','#B54B2A','#6B46C1','#0F766E','#7C4A6E','#4A6E7C'];
 
@@ -1750,7 +1751,9 @@ function unlock() {
   });
 }
 function resetWorkflow() {
-  window._slideData = null;
+  // Restore slide data if previously generated for this lesson
+  const _savedSlide = content._slideData || null;
+  window._slideData = _savedSlide || null;
   const sidebar = document.getElementById('lessonSidebar');
   if (sidebar) sidebar.style.display='none';
   for (let i=1; i<=5; i++) {
@@ -3240,6 +3243,8 @@ async function generateSlideData(callerBtn) {
     const isScience = (subject||'').toLowerCase().includes('science');
 
     window._slideData = {sd, topic, subject, gradeStr, detectedTheme};
+    // Persist slide data to current lesson so it survives page reload
+    _pendingSlideSave = true;
 
     // ── STEP 1b: Fetch contextual image in parallel (non-blocking) ──
     // AI image for Minds On slide (all subjects)
@@ -3313,6 +3318,19 @@ async function generateSlideData(callerBtn) {
     const {wikiImg=null, wikiTitle=null, wikiLicense=null, mindsonImg=null, slideImgs=[]} = window._slideData;
     console.log('[IMG] Opening presenter — mindsonImg:', !!mindsonImg, 'slideImgs:', slideImgs.filter(Boolean).length);
     const deckWindow = openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg, mindsonImg, wikiTitle, wikiLicense, slideImgs);
+    // Save slide data to lesson record so it can be restored on reload
+    if (_pendingSlideSave && curSess && currentUser) {
+      _pendingSlideSave = false;
+      const _slideToSave = { sd, topic, subject, gradeStr, detectedTheme, wikiImg: wikiImg||null, mindsonImg: mindsonImg||null, wikiTitle: wikiTitle||null, wikiLicense: wikiLicense||null, slideImgs: slideImgs||[] };
+      // Find the most recent lesson with this topic
+      const _matchLesson = savedLessons.find(l => l.topic === topic && (l.grades||[]).join(',') === (curSess.grades||[]).join(','));
+      if (_matchLesson) {
+        const _updContent = { ...(_matchLesson.content||{}), _slideData: _slideToSave };
+        db.from('lessons').update({ content: _updContent }).eq('id', _matchLesson.id).then(() => {
+          _matchLesson.content = _updContent;
+        }).catch(e => console.warn('Slide save failed:', e.message));
+      }
+    }
 
     // ── STEP 4: Fire agent loop for any slides that didn't get a hardcoded visual ─
     const needsAgent = slides.slice(0,4).some(s=>!s.svg_html);
@@ -4707,8 +4725,12 @@ const SVG_RENDERERS = {
       <rect x="0" y="0" width="${W}" height="${titleH}" fill="${accentColor}"/>
       <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="15" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>`;
 
+    // Pre-compute frame heights and y positions
+    const frameHeights = frames.map(f => getFrameH(f));
+    const totalH = titleH + 8 + frameHeights.reduce((s,h) => s+h+gap, 0);
     const framesSVG = frames.map((f, i) => {
-      const fy = titleH + 8 + i * (frameH + gap);
+      const frameH = frameHeights[i];
+      const fy = titleH + 8 + frames.slice(0,i).reduce((sum,_,j) => sum + frameHeights[j] + gap, 0);
       const stem = f.stem || f || '';
       const example = f.example || '';
       return `
