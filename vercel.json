@@ -3,16 +3,16 @@
     { "source": "/api/generate", "destination": "/api/generate.js" },
     { "source": "/api/worksheet", "destination": "/api/worksheet.js" },
     { "source": "/api/generate-image", "destination": "/api/generate-image.js" },
-    { "source": "/api/create-checkout", "destination": "/api/create-checkout.js" },
-    { "source": "/api/stripe-webhook", "destination": "/api/stripe-webhook.js" },
-    { "source": "/api/svg-to-png", "destination": "/api/svg-to-png.js" },
-    { "source": "/canvg.js", "destination": "/public/canvg.js" },
-    { "source": "/pptx-export.js", "destination": "/public/pptx-export.js" },
     { "source": "/ws/:path*", "destination": "/public/worksheet.html" },
     { "source": "/app/:path*", "destination": "/public/app/index.html" },
     { "source": "/app", "destination": "/public/app/index.html" },
     { "source": "/privacy", "destination": "/public/privacy.html" },
     { "source": "/terms", "destination": "/public/terms.html" },
     { "source": "/", "destination": "/public/landing.html" }
-  ]
+  ],
+  "functions": {
+    "api/generate.js": { "maxDuration": 60 },
+    "api/generate-image.js": { "maxDuration": 30 },
+    "api/worksheet.js": { "maxDuration": 15 }
+  }
 }
