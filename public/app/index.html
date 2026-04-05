@@ -7311,13 +7311,37 @@ async function generateUnitAssessment(uid, type) {
     test: {
       label: 'Written Test',
       icon: '📝',
-      instruction: `Generate a written unit test with 10-14 questions. Include a mix of:
-- Multiple choice (4-5 questions): [CIRCLE ONE: A) option / B) option / C) option / D) option]
-- Short answer (3-4 questions): [TEXT BOX]
-- Extended response (2-3 questions): [LARGE BOX]
-Questions must reference specific content from the lessons taught (topics: ${expandedTopics}).
-End with an ANSWER KEY section listing correct answers for each question.
-Format as a clean student-facing test with a name/date header.`,
+      instruction: `Generate a written unit test with 10-14 questions using EXACTLY this format for every question:
+
+## ${unit.topic} — Unit Test
+**Name:** [TEXT BOX]
+**Date:** [TEXT BOX]
+
+## Part 1: Multiple Choice
+Use this format for each MC question:
+1. [Question text] [CIRCLE ONE: A) option / B) option / C) option / D) option]
+
+## Part 2: Short Answer
+Use this format for each short answer:
+5. [Question text] [TEXT BOX]
+
+## Part 3: Extended Response
+Use this format for each extended response:
+9. [Question text] [LARGE BOX]
+
+Include 4-5 multiple choice, 3-4 short answer, 2-3 extended response.
+Questions MUST reference specific content from the lessons taught (topics: ${expandedTopics}).
+
+Then add a SEPARATE ANSWER KEY section using EXACTLY this format:
+## ANSWER KEY
+Q1: [correct answer]
+Q2: [correct answer]
+(etc. — for open-ended give 2-3 key points expected at Level 3)
+
+CRITICAL FORMAT RULES:
+- Every question must use [TEXT BOX], [LARGE BOX], or [CIRCLE ONE: A) ... / B) ... / C) ...] — these enable auto-marking
+- Options in CIRCLE ONE must be separated by ' / ' (space-slash-space)
+- Never use plain numbered lists without an input tag`,
     },
     oral: {
       label: 'Oral Performance Task',
@@ -7383,41 +7407,18 @@ Return ONLY the assessment content — no preamble or explanation.`;
     hideLoading();
 
     // Show result in a modal viewer with PDF/copy options
-    showUnitAssessmentResult(config.icon + ' ' + config.label, text, unit.topic, gradesStr);
+    showUnitAssessmentResult(config.icon + ' ' + config.label, text, unit.topic, (unit.grades||[]).join(','), type==='test', uid);
   } catch(e) {
     hideLoading();
     if (e.message !== '__PLAN_LIMIT__') alert('Error generating assessment: ' + e.message);
   }
 }
 
-function showUnitAssessmentResult(title, text, topic, grades) {
-  const existing = document.getElementById('unitAssessResultModal');
-  if (existing) existing.remove();
-
-  const isWS = title.includes('📝');
-  const rendered = isWS ? renderWS(text) : renderMD(text);
-
-  const modal = document.createElement('div');
-  modal.id = 'unitAssessResultModal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;';
-  modal.innerHTML = `
-    <div style="background:var(--paper);border-radius:16px;width:100%;max-width:760px;box-shadow:0 20px 60px rgba(0,0,0,.3);margin:auto;">
-      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;background:var(--paper);border-radius:16px 16px 0 0;z-index:1;">
-        <div style="font-weight:700;font-size:.92rem;color:var(--ink);">${title}</div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="navigator.clipboard.writeText(document.getElementById('unitAssessText').innerText||'');showToast('Copied!')" class="btn b-out b-sm">📋 Copy</button>
-          <button onclick="printUnitAssessment('${topic.replace(/'/g,"\'")}','${grades}')" class="btn b-out b-sm">📄 PDF</button>
-          <button onclick="document.getElementById('unitAssessResultModal').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:2px 6px;">✕</button>
-        </div>
-      </div>
-      <div id="unitAssessText" style="padding:24px 28px;line-height:1.75;font-size:.9rem;">${rendered}</div>
-    </div>`;
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
-  document.body.appendChild(modal);
-}
-
-function printUnitAssessment(topic, grades) {
+function printUnitAssessment() {
+  const modal = document.getElementById('unitAssessResultModal');
   const text = document.getElementById('unitAssessText')?.innerText || '';
+  const topic = modal?.dataset.topic || 'Assessment';
+  const grades = modal?.dataset.grades || '';
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;background:white;color:#16120E;padding:32px 40px;max-width:820px;margin:0 auto;font-size:13px;line-height:1.7;}
@@ -7430,13 +7431,14 @@ p,li{line-height:1.75;margin:3px 0;}li{margin-left:18px;}strong{font-weight:600;
 <div style="font-size:.8rem;color:#7A726A;margin-bottom:16px;">${grades} · TeacherAI · ${new Date().toLocaleDateString('en-CA')}</div>
 <div style="white-space:pre-wrap;">${text}</div>
 <div class="meta">Generated by TeacherAI · Ontario 2023 Curriculum</div>
-<script>window.onload=()=>window.print()<\/script></body></html>`;
+<` + `script>window.onload=()=>window.print()<\/script></body></html>`;
   const blob = new Blob([html], {type:'text/html'});
   const url = URL.createObjectURL(blob);
   const w = window.open(url, '_blank');
   if (!w) alert('Pop-up blocked — allow pop-ups for teacherai.ca');
   setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
+
 
 function toggleUnitCard(uid) {
   const body = document.getElementById('unit-lessons-'+uid);
