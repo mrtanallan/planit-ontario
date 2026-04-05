@@ -5537,7 +5537,7 @@ function loadCanvg() {
     if (window.canvg && window.canvg.Canvg) { resolve(window.canvg); return; }
     if (window.Canvg) { resolve({Canvg: window.Canvg}); return; }
     var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/canvg@3.0.10/dist/browser/canvg.min.js';
+    s.src = '/canvg.js';
     s.onload = function() {
       // v3 may export as window.canvg or window.Canvg
       var exported = window.canvg || (window.Canvg ? {Canvg: window.Canvg} : null);
