@@ -2410,28 +2410,36 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     answerKeyKeys.forEach(k => { if(parsed[k]) genC[k]={orig:parsed[k],cur:parsed[k]}; });
     let lessonExpectations = parsed.expectations || preMatchedExp || [];
 
-    // POST-PARSE VALIDATOR: For split classes, ensure all grades have expectations
-    if (isSplit && lessonExpectations.length > 0 && !isMathSubj) {
+    // POST-PARSE VALIDATOR: For split classes, enforce one expectation per grade
+    if (isSplit) {
       const gradeOrder2 = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
       const bandForGrade2 = g => gradeOrder2.indexOf(g) <= 3 ? '1-3' : gradeOrder2.indexOf(g) <= 6 ? '4-6' : '7-8';
-      const missingGrades = grades.filter(g => {
-        const band = bandForGrade2(g);
-        return !lessonExpectations.some(e =>
-          (e.grade && e.grade === g) ||
-          (e.band && e.band === band)
-        );
+
+      // Step 1: Assign grade field to every expectation based on band if missing
+      lessonExpectations = lessonExpectations.map(e => {
+        if (e.grade) return e;
+        // Assign to the first grade whose band matches
+        const matchingGrade = grades.find(g => bandForGrade2(g) === e.band);
+        return matchingGrade ? {...e, grade: matchingGrade} : e;
       });
+
+      // Step 2: Check which grades still have no expectation assigned
+      const missingGrades = grades.filter(g =>
+        !lessonExpectations.some(e => e.grade === g)
+      );
+
+      // Step 3: For missing grades, pull from curriculum JSON
       if (missingGrades.length > 0) {
-        console.warn('Missing expectations for grades:', missingGrades, '— patching from curriculum');
+        console.warn('Patching missing expectations for:', missingGrades);
         await loadCurriculum(subj);
+        const subjKey = (subj||'').toLowerCase().includes('science') ? 'science'
+          : (subj||'').toLowerCase().includes('math') ? 'math' : 'language';
         missingGrades.forEach(g => {
           const band = bandForGrade2(g);
-          const fallback = (EXPECTATIONS['language'] || []).filter(e => e.band === band).slice(0,2);
-          fallback.forEach(e => {
-            if (!lessonExpectations.find(x => x.code === e.code && x.band === e.band)) {
-              lessonExpectations.push({...e, grade: g});
-            }
-          });
+          const pool = (EXPECTATIONS[subjKey] || []).filter(e => e.band === band);
+          // Pick an expectation not already in the list
+          const pick = pool.find(e => !lessonExpectations.find(x => x.code === e.code));
+          if (pick) lessonExpectations.push({...pick, grade: g});
         });
       }
     }
@@ -5549,8 +5557,7 @@ function openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg, mindsonImg, wi
 html,body{width:100%;height:100%;overflow:hidden;background:#111;font-family:Arial,'Helvetica Neue',sans-serif}
 #deck{width:100%;height:100vh;position:relative}
 .slide{position:absolute;inset:0;opacity:0;transition:opacity .35s ease;pointer-events:none;overflow:hidden}
-.slide.active{opacity:1;pointer-events:all}
-.slide:first-child{opacity:1;pointer-events:all}
+.slide.active{opacity:1!important;pointer-events:all}
 .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #progress{position:fixed;top:0;left:0;height:4px;background:#3BBFAD;transition:width .3s ease;z-index:300}
 #ctrl{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.6rem;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(16px);border-radius:40px;padding:.5rem 1rem;border:1px solid rgba(255,255,255,.1)}
@@ -5565,7 +5572,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:#111;font-family:Ari
 function show(n){if(sl[c])sl[c].classList.remove('active');c=Math.max(0,Math.min(n,t-1));if(sl[c])sl[c].classList.add('active');nm.textContent=(c+1)+'/'+t;pr.style.width=((c+1)/t*100)+'%';}
 function go(d){show(c+d);}
 function fs(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
-document.addEventListener('DOMContentLoaded',function(){sl=document.querySelectorAll('.slide');pr=document.getElementById('progress');nm=document.getElementById('snum');show(0);});
+// Run immediately AND on DOMContentLoaded as backup
+function init(){
+  sl=document.querySelectorAll('.slide');
+  pr=document.getElementById('progress');
+  nm=document.getElementById('snum');
+  if(sl.length&&pr&&nm){show(0);return true;}
+  return false;
+}
+if(!init()){document.addEventListener('DOMContentLoaded',init);}
 document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();go(1);}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(-1);}if(e.key==='f'||e.key==='F')fs();});
 document.addEventListener('click',function(e){if(e.target.closest('#ctrl'))return;e.clientX>window.innerWidth/2?go(1):go(-1);});
 window.addEventListener('message',function(e){
