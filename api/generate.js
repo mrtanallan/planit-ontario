@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
     if (system) anthropicPayload.system = system;
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 55000);
+    const timer = setTimeout(() => controller.abort(), 58000);
 
     let anthropicRes;
     try {
