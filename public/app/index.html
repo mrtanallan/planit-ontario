@@ -1037,13 +1037,13 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <span style="margin-top:6px;display:inline-block;">
     <a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> &nbsp;·&nbsp;
     <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a> &nbsp;·&nbsp;
-    <a href="/cdn-cgi/l/email-protection#d2a6b7b3b1bab7a0b3bbb1b3bcb3b6b392b5bfb3bbbefcb1bdbf" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
+    <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
     <span style="font-family:'DM Mono',monospace;font-size:.65rem;">v5.0 · Mar 31 2026</span>
   </span>
 </div>
 
 </div><!-- end #appScreen -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 
 // ============================================================
 // SUPABASE + GOOGLE
@@ -5561,35 +5561,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#111;font-family:Ari
 
   // The deck JS listens for postMessage and injects visuals
   const JS=`var c=0,t=${total},sl,pr,nm;
-function show(n){
-  if(sl&&sl[c])sl[c].classList.remove('active');
-  c=Math.max(0,Math.min(n,t-1));
-  if(sl&&sl[c]){
-    sl[c].classList.add('active');
-    sl[c].style.opacity='1';
-  }
-  if(nm)nm.textContent=(c+1)+'/'+t;
-  if(pr)pr.style.width=((c+1)/t*100)+'%';
-}
+function show(n){if(sl[c])sl[c].classList.remove('active');c=Math.max(0,Math.min(n,t-1));if(sl[c])sl[c].classList.add('active');nm.textContent=(c+1)+'/'+t;pr.style.width=((c+1)/t*100)+'%';}
 function go(d){show(c+d);}
 function fs(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
-function init(){
-  sl=document.querySelectorAll('.slide');
-  pr=document.getElementById('progress');
-  nm=document.getElementById('snum');
-  if(sl.length){
-    // Force first slide visible regardless of CSS
-    sl[0].style.opacity='1';
-    sl[0].style.pointerEvents='all';
-    sl[0].classList.add('active');
-    c=0;
-    if(nm)nm.textContent='1/'+t;
-    if(pr)pr.style.width=(1/t*100)+'%';
-  } else {
-    setTimeout(init, 100);
-  }
-}
-setTimeout(init, 0);
+document.addEventListener('DOMContentLoaded',function(){sl=document.querySelectorAll('.slide');pr=document.getElementById('progress');nm=document.getElementById('snum');show(0);});
 document.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key===' '||e.key==='ArrowDown'){e.preventDefault();go(1);}if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();go(-1);}if(e.key==='f'||e.key==='F')fs();});
 document.addEventListener('click',function(e){if(e.target.closest('#ctrl'))return;e.clientX>window.innerWidth/2?go(1):go(-1);});
 window.addEventListener('message',function(e){
@@ -5604,7 +5579,50 @@ window.addEventListener('message',function(e){
     panel.innerHTML='<p style="font-size:14px;color:#888780;text-align:center;padding:20px">Visual unavailable</p>';
   }
 });
-`;
+function dlPPTX(){
+  var btn=document.getElementById('pptxbtn');
+  if(!window.PptxGenJS){alert('PPTX library loading, please wait a moment and try again.');return;}
+  if(btn){btn.textContent='Building...';btn.disabled=true;}
+  try{
+    var pptx=new PptxGenJS();
+    pptx.layout='LAYOUT_WIDE';
+    var slides=document.querySelectorAll('.slide');
+    slides.forEach(function(el,i){
+      var s=pptx.addSlide();
+      var isTitleSlide=(i===0);
+      s.background={color:isTitleSlide?'1D3461':'F4F3EF'};
+      var svgs=el.querySelectorAll('svg');
+      if(svgs.length){
+        try{
+          var serializer=new XMLSerializer();
+          var svgStr=serializer.serializeToString(svgs[0]);
+          var b64=btoa(unescape(encodeURIComponent(svgStr)));
+          s.addImage({data:'data:image/svg+xml;base64,'+b64,x:0,y:0,w:'100%',h:'100%'});
+        }catch(e2){console.warn('SVG encode err',e2);}
+      }
+      var textNodes=el.querySelectorAll('h1,h2,h3,p,[style*="font-size"]');
+      var collected=[];
+      textNodes.forEach(function(n){
+        var t=(n.innerText||n.textContent||'').trim();
+        if(t&&t.length>2&&t.length<500&&!collected.some(function(c){return c.includes(t.slice(0,20));}))
+          collected.push(t);
+      });
+      if(collected.length){
+        var combined=collected.slice(0,6).join('\n');
+        s.addText(combined,{x:0.3,y:0.3,w:12.7,h:6.8,fontSize:14,color:isTitleSlide?'FFFFFF':'1D3461',wrap:true,valign:'top',transparent:true});
+      }
+    });
+    pptx.writeFile({fileName:'TeacherAI_Slides.pptx'}).then(function(){
+      if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}
+    }).catch(function(err){
+      alert('Download failed: '+err.message);
+      if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}
+    });
+  }catch(err){
+    alert('PPTX error: '+err.message);
+    if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}
+  }
+}`;
 
   const html=`<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -5617,8 +5635,10 @@ window.addEventListener('message',function(e){
   <span id="snum">1/${total}</span>
   <button onclick="go(1)">&#8250;</button>
   <button id="fsb" onclick="fs()">&#x26F6; Full</button>
+  <button id="pptxbtn" onclick="dlPPTX()" style="border-radius:8px!important;width:auto!important;padding:.3rem .85rem!important;font-size:.7rem!important;font-family:monospace;background:#3BBFAD!important;color:white!important;">&#11015; PPTX</button>
 </div>
 <script>${JS}<\/script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js" defer><\/script>
 </body></html>`;
 
   const b=new Blob([html],{type:'text/html'});
@@ -7770,4 +7790,11 @@ function renderTourStep(){const step=TOUR_STEPS[_tourIndex];document.getElementB
 function tourNext(){if(_tourIndex<TOUR_STEPS.length-1){_tourIndex++;renderTourStep();}else{skipTour();}}
 function skipTour(){document.getElementById('tourOverlay').style.display='none';localStorage.setItem('teacherai_tour_done','1');}
 
-// ===============
+// ============================================================
+// BOOT
+// ============================================================
+initApp();
+
+</script>
+</body>
+</html>
