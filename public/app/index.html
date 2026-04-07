@@ -3274,9 +3274,11 @@ async function generateSlideData(callerBtn) {
 
     const fetchMindsonImage = async () => {
       try {
+        // Use the hook question as the image prompt — more relevant than generic topic
+        const mindsonPrompt = (sd.minds_on && sd.minds_on.hook) ? sd.minds_on.hook : topic;
         const r = await authFetch('/api/generate-image', {
           method: 'POST',
-          body: JSON.stringify({ type: 'ai', topic, subject, grade: gradeStr, theme: detectedTheme })
+          body: JSON.stringify({ type: 'ai', topic: mindsonPrompt, subject, grade: gradeStr, theme: detectedTheme })
         });
         if (r.ok) {
           const d = await r.json();
@@ -5647,31 +5649,50 @@ window.addEventListener('message',function(e){
 // ============================================================
 
 // Convert <foreignObject> blocks to native SVG <text> so canvg can render them
-// Preserves position from foreignObject x/y attributes so text lands in the right place
+// Preserves position and wraps text within the foreignObject width using tspan
 function stripForeignObject(svgStr) {
   return svgStr.replace(/<foreignObject([^>]*)>([\s\S]*?)<\/foreignObject>/gi, function(match, attrs, inner) {
-    const xm = attrs.match(/\bx=["\']([\d.]+)["\']/) ;
-    const ym = attrs.match(/\by=["\']([\d.]+)["\']/) ;
+    const xm = attrs.match(/\bx=["\'\s]*([-\d.]+)/);
+    const ym = attrs.match(/\by=["\'\s]*([-\d.]+)/);
+    const wm = attrs.match(/\bwidth=["\'\s]*([-\d.]+)/);
     const x = xm ? parseFloat(xm[1]) : 0;
     const y = ym ? parseFloat(ym[1]) : 0;
-    // Extract text from each div/span/p element separately to preserve lines
-    const lines = [];
-    const divRe = /<(?:div|p|span)[^>]*>([^<]*)<\/(?:div|p|span)>/gi;
-    let dm;
-    while ((dm = divRe.exec(inner)) !== null) {
-      const t = dm[1].trim();
-      if (t) lines.push(t);
+    const maxW = wm ? parseFloat(wm[1]) : 160;
+    // Extract text segments
+    const segs = [];
+    const re = /<(?:div|p|span|tspan)[^>]*>([^<]*)<\/(?:div|p|span|tspan)>/gi;
+    let m2;
+    while ((m2 = re.exec(inner)) !== null) {
+      const t = m2[1].trim();
+      if (t) segs.push(t);
     }
-    if (!lines.length) {
+    if (!segs.length) {
       const t = inner.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (t) lines.push(t);
+      if (t) segs.push(t);
     }
-    if (!lines.length) return '';
-    const fs = 13, lh = fs * 1.4;
-    return lines.slice(0, 6).map((line, i) =>
-      '<text x="' + (x + 4) + '" y="' + (y + fs + i * lh) + '" font-size="' + fs + '" font-family="Arial,sans-serif" fill="#1D3461">' +
-      line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</text>'
-    ).join('');
+    if (!segs.length) return '';
+    const fs = 13, lh = fs * 1.5;
+    // Word-wrap each segment to fit maxW (approx 7px per char at font-size 13)
+    const charsPerLine = Math.max(10, Math.floor(maxW / 7));
+    const wrapped = [];
+    segs.forEach(seg => {
+      const words = seg.split(' ');
+      let cur = '';
+      words.forEach(w => {
+        if ((cur + ' ' + w).trim().length > charsPerLine && cur) {
+          wrapped.push(cur.trim());
+          cur = w;
+        } else {
+          cur = cur ? cur + ' ' + w : w;
+        }
+      });
+      if (cur) wrapped.push(cur.trim());
+    });
+    const esc2 = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<text font-size="' + fs + '" font-family="Arial,sans-serif" fill="#1D3461">' +
+      wrapped.slice(0, 5).map((line, i) =>
+        '<tspan x="' + (x + 4) + '" dy="' + (i === 0 ? (y + fs) : lh) + '">' + esc2(line) + '</tspan>'
+      ).join('') + '</text>';
   });
 }
 
