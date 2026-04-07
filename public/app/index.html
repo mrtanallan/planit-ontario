@@ -5642,7 +5642,7 @@ function dlPPTX(){
     + '<button id="fsb" onclick="fs()">&#x26F6; Full</button>'
     + '<button id="pptxbtn" onclick="dlPPTX()">&#11015; PPTX</button>'
     + '</div>'
-    + '<script id="_js" type="application/json">' + JSON.stringify({d:deckJson,j:JS}) + '<\/script>'
+    + '<script id="_js" type="application/json">' + JSON.stringify({d:deckJson,j:JS.replace('${total}',String(total))}) + '<\/script>'
     + '<script>(function(){var p=JSON.parse(document.getElementById("_js").textContent);document.getElementById("deck").innerHTML=JSON.parse(p.d);var s=document.createElement("script");s.textContent=p.j;document.head.appendChild(s);})();<\/script>'
     + '</body></html>'
   const b=new Blob([html],{type:'text/html'});
