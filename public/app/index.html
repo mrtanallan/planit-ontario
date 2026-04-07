@@ -5645,7 +5645,7 @@ function dlPPTX(){
     + '<script>'
     + 'var _d=' + deckJson + ';'
     + 'document.getElementById("deck").innerHTML=_d;'
-    + JS
+    + JS.split('<\/script>').join('<\/scr'+'ipt>')
     + '<\/script>'
     + '</body></html>'
   const b=new Blob([html],{type:'text/html'});
