@@ -5617,50 +5617,7 @@ window.addEventListener('message',function(e){
   } else {
     panel.innerHTML='<p style="font-size:14px;color:#888780;text-align:center;padding:20px">Visual unavailable</p>';
   }
-});
-function dlPPTX(){
-  var btn=document.getElementById('pptxbtn');
-  if(!window.PptxGenJS){
-    if(btn){btn.textContent='Loading...';btn.disabled=true;}
-    var s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
-    s.onload=function(){if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}dlPPTX();};
-    s.onerror=function(){alert('Could not load PPTX library.');if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}};
-    document.head.appendChild(s);return;
-  }
-  if(btn){btn.textContent='Building...';btn.disabled=true;}
-  try{
-    var pptx=new PptxGenJS();
-    pptx.layout='LAYOUT_WIDE';
-    var slides=document.querySelectorAll('.slide');
-    slides.forEach(function(el,i){
-      var s=pptx.addSlide();
-      s.background={color:i===0?'1D3461':'F4F3EF'};
-      var svgs=el.querySelectorAll('svg');
-      if(svgs.length){
-        try{
-          var sr=new XMLSerializer();
-          var ss=sr.serializeToString(svgs[0]);
-          var b64=btoa(unescape(encodeURIComponent(ss)));
-          s.addImage({data:'data:image/svg+xml;base64,'+b64,x:0,y:0,w:'100%',h:'100%'});
-        }catch(e2){}
-      }
-      var tn=el.querySelectorAll('h1,h2,h3,p');
-      var col=[];
-      tn.forEach(function(n){
-        var t=(n.innerText||n.textContent||'').trim();
-        if(t&&t.length>2&&t.length<500&&!col.some(function(c){return c.includes(t.slice(0,20));}))col.push(t);
-      });
-      if(col.length)s.addText(col.slice(0,6).join('\n'),{x:0.3,y:0.3,w:12.7,h:6.8,fontSize:14,color:i===0?'FFFFFF':'1D3461',wrap:true,valign:'top',transparent:true});
-    });
-    pptx.writeFile({fileName:'TeacherAI_Slides.pptx'})
-      .then(function(){if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}})
-      .catch(function(err){alert('Download failed: '+err.message);if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}});
-  }catch(err){
-    alert('PPTX error: '+err.message);
-    if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}
-  }
-}`;
+});`;
 
   const html=`<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -5673,7 +5630,6 @@ function dlPPTX(){
   <span id="snum">1/${total}</span>
   <button onclick="go(1)">&#8250;</button>
   <button id="fsb" onclick="fs()">&#x26F6; Full</button>
-  <button id="pptxbtn" onclick="dlPPTX()" style="background:#3BBFAD;color:white;border:none;border-radius:8px;padding:.3rem .85rem;font-size:.7rem;font-family:monospace;cursor:pointer;">&#11015; PPTX</button>
 </div>
 <script>${JS}<\/script>
 </body></html>`;
