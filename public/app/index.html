@@ -5724,7 +5724,9 @@ async function downloadSlidesPPTX() {
         sd: window._slideData.sd,
         topic: window._slideData.topic,
         subject: window._slideData.subject,
-        gradeStr: window._slideData.gradeStr
+        gradeStr: window._slideData.gradeStr,
+        mindsonImg: window._slideData.mindsonImg || null,
+        slideImgs: window._slideData.slideImgs || []
       })
     });
     if (!res.ok) throw new Error('Server error: ' + res.status);
