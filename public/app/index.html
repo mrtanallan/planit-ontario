@@ -5617,7 +5617,60 @@ window.addEventListener('message',function(e){
   } else {
     panel.innerHTML='<p style="font-size:14px;color:#888780;text-align:center;padding:20px">Visual unavailable</p>';
   }
-});`;
+});
+function dlPPTX(){
+  var btn=document.getElementById('pptxbtn');
+  if(!window.PptxGenJS){
+    if(btn)btn.textContent='Loading...';
+    setTimeout(dlPPTX,1500);
+    return;
+  }
+  if(btn){btn.textContent='Building...';btn.disabled=true;}
+  try{
+    var pptx=new PptxGenJS();
+    pptx.layout='LAYOUT_WIDE';
+    var slides=document.querySelectorAll('.slide');
+    slides.forEach(function(el,i){
+      var s=pptx.addSlide();
+      s.background={color:i===0?'1D3461':'F4F3EF'};
+      var svgs=el.querySelectorAll('svg');
+      if(svgs.length){
+        try{
+          var sr=new XMLSerializer();
+          var ss=sr.serializeToString(svgs[0]);
+          var b64=btoa(unescape(encodeURIComponent(ss)));
+          s.addImage({data:'data:image/svg+xml;base64,'+b64,x:0,y:0,w:'100%',h:'100%'});
+        }catch(e2){console.warn('SVG err',e2);}
+      }
+      var imgs=el.querySelectorAll('img');
+      imgs.forEach(function(img){
+        if(img.src&&img.naturalWidth>0){
+          try{
+            var c=document.createElement('canvas');
+            c.width=img.naturalWidth;c.height=img.naturalHeight;
+            var ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+            var d=c.toDataURL('image/jpeg',0.85);
+            var iw=6.5,ih=iw*(img.naturalHeight/img.naturalWidth);
+            s.addImage({data:d,x:6.6,y:0.9,w:iw,h:Math.min(ih,5.5)});
+          }catch(e3){}
+        }
+      });
+      var tn=el.querySelectorAll('h1,h2,h3,p');
+      var col=[];
+      tn.forEach(function(n){
+        var t=(n.innerText||n.textContent||'').trim();
+        if(t&&t.length>2&&t.length<400&&!col.some(function(c2){return c2.slice(0,15)===t.slice(0,15);}))col.push(t);
+      });
+      if(col.length)s.addText(col.slice(0,8).join('\n'),{x:0.3,y:0.3,w:12.7,h:6.8,fontSize:13,color:i===0?'FFFFFF':'1D3461',wrap:true,valign:'top',transparent:true});
+    });
+    pptx.writeFile({fileName:'TeacherAI_Slides.pptx'})
+      .then(function(){if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}})
+      .catch(function(err){alert('Download failed: '+err.message);if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}});
+  }catch(err){
+    alert('PPTX error: '+err.message);
+    if(btn){btn.textContent='\u2B07 PPTX';btn.disabled=false;}
+  }
+}`;
 
   const html=`<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -5630,8 +5683,10 @@ window.addEventListener('message',function(e){
   <span id="snum">1/${total}</span>
   <button onclick="go(1)">&#8250;</button>
   <button id="fsb" onclick="fs()">&#x26F6; Full</button>
+  <button id="pptxbtn" onclick="dlPPTX()" style="background:#3BBFAD;color:white;border:none;border-radius:8px;padding:.3rem .85rem;font-size:.7rem;font-family:monospace;cursor:pointer;margin-left:4px;">&#11015; PPTX</button>
 </div>
 <script>${JS}<\/script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js" defer><\/script>
 </body></html>`;
 
   const b=new Blob([html],{type:'text/html'});
