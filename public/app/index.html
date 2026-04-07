@@ -5651,48 +5651,41 @@ window.addEventListener('message',function(e){
 // Convert <foreignObject> blocks to native SVG <text> so canvg can render them
 // Preserves position and wraps text within the foreignObject width using tspan
 function stripForeignObject(svgStr) {
+  let clipId = 0;
   return svgStr.replace(/<foreignObject([^>]*)>([\s\S]*?)<\/foreignObject>/gi, function(match, attrs, inner) {
-    const xm = attrs.match(/\bx=["\'\s]*([-\d.]+)/);
-    const ym = attrs.match(/\by=["\'\s]*([-\d.]+)/);
-    const wm = attrs.match(/\bwidth=["\'\s]*([-\d.]+)/);
+    const xm = attrs.match(/\bx=["']([\d.]+)["']/);
+    const ym = attrs.match(/\by=["']([\d.]+)["']/);
+    const wm = attrs.match(/\bwidth=["']([\d.]+)["']/);
+    const hm = attrs.match(/\bheight=["']([\d.]+)["']/);
     const x = xm ? parseFloat(xm[1]) : 0;
     const y = ym ? parseFloat(ym[1]) : 0;
-    const maxW = wm ? parseFloat(wm[1]) : 160;
-    // Extract text segments
-    const segs = [];
-    const re = /<(?:div|p|span|tspan)[^>]*>([^<]*)<\/(?:div|p|span|tspan)>/gi;
-    let m2;
-    while ((m2 = re.exec(inner)) !== null) {
-      const t = m2[1].trim();
-      if (t) segs.push(t);
+    const w = wm ? parseFloat(wm[1]) : 200;
+    const h = hm ? parseFloat(hm[1]) : 100;
+    // Extract text lines from HTML elements
+    const lines = [];
+    const divRe = /<(?:div|p|span)[^>]*>([^<]+)<\/(?:div|p|span)>/gi;
+    let dm;
+    while ((dm = divRe.exec(inner)) !== null) {
+      const t = dm[1].trim();
+      if (t) lines.push(t);
     }
-    if (!segs.length) {
+    if (!lines.length) {
       const t = inner.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (t) segs.push(t);
+      if (t) lines.push(t);
     }
-    if (!segs.length) return '';
-    const fs = 13, lh = fs * 1.5;
-    // Word-wrap each segment to fit maxW (approx 7px per char at font-size 13)
-    const charsPerLine = Math.max(10, Math.floor(maxW / 7));
-    const wrapped = [];
-    segs.forEach(seg => {
-      const words = seg.split(' ');
-      let cur = '';
-      words.forEach(w => {
-        if ((cur + ' ' + w).trim().length > charsPerLine && cur) {
-          wrapped.push(cur.trim());
-          cur = w;
-        } else {
-          cur = cur ? cur + ' ' + w : w;
-        }
-      });
-      if (cur) wrapped.push(cur.trim());
-    });
-    const esc2 = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    return '<text font-size="' + fs + '" font-family="Arial,sans-serif" fill="#1D3461">' +
-      wrapped.slice(0, 5).map((line, i) =>
-        '<tspan x="' + (x + 4) + '" dy="' + (i === 0 ? (y + fs) : lh) + '">' + esc2(line) + '</tspan>'
-      ).join('') + '</text>';
+    if (!lines.length) return '';
+    // Use a clipPath so text stays inside the box bounds
+    const cid = 'fo_clip_' + (clipId++);
+    const fs = Math.min(13, Math.floor(h / Math.max(lines.length, 1) / 1.4));
+    const lh = fs * 1.4;
+    const textEls = lines.slice(0, Math.floor(h / lh)).map((line, i) => {
+      // Truncate line to fit width (approx 6px per char at font-size 13)
+      const maxChars = Math.floor(w / (fs * 0.6));
+      const truncated = line.length > maxChars ? line.slice(0, maxChars - 1) + '…' : line;
+      return '<text x="' + (x + 4) + '" y="' + (y + fs + i * lh) + '" font-size="' + fs + '" font-family="Arial,sans-serif" fill="#1D3461" clip-path="url(#' + cid + ')">' +
+        truncated.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</text>';
+    }).join('');
+    return '<clipPath id="' + cid + '"><rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '"/></clipPath>' + textEls;
   });
 }
 
@@ -5857,10 +5850,11 @@ async function downloadSlidesPPTX() {
     }
 
     // ── Content slides (with SVG diagrams via canvg + AI images) ──
-    const DIAGRAM_TYPES = new Set(['concept_card','word_web','anchor_chart','story_map','reading_strategy',
-      'sentence_frames','writing_process','comparison_table','venn_diagram','cycle_diagram',
-      'food_chain','science_diagram','fraction_bar','fraction_circle','number_line','bar_graph',
-      'line_graph','pie_chart','t_table','place_value','worked_steps','balance_scale']);
+    const CANVG_SAFE = new Set(['fraction_bar','fraction_circle','fraction_compare',
+      'fraction_circle_compare','area_grid','number_line','bar_graph','line_graph',
+      'pie_chart','percent_bar','integer_line','place_value','ten_frame','counting_dots',
+      'array','measurement_bar','angle_types','pattern_row','isometric_box',
+      'triangle_area','parallelogram_area','probability_scale','money_display','perimeter_shape']);
 
     const csArr = (sd.content_slides || []).slice(0, 6);
     for (let i = 0; i < csArr.length; i++) {
@@ -5870,24 +5864,52 @@ async function downloadSlidesPPTX() {
       s.background = { color: GREY };
       addAccents(s);
       addHeader(s, cs.title || 'Key Concept');
-      s.addShape(pptx.shapes.RECTANGLE, { x: 0.5, y: HEADER_H + 0.3, w: 0.07, h: 4.5, fill: { color: TEAL } });
-      s.addShape(pptx.shapes.RECTANGLE, { x: 0.7, y: HEADER_H + 0.3, w: 5.8, h: 2.6, fill: { color: WHITE }, shadow: mkShadow() });
-      s.addText(String(cs.key_point || ''), { x: 0.9, y: HEADER_H + 0.3, w: 5.4, h: 2.6, fontSize: 17, color: NAVY, fontFace: 'Arial', wrap: true, valign: 'middle' });
-      if (cs.example) s.addText('Example: ' + String(cs.example), { x: 0.9, y: HEADER_H + 3.1, w: 5.6, h: 1.1, fontSize: 13, color: '5F5E5A', fontFace: 'Arial', wrap: true, italic: true });
 
-      // Right panel: SVG diagram if available, else AI image, else placeholder
-      let rightImg = null;
-      if (cs.svg_html) {
-        rightImg = await svgToPng(cs.svg_html, 744, 495);
+      const hasSvg = !!cs.svg_html;
+      // Left panel: wider when no SVG (full width), narrower when SVG present
+      const leftW = hasSvg ? 5.6 : W - 1;
+      const rightX = 6.0, rightW = W - rightX - 0.2;
+
+      // Left accent bar
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0.4, y: HEADER_H + 0.3, w: 0.06, h: H - HEADER_H - 0.6, fill: { color: TEAL } });
+
+      // Key point box — taller when no SVG
+      const kpH = hasSvg ? 2.8 : 4.0;
+      s.addShape(pptx.shapes.RECTANGLE, { x: 0.6, y: HEADER_H + 0.3, w: leftW, h: kpH, fill: { color: WHITE }, shadow: mkShadow() });
+      s.addText(String(cs.key_point || ''), { x: 0.8, y: HEADER_H + 0.3, w: leftW - 0.4, h: kpH, fontSize: 18, color: NAVY, fontFace: 'Arial', wrap: true, valign: 'middle' });
+
+      // Example below key point
+      if (cs.example) {
+        const exY = HEADER_H + 0.3 + kpH + 0.2;
+        s.addText('Example: ' + String(cs.example), { x: 0.8, y: exY, w: leftW, h: H - exY - 0.3, fontSize: 13, color: '5F5E5A', fontFace: 'Arial', wrap: true, italic: true });
       }
-      if (!rightImg && !DIAGRAM_TYPES.has(cs.visual_type)) {
-        rightImg = await urlToPng((slideImgs || [])[i]);
-      }
-      if (rightImg) {
-        s.addImage({ data: rightImg, x: 6.8, y: HEADER_H + 0.3, w: 6.1, h: 5.5, sizing: { type: 'cover', w: 6.1, h: 5.5 } });
-      } else {
-        s.addShape(pptx.shapes.RECTANGLE, { x: 6.8, y: HEADER_H + 0.3, w: 6.1, h: 5.5, fill: { color: 'E8E7E3' } });
-        s.addText('[ Visual ]', { x: 6.8, y: HEADER_H + 2.8, w: 6.1, h: 0.5, fontSize: 12, color: 'BBBBBB', fontFace: 'Arial', align: 'center' });
+
+      // Right panel: SVG diagram (canvg-safe types only), else placeholder
+      if (hasSvg) {
+        let rightImg = null;
+        if (CANVG_SAFE.has(cs.visual_type || '')) {
+          rightImg = await svgToPng(cs.svg_html, 900, 600);
+        }
+        if (rightImg) {
+          s.addImage({ data: rightImg, x: rightX, y: HEADER_H + 0.2, w: rightW, h: H - HEADER_H - 0.4,
+            sizing: { type: 'contain', w: rightW, h: H - HEADER_H - 0.4 } });
+        } else {
+          // Complex SVG (word_web, concept_card etc.) — render at larger size as PNG
+          // Use a white panel with the visual type label so teachers know what's there
+          s.addShape(pptx.shapes.RECTANGLE, { x: rightX, y: HEADER_H + 0.2, w: rightW, h: H - HEADER_H - 0.4, fill: { color: WHITE }, shadow: mkShadow() });
+          s.addText('📊 ' + (cs.visual_type || 'Diagram').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), {
+            x: rightX, y: HEADER_H + 0.2, w: rightW, h: 0.5,
+            fontSize: 11, color: TEAL, fontFace: 'Arial', bold: true, align: 'center', margin: 0
+          });
+          // Render the SVG to canvas at higher resolution for complex types
+          const complexImg = await svgToPng(cs.svg_html, 1000, 650);
+          if (complexImg) {
+            s.addImage({ data: complexImg, x: rightX + 0.1, y: HEADER_H + 0.8, w: rightW - 0.2, h: H - HEADER_H - 1.2,
+              sizing: { type: 'contain', w: rightW - 0.2, h: H - HEADER_H - 1.2 } });
+          } else {
+            s.addText('See diagram in lesson', { x: rightX, y: (H / 2) - 0.2, w: rightW, h: 0.4, fontSize: 12, color: 'BBBBBB', fontFace: 'Arial', align: 'center' });
+          }
+        }
       }
     }
 
