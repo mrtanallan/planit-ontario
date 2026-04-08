@@ -1,1 +1,1276 @@
-[{"code":"A1.1","strand":"A","overall":"Literacy Connections","desc":"Make connections between texts and personal experiences, other texts, and the world","band":"1-3"},{"code":"A1.1","strand":"A","overall":"Literacy Connections","desc":"Analyse and evaluate connections between texts, personal experiences, and broader contexts","band":"4-6"},{"code":"A1.1","strand":"A","overall":"Literacy Connections","desc":"Synthesise and critically evaluate connections between texts, personal experiences, and societal issues","band":"7-8"},{"code":"A1.2","strand":"A","overall":"Literacy Connections","desc":"Identify ways in which literacy skills are used in daily life and across subjects","band":"1-3"},{"code":"A1.2","strand":"A","overall":"Literacy Connections","desc":"Explain how literacy skills support learning and communication in various contexts","band":"4-6"},{"code":"A1.2","strand":"A","overall":"Literacy Connections","desc":"Analyse how literacy skills are applied and transferred across disciplines and contexts","band":"7-8"},{"code":"A1.3","strand":"A","overall":"Literacy Connections","desc":"Identify and describe Indigenous ways of knowing and communicating in texts","band":"1-3"},{"code":"A1.3","strand":"A","overall":"Literacy Connections","desc":"Explain how Indigenous perspectives and ways of knowing are reflected in texts","band":"4-6"},{"code":"A1.3","strand":"A","overall":"Literacy Connections","desc":"Critically analyse how Indigenous knowledge and perspectives are represented and honoured in texts","band":"7-8"},{"code":"B1.1","strand":"B","overall":"Oral Communication","desc":"Listen actively and respond with relevant questions or comments","band":"1-3"},{"code":"B1.1","strand":"B","overall":"Oral Communication","desc":"Listen to understand, and demonstrate understanding through questions and responses","band":"4-6"},{"code":"B1.1","strand":"B","overall":"Oral Communication","desc":"Listen critically to evaluate ideas and information and respond thoughtfully","band":"7-8"},{"code":"B1.2","strand":"B","overall":"Oral Communication","desc":"Use speaking skills to communicate ideas clearly in familiar contexts","band":"1-3"},{"code":"B1.2","strand":"B","overall":"Oral Communication","desc":"Use speaking skills effectively to communicate with a variety of audiences","band":"4-6"},{"code":"B1.2","strand":"B","overall":"Oral Communication","desc":"Use sophisticated oral communication strategies to persuade, inform, and engage audiences","band":"7-8"},{"code":"B2.1","strand":"B","overall":"Word Study","desc":"Identify and use high-frequency words, sight words, and phonics patterns","band":"1-3"},{"code":"B2.1","strand":"B","overall":"Word Study","desc":"Apply knowledge of roots, prefixes, suffixes, and word families to determine word meaning","band":"4-6"},{"code":"B2.1","strand":"B","overall":"Word Study","desc":"Analyse morphology, etymology, and context to determine the meaning of unfamiliar words","band":"7-8"},{"code":"B2.2","strand":"B","overall":"Word Study","desc":"Use vocabulary from texts and classroom discussions in speaking and writing","band":"1-3"},{"code":"B2.2","strand":"B","overall":"Word Study","desc":"Expand vocabulary by selecting and using precise words appropriate to purpose and audience","band":"4-6"},{"code":"B2.2","strand":"B","overall":"Word Study","desc":"Use nuanced, precise, and sophisticated vocabulary appropriate to context and purpose","band":"7-8"},{"code":"B3.1","strand":"B","overall":"Language Conventions","desc":"Identify and use correct sentence structure including subjects, verbs, and punctuation","band":"1-3"},{"code":"B3.1","strand":"B","overall":"Language Conventions","desc":"Apply grammar conventions including sentence variety, verb tense, and punctuation","band":"4-6"},{"code":"B3.1","strand":"B","overall":"Language Conventions","desc":"Apply grammar conventions with precision and style to enhance written and oral communication","band":"7-8"},{"code":"B3.2","strand":"B","overall":"Language Conventions","desc":"Identify and use basic grammar conventions in writing with support","band":"1-3"},{"code":"B3.2","strand":"B","overall":"Language Conventions","desc":"Apply a range of grammar conventions to improve clarity and effectiveness in writing","band":"4-6"},{"code":"B3.2","strand":"B","overall":"Language Conventions","desc":"Apply grammar conventions with sophistication to enhance writing style","band":"7-8"},{"code":"B3.3","strand":"B","overall":"Language Conventions","desc":"Identify and use basic spelling conventions and strategies","band":"1-3"},{"code":"B3.3","strand":"B","overall":"Language Conventions","desc":"Apply a range of spelling strategies and conventions","band":"4-6"},{"code":"B3.3","strand":"B","overall":"Language Conventions","desc":"Apply spelling strategies and edit writing for conventions","band":"7-8"},{"code":"C1.1","strand":"C","overall":"Knowledge About Texts","desc":"Identify and describe features and structures of familiar text forms","band":"1-3"},{"code":"C1.1","strand":"C","overall":"Knowledge About Texts","desc":"Identify and describe features, structures, and patterns of a variety of text forms","band":"4-6"},{"code":"C1.1","strand":"C","overall":"Knowledge About Texts","desc":"Analyse and evaluate features, structures, and patterns in a variety of text forms","band":"7-8"},{"code":"C1.2","strand":"C","overall":"Knowledge About Texts","desc":"Identify the purpose and audience of simple texts","band":"1-3"},{"code":"C1.2","strand":"C","overall":"Knowledge About Texts","desc":"Explain how text features and forms support the author's purpose","band":"4-6"},{"code":"C1.2","strand":"C","overall":"Knowledge About Texts","desc":"Analyse how authors use text features and forms to achieve purpose and effect","band":"7-8"},{"code":"C2.1","strand":"C","overall":"Reading Comprehension","desc":"Use comprehension strategies before, during, and after reading","band":"1-3"},{"code":"C2.1","strand":"C","overall":"Reading Comprehension","desc":"Use a variety of comprehension strategies to understand increasingly complex texts","band":"4-6"},{"code":"C2.1","strand":"C","overall":"Reading Comprehension","desc":"Select and apply comprehension strategies to interpret and analyse complex texts","band":"7-8"},{"code":"C2.2","strand":"C","overall":"Reading Comprehension","desc":"Identify the main idea and supporting details in simple texts","band":"1-3"},{"code":"C2.2","strand":"C","overall":"Reading Comprehension","desc":"Identify main idea, supporting details, and key information in a variety of texts","band":"4-6"},{"code":"C2.2","strand":"C","overall":"Reading Comprehension","desc":"Analyse main idea, supporting details, and implicit meaning across a variety of texts","band":"7-8"},{"code":"C2.3","strand":"C","overall":"Reading Comprehension","desc":"Make personal connections and simple inferences while reading","band":"1-3"},{"code":"C2.3","strand":"C","overall":"Reading Comprehension","desc":"Make inferences, connections, and interpretations while reading","band":"4-6"},{"code":"C2.3","strand":"C","overall":"Reading Comprehension","desc":"Make and justify complex inferences and interpretations using textual evidence","band":"7-8"},{"code":"C2.4","strand":"C","overall":"Reading Comprehension","desc":"Identify the sequence of events and cause-and-effect relationships in texts","band":"1-3"},{"code":"C2.4","strand":"C","overall":"Reading Comprehension","desc":"Analyse sequence, cause and effect, and relationships between ideas in texts","band":"4-6"},{"code":"C2.4","strand":"C","overall":"Reading Comprehension","desc":"Evaluate the logic, sequence, and relationships between ideas in complex texts","band":"7-8"},{"code":"C2.5","strand":"C","overall":"Reading Comprehension","desc":"Identify the vocabulary and language used by authors in texts","band":"1-3"},{"code":"C2.5","strand":"C","overall":"Reading Comprehension","desc":"Analyse vocabulary, figurative language, and author's craft in texts","band":"4-6"},{"code":"C2.5","strand":"C","overall":"Reading Comprehension","desc":"Critically analyse vocabulary choices, figurative language, and author's style","band":"7-8"},{"code":"C3.1","strand":"C","overall":"Critical Thinking","desc":"Identify the author's point of view in simple texts","band":"1-3"},{"code":"C3.1","strand":"C","overall":"Critical Thinking","desc":"Identify and explain the author's perspective and purpose in a variety of texts","band":"4-6"},{"code":"C3.1","strand":"C","overall":"Critical Thinking","desc":"Analyse and evaluate the author's perspective, purpose, and bias in complex texts","band":"7-8"},{"code":"C3.2","strand":"C","overall":"Critical Thinking","desc":"Identify information in texts and begin to question its accuracy","band":"1-3"},{"code":"C3.2","strand":"C","overall":"Critical Thinking","desc":"Evaluate the credibility and accuracy of information in texts","band":"4-6"},{"code":"C3.2","strand":"C","overall":"Critical Thinking","desc":"Critically evaluate the credibility, accuracy, and bias of information across texts","band":"7-8"},{"code":"C3.3","strand":"C","overall":"Critical Thinking","desc":"Share personal responses and reactions to texts read","band":"1-3"},{"code":"C3.3","strand":"C","overall":"Critical Thinking","desc":"Analyse how social and cultural contexts influence texts and responses","band":"4-6"},{"code":"C3.3","strand":"C","overall":"Critical Thinking","desc":"Evaluate how identity, culture, and power influence texts and reader response","band":"7-8"},{"code":"D1.1","strand":"D","overall":"Writing Process","desc":"Use the writing process (plan, draft, revise, edit, publish) with guidance","band":"1-3"},{"code":"D1.1","strand":"D","overall":"Writing Process","desc":"Apply the writing process independently to produce a variety of texts","band":"4-6"},{"code":"D1.1","strand":"D","overall":"Writing Process","desc":"Apply the writing process with increasing independence and sophistication","band":"7-8"},{"code":"D1.2","strand":"D","overall":"Writing Process","desc":"Generate and organise ideas for writing using simple strategies","band":"1-3"},{"code":"D1.2","strand":"D","overall":"Writing Process","desc":"Generate, select, and organise ideas for writing using a variety of strategies","band":"4-6"},{"code":"D1.2","strand":"D","overall":"Writing Process","desc":"Generate, analyse, and refine ideas using sophisticated planning strategies","band":"7-8"},{"code":"D1.3","strand":"D","overall":"Writing Process","desc":"Revise writing to improve clarity and add details with support","band":"1-3"},{"code":"D1.3","strand":"D","overall":"Writing Process","desc":"Revise and edit writing to improve content, organisation, style, and conventions","band":"4-6"},{"code":"D1.3","strand":"D","overall":"Writing Process","desc":"Revise and edit writing independently to strengthen voice, style, and precision","band":"7-8"},{"code":"D2.1","strand":"D","overall":"Writing Forms","desc":"Write a variety of simple text forms for different purposes and audiences","band":"1-3"},{"code":"D2.1","strand":"D","overall":"Writing Forms","desc":"Write a variety of text forms for different purposes and audiences","band":"4-6"},{"code":"D2.1","strand":"D","overall":"Writing Forms","desc":"Write sophisticated texts in a variety of forms for specific purposes and audiences","band":"7-8"},{"code":"D2.2","strand":"D","overall":"Writing Forms","desc":"Use basic text features and structures in writing","band":"1-3"},{"code":"D2.2","strand":"D","overall":"Writing Forms","desc":"Use appropriate text features, structures, and organisational patterns in writing","band":"4-6"},{"code":"D2.2","strand":"D","overall":"Writing Forms","desc":"Strategically apply text features, structures, and patterns to achieve effect","band":"7-8"},{"code":"D2.3","strand":"D","overall":"Writing Craft","desc":"Use descriptive words and simple sentences to develop ideas in writing","band":"1-3"},{"code":"D2.3","strand":"D","overall":"Writing Craft","desc":"Use descriptive language, voice, and variety in sentence structure","band":"4-6"},{"code":"D2.3","strand":"D","overall":"Writing Craft","desc":"Craft writing with precise language, distinctive voice, and varied style","band":"7-8"},{"code":"D2.4","strand":"D","overall":"Writing Craft","desc":"Use paragraphs to organise writing with support","band":"1-3"},{"code":"D2.4","strand":"D","overall":"Writing Craft","desc":"Organise writing into well-structured paragraphs with clear focus","band":"4-6"},{"code":"D2.4","strand":"D","overall":"Writing Craft","desc":"Construct cohesive multi-paragraph texts with sophisticated organisation","band":"7-8"},{"code":"D3.1","strand":"D","overall":"Publishing and Presenting","desc":"Share and present writing for a familiar audience with support","band":"1-3"},{"code":"D3.1","strand":"D","overall":"Publishing and Presenting","desc":"Publish and present writing in appropriate forms for intended audiences","band":"4-6"},{"code":"D3.1","strand":"D","overall":"Publishing and Presenting","desc":"Publish and present polished writing for a variety of audiences and purposes","band":"7-8"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 50, using a variety of tools and strategies","band":"1"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 200, using a variety of tools and strategies","band":"2"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 1000, using a variety of tools and strategies","band":"3"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 10 000, using a variety of tools and strategies","band":"4"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 100 000, using a variety of tools and strategies","band":"5"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 1 000 000, using a variety of tools and strategies","band":"6"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"represent and compare whole numbers up to and including one billion, including in expanded form using powers of ten","band":"7"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"represent and compare very large and very small numbers, including through the use of scientific notation","band":"8"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"compare and order whole numbers up to 50, and represent the relationships using appropriate symbols","band":"1"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"compare and order whole numbers up to 200, and represent the relationships using appropriate symbols","band":"2"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"compare and order whole numbers up to 1000, and represent the relationships using appropriate symbols","band":"3"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"compare and order fractions by considering the size and the number of fractional parts","band":"4"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order decimal numbers up to thousandths, in various contexts","band":"5"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order rational numbers, including positive and negative fractions and decimal numbers to thousandths","band":"6"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"identify and represent perfect squares and their square roots, and estimate the square roots of non-perfect squares","band":"7"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"represent numbers in a variety of ways, and apply these representations to describe part-whole relationships","band":"8"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"identify and represent fractions equal to and greater than 1, and describe situations where fractions are used","band":"1"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"identify and represent fractions, using a variety of tools and drawing connections between representations","band":"2"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order fractions, including fractions greater than 1, using a variety of tools and strategies","band":"3"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order decimal tenths, in various contexts","band":"4"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order integers, in various contexts","band":"5"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"describe relationships and show equivalences among fractions, decimals and percents","band":"6"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order rational numbers, including positive and negative fractions and decimal numbers","band":"7"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"apply an understanding of integers to explain the effects that different operations have on the magnitude of numbers","band":"8"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"use objects, diagrams, and equations to represent, describe, and solve situations involving addition and subtraction of whole numbers","band":"1"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"recall and demonstrate addition facts for numbers up to 20, and related subtraction facts","band":"2"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"use knowledge of place value and addition and subtraction relationships to solve problems involving whole numbers","band":"3"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order decimal hundredths, in various contexts","band":"4"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"use equivalent fractions to simplify fractions, when appropriate, in various contexts","band":"5"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"apply the properties of operations, and the relationships between operations, to solve problems involving whole numbers and decimal numbers","band":"6"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"use rates and ratios to describe and compare two quantities, and solve related problems","band":"7"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"use proportional reasoning to solve problems involving percents","band":"8"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"use the properties of addition and subtraction, and the relationship between addition and subtraction, to solve problems and check calculations","band":"1"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"recall and demonstrate multiplication facts for 2, 5, and 10, and related division facts","band":"2"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"recall and demonstrate multiplication facts up to 10 \u00d7 10, and related division facts","band":"3"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"use mental math strategies to multiply whole numbers by 0.1 and 0.01, and explain the strategies used","band":"4"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"solve problems involving the addition, subtraction, multiplication, and division of whole numbers, using a variety of strategies","band":"5"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"use mental math strategies to add and subtract integers, explain the strategies used, and solve related mathematical problems","band":"6"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"solve problems involving the addition, subtraction, multiplication, and division of integers","band":"7"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"solve problems involving the multiplication and division of fractions","band":"8"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"recall and demonstrate addition facts for numbers up to 10, and related subtraction facts","band":"1"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"add and subtract whole numbers up to 200, using a variety of tools and strategies","band":"2"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"add and subtract three-digit whole numbers, using various tools and strategies","band":"3"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"add and subtract fractions with like denominators, in various contexts","band":"4"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"add and subtract fractions, including fractions greater than 1, using appropriate tools in various contexts","band":"5"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"add and subtract fractions with like and unlike denominators, using a variety of tools and algorithms","band":"6"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"solve problems involving addition and subtraction of fractions and mixed numbers","band":"7"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"solve problems involving the multiplication and division of whole numbers and decimal numbers","band":"8"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"use objects, diagrams, and equations to represent, describe, and solve situations involving multiplication and division","band":"1"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"represent and solve problems involving multiplication and division, including problems that involve groups of one half","band":"2"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"multiply and divide two-digit whole numbers by one-digit whole numbers, using a variety of tools and strategies","band":"3"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"multiply three-digit whole numbers by one-digit whole numbers, using various tools and strategies","band":"4"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"multiply and divide decimals up to thousandths by powers of 10, in various contexts","band":"5"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"solve problems involving the multiplication and division of decimal numbers","band":"6"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"solve problems involving the multiplication and division of fractions and mixed numbers","band":"7"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"evaluate and express algebraic expressions with integers","band":"8"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"add and subtract single-digit whole numbers, using a variety of strategies","band":"1"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"add and subtract multi-digit numbers in various contexts, using mental math strategies","band":"2"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"represent and solve problems involving the multiplication of two- or three-digit whole numbers by one-digit whole numbers","band":"3"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"represent and solve problems involving the division of multi-digit whole numbers by one-digit whole numbers","band":"4"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"add and subtract integers, using appropriate tools and strategies, in various contexts","band":"5"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"represent and solve problems involving the addition and subtraction of fractions and mixed numbers with unlike denominators","band":"6"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"solve multi-step problems involving whole numbers, fractions, and decimal numbers","band":"7"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"solve problems involving ratios, rates, and proportional reasoning","band":"8"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe repeating patterns in various contexts","band":"1"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe repeating and growing patterns in various contexts","band":"2"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe various patterns in a multiplication table","band":"3"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe repeating, growing, and shrinking patterns, including patterns found in real-life contexts","band":"4"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe patterns, including those in tables and graphs","band":"5"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe the recursive pattern in a growing pattern","band":"6"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and compare a variety of representations of linear and non-linear relations","band":"7"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and compare properties of linear and non-linear relations","band":"8"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"create and translate repeating patterns using various representations","band":"1"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"create and translate patterns using tables of values, graphs, and equations","band":"2"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"extend and create repeating and growing patterns","band":"3"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"create and describe patterns to illustrate relationships among whole numbers","band":"4"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"create tables of values, and graphs, to represent a linear growing pattern","band":"5"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"represent and describe linear patterns using tables of values and equations","band":"6"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"create a table of values for a relation, and determine and justify whether the relation is linear or non-linear","band":"7"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"graph linear and non-linear relations from tables of values and equations","band":"8"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"determine whether given pairs of addition and subtraction expressions are equal or not equal","band":"1"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"determine whether given pairs of multiplication and division expressions are equal or not equal","band":"2"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"describe how variables are used, and use them in equations and expressions","band":"3"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"solve equations that involve whole numbers up to 100 in various contexts","band":"4"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"solve equations that involve multiple terms and whole numbers","band":"5"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"solve equations that involve multiple terms, whole numbers, and decimal numbers in various contexts","band":"6"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"solve equations with two variables and verify solutions","band":"7"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"solve and verify linear equations involving one variable with integer coefficients","band":"8"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"determine what needs to be added to or subtracted from addition and subtraction expressions to make them equivalent","band":"1"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"identify missing values in equations involving addition and subtraction","band":"2"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve equations and inequalities that involve whole numbers up to 50, and verify solutions","band":"3"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve inequalities that involve whole numbers up to 100 and determine possible solutions","band":"4"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve inequalities that involve multiple terms and whole numbers, and verify and graph the solution","band":"5"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve inequalities that involve multiple terms and whole numbers and decimal numbers, and verify and graph the solution","band":"6"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve and verify inequalities with one variable","band":"7"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve problems by applying the relationships between operations","band":"8"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"1"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"2"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"3"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"4"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"5"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"6"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"7"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"8"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"sort sets of data about people or things according to two and three attributes","band":"1"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"collect data through observations, experiments, and interviews to answer questions of interest that focus on a quality","band":"2"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"collect data through observations, experiments, and interviews to answer questions of interest that focus on a quality","band":"3"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"explain why collecting data through different methods may lead to different conclusions","band":"4"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"explain why a survey question may or may not be an effective tool for answering a survey question","band":"5"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"collect qualitative and quantitative data to answer questions of interest about a population, and consider the appropriate type of data for the question","band":"6"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"explain why establishing a representative sample is important for making generalizations about a population","band":"7"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"identify situations involving one-variable data and situations involving two-variable data, and explain when each type of display is appropriate","band":"8"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"collect data through observations, experiments, and interviews to answer questions of interest that focus on a quality","band":"1"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"organize data into categories using tally marks and frequency tables, and display the data using concrete graphs and pictographs","band":"2"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"collect and organize categorical and discrete primary data, and display the data using charts and graphs","band":"3"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"collect data from different primary and secondary sources to answer questions of interest","band":"4"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"select and use the most appropriate graph to represent data","band":"5"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"select and create an appropriate graph to represent data, and justify the choice of graph","band":"6"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"collect data from different primary and secondary sources to answer questions of interest involving two variables","band":"7"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"create a scatter plot to represent two-variable data, and identify and describe any trends","band":"8"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display sets of data using many-to-one correspondence in pictographs and bar graphs","band":"1"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display sets of data using pictographs and bar graphs","band":"2"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display sets of data in many-to-one correspondence using pictographs and bar graphs","band":"3"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display sets of data using stem-and-leaf plots and double bar graphs","band":"4"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display sets of data using broken-line graphs and stacked bar graphs","band":"5"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display continuous data using broken-line graphs and histograms","band":"6"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display continuous data using various graphs, including scatter plots","band":"7"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"determine and describe the correlation between two variables","band":"8"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"read and interpret data presented using concrete graphs and pictographs","band":"1"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"read and interpret data presented in various ways","band":"2"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"read and interpret data presented in various ways","band":"3"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"read and interpret primary and secondary data presented in circle graphs and tables","band":"4"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"determine the mean and identify the median and the mode(s) for a set of data, and explain what each measure indicates","band":"5"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"determine the impact of adding or removing data from a data set on measures of central tendency and the data representations","band":"6"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"determine the mean, median, and mode(s) for a set of data and compare the measures","band":"7"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"use measures of central tendency and measures of spread to compare sets of data","band":"8"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments","band":"1"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data by identifying the mode and describing the shape of a set of data","band":"2"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments","band":"3"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments","band":"4"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments","band":"5"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments, and to identify misleading representations","band":"6"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments and to identify misleading representations","band":"7"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments, and to identify misleading representations","band":"8"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"use mathematical language, including the terms 'impossible', 'unlikely', 'equally likely', 'likely', and 'certain', to describe the likelihood of events","band":"1"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"describe the likelihood that events will happen, and use that information to make predictions","band":"2"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"describe how to help ensure that the results of an experiment are fair","band":"3"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"use fractions to express the probability of events happening","band":"4"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"determine and represent the probability of multiple independent events","band":"5"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"determine and represent the theoretical probability of an event, and explain how to use it to make predictions","band":"6"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"determine the probability of a simple event and express it as a fraction, decimal, or percent","band":"7"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"identify the sample space for probability experiments involving two independent events","band":"8"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"make predictions about the likelihood of events happening, and investigate through experimentation","band":"1"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"run simple experiments to determine the frequency of an outcome, record the results, and make predictions","band":"2"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of an event","band":"3"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of an event","band":"4"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of events","band":"5"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of events","band":"6"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of events","band":"7"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of two independent events","band":"8"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"sort three-dimensional objects and two-dimensional shapes by one attribute and identify the sorting rule used","band":"1"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"sort and identify two-dimensional shapes by comparing number of sides, side lengths, and angles","band":"2"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"sort three-dimensional objects and two-dimensional shapes by their geometric properties","band":"3"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe, compare, and classify quadrilaterals by their geometric properties","band":"4"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe and classify two-dimensional shapes and three-dimensional objects","band":"5"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"create lists of the geometric properties of various types of quadrilaterals","band":"6"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe and classify cylinders, pyramids, and prisms","band":"7"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"identify and describe the type of symmetry that a two-dimensional shape has","band":"8"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"construct and describe two-dimensional shapes and three-dimensional objects that have matching halves","band":"1"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"compose and decompose two-dimensional shapes and three-dimensional objects","band":"2"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"compose and decompose various structures, and identify the two-dimensional shapes and three-dimensional objects within them","band":"3"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"construct three-dimensional objects, and identify two-dimensional shapes contained within structures and objects","band":"4"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"construct and identify prisms and pyramids, and distinguish them from other three-dimensional objects","band":"5"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"construct nets of prisms and pyramids and determine which nets are correct","band":"6"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"draw top, front, and side views of objects, and match views with their corresponding object","band":"7"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"construct three-dimensional objects from nets and identify and describe the shapes of the faces","band":"8"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe the locations and movements of objects in everyday situations","band":"1"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe the relative locations of objects or people, using positional language","band":"2"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe and perform translations and reflections on a grid","band":"3"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe and perform reflections and translations on a grid","band":"4"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe and perform translations, reflections, and rotations on a Cartesian plane","band":"5"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"perform and describe translations, reflections, and rotations on a Cartesian plane","band":"6"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"perform and describe dilatations of two-dimensional shapes on a Cartesian plane","band":"7"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"identify and describe the Pythagorean relationship and use it to solve problems","band":"8"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"use non-standard units of length to compare and order shapes, and to describe the length of objects","band":"1"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"estimate and measure the length of objects using non-standard and standard units","band":"2"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"use metres, centimetres, and millimetres to estimate and measure the length of objects","band":"3"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"use appropriate units of length to estimate and measure the perimeter of polygons","band":"4"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"use the formula for the area of a rectangle to calculate the areas of rectangles and squares","band":"5"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"determine the perimeter and area of various quadrilaterals","band":"6"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"determine the circumference and area of circles, using appropriate formulas","band":"7"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"determine the area of composite figures","band":"8"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"estimate and measure areas and volumes using non-standard units","band":"1"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"estimate and measure the area of shapes using non-standard units","band":"2"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"use centimetres and metres to estimate and measure the perimeter of polygons","band":"3"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"estimate and calculate the area of rectangles and right triangles","band":"4"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"determine the relationships between the volumes of cylinders, pyramids, and cones","band":"5"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"estimate and calculate the volume of rectangular and triangular prisms","band":"6"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"solve problems involving the surface area of prisms","band":"7"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"solve problems involving the volume of cylinders, triangular prisms, and composite figures","band":"8"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"use non-standard units to compare the areas of two-dimensional shapes","band":"1"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"use non-standard units to estimate and measure the volume of three-dimensional objects","band":"2"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"use a variety of non-standard units to estimate and measure mass","band":"3"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"use the relationships between hours and minutes, and between minutes and seconds, to solve problems","band":"4"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"solve problems involving elapsed time, using the relationship between 12-hour and 24-hour clocks","band":"5"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"use the formula for the area of a parallelogram to determine the area of rectangles and parallelograms","band":"6"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"solve problems involving the area of composite two-dimensional shapes","band":"7"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"solve problems involving the surface area and volume of cylinders","band":"8"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"identify different ways of representing the same amount of money up to 200\u00a2 using various combinations of coins","band":"1"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"estimate and calculate the cost of transactions involving whole-dollar amounts and determine the change","band":"2"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"estimate and calculate the cost of transactions involving dollars and cents, and determine the change","band":"3"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"explain the relationship between paying taxes and government services, and describe different ways people can pay for items","band":"4"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"describe some advantages and disadvantages of various methods of payment that can be used when dealing with multiple currencies","band":"5"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"explain various ways to pay for goods and services, including ways in which people can pay for things they want but may not have enough money for","band":"6"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"explain the concepts of income, expenses, and the importance of financial planning","band":"7"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"explain the concept of interest and calculate simple interest","band":"8"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"estimate and calculate the cost of transactions involving whole-dollar amounts, and explain the change given","band":"1"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"read and represent various amounts of money up to $10 using a combination of coins and bills","band":"2"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"explain the relationship between spending and saving, describe simple interest, and solve problems involving simple interest","band":"3"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"explain the difference between simple interest and compound interest","band":"4"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"calculate the unit price of an item and compare unit prices of similar items","band":"5"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"describe and compare a variety of ways in which individuals can manage their finances","band":"6"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"create a simple budget for a fictional event or scenario and justify the budget using mathematical reasoning","band":"7"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"determine and compare the costs of different ways of acquiring goods and services","band":"8"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"describe and compare common ways people get money and things they need","band":"1"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"identify how the value of currency is determined and compare the costs of goods in different countries","band":"2"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"explain the concepts of earning and spending and the importance of making informed financial decisions","band":"3"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"create a financial plan to reach a savings goal for a fictional scenario","band":"4"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"explain the concepts of income, expenses, budgeting, and saving, and describe some ways to make financial decisions","band":"5"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"make and track personal financial goals, and explain potential obstacles to reaching financial goals","band":"6"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"explain the concepts of borrowing money, and the advantages and disadvantages of different ways of borrowing money","band":"7"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"identify and explain various savings and investment strategies","band":"8"}]
+[
+  {
+    "code": "A1.1",
+    "strand": "A",
+    "desc": "identify how transferable skills can be used to support communication in various cultural, social, linguistic, and domain-specific contexts, and apply them when reading, listening to, viewing, and creating texts of various forms",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A1.2",
+    "strand": "A",
+    "desc": "demonstrate an understanding of how transferable skills help them to express their voice and be engaged in their learning",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.1",
+    "strand": "A",
+    "desc": "demonstrate an understanding of their rights and responsibilities when interacting online with appropriate permission, and make decisions that contribute positively to the development of their digital identity and those of their communities",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.2",
+    "strand": "A",
+    "desc": "demonstrate an understanding of how to navigate online environments safely, manage their privacy, and interact in a way that supports their well-being and that of others, including seeking appropriate permission",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.3",
+    "strand": "A",
+    "desc": "gather, evaluate, and use information, considering various perspectives, to construct knowledge and demonstrate learning",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.4",
+    "strand": "A",
+    "desc": "demonstrate an understanding of the forms, conventions, and techniques of digital and media texts, and apply this understanding when analyzing texts",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.5",
+    "strand": "A",
+    "desc": "demonstrate an understanding of the interrelationships between the form, message, and context of a text, the audience, and the creator",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.6",
+    "strand": "A",
+    "desc": "use digital and media tools to support stages of the design process and to develop creative solutions to authentic, real-world problems",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.7",
+    "strand": "A",
+    "desc": "communicate and collaborate with various communities in a safe, respectful, responsible, and inclusive manner when using online platforms and environments, including digital and media tools, and demonstrate cultural awareness with members of the community",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A3.1",
+    "strand": "A",
+    "desc": "apply the knowledge and skills developed in this grade to support learning in various subject areas and identify some ways this learning can be used in everyday life",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A3.2",
+    "strand": "A",
+    "desc": "demonstrate an understanding of the contributions, lived experiences, and perspectives of a diversity of individuals and communities, including those in Canada, by exploring the concepts of identity, self, and sense of belonging in culturally responsive and relevant texts",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A3.3",
+    "strand": "A",
+    "desc": "identify themes explored in First Nations, Métis, and Inuit cultures to demonstrate an understanding of the varied identities, perspectives, relationships, legacies, truths, and ways of knowing, being, and doing",
+    "band": "1-3",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "use effective listening skills, including asking questions to clarify information and ideas, in formal and informal contexts and for various purposes, including in small- and large-group conversations and various classroom activities",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "select and use a variety of listening strategies before, during, and after listening to comprehend information communicated orally and non-verbally, recognize when a message is difficult to understand, and develop an appropriate response",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "identify the purpose and audience for speaking in formal and informal contexts, and use appropriate speaking strategies, including establishing a rapport with the audience, to communicate clearly and coherently",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "identify and use oral and non-verbal communication strategies, including expression, gestures, and body language, and demonstrate an understanding of how these strategies can contribute to the meaning being conveyed",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.5",
+    "strand": "B",
+    "desc": "use appropriate word choice, including new vocabulary, grammar, and cohesive sentences when speaking and communicating ideas in various contexts, to support audience comprehension",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use consolidated phonics knowledge, including phonemic blending to read words and set for variability to correct approximations, and phonemic segmentation to spell phonetically regular monosyllabic and multisyllabic words, in isolation and various text contexts",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "use consolidated orthographic knowledge, including position-based tendencies, to make a spelling choice or accurately pronounce a word when reading",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "use developing knowledge of the meanings of words and morphemes (i.e., bases, prefixes, and suffixes) to read and spell words Vocabulary",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.4",
+    "strand": "B",
+    "desc": "demonstrate an understanding of a variety of words, acquire and use explicitly taught vocabulary in various contexts, including other subject areas, and use morphological knowledge to analyze and understand new words in context",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.5",
+    "strand": "B",
+    "desc": "read words, complex sentences, and paragraphs in a variety of texts fluently, with accuracy and appropriate pacing to support comprehension, and read aloud using varied expression and intonation according to the purpose of reading",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.6",
+    "strand": "B",
+    "desc": "use developing knowledge of the meanings of words and common morphemes (i.e., bases, prefixes, and suffixes) to read and spell words Vocabulary",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.7",
+    "strand": "B",
+    "desc": "demonstrate an understanding of commonly used words, acquire and use explicitly taught vocabulary in various contexts, including other subject areas, and use their developing morphological knowledge to analyze and understand new words in context",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.8",
+    "strand": "B",
+    "desc": "read simple words, short sentences, and paragraphs in a variety of texts fluently, with accuracy and appropriate pacing to support comprehension, and read aloud with expression",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B3.1",
+    "strand": "B",
+    "desc": "identify and construct various sentence types and forms, including simple sentences, compound sentences, and complex sentences containing adverbial clauses Grammar",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B3.2",
+    "strand": "B",
+    "desc": "demonstrate an understanding of the functions of parts of speech in sentences, including possessive nouns, linking verbs and the progressive tense, interrogative adjectives and adverbs, and prepositions and interjections, and use this knowledge to support comprehension and communicate meaning clearly",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B3.3",
+    "strand": "B",
+    "desc": "use their understanding of the meaning and function of capitalization and punctuation to communicate meaning clearly, including the use of capital letters in dialogue and for words in titles, commas and quotation marks to mark direct speech and direct quotations from texts within sentences, and apostrophes to indicate contractions",
+    "band": "1-3",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "read and comprehend various texts, using knowledge of words, grammar, cohesive ties, sentence structures, and background knowledge",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "identify and describe some characteristics of literary and informational text forms and their associated genres",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "identify some text patterns, such as order of importance and cause and effect, and text features, such as headings and an index, associated with various text forms, and explain how they help readers, listeners, and viewers understand the meaning",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "describe ways in which images, graphics, and visual design are used in a given text, and demonstrate an understanding of their purpose and connection to the content of the text",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.5",
+    "strand": "C",
+    "desc": "identify some elements of style in texts, including voice, word choice, word patterns, and sentence structure, and explain how they help communicate meaning",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.6",
+    "strand": "C",
+    "desc": "identify the narrator’s point of view, including first person or third person, in a variety of texts, and suggest alternative points of view to tell each story",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.7",
+    "strand": "C",
+    "desc": "read, listen to, and view various forms of texts by diverse First Nations, Métis, and Inuit creators and demonstrate understanding of various aspects of First Nations, Métis, and Inuit histories, cultures, relationships, communities, groups, nations, and lived experiences",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "activate prior knowledge, including knowledge gained from personal and text experiences, that they can use to make connections and understand the topic and form of new texts",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "identify specific purposes for engaging with texts, including learning facts or information, or to gain insight or new perspectives",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "make predictions using background knowledge, text features, and evidence from the text, and adjust their understanding based on new information",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.4",
+    "strand": "C",
+    "desc": "use strategies such as rereading, visualizing, and asking questions, to monitor and confirm their understanding of various texts",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.5",
+    "strand": "C",
+    "desc": "identify connections between ideas expressed in texts and their knowledges and lived experiences, the ideas in other texts, and the world around them",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.6",
+    "strand": "C",
+    "desc": "identify the main idea in a simple text, and relate important details in sequence",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.7",
+    "strand": "C",
+    "desc": "describe how strategies, such as visualizing, making predictions, and connecting to their experiences, have helped them comprehend various texts",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "identify literary devices, including metaphor and assonance, and describe how they help communicate meaning",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "make inferences using stated and implied information and ideas to understand texts",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.3",
+    "strand": "C",
+    "desc": "analyze various texts, including literary and informational texts, by identifying main and supporting ideas, sequencing information, and comparing and contrasting elements",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.4",
+    "strand": "C",
+    "desc": "identify some cultural elements represented in various texts, including symbols, language, and values, and pose questions and share ideas about how these elements contribute to the meaning",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.5",
+    "strand": "C",
+    "desc": "identify explicit and implicit perspectives communicated in texts, providing evidence, and explain how these perspectives could influence an audience",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.6",
+    "strand": "C",
+    "desc": "describe personal thoughts and feelings about ideas presented in texts, such as ideas about diversity, inclusion, and accessibility",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.7",
+    "strand": "C",
+    "desc": "identify some ways in which texts created by First Nations, Métis, and Inuit individuals, communities, groups, or nations communicate about historical periods, cultural experiences, and events, and how they relate to current lived experiences",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.8",
+    "strand": "C",
+    "desc": "identify thinking skills that have helped them analyze and better understand various texts",
+    "band": "1-3",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "identify the topic, purpose, and audience for various texts they plan to create, and describe how the chosen text form and genre will help communicate their intended meaning",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "generate and develop ideas about given and chosen topics, using various strategies, and drawing on various resources, including their own lived experiences, and learning from other subject areas Research",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "gather information and content relevant to a topic, using three or more sources",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "sort and sequence ideas and information, using appropriate strategies and tools, taking into account the text form and genre to be used",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "identify the strategies that helped them develop ideas for texts and organize content",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "draft short texts of various forms and genres, including narrative, persuasive, and informational texts, using a variety of media, tools, and strategies",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "begin to write in cursive, forming letters with appropriate formation patterns, size, placement, and spacing Voice",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.3",
+    "strand": "D",
+    "desc": "demonstrate a personal voice in their texts, using descriptive words and sentence patterns to express their thoughts, feelings, and opinions about the topic",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.4",
+    "strand": "D",
+    "desc": "identify the point of view, including first person or third person, used in their texts Revision",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.5",
+    "strand": "D",
+    "desc": "make simple revisions to draft texts, including replacing words and adding sentences, to improve content and clarity, using feedback from others",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.6",
+    "strand": "D",
+    "desc": "edit draft texts to improve accuracy and style, checking for errors in spelling, punctuation, grammar, and text conventions, and proofread edited texts to make corrections",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D3.1",
+    "strand": "D",
+    "desc": "produce final texts using simple techniques, to achieve the intended effect",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D3.2",
+    "strand": "D",
+    "desc": "present the texts they have created using appropriate strategies, including by reading aloud with expression",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D3.3",
+    "strand": "D",
+    "desc": "identify the strategies that helped them present and communicate their message, and explain how they helped them improve as a text creator",
+    "band": "1-3",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "A1.1",
+    "strand": "A",
+    "desc": "explain how transferable skills can be used to support communication in various cultural, social, linguistic, and domain-specific contexts, and apply them when reading, listening to, viewing, and creating texts of various forms",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A1.2",
+    "strand": "A",
+    "desc": "explain how transferable skills help them to express their voice, be engaged in their learning, and plan the next steps to develop their capabilities and potential",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.1",
+    "strand": "A",
+    "desc": "explain their rights and responsibilities when interacting online with appropriate permission, and make decisions that contribute positively to the development of their digital identity and those of their communities",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.2",
+    "strand": "A",
+    "desc": "demonstrate an understanding of how to navigate online environments safely, manage their privacy and personal data, and interact in a way that supports their well-being and that of others, including seeking appropriate permission",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.3",
+    "strand": "A",
+    "desc": "gather, evaluate, and use information, considering validity, credibility, accuracy, and perspectives, to construct knowledge, create texts, and demonstrate learning",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.4",
+    "strand": "A",
+    "desc": "demonstrate an understanding of the forms, conventions, and techniques of digital and media texts, consider the impact on the audience, and apply this understanding when analyzing and creating texts",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.5",
+    "strand": "A",
+    "desc": "demonstrate an understanding of the interrelationships between the form, message, and context of texts, the intended audience, and the purpose for production",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.6",
+    "strand": "A",
+    "desc": "select and use appropriate digital and media tools to support the design process and address authentic, relevant, real-world problems by developing innovative solutions",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.7",
+    "strand": "A",
+    "desc": "communicate and collaborate with various communities in a safe, respectful, responsible, and inclusive manner when using online platforms and environments, including digital and media tools, and demonstrate cultural awareness with members of the community",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A3.1",
+    "strand": "A",
+    "desc": "explain how the knowledge and skills developed in this grade support learning in various subject areas and in everyday life, and describe how they enhance understanding and communication",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A3.2",
+    "strand": "A",
+    "desc": "demonstrate an understanding of the historical contexts, contributions, lived experiences, and perspectives of a diversity of individuals and communities, including those in Canada, by exploring the concepts of identity, self, and sense of belonging in a variety of culturally responsive and relevant texts",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A3.3",
+    "strand": "A",
+    "desc": "explain themes explored in First Nations, Métis, and Inuit cultures to demonstrate an understanding of the varied identities, perspectives, relationships, legacies, truths, and ways of knowing, being, and doing",
+    "band": "4-6",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "analyze various effective listening skills, including understanding when to ask relevant questions and how to respond to the contributions of others in group discussions, and use these skills in formal and informal contexts and for various purposes",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "select and use a variety of listening strategies before, during, and after listening to comprehend information communicated orally and non-verbally, seek clarification, and develop a relevant response appropriate to the context",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "identify the purpose and audience for speaking in formal and informal contexts, and choose appropriate speaking strategies to communicate clearly and coherently",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "identify and use oral and non-verbal communication strategies, including expression, gestures, and body language, and analyze the ways in which these strategies support understanding or communication, including how their use may vary across cultures",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.5",
+    "strand": "B",
+    "desc": "use precise and descriptive word choice, including varied adjectives and adverbs to elaborate, a variety of sentence types, cohesive sentences, and the active or passive voice as appropriate during formal and informal communication, to support audience comprehension",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use generalized knowledge of the meanings of words and morphemes (i.e., bases, prefixes, and suffixes) to read and spell complex words with accuracy and automaticity Vocabulary",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "demonstrate an understanding of a variety of words, acquire and use explicitly taught vocabulary in various contexts, including other subject areas, and use generalized morphological knowledge to analyze and understand new words in context",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "read a variety of texts fluently, with accuracy and appropriate pacing to support comprehension, and when reading aloud, adjust expression and intonation according to the purpose of reading",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B3.1",
+    "strand": "B",
+    "desc": "use their knowledge of sentence types and forms to construct sentences that communicate ideas effectively, including using and creating complex sentences with adjective or relative clauses to express relationships among ideas Grammar",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B3.2",
+    "strand": "B",
+    "desc": "demonstrate an understanding of the functions of parts of speech in sentences, including nouns that are gerunds, distinguishing and converting between active and passive voice, and use this knowledge to support comprehension and communicate meaning clearly",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B3.3",
+    "strand": "B",
+    "desc": "use their understanding of the meaning and function of capitalization and punctuation to communicate meaning clearly and coherently, including the use of colons in formal letters and memo salutations and to indicate a new speaker in script dialogue, and commas after transitional words or phrases",
+    "band": "4-6",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "read and comprehend various texts, using knowledge of words, grammar, cohesive ties, sentence structures, and background knowledge",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "analyze a variety of text forms and genres, including cultural text forms, and explain how their characteristics help communicate meaning",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "analyze text patterns, such as problem-solution in a report, and text features, such as subheadings and pull-down menus, associated with various text forms, including cultural texts, and explain how they help readers, listeners, and viewers understand the meaning",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "analyze and compare how images, graphics, and visual design create, communicate, and contribute to meaning in a variety of texts",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.5",
+    "strand": "C",
+    "desc": "identify various elements of style in texts, including voice, word choice, word patterns, and sentence structure, and analyze how each element helps create meaning and is appropriate for the text form and genre",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.6",
+    "strand": "C",
+    "desc": "identify the narrator’s point of view, including first, second, or third person, in a variety of texts, providing evidence, and explain how using an alternative point of view would change each story",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.7",
+    "strand": "C",
+    "desc": "read, listen to, and view various forms of texts by diverse First Nations, Métis, and Inuit creators to make meaning through Indigenous Storywork about First Nations, Métis, and Inuit histories, cultures, relationships, communities, groups, nations, and lived experiences",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "identify and explain prior knowledge from various sources, including personal experiences and learning in other subject areas, that they can use to make connections and understand new texts",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "identify a variety of purposes for engaging with texts, select texts from diverse creators that are suitable for the purposes, and explain why the selections are appropriate",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "make predictions using background knowledge and textual information, pose questions to check whether their predictions were correct, and, if not, adjust their understanding",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.4",
+    "strand": "C",
+    "desc": "use strategies such as visualizing, reading ahead, asking questions, and consulting references and other texts or sources of information, to monitor and confirm their understanding of various texts",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.5",
+    "strand": "C",
+    "desc": "explain how the ideas expressed in texts connect to their knowledges and lived experiences, the ideas in other texts, and the world around them",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.6",
+    "strand": "C",
+    "desc": "summarize and record the main idea and supporting details in various texts, and draw well- supported conclusions",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.7",
+    "strand": "C",
+    "desc": "explain and compare how various strategies, such as visualizing, making predictions, summarizing, and connecting to their experiences, have helped them comprehend various texts, and set goals to improve their comprehension",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "describe literary devices, including hyperbole and idioms, in a variety of texts, and explain how they help create meaning and are appropriate for the intended purpose and audience",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "make local and global inferences, using explicit and implicit evidence, to develop interpretations about various texts and to extend their understanding",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.3",
+    "strand": "C",
+    "desc": "analyze various texts, including literary and informational texts, by identifying main and supporting ideas, evaluating the quality of information and its relevance for a specific purpose, and formulating conclusions",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.4",
+    "strand": "C",
+    "desc": "analyze cultural elements that are represented in various texts, including values, rituals and ceremonies, architecture, art, and dance, by investigating the meanings of these elements, making connections to their lived experience and culture, and sharing their interpretations with others",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.5",
+    "strand": "C",
+    "desc": "explain explicit and implicit perspectives communicated in various texts, including narrative texts, provide any evidence that could suggest bias in these perspectives, and suggest ways to avoid any such bias",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.6",
+    "strand": "C",
+    "desc": "explain how various topics, such as diversity, inclusion, and accessibility, are addressed in texts, analyze the insights or messages conveyed, and identify different positions presented",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.7",
+    "strand": "C",
+    "desc": "assess the influence of historical periods, cultural experiences, and/or socio-political conditions and events on texts created by First Nations, Métis, and Inuit individuals, communities, groups, or nations, and how they relate to current lived experiences",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.8",
+    "strand": "C",
+    "desc": "compare the critical thinking skills they used when analyzing and evaluating various texts, identify the skills that best supported their understanding, and explain why they were effective",
+    "band": "4-6",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "identify the topic, purpose, and audience for various texts they plan to create, and explain why the chosen text form, genre, and medium suit the purpose and audience, and how they will help communicate the intended meaning",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "generate and develop ideas and details about various topics, such as topics related to diversity, equity, and inclusion and to other subject areas, using a variety of strategies, and drawing on various resources, including their own lived experiences Research",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "gather information and content relevant to a topic, using multiple textual sources; summarize the information; verify the reliability of sources; and record the creator and source of all content created by others",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "classify and sequence ideas and collected information, using appropriate strategies and tools, and identify and organize relevant content, taking into account the chosen text form, genre, and medium",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "explain and compare how the strategies and tools used helped them develop ideas and organize content for texts of the chosen forms, genres, and media, and how they helped them improve as a text creator",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "draft complex texts of various forms and genres, including narrative, expository, and informational texts, using a variety of media, tools, and strategies",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "write in fluent cursive, and apply keyboarding skills with increasing fluency, automaticity, and proficiency to improve the accuracy and effect of texts Voice",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.3",
+    "strand": "D",
+    "desc": "establish a personal voice in their texts, using varied language and elements of style to express their thoughts, feelings, and opinions about a topic, and using a tone appropriate to the form and genre",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.4",
+    "strand": "D",
+    "desc": "identify the point of view, perspectives, and bias conveyed in their texts, and explain how their messages might be interpreted by audiences with different perspectives Revision",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.5",
+    "strand": "D",
+    "desc": "make revisions to the content, elements of style, patterns, and features of draft texts, and add and delete sentences to improve clarity, focus, and coherence, using various strategies and seeking and selectively using feedback",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.6",
+    "strand": "D",
+    "desc": "edit draft texts to improve accuracy and style, checking for errors in spelling, punctuation, grammar, and format; edit digital texts using word-processing software, including spell- and grammar- checkers",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D3.1",
+    "strand": "D",
+    "desc": "produce final texts, selecting a variety of suitable techniques and tools, including digital design and production tools, to achieve the intended effect",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D3.2",
+    "strand": "D",
+    "desc": "publish and present texts they have created, using selected media and tools, and analyze how their choices helped them communicate their intended message",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D3.3",
+    "strand": "D",
+    "desc": "compare how various strategies and tools helped them communicate their intended message when publishing and presenting texts, and suggest future steps for improvement as a text creator",
+    "band": "4-6",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "A1.1",
+    "strand": "A",
+    "desc": "analyze and explain how transferable skills can be used to support communication in various cultural, social, linguistic, and domain-specific contexts, and apply them when reading, listening to, viewing, and creating texts of various forms",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A1.2",
+    "strand": "A",
+    "desc": "evaluate and explain how transferable skills help them to express their voice, be engaged in their learning, and implement a plan to develop their capabilities and potential",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.1",
+    "strand": "A",
+    "desc": "evaluate and explain their rights and responsibilities when interacting online with appropriate permission, and make decisions that contribute positively to the development of their digital identity and those of their communities",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.2",
+    "strand": "A",
+    "desc": "demonstrate an understanding of how to navigate online environments safely, manage their privacy, personal data, and security, and interact in a way that supports their well-being and that of others, including seeking appropriate permission",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.3",
+    "strand": "A",
+    "desc": "conduct research, considering accuracy, credibility, and perspectives, with a focus on misinformation, disinformation, and curated information, to construct knowledge, create texts, and demonstrate learning, while respecting legal and ethical considerations",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.4",
+    "strand": "A",
+    "desc": "evaluate the use of the various forms, conventions, and techniques of digital and media texts, consider the impact on the audience, and apply this understanding when analyzing and creating texts",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.5",
+    "strand": "A",
+    "desc": "demonstrate an understanding of the interrelationships between the form, message, and context of texts, the intended and unintended audience, and the purpose for production",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.6",
+    "strand": "A",
+    "desc": "select and use appropriate digital and media tools to support the design process and address authentic, relevant, real-world problems by developing and proposing innovative solutions",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A2.7",
+    "strand": "A",
+    "desc": "communicate and collaborate with various communities in a safe, respectful, responsible, and inclusive manner when using online platforms and environments, including digital and media tools, and demonstrate and model cultural awareness with members of the community",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A3.1",
+    "strand": "A",
+    "desc": "analyze and explain how the knowledge and skills developed in this grade support learning in various subject areas and in everyday life, and describe how they enhance understanding and communication",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A3.2",
+    "strand": "A",
+    "desc": "demonstrate an understanding of the historical contexts, contributions, lived experiences, and perspectives of a diversity of individuals and communities, including those in Canada, by exploring and analyzing the concepts of identity, self, and sense of belonging in a variety of culturally responsive and relevant texts",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "A3.3",
+    "strand": "A",
+    "desc": "analyze themes explored in First Nations, Métis, and Inuit cultures to demonstrate an understanding of the varied identities, perspectives, relationships, legacies, truths, and ways of knowing, being, and doing",
+    "band": "7-8",
+    "overall": "Literacy Connections and Applications"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "evaluate and use various effective listening skills to enhance comprehension, including paraphrasing, asking open-ended questions, making relevant responses in group discussions, and reflecting on what has been said, and use these skills in formal and informal contexts and for various purposes",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "select and use a variety of listening strategies before, during, and after listening to analyze and comprehend information communicated orally and non-verbally, seek clarification, and identify relevant evidence to support a response appropriate to the context",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "analyze the purpose and audience for speaking in formal and informal contexts, and select and adapt speaking strategies to communicate clearly and coherently",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "identify and use oral and non-verbal communication strategies, including expression, gestures, and body language, and evaluate and compare the effectiveness of these strategies in supporting understanding or communication, including how their use may vary across cultures",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B1.5",
+    "strand": "B",
+    "desc": "use precise and descriptive word choice, including domain-specific vocabulary from various subjects, and cohesive and coherent sentences during formal and informal communication, to support audience comprehension",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use consolidated knowledge of the meanings of words and morphemes (i.e., bases, prefixes, and suffixes) to read and spell complex words with accuracy and automaticity Vocabulary",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "demonstrate an understanding of a wide variety of words, acquire and use explicitly taught vocabulary flexibly in various contexts, including other subject areas, and use consolidated morphological knowledge to analyze and understand new words in context",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "read a variety of complex texts fluently, with accuracy and appropriate pacing, to support comprehension, and when reading aloud, adjust expression and intonation according to the purpose of reading",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B3.1",
+    "strand": "B",
+    "desc": "use their knowledge of sentence types and forms to construct increasingly complex sentences that connect and communicate ideas accurately and effectively Grammar",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B3.2",
+    "strand": "B",
+    "desc": "demonstrate an understanding of the functions of parts of speech in sentences, refine their understanding of grammar, and use this knowledge to support comprehension and communicate meaning clearly and precisely",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "B3.3",
+    "strand": "B",
+    "desc": "use and refine their understanding of the meaning and function of capitalization and punctuation to communicate meaning clearly and coherently, when reading and writing",
+    "band": "7-8",
+    "overall": "Foundations of Language"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "read and comprehend various complex texts, using knowledge of words, grammar, cohesive ties, sentence structures, and background knowledge",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "analyze and compare the characteristics of various text forms and genres, including cultural text forms, and provide evidence to explain how they help communicate meaning",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "compare the text patterns, such as problem-solution in a letter to the editor, and text features, such as a glossary and infographics, associated with different text forms, including cultural texts, and evaluate their importance in helping readers, listeners, and viewers understand the meaning",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "evaluate how images, graphics, and visual design create, communicate, and contribute to meaning in a variety of texts",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.5",
+    "strand": "C",
+    "desc": "identify various elements of style in texts, including voice, word choice, word patterns, and sentence structure, and analyze how each element helps create meaning and is appropriate for the text form and genre",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.6",
+    "strand": "C",
+    "desc": "analyze the narrator’s point of view, including limited, omniscient, or unreliable, in a variety of texts, explain how it is communicated, and suggest alternative points of view, giving reasons",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C1.7",
+    "strand": "C",
+    "desc": "read, listen to, and view a wide variety of text forms by diverse First Nations, Métis, and Inuit creators to make meaning through Indigenous Storywork about First Nations, Métis, and Inuit histories, cultures, relationships, communities, groups, nations, and lived experiences",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "identify and explain prior knowledge from various sources, including personal experiences and learning in other subject areas, that they can use to make connections and understand new texts",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "identify a variety of purposes for engaging with texts, select texts from diverse creators that are suitable for the purposes, and explain why the selections are appropriate",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "make predictions using background knowledge and textual information, pose questions to confirm or refute their predictions, and revise or refine their understanding as indicated",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.4",
+    "strand": "C",
+    "desc": "select suitable strategies, such as rereading, using the glossary, asking questions, and consulting references and other resources, to monitor and confirm their understanding of complex texts and solve comprehension problems",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.5",
+    "strand": "C",
+    "desc": "connect, compare, and contrast the ideas expressed in texts and their knowledges and lived experiences, the ideas in other texts, and the world around them",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.6",
+    "strand": "C",
+    "desc": "summarize and synthesize the important ideas and supporting details in complex texts, and draw effective conclusions",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C2.7",
+    "strand": "C",
+    "desc": "explain and compare how various strategies, such as visualizing, making predictions, summarizing, and connecting to their experiences, have helped them comprehend various texts, and set goals for future improvement",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "analyze literary devices, including irony, satire, and allusion, in a variety of texts, and explain how they help create meaning and are appropriate for the intended purpose and audience",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "make local and global inferences, using explicit and implicit evidence, to explain and support their interpretations about various complex texts",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.3",
+    "strand": "C",
+    "desc": "analyze complex texts, including literary and informational texts, by evaluating, synthesizing, and sequencing relevant information and formulating conclusions",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.4",
+    "strand": "C",
+    "desc": "analyze cultural elements that are represented in various texts, including norms, values, social hierarchy, pastimes, language, and taboos, by investigating the meanings of these elements, making connections to their lived experience and culture, and considering how the inclusion of these elements contributes to the meaning of the text",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.5",
+    "strand": "C",
+    "desc": "analyze explicit and implicit perspectives communicated in various texts, evaluate any evidence that could suggest bias in these perspectives, and suggest ways to avoid any such bias",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.6",
+    "strand": "C",
+    "desc": "analyze how various topics, such as diversity, inclusion, and accessibility, are addressed in texts, respond to the insights and messages conveyed, and identify different positions presented",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.7",
+    "strand": "C",
+    "desc": "compare the ways in which historical periods, cultural experiences, and/or socio-political conditions and events have influenced two or more texts created by First Nations, Métis, and Inuit individuals, communities, groups, or nations, and how they relate to current lived experiences",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "C3.8",
+    "strand": "C",
+    "desc": "assess the effectiveness of the critical thinking skills they used when analyzing and evaluating various texts, and set goals to improve their use",
+    "band": "7-8",
+    "overall": "Comprehension: Understanding and Responding to Texts"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "identify the topic, purpose, and audience for various texts they plan to create; choose a text form, genre, and medium to suit the purpose and audience, and justify their choices",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "generate and develop ideas and details about challenging topics, such as topics related to diversity, equity, and inclusion and to other subject areas, using a variety of strategies, and drawing on various resources, including their own lived experiences Research",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "gather and synthesize information and content relevant to a topic, using a variety of textual sources and appropriate strategies; evaluate the currency, quality, bias, and accuracy of information; verify the reliability of sources; and cite the sources of all content created by others",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "classify and sequence ideas and collected information, selecting effective strategies and tools, and identify and organize relevant content, evaluating the choices of text form, genre, and medium, and considering alternatives",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "evaluate the strategies and tools used to develop ideas and organize content for texts of the chosen forms, genres, and media, explain which were most helpful, and suggest steps for future improvement as a text creator",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "draft complex texts of various forms and genres, including narrative, persuasive, expository, and informational texts, citing sources, and use a variety of appropriate media, tools, and strategies to transform information and communicate ideas",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "write in cursive fluently, with a personal style, and apply advanced word-processing skills to improve the accuracy and effect of texts Voice",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.3",
+    "strand": "D",
+    "desc": "establish an identifiable voice in their texts, modifying language and style to suit the text’s form, genre, audience, and purpose, and express their thoughts, feelings, and opinions about the topic clearly",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.4",
+    "strand": "D",
+    "desc": "explain the explicit and implicit points of view, perspectives, and bias conveyed in their texts, evaluate how various audiences might respond, and suggest ways to acknowledge other perspectives Revision",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.5",
+    "strand": "D",
+    "desc": "make revisions to the content, elements of style, patterns, and features of draft texts, and add, delete, revise, and reorganize sentences to improve clarity, focus, and coherence, using various strategies and seeking and selectively using feedback",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D2.6",
+    "strand": "D",
+    "desc": "edit draft texts to improve accuracy and style, checking for errors in spelling, punctuation, grammar, and format; edit digital texts using word-processing software, including spell- and grammar- checkers",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D3.1",
+    "strand": "D",
+    "desc": "produce final texts using appropriate techniques and tools, including digital design and production tools, to achieve the intended effect",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D3.2",
+    "strand": "D",
+    "desc": "publish and present texts they have created, using various media and tools, and evaluate how their choices helped them communicate their intended message",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "D3.3",
+    "strand": "D",
+    "desc": "evaluate the strategies and tools they found helpful when publishing and presenting texts, reflect on what they learned at each stage of the creative process, analyze how their texts address various topics, and suggest steps for future improvement as a text creator",
+    "band": "7-8",
+    "overall": "Composition: Expressing Ideas and Creating Texts"
+  }
+]
