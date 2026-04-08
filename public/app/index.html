@@ -1037,13 +1037,13 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <span style="margin-top:6px;display:inline-block;">
     <a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> &nbsp;·&nbsp;
     <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a> &nbsp;·&nbsp;
-    <a href="mailto:teacheraicanada@gmail.com" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
+    <a href="/cdn-cgi/l/email-protection#1f6b7a7e7c777a6d7e767c7e717e7b7e5f78727e7673317c7072" style="color:var(--muted);text-decoration:underline;">Contact</a> &nbsp;·&nbsp;
     <span style="font-family:'DM Mono',monospace;font-size:.65rem;">v5.0 · Mar 31 2026</span>
   </span>
 </div>
 
 </div><!-- end #appScreen -->
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 
 // ============================================================
 // SUPABASE + GOOGLE
@@ -1241,6 +1241,59 @@ async function retryAuthFetch(url, options, maxRetries=3) {
     setProgress(null,'High demand — retrying shortly...');
     await new Promise(r => setTimeout(r, wait));
   }
+}
+
+// ============================================================
+// STREAMING: /api/generate streaming helper.
+// Returns {ok, status, content:[{text}], error?} — same shape as a
+// parsed non-streaming response so callers' downstream parsing logic
+// (JSON.parse, content.map, etc.) needs zero changes.
+// TO REVERT: delete this function + swap any callGenerateStreaming()
+// callers back to authFetch('/api/generate', {...}) + await res.json().
+// ============================================================
+async function callGenerateStreaming(bodyObj) {
+  const body = { ...bodyObj, stream: true };
+  const res = await authFetch('/api/generate', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  if (!res || !res.ok) {
+    let errData = {};
+    try { errData = await res.json(); } catch(_) {}
+    return { ok:false, status: res?.status || 0, error: errData.error, content: [{text:''}] };
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let fullText = '';
+  let streamError = null;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let sepIdx;
+    while ((sepIdx = buf.indexOf('\n\n')) !== -1) {
+      const rawEvent = buf.slice(0, sepIdx);
+      buf = buf.slice(sepIdx + 2);
+      const dataLines = rawEvent.split('\n').filter(l => l.startsWith('data: '));
+      for (const dl of dataLines) {
+        const payload = dl.slice(6).trim();
+        if (!payload || payload === '[DONE]') continue;
+        try {
+          const evt = JSON.parse(payload);
+          if (evt.type === 'content_block_delta' && evt.delta && evt.delta.type === 'text_delta') {
+            fullText += evt.delta.text || '';
+          } else if (evt.type === 'error') {
+            streamError = evt.error || { message: 'Unknown stream error' };
+          }
+        } catch(_) { /* ignore malformed SSE chunks */ }
+      }
+    }
+  }
+  if (streamError) {
+    return { ok:false, status: 500, error: streamError, content: [{text: fullText}] };
+  }
+  return { ok:true, status: 200, content: [{text: fullText}] };
 }
 
 // ============================================================
@@ -2422,25 +2475,24 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       }
     }, 600);
 
-    const res = await retryAuthFetch('/api/generate', {
-      method:'POST',
-      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:maxTok, call_type:'lesson', topic, grades, messages:[{role:'user',content:prompt}] })
+    // STREAMING: lesson generator uses streaming helper (revert: swap back to retryAuthFetch)
+    const data = await callGenerateStreaming({
+      model:'claude-sonnet-4-20250514', max_tokens:maxTok, call_type:'lesson', topic, grades, messages:[{role:'user',content:prompt}]
     });
     clearInterval(progInterval);
     setProgress(90,'Processing response...');
 
-    if (!res||!res.ok) {
-      const status = res?.status||0;
-      const errData = res ? await res.json().catch(()=>({})) : {};
+    if (!data || !data.ok) {
+      const status = data?.status||0;
+      const errData = data?.error || {};
       if (status===529) throw new Error('AI service is at capacity. Please try again in a minute.');
       if (status===402 || errData?.code==='PLAN_LIMIT_REACHED') {
-        showUpgradePrompt(errData?.error || 'You\'ve reached your free plan limit.');
+        showUpgradePrompt(errData?.error || errData?.message || 'You\'ve reached your free plan limit.');
         throw new Error('__PLAN_LIMIT__');
       }
-      throw new Error(errData?.error?.message||errData?.error||'Server error '+status);
+      throw new Error(errData?.message||errData||'Server error '+status);
     }
 
-    const data = await res.json();
     if (data.error) throw new Error(data.error.message||JSON.stringify(data.error));
     setProgress(95,'Building lesson blocks...');
 
@@ -3300,12 +3352,11 @@ async function generateSlideData(callerBtn) {
       '- Pure JSON only, no markdown, no comments'
     ].filter(Boolean).join('\n');
 
-    const res = await authFetch('/api/generate', {
-      method: 'POST',
-      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:6000, messages:[{role:'user',content:structurePrompt}]})
+    // STREAMING: slide structure uses streaming helper (max_tokens 6000 = highest 504 risk)
+    const data = await callGenerateStreaming({
+      model:'claude-sonnet-4-20250514', max_tokens:6000, messages:[{role:'user',content:structurePrompt}]
     });
-    if (!res||!res.ok) throw new Error('Slide structure generation failed ('+res?.status+')');
-    const data = await res.json();
+    if (!data||!data.ok) throw new Error('Slide structure generation failed ('+(data?.status||0)+')');
     const raw = data.content?.map(i=>i.text||'').join('')||'';
     let sd;
     try { sd = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
@@ -7713,13 +7764,12 @@ Rules:
 - Types should flow: Introduction early, Assessment near end`;
 
   try {
-    const res = await authFetch('/api/generate', {
-      method: 'POST',
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1400, messages: [{ role: 'user', content: prompt }] })
+    // STREAMING: unit plan uses streaming helper
+    const data = await callGenerateStreaming({
+      model: 'claude-sonnet-4-20250514', max_tokens: 1400, messages: [{ role: 'user', content: prompt }]
     });
     setProgress(70, 'Parsing unit...');
-    if (!res || !res.ok) { const err = await res?.json().catch(()=>({})); throw new Error(err?.error || 'Generation failed'); }
-    const data = await res.json();
+    if (!data || !data.ok) { throw new Error(data?.error?.message || data?.error || 'Generation failed'); }
     const raw = data.content.map(i => i.text || '').join('');
     let parsed;
     try { parsed = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
@@ -7937,17 +7987,14 @@ Format using markdown. Use ## for major sections, **bold** for labels.
 Return ONLY the assessment content — no preamble or explanation.`;
 
   try {
-    const res = await authFetch('/api/generate', {
-      method: 'POST',
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2000,
-        messages: [{ role: 'user', content: prompt }]
-      })
+    // STREAMING: unit assessment uses streaming helper
+    const data = await callGenerateStreaming({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: prompt }]
     });
     setProgress(80, 'Finishing...');
-    if (!res || !res.ok) throw new Error('Generation failed');
-    const data = await res.json();
+    if (!data || !data.ok) throw new Error('Generation failed');
     const text = data.content.map(i => i.text || '').join('');
     hideLoading();
 
