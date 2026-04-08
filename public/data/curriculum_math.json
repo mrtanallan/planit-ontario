@@ -1,1 +1,2585 @@
-[{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 50, using a variety of tools and strategies","band":"1"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 200, using a variety of tools and strategies","band":"2"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 1000, using a variety of tools and strategies","band":"3"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 10 000, using a variety of tools and strategies","band":"4"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 100 000, using a variety of tools and strategies","band":"5"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"read, represent, compose, and decompose whole numbers up to and including 1 000 000, using a variety of tools and strategies","band":"6"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"represent and compare whole numbers up to and including one billion, including in expanded form using powers of ten","band":"7"},{"code":"B1.1","strand":"B","overall":"Number Sense","desc":"represent and compare very large and very small numbers, including through the use of scientific notation","band":"8"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"compare and order whole numbers up to 50, and represent the relationships using appropriate symbols","band":"1"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"compare and order whole numbers up to 200, and represent the relationships using appropriate symbols","band":"2"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"compare and order whole numbers up to 1000, and represent the relationships using appropriate symbols","band":"3"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"compare and order fractions by considering the size and the number of fractional parts","band":"4"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order decimal numbers up to thousandths, in various contexts","band":"5"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order rational numbers, including positive and negative fractions and decimal numbers to thousandths","band":"6"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"identify and represent perfect squares and their square roots, and estimate the square roots of non-perfect squares","band":"7"},{"code":"B1.2","strand":"B","overall":"Number Sense","desc":"represent numbers in a variety of ways, and apply these representations to describe part-whole relationships","band":"8"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"identify and represent fractions equal to and greater than 1, and describe situations where fractions are used","band":"1"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"identify and represent fractions, using a variety of tools and drawing connections between representations","band":"2"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order fractions, including fractions greater than 1, using a variety of tools and strategies","band":"3"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order decimal tenths, in various contexts","band":"4"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order integers, in various contexts","band":"5"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"describe relationships and show equivalences among fractions, decimals and percents","band":"6"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order rational numbers, including positive and negative fractions and decimal numbers","band":"7"},{"code":"B1.3","strand":"B","overall":"Number Sense","desc":"apply an understanding of integers to explain the effects that different operations have on the magnitude of numbers","band":"8"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"use objects, diagrams, and equations to represent, describe, and solve situations involving addition and subtraction of whole numbers","band":"1"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"recall and demonstrate addition facts for numbers up to 20, and related subtraction facts","band":"2"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"use knowledge of place value and addition and subtraction relationships to solve problems involving whole numbers","band":"3"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"read, represent, compare, and order decimal hundredths, in various contexts","band":"4"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"use equivalent fractions to simplify fractions, when appropriate, in various contexts","band":"5"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"apply the properties of operations, and the relationships between operations, to solve problems involving whole numbers and decimal numbers","band":"6"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"use rates and ratios to describe and compare two quantities, and solve related problems","band":"7"},{"code":"B1.4","strand":"B","overall":"Number Sense","desc":"use proportional reasoning to solve problems involving percents","band":"8"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"use the properties of addition and subtraction, and the relationship between addition and subtraction, to solve problems and check calculations","band":"1"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"recall and demonstrate multiplication facts for 2, 5, and 10, and related division facts","band":"2"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"recall and demonstrate multiplication facts up to 10 \u00d7 10, and related division facts","band":"3"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"use mental math strategies to multiply whole numbers by 0.1 and 0.01, and explain the strategies used","band":"4"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"solve problems involving the addition, subtraction, multiplication, and division of whole numbers, using a variety of strategies","band":"5"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"use mental math strategies to add and subtract integers, explain the strategies used, and solve related mathematical problems","band":"6"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"solve problems involving the addition, subtraction, multiplication, and division of integers","band":"7"},{"code":"B2.1","strand":"B","overall":"Operations","desc":"solve problems involving the multiplication and division of fractions","band":"8"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"recall and demonstrate addition facts for numbers up to 10, and related subtraction facts","band":"1"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"add and subtract whole numbers up to 200, using a variety of tools and strategies","band":"2"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"add and subtract three-digit whole numbers, using various tools and strategies","band":"3"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"add and subtract fractions with like denominators, in various contexts","band":"4"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"add and subtract fractions, including fractions greater than 1, using appropriate tools in various contexts","band":"5"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"add and subtract fractions with like and unlike denominators, using a variety of tools and algorithms","band":"6"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"solve problems involving addition and subtraction of fractions and mixed numbers","band":"7"},{"code":"B2.2","strand":"B","overall":"Operations","desc":"solve problems involving the multiplication and division of whole numbers and decimal numbers","band":"8"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"use objects, diagrams, and equations to represent, describe, and solve situations involving multiplication and division","band":"1"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"represent and solve problems involving multiplication and division, including problems that involve groups of one half","band":"2"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"multiply and divide two-digit whole numbers by one-digit whole numbers, using a variety of tools and strategies","band":"3"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"multiply three-digit whole numbers by one-digit whole numbers, using various tools and strategies","band":"4"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"multiply and divide decimals up to thousandths by powers of 10, in various contexts","band":"5"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"solve problems involving the multiplication and division of decimal numbers","band":"6"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"solve problems involving the multiplication and division of fractions and mixed numbers","band":"7"},{"code":"B2.3","strand":"B","overall":"Operations","desc":"evaluate and express algebraic expressions with integers","band":"8"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"add and subtract single-digit whole numbers, using a variety of strategies","band":"1"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"add and subtract multi-digit numbers in various contexts, using mental math strategies","band":"2"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"represent and solve problems involving the multiplication of two- or three-digit whole numbers by one-digit whole numbers","band":"3"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"represent and solve problems involving the division of multi-digit whole numbers by one-digit whole numbers","band":"4"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"add and subtract integers, using appropriate tools and strategies, in various contexts","band":"5"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"represent and solve problems involving the addition and subtraction of fractions and mixed numbers with unlike denominators","band":"6"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"solve multi-step problems involving whole numbers, fractions, and decimal numbers","band":"7"},{"code":"B2.4","strand":"B","overall":"Operations","desc":"solve problems involving ratios, rates, and proportional reasoning","band":"8"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe repeating patterns in various contexts","band":"1"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe repeating and growing patterns in various contexts","band":"2"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe various patterns in a multiplication table","band":"3"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe repeating, growing, and shrinking patterns, including patterns found in real-life contexts","band":"4"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe patterns, including those in tables and graphs","band":"5"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and describe the recursive pattern in a growing pattern","band":"6"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and compare a variety of representations of linear and non-linear relations","band":"7"},{"code":"C1.1","strand":"C","overall":"Patterns and Relationships","desc":"identify and compare properties of linear and non-linear relations","band":"8"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"create and translate repeating patterns using various representations","band":"1"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"create and translate patterns using tables of values, graphs, and equations","band":"2"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"extend and create repeating and growing patterns","band":"3"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"create and describe patterns to illustrate relationships among whole numbers","band":"4"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"create tables of values, and graphs, to represent a linear growing pattern","band":"5"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"represent and describe linear patterns using tables of values and equations","band":"6"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"create a table of values for a relation, and determine and justify whether the relation is linear or non-linear","band":"7"},{"code":"C1.2","strand":"C","overall":"Patterns and Relationships","desc":"graph linear and non-linear relations from tables of values and equations","band":"8"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"determine whether given pairs of addition and subtraction expressions are equal or not equal","band":"1"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"determine whether given pairs of multiplication and division expressions are equal or not equal","band":"2"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"describe how variables are used, and use them in equations and expressions","band":"3"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"solve equations that involve whole numbers up to 100 in various contexts","band":"4"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"solve equations that involve multiple terms and whole numbers","band":"5"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"solve equations that involve multiple terms, whole numbers, and decimal numbers in various contexts","band":"6"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"solve equations with two variables and verify solutions","band":"7"},{"code":"C2.1","strand":"C","overall":"Equations and Inequalities","desc":"solve and verify linear equations involving one variable with integer coefficients","band":"8"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"determine what needs to be added to or subtracted from addition and subtraction expressions to make them equivalent","band":"1"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"identify missing values in equations involving addition and subtraction","band":"2"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve equations and inequalities that involve whole numbers up to 50, and verify solutions","band":"3"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve inequalities that involve whole numbers up to 100 and determine possible solutions","band":"4"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve inequalities that involve multiple terms and whole numbers, and verify and graph the solution","band":"5"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve inequalities that involve multiple terms and whole numbers and decimal numbers, and verify and graph the solution","band":"6"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve and verify inequalities with one variable","band":"7"},{"code":"C2.2","strand":"C","overall":"Equations and Inequalities","desc":"solve problems by applying the relationships between operations","band":"8"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"1"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"2"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"3"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"4"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"5"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"6"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"7"},{"code":"C3.1","strand":"C","overall":"Coding","desc":"solve problems and create computational representations of mathematical situations using coding concepts and skills","band":"8"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"sort sets of data about people or things according to two and three attributes","band":"1"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"collect data through observations, experiments, and interviews to answer questions of interest that focus on a quality","band":"2"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"collect data through observations, experiments, and interviews to answer questions of interest that focus on a quality","band":"3"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"explain why collecting data through different methods may lead to different conclusions","band":"4"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"explain why a survey question may or may not be an effective tool for answering a survey question","band":"5"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"collect qualitative and quantitative data to answer questions of interest about a population, and consider the appropriate type of data for the question","band":"6"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"explain why establishing a representative sample is important for making generalizations about a population","band":"7"},{"code":"D1.1","strand":"D","overall":"Data Literacy","desc":"identify situations involving one-variable data and situations involving two-variable data, and explain when each type of display is appropriate","band":"8"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"collect data through observations, experiments, and interviews to answer questions of interest that focus on a quality","band":"1"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"organize data into categories using tally marks and frequency tables, and display the data using concrete graphs and pictographs","band":"2"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"collect and organize categorical and discrete primary data, and display the data using charts and graphs","band":"3"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"collect data from different primary and secondary sources to answer questions of interest","band":"4"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"select and use the most appropriate graph to represent data","band":"5"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"select and create an appropriate graph to represent data, and justify the choice of graph","band":"6"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"collect data from different primary and secondary sources to answer questions of interest involving two variables","band":"7"},{"code":"D1.2","strand":"D","overall":"Data Literacy","desc":"create a scatter plot to represent two-variable data, and identify and describe any trends","band":"8"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display sets of data using many-to-one correspondence in pictographs and bar graphs","band":"1"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display sets of data using pictographs and bar graphs","band":"2"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display sets of data in many-to-one correspondence using pictographs and bar graphs","band":"3"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display sets of data using stem-and-leaf plots and double bar graphs","band":"4"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display sets of data using broken-line graphs and stacked bar graphs","band":"5"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display continuous data using broken-line graphs and histograms","band":"6"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"display continuous data using various graphs, including scatter plots","band":"7"},{"code":"D1.3","strand":"D","overall":"Data Literacy","desc":"determine and describe the correlation between two variables","band":"8"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"read and interpret data presented using concrete graphs and pictographs","band":"1"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"read and interpret data presented in various ways","band":"2"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"read and interpret data presented in various ways","band":"3"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"read and interpret primary and secondary data presented in circle graphs and tables","band":"4"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"determine the mean and identify the median and the mode(s) for a set of data, and explain what each measure indicates","band":"5"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"determine the impact of adding or removing data from a data set on measures of central tendency and the data representations","band":"6"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"determine the mean, median, and mode(s) for a set of data and compare the measures","band":"7"},{"code":"D1.4","strand":"D","overall":"Data Literacy","desc":"use measures of central tendency and measures of spread to compare sets of data","band":"8"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments","band":"1"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data by identifying the mode and describing the shape of a set of data","band":"2"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments","band":"3"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments","band":"4"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments","band":"5"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments, and to identify misleading representations","band":"6"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments and to identify misleading representations","band":"7"},{"code":"D1.5","strand":"D","overall":"Data Literacy","desc":"analyse and interpret data to draw conclusions and make convincing arguments, and to identify misleading representations","band":"8"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"use mathematical language, including the terms 'impossible', 'unlikely', 'equally likely', 'likely', and 'certain', to describe the likelihood of events","band":"1"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"describe the likelihood that events will happen, and use that information to make predictions","band":"2"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"describe how to help ensure that the results of an experiment are fair","band":"3"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"use fractions to express the probability of events happening","band":"4"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"determine and represent the probability of multiple independent events","band":"5"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"determine and represent the theoretical probability of an event, and explain how to use it to make predictions","band":"6"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"determine the probability of a simple event and express it as a fraction, decimal, or percent","band":"7"},{"code":"D2.1","strand":"D","overall":"Probability","desc":"identify the sample space for probability experiments involving two independent events","band":"8"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"make predictions about the likelihood of events happening, and investigate through experimentation","band":"1"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"run simple experiments to determine the frequency of an outcome, record the results, and make predictions","band":"2"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of an event","band":"3"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of an event","band":"4"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of events","band":"5"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of events","band":"6"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of events","band":"7"},{"code":"D2.2","strand":"D","overall":"Probability","desc":"determine and compare the theoretical and experimental probabilities of two independent events","band":"8"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"sort three-dimensional objects and two-dimensional shapes by one attribute and identify the sorting rule used","band":"1"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"sort and identify two-dimensional shapes by comparing number of sides, side lengths, and angles","band":"2"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"sort three-dimensional objects and two-dimensional shapes by their geometric properties","band":"3"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe, compare, and classify quadrilaterals by their geometric properties","band":"4"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe and classify two-dimensional shapes and three-dimensional objects","band":"5"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"create lists of the geometric properties of various types of quadrilaterals","band":"6"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe and classify cylinders, pyramids, and prisms","band":"7"},{"code":"E1.1","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"identify and describe the type of symmetry that a two-dimensional shape has","band":"8"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"construct and describe two-dimensional shapes and three-dimensional objects that have matching halves","band":"1"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"compose and decompose two-dimensional shapes and three-dimensional objects","band":"2"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"compose and decompose various structures, and identify the two-dimensional shapes and three-dimensional objects within them","band":"3"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"construct three-dimensional objects, and identify two-dimensional shapes contained within structures and objects","band":"4"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"construct and identify prisms and pyramids, and distinguish them from other three-dimensional objects","band":"5"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"construct nets of prisms and pyramids and determine which nets are correct","band":"6"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"draw top, front, and side views of objects, and match views with their corresponding object","band":"7"},{"code":"E1.2","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"construct three-dimensional objects from nets and identify and describe the shapes of the faces","band":"8"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe the locations and movements of objects in everyday situations","band":"1"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe the relative locations of objects or people, using positional language","band":"2"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe and perform translations and reflections on a grid","band":"3"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe and perform reflections and translations on a grid","band":"4"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"describe and perform translations, reflections, and rotations on a Cartesian plane","band":"5"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"perform and describe translations, reflections, and rotations on a Cartesian plane","band":"6"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"perform and describe dilatations of two-dimensional shapes on a Cartesian plane","band":"7"},{"code":"E1.3","strand":"E","overall":"Geometric and Spatial Reasoning","desc":"identify and describe the Pythagorean relationship and use it to solve problems","band":"8"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"use non-standard units of length to compare and order shapes, and to describe the length of objects","band":"1"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"estimate and measure the length of objects using non-standard and standard units","band":"2"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"use metres, centimetres, and millimetres to estimate and measure the length of objects","band":"3"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"use appropriate units of length to estimate and measure the perimeter of polygons","band":"4"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"use the formula for the area of a rectangle to calculate the areas of rectangles and squares","band":"5"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"determine the perimeter and area of various quadrilaterals","band":"6"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"determine the circumference and area of circles, using appropriate formulas","band":"7"},{"code":"E2.1","strand":"E","overall":"Measurement","desc":"determine the area of composite figures","band":"8"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"estimate and measure areas and volumes using non-standard units","band":"1"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"estimate and measure the area of shapes using non-standard units","band":"2"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"use centimetres and metres to estimate and measure the perimeter of polygons","band":"3"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"estimate and calculate the area of rectangles and right triangles","band":"4"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"determine the relationships between the volumes of cylinders, pyramids, and cones","band":"5"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"estimate and calculate the volume of rectangular and triangular prisms","band":"6"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"solve problems involving the surface area of prisms","band":"7"},{"code":"E2.2","strand":"E","overall":"Measurement","desc":"solve problems involving the volume of cylinders, triangular prisms, and composite figures","band":"8"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"use non-standard units to compare the areas of two-dimensional shapes","band":"1"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"use non-standard units to estimate and measure the volume of three-dimensional objects","band":"2"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"use a variety of non-standard units to estimate and measure mass","band":"3"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"use the relationships between hours and minutes, and between minutes and seconds, to solve problems","band":"4"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"solve problems involving elapsed time, using the relationship between 12-hour and 24-hour clocks","band":"5"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"use the formula for the area of a parallelogram to determine the area of rectangles and parallelograms","band":"6"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"solve problems involving the area of composite two-dimensional shapes","band":"7"},{"code":"E2.3","strand":"E","overall":"Measurement","desc":"solve problems involving the surface area and volume of cylinders","band":"8"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"identify different ways of representing the same amount of money up to 200\u00a2 using various combinations of coins","band":"1"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"estimate and calculate the cost of transactions involving whole-dollar amounts and determine the change","band":"2"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"estimate and calculate the cost of transactions involving dollars and cents, and determine the change","band":"3"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"explain the relationship between paying taxes and government services, and describe different ways people can pay for items","band":"4"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"describe some advantages and disadvantages of various methods of payment that can be used when dealing with multiple currencies","band":"5"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"explain various ways to pay for goods and services, including ways in which people can pay for things they want but may not have enough money for","band":"6"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"explain the concepts of income, expenses, and the importance of financial planning","band":"7"},{"code":"F1.1","strand":"F","overall":"Money and Finances","desc":"explain the concept of interest and calculate simple interest","band":"8"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"estimate and calculate the cost of transactions involving whole-dollar amounts, and explain the change given","band":"1"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"read and represent various amounts of money up to $10 using a combination of coins and bills","band":"2"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"explain the relationship between spending and saving, describe simple interest, and solve problems involving simple interest","band":"3"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"explain the difference between simple interest and compound interest","band":"4"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"calculate the unit price of an item and compare unit prices of similar items","band":"5"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"describe and compare a variety of ways in which individuals can manage their finances","band":"6"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"create a simple budget for a fictional event or scenario and justify the budget using mathematical reasoning","band":"7"},{"code":"F1.2","strand":"F","overall":"Money and Finances","desc":"determine and compare the costs of different ways of acquiring goods and services","band":"8"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"describe and compare common ways people get money and things they need","band":"1"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"identify how the value of currency is determined and compare the costs of goods in different countries","band":"2"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"explain the concepts of earning and spending and the importance of making informed financial decisions","band":"3"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"create a financial plan to reach a savings goal for a fictional scenario","band":"4"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"explain the concepts of income, expenses, budgeting, and saving, and describe some ways to make financial decisions","band":"5"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"make and track personal financial goals, and explain potential obstacles to reaching financial goals","band":"6"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"explain the concepts of borrowing money, and the advantages and disadvantages of different ways of borrowing money","band":"7"},{"code":"F1.3","strand":"F","overall":"Money and Finances","desc":"identify and explain various savings and investment strategies","band":"8"}]
+[
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "read and represent whole numbers up to and including 50, and describe various ways they are used in everyday life",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "compose and decompose whole numbers up to and including 50, using a variety of tools and strategies, in various contexts",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "compare and order whole numbers up to and including 50, in various contexts",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "estimate the number of objects in collections of up to 50, and verify their estimates by counting",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.5",
+    "strand": "B",
+    "desc": "count to 50 by 1s, 2s, 5s, and 10s, using a variety of tools and strategies",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.6",
+    "strand": "B",
+    "desc": "use drawings to represent and solve fair-share problems that involve 2 and 4 sharers, respectively, and have remainders of 1 or 2",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.7",
+    "strand": "B",
+    "desc": "recognize that one half and two fourths of the same whole are equal, in fair-sharing contexts",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.8",
+    "strand": "B",
+    "desc": "use drawings to compare and order unit fractions representing the individual portions that result when a whole is shared by different numbers of sharers, up to a maximum of 10",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use the properties of addition and subtraction, and the relationship between addition and subtraction, to solve problems and check calculations",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "recall and demonstrate addition facts for numbers up to 10, and related subtraction facts",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "use mental math strategies, including estimation, to add and subtract whole numbers that add up to no more than 20, and explain the strategies used",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.4",
+    "strand": "B",
+    "desc": "use objects, diagrams, and equations to represent, describe, and solve situations involving addition and subtraction of whole numbers that add up to no more than 50",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.5",
+    "strand": "B",
+    "desc": "represent and solve equal-group problems where the total number of items is no more than 10, including problems in which each group is a half, using tools and drawings",
+    "band": "1",
+    "overall": "Number"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "identify and describe the regularities in a variety of patterns, including patterns found in real- life contexts",
+    "band": "1",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "create and translate patterns using movements, sounds, objects, shapes, letters, and numbers",
+    "band": "1",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "determine pattern rules and use them to extend patterns, make and justify predictions, and identify missing elements in patterns",
+    "band": "1",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "create and describe patterns to illustrate relationships among whole numbers up to 50",
+    "band": "1",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "identify quantities that can change and quantities that always remain the same in real-life contexts",
+    "band": "1",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "determine whether given pairs of addition and subtraction expressions are equivalent or not",
+    "band": "1",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "identify and use equivalent relationships for whole numbers up to 50, in various contexts",
+    "band": "1",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "solve problems and create computational representations of mathematical situations by writing and executing code, including code that involves sequential events",
+    "band": "1",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "read and alter existing code, including code that involves sequential events, and describe how changes to the code affect the outcomes",
+    "band": "1",
+    "overall": "Algebra"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "sort sets of data about people or things according to one attribute, and describe rules used for sorting",
+    "band": "1",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "collect data through observations, experiments, and interviews to answer questions of interest that focus on a single piece of information; record the data using methods of their choice; and organize the data in tally tables",
+    "band": "1",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "display sets of data, using one-to-one correspondence, in concrete graphs and pictographs with proper sources, titles, and labels",
+    "band": "1",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "order categories of data from greatest to least frequency for various data sets displayed in tally tables, concrete graphs, and pictographs",
+    "band": "1",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "analyse different sets of data presented in various ways, including in tally tables, concrete graphs, and pictographs, by asking and answering questions about the data and drawing conclusions, then make convincing arguments and informed decisions",
+    "band": "1",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "use mathematical language, including the terms “impossible”, “possible”, and “certain”, to describe the likelihood of events happening, and use that likelihood to make predictions and informed decisions",
+    "band": "1",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "make and test predictions about the likelihood that the categories in a data set from one population will have the same frequencies in data collected from a different population of the same size",
+    "band": "1",
+    "overall": "Data"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "desc": "sort three-dimensional objects and two-dimensional shapes according to one attribute at a time, and identify the sorting rule being used",
+    "band": "1",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.2",
+    "strand": "E",
+    "desc": "construct three-dimensional objects, and identify two-dimensional shapes contained within structures and objects",
+    "band": "1",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.3",
+    "strand": "E",
+    "desc": "construct and describe two-dimensional shapes and three-dimensional objects that have matching halves",
+    "band": "1",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.4",
+    "strand": "E",
+    "desc": "describe the relative locations of objects or people, using positional language",
+    "band": "1",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.5",
+    "strand": "E",
+    "desc": "give and follow directions for moving from one location to another",
+    "band": "1",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "desc": "identify measurable attributes of two-dimensional shapes and three-dimensional objects, including length, area, mass, capacity, and angle",
+    "band": "1",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "desc": "compare several everyday objects and order them according to length, area, mass, and capacity",
+    "band": "1",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "desc": "read the date on a calendar, and use a calendar to identify days, weeks, months, holidays, and seasons",
+    "band": "1",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "F1.1",
+    "strand": "F",
+    "desc": "identify the various Canadian coins up to 50¢ and coins and bills up to $50, and compare their values",
+    "band": "1",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "read, represent, compose, and decompose whole numbers up to and including 200, using a variety of tools and strategies, and describe various ways they are used in everyday life",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "compare and order whole numbers up to and including 200, in various contexts",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "estimate the number of objects in collections of up to 200 and verify their estimates by counting",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "count to 200, including by 20s, 25s, and 50s, using a variety of tools and strategies",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.5",
+    "strand": "B",
+    "desc": "describe what makes a number even or odd",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.6",
+    "strand": "B",
+    "desc": "use drawings to represent, solve, and compare the results of fair-share problems that involve sharing up to 10 items among 2, 3, 4, and 6 sharers, including problems that result in whole numbers, mixed numbers, and fractional amounts",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.7",
+    "strand": "B",
+    "desc": "recognize that one third and two sixths of the same whole are equal, in fair-sharing contexts",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use the properties of addition and subtraction, and the relationships between addition and multiplication and between subtraction and division, to solve problems and check calculations",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "recall and demonstrate addition facts for numbers up to 20, and related subtraction facts",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "use mental math strategies, including estimation, to add and subtract whole numbers that add up to no more than 50, and explain the strategies used",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.4",
+    "strand": "B",
+    "desc": "use objects, diagrams, and equations to represent, describe, and solve situations involving addition and subtraction of whole numbers that add up to no more than 100",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.5",
+    "strand": "B",
+    "desc": "represent multiplication as repeated equal groups, including groups of one half and one fourth, and solve related problems, using various tools and drawings",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.6",
+    "strand": "B",
+    "desc": "represent division of up to 12 items as the equal sharing of a quantity, and solve related problems, using various tools and drawings",
+    "band": "2",
+    "overall": "Number"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "identify and describe a variety of patterns involving geometric designs, including patterns found in real-life contexts",
+    "band": "2",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "create and translate patterns using various representations, including shapes and numbers",
+    "band": "2",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "determine pattern rules and use them to extend patterns, make and justify predictions, and identify missing elements in patterns represented with shapes and numbers",
+    "band": "2",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "create and describe patterns to illustrate relationships among whole numbers up to 100",
+    "band": "2",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "identify when symbols are being used as variables, and describe how they are being used",
+    "band": "2",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "determine what needs to be added to or subtracted from addition and subtraction expressions to make them equivalent",
+    "band": "2",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "identify and use equivalent relationships for whole numbers up to 100, in various contexts",
+    "band": "2",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "solve problems and create computational representations of mathematical situations by writing and executing code, including code that involves sequential and concurrent events",
+    "band": "2",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "read and alter existing code, including code that involves sequential and concurrent events, and describe how changes to the code affect the outcomes",
+    "band": "2",
+    "overall": "Algebra"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "sort sets of data about people or things according to two attributes, using tables and logic diagrams, including Venn and Carroll diagrams",
+    "band": "2",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "collect data through observations, experiments, and interviews to answer questions of interest that focus on two pieces of information, and organize the data in two-way tally tables",
+    "band": "2",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "display sets of data, using one-to-one correspondence, in concrete graphs, pictographs, line plots, and bar graphs with proper sources, titles, and labels",
+    "band": "2",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "identify the mode(s), if any, for various data sets presented in concrete graphs, pictographs, line plots, bar graphs, and tables, and explain what this measure indicates about the data",
+    "band": "2",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "analyse different sets of data presented in various ways, including in logic diagrams, line plots, and bar graphs, by asking and answering questions about the data and drawing conclusions, then make convincing arguments and informed decisions",
+    "band": "2",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "use mathematical language, including the terms “impossible”, “possible”, and “certain”, to describe the likelihood of complementary events happening, and use that likelihood to make predictions and informed decisions",
+    "band": "2",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "make and test predictions about the likelihood that the mode(s) of a data set from one population will be the same for data collected from a different population",
+    "band": "2",
+    "overall": "Data"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "desc": "sort and identify two-dimensional shapes by comparing number of sides, side lengths, angles, and number of lines of symmetry",
+    "band": "2",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.2",
+    "strand": "E",
+    "desc": "compose and decompose two-dimensional shapes, and show that the area of a shape remains constant regardless of how its parts are rearranged",
+    "band": "2",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.3",
+    "strand": "E",
+    "desc": "identify congruent lengths and angles in two-dimensional shapes by mentally and physically matching them, and determine if the shapes are congruent",
+    "band": "2",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.4",
+    "strand": "E",
+    "desc": "create and interpret simple maps of familiar places",
+    "band": "2",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.5",
+    "strand": "E",
+    "desc": "describe the relative positions of several objects and the movements needed to get from one object to another",
+    "band": "2",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "desc": "choose and use non-standard units appropriately to measure lengths, and describe the inverse relationship between the size of a unit and the number of units needed",
+    "band": "2",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "desc": "explain the relationship between centimetres and metres as units of length, and use benchmarks for these units to estimate lengths",
+    "band": "2",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "desc": "measure and draw lengths in centimetres and metres, using a measuring tool, and recognize the impact of starting at points other than zero",
+    "band": "2",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.4",
+    "strand": "E",
+    "desc": "use units of time, including seconds, minutes, hours, and non-standard units, to describe the duration of various events",
+    "band": "2",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "F1.1",
+    "strand": "F",
+    "desc": "identify different ways of representing the same amount of money up to Canadian 200¢ using various combinations of coins, and up to $200 using various combinations of $1 and $2 coins and $5, $10, $20, $50, and $100 bills",
+    "band": "2",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "read, represent, compose, and decompose whole numbers up to and including 1000, using a variety of tools and strategies, and describe various ways they are used in everyday life",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "compare and order whole numbers up to and including 1000, in various contexts",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "round whole numbers to the nearest ten or hundred, in various contexts",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "count to 1000, including by 50s, 100s, and 200s, using a variety of tools and strategies",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.5",
+    "strand": "B",
+    "desc": "use place value when describing and representing multi-digit numbers in a variety of ways, including with base ten materials",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.6",
+    "strand": "B",
+    "desc": "use drawings to represent, solve, and compare the results of fair-share problems that involve sharing up to 20 items among 2, 3, 4, 5, 6, 8, and 10 sharers, including problems that result in whole numbers, mixed numbers, and fractional amounts",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.7",
+    "strand": "B",
+    "desc": "represent and solve fair-share problems that focus on determining and using equivalent fractions, including problems that involve halves, fourths, and eighths; thirds and sixths; and fifths and tenths",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use the properties of operations, and the relationships between multiplication and division, to solve problems and check calculations",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "recall and demonstrate multiplication facts of 2, 5, and 10, and related division facts",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "use mental math strategies, including estimation, to add and subtract whole numbers that add up to no more than 1000, and explain the strategies used",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.4",
+    "strand": "B",
+    "desc": "demonstrate an understanding of algorithms for adding and subtracting whole numbers by making connections to and describing the way other tools and strategies are used to add and subtract",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.5",
+    "strand": "B",
+    "desc": "represent and solve problems involving the addition and subtraction of whole numbers that add up to no more than 1000, using various tools and algorithms",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.6",
+    "strand": "B",
+    "desc": "represent multiplication of numbers up to 10 × 10 and division up to 100 ÷ 10, using a variety of tools and drawings, including arrays",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.7",
+    "strand": "B",
+    "desc": "represent and solve problems involving multiplication and division, including problems that involve groups of one half, one fourth, and one third, using tools and drawings",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.8",
+    "strand": "B",
+    "desc": "represent the connection between the numerator of a fraction and the repeated addition of the unit fraction with the same denominator using various tools and drawings, and standard fractional notation",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.9",
+    "strand": "B",
+    "desc": "use the ratios of 1 to 2, 1 to 5, and 1 to 10 to scale up numbers and to solve problems",
+    "band": "3",
+    "overall": "Number"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "identify and describe repeating elements and operations in a variety of patterns, including patterns found in real-life contexts",
+    "band": "3",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "create and translate patterns that have repeating elements, movements, or operations using various representations, including shapes, numbers, and tables of values",
+    "band": "3",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "determine pattern rules and use them to extend patterns, make and justify predictions, and identify missing elements in patterns that have repeating elements, movements, or operations",
+    "band": "3",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "create and describe patterns to illustrate relationships among whole numbers up to 1000",
+    "band": "3",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "describe how variables are used, and use them in various contexts as appropriate",
+    "band": "3",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "determine whether given sets of addition, subtraction, multiplication, and division expressions are equivalent or not",
+    "band": "3",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "identify and use equivalent relationships for whole numbers up to 1000, in various contexts",
+    "band": "3",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "solve problems and create computational representations of mathematical situations by writing and executing code, including code that involves sequential, concurrent, and repeating events",
+    "band": "3",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "read and alter existing code, including code that involves sequential, concurrent, and repeating events, and describe how changes to the code affect the outcomes",
+    "band": "3",
+    "overall": "Algebra"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "sort sets of data about people or things according to two and three attributes, using tables and logic diagrams, including Venn, Carroll, and tree diagrams, as appropriate",
+    "band": "3",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "collect data through observations, experiments, and interviews to answer questions of interest that focus on qualitative and quantitative data, and organize the data using frequency tables",
+    "band": "3",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "display sets of data, using many-to-one correspondence, in pictographs and bar graphs with proper sources, titles, and labels, and appropriate scales",
+    "band": "3",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "determine the mean and identify the mode(s), if any, for various data sets involving whole numbers, and explain what each of these measures indicates about the data",
+    "band": "3",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "analyse different sets of data presented in various ways, including in frequency tables and in graphs with different scales, by asking and answering questions about the data and drawing conclusions, then make convincing arguments and informed decisions",
+    "band": "3",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "use mathematical language, including the terms “impossible”, “unlikely”, “equally likely”, “likely”, and “certain”, to describe the likelihood of events happening, and use that likelihood to make predictions and informed decisions",
+    "band": "3",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "make and test predictions about the likelihood that the mean and the mode(s) of a data set will be the same for data collected from different populations",
+    "band": "3",
+    "overall": "Data"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "desc": "sort, construct, and identify cubes, prisms, pyramids, cylinders, and cones by comparing their faces, edges, vertices, and angles",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.2",
+    "strand": "E",
+    "desc": "compose and decompose various structures, and identify the two-dimensional shapes and three-dimensional objects that these structures contain",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.3",
+    "strand": "E",
+    "desc": "identify congruent lengths, angles, and faces of three-dimensional objects by mentally and physically matching them, and determine if the objects are congruent",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.4",
+    "strand": "E",
+    "desc": "give and follow multistep instructions involving movement from one location to another, including distances and half- and quarter-turns",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "desc": "use appropriate units of length to estimate, measure, and compare the perimeters of polygons and curved shapes, and construct polygons with a given perimeter",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "desc": "explain the relationships between millimetres, centimetres, metres, and kilometres as metric units of length, and use benchmarks for these units to estimate lengths",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "desc": "use non-standard units appropriately to estimate, measure, and compare capacity, and explain the effect that overfilling or underfilling, and gaps between units, have on accuracy",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.4",
+    "strand": "E",
+    "desc": "compare, estimate, and measure the mass of various objects, using a pan balance and non- standard units",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.5",
+    "strand": "E",
+    "desc": "use various units of different sizes to measure the same attribute of a given item, and demonstrate that even though using different-sized units produces a different count, the size of the attribute remains the same",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.6",
+    "strand": "E",
+    "desc": "use analog and digital clocks and timers to tell time in hours, minutes, and seconds",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.7",
+    "strand": "E",
+    "desc": "compare the areas of two-dimensional shapes by matching, covering, or decomposing and recomposing the shapes, and demonstrate that different shapes can have the same area",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.8",
+    "strand": "E",
+    "desc": "use appropriate non-standard units to measure area, and explain the effect that gaps and overlaps have on accuracy",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.9",
+    "strand": "E",
+    "desc": "use square centimetres (cm2) and square metres (m2) to estimate, measure, and compare the areas of various two-dimensional shapes, including those with curved sides",
+    "band": "3",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "F1.1",
+    "strand": "F",
+    "desc": "estimate and calculate the change required for various simple cash transactions involving whole-dollar amounts and amounts of less than one dollar",
+    "band": "3",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "read, represent, compose, and decompose whole numbers up to and including 10 000, using appropriate tools and strategies, and describe various ways they are used in everyday life",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "compare and order whole numbers up to and including 10 000, in various contexts",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "round whole numbers to the nearest ten, hundred, or thousand, in various contexts",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "represent fractions from halves to tenths using drawings, tools, and standard fractional notation, and explain the meanings of the denominator and the numerator",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.5",
+    "strand": "B",
+    "desc": "use drawings and models to represent, compare, and order fractions representing the individual portions that result from two different fair-share scenarios involving any combination of 2, 3, 4, 5, 6, 8, and 10 sharers",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.6",
+    "strand": "B",
+    "desc": "count to 10 by halves, thirds, fourths, fifths, sixths, eighths, and tenths, with and without the use of tools",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.7",
+    "strand": "B",
+    "desc": "read, represent, compare, and order decimal tenths, in various contexts",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.8",
+    "strand": "B",
+    "desc": "round decimal numbers to the nearest whole number, in various contexts",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.9",
+    "strand": "B",
+    "desc": "describe relationships and show equivalences among fractions and decimal tenths, in various contexts",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use the properties of operations, and the relationships between addition, subtraction, multiplication, and division, to solve problems involving whole numbers, including those requiring more than one operation, and check calculations",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "recall and demonstrate multiplication facts for 1 × 1 to 10 × 10, and related division facts",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "use mental math strategies to multiply whole numbers by 10, 100, and 1000, divide whole numbers by 10, and add and subtract decimal tenths, and explain the strategies used",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.4",
+    "strand": "B",
+    "desc": "represent and solve problems involving the addition and subtraction of whole numbers that add up to no more than 10 000 and of decimal tenths, using appropriate tools and strategies, including algorithms",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.5",
+    "strand": "B",
+    "desc": "represent and solve problems involving the multiplication of two- or three-digit whole numbers by one-digit whole numbers and by 10, 100, and 1000, using appropriate tools, including arrays",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.6",
+    "strand": "B",
+    "desc": "represent and solve problems involving the division of two- or three-digit whole numbers by one-digit whole numbers, expressing any remainder as a fraction when appropriate, using appropriate tools, including arrays",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.7",
+    "strand": "B",
+    "desc": "represent the relationship between the repeated addition of a unit fraction and the multiplication of that unit fraction by a whole number, using tools, drawings, and standard fractional notation",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.8",
+    "strand": "B",
+    "desc": "show simple multiplicative relationships involving whole-number rates, using various tools and drawings",
+    "band": "4",
+    "overall": "Number"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "identify and describe repeating and growing patterns, including patterns found in real-life contexts",
+    "band": "4",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "create and translate repeating and growing patterns using various representations, including tables of values and graphs",
+    "band": "4",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "determine pattern rules and use them to extend patterns, make and justify predictions, and identify missing elements in repeating and growing patterns",
+    "band": "4",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "create and describe patterns to illustrate relationships among whole numbers and decimal tenths",
+    "band": "4",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "identify and use symbols as variables in expressions and equations",
+    "band": "4",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "solve equations that involve whole numbers up to 50 in various contexts, and verify solutions",
+    "band": "4",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "solve inequalities that involve addition and subtraction of whole numbers up to 20, and verify and graph the solutions",
+    "band": "4",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "solve problems and create computational representations of mathematical situations by writing and executing code, including code that involves sequential, concurrent, repeating, and nested events",
+    "band": "4",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "read and alter existing code, including code that involves sequential, concurrent, repeating, and nested events, and describe how changes to the code affect the outcomes",
+    "band": "4",
+    "overall": "Algebra"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "describe the difference between qualitative and quantitative data, and describe situations where each would be used",
+    "band": "4",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "collect data from different primary and secondary sources to answer questions of interest that involve comparing two or more sets of data, and organize the data in frequency tables and stem-and-leaf plots",
+    "band": "4",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "select from among a variety of graphs, including multiple-bar graphs, the type of graph best suited to represent various sets of data; display the data in the graphs with proper sources, titles, and labels, and appropriate scales; and justify their choice of graphs",
+    "band": "4",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "create an infographic about a data set, representing the data in appropriate ways, including in frequency tables, stem-and-leaf plots, and multiple-bar graphs, and incorporating any other relevant information that helps to tell a story about the data",
+    "band": "4",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "determine the mean and the median and identify the mode(s), if any, for various data sets involving whole numbers, and explain what each of these measures indicates about the data",
+    "band": "4",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.6",
+    "strand": "D",
+    "desc": "analyse different sets of data presented in various ways, including in stem-and-leaf plots and multiple-bar graphs, by asking and answering questions about the data and drawing conclusions, then make convincing arguments and informed decisions",
+    "band": "4",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "use mathematical language, including the terms “impossible”, “unlikely”, “equally likely”, “likely”, and “certain”, to describe the likelihood of events happening, represent this likelihood on a probability line, and use it to make predictions and informed decisions",
+    "band": "4",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "make and test predictions about the likelihood that the mean, median, and mode(s) of a data set will be the same for data collected from different populations",
+    "band": "4",
+    "overall": "Data"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "desc": "identify geometric properties of rectangles, including the number of right angles, parallel and perpendicular sides, and lines of symmetry",
+    "band": "4",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.2",
+    "strand": "E",
+    "desc": "plot and read coordinates in the first quadrant of a Cartesian plane, and describe the translations that move a point from one coordinate to another",
+    "band": "4",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.3",
+    "strand": "E",
+    "desc": "describe and perform translations and reflections on a grid, and predict the results of these transformations",
+    "band": "4",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "desc": "explain the relationships between grams and kilograms as metric units of mass, and between litres and millilitres as metric units of capacity, and use benchmarks for these units to estimate mass and capacity",
+    "band": "4",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "desc": "use metric prefixes to describe the relative size of different metric units, and choose appropriate units and tools to measure length, mass, and capacity",
+    "band": "4",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "desc": "solve problems involving elapsed time by applying the relationships between different units of time",
+    "band": "4",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.4",
+    "strand": "E",
+    "desc": "identify angles and classify them as right, straight, acute, or obtuse",
+    "band": "4",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.5",
+    "strand": "E",
+    "desc": "use the row and column structure of an array to measure the areas of rectangles and to show that the area of any rectangle can be found by multiplying its side lengths",
+    "band": "4",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.6",
+    "strand": "E",
+    "desc": "apply the formula for the area of a rectangle to find the unknown measurement when given two of the three",
+    "band": "4",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "F1.1",
+    "strand": "F",
+    "desc": "identify various methods of payment that can be used to purchase goods and services",
+    "band": "4",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.2",
+    "strand": "F",
+    "desc": "estimate and calculate the cost of transactions involving multiple items priced in whole-dollar amounts, not including sales tax, and the amount of change needed when payment is made in cash, using mental math",
+    "band": "4",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.3",
+    "strand": "F",
+    "desc": "explain the concepts of spending, saving, earning, investing, and donating, and identify key factors to consider when making basic decisions related to each",
+    "band": "4",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.4",
+    "strand": "F",
+    "desc": "explain the relationship between spending and saving, and describe how spending and saving behaviours may differ from one person to another",
+    "band": "4",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.5",
+    "strand": "F",
+    "desc": "describe some ways of determining whether something is reasonably priced and therefore a good purchase",
+    "band": "4",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "read, represent, compose, and decompose whole numbers up to and including 100 000, using appropriate tools and strategies, and describe various ways they are used in everyday life",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "compare and order whole numbers up to and including 100 000, in various contexts",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "represent equivalent fractions from halves to twelfths, including improper fractions and mixed numbers, using appropriate tools, in various contexts",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "compare and order fractions from halves to twelfths, including improper fractions and mixed numbers, in various contexts",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.5",
+    "strand": "B",
+    "desc": "read, represent, compare, and order decimal numbers up to hundredths, in various contexts",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.6",
+    "strand": "B",
+    "desc": "round decimal numbers to the nearest tenth, in various contexts",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.7",
+    "strand": "B",
+    "desc": "describe relationships and show equivalences among fractions, decimal numbers up to hundredths, and whole number percents, using appropriate tools and drawings, in various contexts",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use the properties of operations, and the relationships between operations, to solve problems involving whole numbers and decimal numbers, including those requiring more than one operation, and check calculations",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "recall and demonstrate multiplication facts from 0 × 0 to 12 × 12, and related division facts",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "use mental math strategies to multiply whole numbers by 0.1 and 0.01 and estimate sums and differences of decimal numbers up to hundredths, and explain the strategies used",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.4",
+    "strand": "B",
+    "desc": "represent and solve problems involving the addition and subtraction of whole numbers that add up to no more than 100 000, and of decimal numbers up to hundredths, using appropriate tools, strategies, and algorithms",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.5",
+    "strand": "B",
+    "desc": "add and subtract fractions with like denominators, in various contexts",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.6",
+    "strand": "B",
+    "desc": "represent and solve problems involving the multiplication of two-digit whole numbers by two- digit whole numbers using the area model and using algorithms, and make connections between the two methods",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.7",
+    "strand": "B",
+    "desc": "represent and solve problems involving the division of three-digit whole numbers by two-digit whole numbers using the area model and using algorithms, and make connections between the two methods, while expressing any remainder appropriately",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.8",
+    "strand": "B",
+    "desc": "multiply and divide one-digit whole numbers by unit fractions, using appropriate tools and drawings",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.9",
+    "strand": "B",
+    "desc": "represent and create equivalent ratios and rates, using a variety of tools and models, in various contexts",
+    "band": "5",
+    "overall": "Number"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "identify and describe repeating, growing, and shrinking patterns, including patterns found in real-life contexts",
+    "band": "5",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "create and translate growing and shrinking patterns using various representations, including tables of values and graphs",
+    "band": "5",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "determine pattern rules and use them to extend patterns, make and justify predictions, and identify missing elements in repeating, growing, and shrinking patterns",
+    "band": "5",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "create and describe patterns to illustrate relationships among whole numbers and decimal tenths and hundredths",
+    "band": "5",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "translate among words, algebraic expressions, and visual representations that describe equivalent relationships",
+    "band": "5",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "evaluate algebraic expressions that involve whole numbers",
+    "band": "5",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "solve equations that involve whole numbers up to 100 in various contexts, and verify solutions",
+    "band": "5",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.4",
+    "strand": "C",
+    "desc": "solve inequalities that involve one operation and whole numbers up to 50, and verify and graph the solutions",
+    "band": "5",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "solve problems and create computational representations of mathematical situations by writing and executing code, including code that involves conditional statements and other control structures",
+    "band": "5",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "read and alter existing code, including code that involves conditional statements and other control structures, and describe how changes to the code affect the outcomes",
+    "band": "5",
+    "overall": "Algebra"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "explain the importance of various sampling techniques for collecting a sample of data that is representative of a population",
+    "band": "5",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "collect data, using appropriate sampling techniques as needed, to answer questions of interest about a population, and organize the data in relative-frequency tables",
+    "band": "5",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "select from among a variety of graphs, including stacked-bar graphs, the type of graph best suited to represent various sets of data; display the data in the graphs with proper sources, titles, and labels, and appropriate scales; and justify their choice of graphs",
+    "band": "5",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "create an infographic about a data set, representing the data in appropriate ways, including in relative-frequency tables and stacked-bar graphs, and incorporating any other relevant information that helps to tell a story about the data",
+    "band": "5",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "determine the mean and the median and identify the mode(s), if any, for various data sets involving whole numbers and decimal numbers, and explain what each of these measures indicates about the data",
+    "band": "5",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.6",
+    "strand": "D",
+    "desc": "analyse different sets of data presented in various ways, including in stacked-bar graphs and in misleading graphs, by asking and answering questions about the data, challenging preconceived notions, and drawing conclusions, then make convincing arguments and informed decisions",
+    "band": "5",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "use fractions to express the probability of events happening, represent this probability on a probability line, and use it to make predictions and informed decisions",
+    "band": "5",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "determine and compare the theoretical and experimental probabilities of an event happening",
+    "band": "5",
+    "overall": "Data"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "desc": "identify geometric properties of triangles, and construct different types of triangles when given side or angle measurements",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.2",
+    "strand": "E",
+    "desc": "identify and construct congruent triangles, rectangles, and parallelograms",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.3",
+    "strand": "E",
+    "desc": "draw top, front, and side views of objects, and match drawings with objects",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.4",
+    "strand": "E",
+    "desc": "plot and read coordinates in the first quadrant of a Cartesian plane using various scales, and describe the translations that move a point from one coordinate to another",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.5",
+    "strand": "E",
+    "desc": "describe and perform translations, reflections, and rotations up to 180° on a grid, and predict the results of these transformations",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "desc": "use appropriate metric units to estimate and measure length, area, mass, and capacity",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "desc": "solve problems that involve converting larger metric units into smaller ones, and describe the base ten relationships among metric units",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "desc": "compare angles and determine their relative size by matching them and by measuring them using appropriate non-standard units",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.4",
+    "strand": "E",
+    "desc": "explain how protractors work, use them to measure and construct angles up to 180°, and use benchmark angles to estimate the size of other angles",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.5",
+    "strand": "E",
+    "desc": "use the area relationships among rectangles, parallelograms, and triangles to develop the formulas for the area of a parallelogram and the area of a triangle, and solve related problems",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.6",
+    "strand": "E",
+    "desc": "show that two-dimensional shapes with the same area can have different perimeters, and solve related problems",
+    "band": "5",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "F1.1",
+    "strand": "F",
+    "desc": "describe several ways money can be transferred among individuals, organizations, and businesses",
+    "band": "5",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.2",
+    "strand": "F",
+    "desc": "estimate and calculate the cost of transactions involving multiple items priced in dollars and cents, including sales tax, using various strategies",
+    "band": "5",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.3",
+    "strand": "F",
+    "desc": "design sample basic budgets to manage finances for various earning and spending scenarios",
+    "band": "5",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.4",
+    "strand": "F",
+    "desc": "explain the concepts of credit and debt, and describe how financial decisions may be impacted by each",
+    "band": "5",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.5",
+    "strand": "F",
+    "desc": "calculate unit rates for various goods and services, and identify which rates offer the best value",
+    "band": "5",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.6",
+    "strand": "F",
+    "desc": "describe the types of taxes that are collected by the different levels of government in Canada, and explain how tax revenue is used to provide services in the community",
+    "band": "5",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "read and represent whole numbers up to and including one million, using appropriate tools and strategies, and describe various ways they are used in everyday life",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "read and represent integers, using a variety of tools and strategies, including horizontal and vertical number lines",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "compare and order integers, decimal numbers, and fractions, separately and in combination, in various contexts",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "read, represent, compare, and order decimal numbers up to thousandths, in various contexts",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.5",
+    "strand": "B",
+    "desc": "round decimal numbers, both terminating and repeating, to the nearest tenth, hundredth, or whole number, as applicable, in various contexts",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.6",
+    "strand": "B",
+    "desc": "describe relationships and show equivalences among fractions and decimal numbers up to thousandths, using appropriate tools and drawings, in various contexts",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use the properties of operations, and the relationships between operations, to solve problems involving whole numbers, decimal numbers, fractions, ratios, rates, and whole number percents, including those requiring multiple steps or multiple operations",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "understand the divisibility rules and use them to determine whether numbers are divisible by 2, 3, 4, 5, 6, 8, 9, and 10",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "use mental math strategies to calculate percents of whole numbers, including 1%, 5%, 10%, 15%, 25%, and 50%, and explain the strategies used",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.4",
+    "strand": "B",
+    "desc": "represent and solve problems involving the addition and subtraction of whole numbers and decimal numbers, using estimation and algorithms",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.5",
+    "strand": "B",
+    "desc": "add and subtract fractions with like and unlike denominators, using appropriate tools, in various contexts",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.6",
+    "strand": "B",
+    "desc": "represent composite numbers as a product of their prime factors, including through the use of factor trees",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.7",
+    "strand": "B",
+    "desc": "represent and solve problems involving the multiplication of three-digit whole numbers by decimal tenths, using algorithms",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.8",
+    "strand": "B",
+    "desc": "represent and solve problems involving the division of three-digit whole numbers by decimal tenths, using appropriate tools, strategies, and algorithms, and expressing remainders as appropriate",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.9",
+    "strand": "B",
+    "desc": "multiply whole numbers by proper fractions, using appropriate tools and strategies",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.10",
+    "strand": "B",
+    "desc": "divide whole numbers by proper fractions, using appropriate tools and strategies",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.11",
+    "strand": "B",
+    "desc": "represent and solve problems involving the division of decimal numbers up to thousandths by whole numbers up to 10, using appropriate tools and strategies",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.12",
+    "strand": "B",
+    "desc": "solve problems involving ratios, including percents and rates, using appropriate tools and strategies",
+    "band": "6",
+    "overall": "Number"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "identify and describe repeating, growing, and shrinking patterns, including patterns found in real-life contexts, and specify which growing patterns are linear",
+    "band": "6",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "create and translate repeating, growing, and shrinking patterns using various representations, including tables of values, graphs, and, for linear growing patterns, algebraic expressions and equations",
+    "band": "6",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "determine pattern rules and use them to extend patterns, make and justify predictions, and identify missing elements in repeating, growing, and shrinking patterns, and use algebraic representations of the pattern rules to solve for unknown values in linear growing patterns",
+    "band": "6",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "create and describe patterns to illustrate relationships among whole numbers and decimal numbers",
+    "band": "6",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "add monomials with a degree of 1 that involve whole numbers, using tools",
+    "band": "6",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "evaluate algebraic expressions that involve whole numbers and decimal tenths",
+    "band": "6",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "solve equations that involve multiple terms and whole numbers in various contexts, and verify solutions",
+    "band": "6",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.4",
+    "strand": "C",
+    "desc": "solve inequalities that involve two operations and whole numbers up to 100, and verify and graph the solutions",
+    "band": "6",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "solve problems and create computational representations of mathematical situations by writing and executing efficient code, including code that involves conditional statements and other control structures",
+    "band": "6",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "read and alter existing code, including code that involves conditional statements and other control structures, and describe how changes to the code affect the outcomes and the efficiency of the code",
+    "band": "6",
+    "overall": "Algebra"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "describe the difference between discrete and continuous data, and provide examples of each",
+    "band": "6",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "collect qualitative data and discrete and continuous quantitative data to answer questions of interest about a population, and organize the sets of data as appropriate, including using intervals",
+    "band": "6",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "select from among a variety of graphs, including histograms and broken-line graphs, the type of graph best suited to represent various sets of data; display the data in the graphs with proper sources, titles, and labels, and appropriate scales; and justify their choice of graphs",
+    "band": "6",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "create an infographic about a data set, representing the data in appropriate ways, including in tables, histograms, and broken-line graphs, and incorporating any other relevant information that helps to tell a story about the data",
+    "band": "6",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "determine the range as a measure of spread and the measures of central tendency for various data sets, and use this information to compare two or more data sets",
+    "band": "6",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.6",
+    "strand": "D",
+    "desc": "analyse different sets of data presented in various ways, including in histograms and broken- line graphs and in misleading graphs, by asking and answering questions about the data, challenging preconceived notions, and drawing conclusions, then make convincing arguments and informed decisions",
+    "band": "6",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "use fractions, decimals, and percents to express the probability of events happening, represent this probability on a probability line, and use it to make predictions and informed decisions",
+    "band": "6",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "determine and compare the theoretical and experimental probabilities of two independent events happening",
+    "band": "6",
+    "overall": "Data"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "desc": "create lists of the geometric properties of various types of quadrilaterals, including the properties of the diagonals, rotational symmetry, and line symmetry",
+    "band": "6",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.2",
+    "strand": "E",
+    "desc": "construct three-dimensional objects when given their top, front, and side views",
+    "band": "6",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.3",
+    "strand": "E",
+    "desc": "plot and read coordinates in all four quadrants of a Cartesian plane, and describe the translations that move a point from one coordinate to another",
+    "band": "6",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.4",
+    "strand": "E",
+    "desc": "describe and perform combinations of translations, reflections, and rotations up to 360° on a grid, and predict the results of these transformations",
+    "band": "6",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "desc": "measure length, area, mass, and capacity using the appropriate metric units, and solve problems that require converting smaller units to larger ones and vice versa",
+    "band": "6",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "desc": "use a protractor to measure and construct angles up to 360°, and state the relationship between angles that are measured clockwise and those that are measured counterclockwise",
+    "band": "6",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "desc": "use the properties of supplementary angles, complementary angles, opposite angles, and interior and exterior angles to solve for unknown angle measures",
+    "band": "6",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.4",
+    "strand": "E",
+    "desc": "determine the areas of trapezoids, rhombuses, kites, and composite polygons by decomposing them into shapes with known areas",
+    "band": "6",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.5",
+    "strand": "E",
+    "desc": "create and use nets to demonstrate the relationship between the faces of prisms and pyramids and their surface areas",
+    "band": "6",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.6",
+    "strand": "E",
+    "desc": "determine the surface areas of prisms and pyramids by calculating the areas of their two- dimensional faces and adding them together",
+    "band": "6",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "F1.1",
+    "strand": "F",
+    "desc": "describe the advantages and disadvantages of various methods of payment that can be used to purchase goods and services",
+    "band": "6",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.2",
+    "strand": "F",
+    "desc": "identify different types of financial goals, including earning and saving goals, and outline some key steps in achieving them",
+    "band": "6",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.3",
+    "strand": "F",
+    "desc": "identify and describe various factors that may help or interfere with reaching financial goals",
+    "band": "6",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.4",
+    "strand": "F",
+    "desc": "explain the concept of interest rates, and identify types of interest rates and fees associated with different accounts and loans offered by various banks and other financial institutions",
+    "band": "6",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.5",
+    "strand": "F",
+    "desc": "describe trading, lending, borrowing, and donating as different ways to distribute financial and other resources among individuals and organizations",
+    "band": "6",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "represent and compare whole numbers up to and including one billion, including in expanded form using powers of ten, and describe various ways they are used in everyday life",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "identify and represent perfect squares, and determine their square roots, in various contexts",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "read, represent, compare, and order rational numbers, including positive and negative fractions and decimal numbers to thousandths, in various contexts",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "use equivalent fractions to simplify fractions, when appropriate, in various contexts",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.5",
+    "strand": "B",
+    "desc": "generate fractions and decimal numbers between any two quantities",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.6",
+    "strand": "B",
+    "desc": "round decimal numbers to the nearest tenth, hundredth, or whole number, as applicable, in various contexts",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.7",
+    "strand": "B",
+    "desc": "convert between fractions, decimal numbers, and percents, in various contexts",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use the properties and order of operations, and the relationships between operations, to solve problems involving whole numbers, decimal numbers, fractions, ratios, rates, and percents, including those requiring multiple steps or multiple operations",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "understand and recall commonly used percents, fractions, and decimal equivalents",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "use mental math strategies to increase and decrease a whole number by 1%, 5%, 10%, 25%, 50%, and 100%, and explain the strategies used",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.4",
+    "strand": "B",
+    "desc": "use objects, diagrams, and equations to represent, describe, and solve situations involving addition and subtraction of integers",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.5",
+    "strand": "B",
+    "desc": "add and subtract fractions, including by creating equivalent fractions, in various contexts",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.6",
+    "strand": "B",
+    "desc": "determine the greatest common factor for a variety of whole numbers up to 144 and the lowest common multiple for two and three whole numbers",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.7",
+    "strand": "B",
+    "desc": "evaluate and express repeated multiplication of whole numbers using exponential notation, in various contexts",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.8",
+    "strand": "B",
+    "desc": "multiply and divide fractions by fractions, using tools in various contexts",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.9",
+    "strand": "B",
+    "desc": "multiply and divide decimal numbers by decimal numbers, in various contexts",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.10",
+    "strand": "B",
+    "desc": "identify proportional and non-proportional situations and apply proportional reasoning to solve problems",
+    "band": "7",
+    "overall": "Number"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "identify and compare a variety of repeating, growing, and shrinking patterns, including patterns found in real-life contexts, and compare linear growing patterns on the basis of their constant rates and initial values",
+    "band": "7",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "create and translate repeating, growing, and shrinking patterns involving whole numbers and decimal numbers using various representations, including algebraic expressions and equations for linear growing patterns",
+    "band": "7",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "determine pattern rules and use them to extend patterns, make and justify predictions, and identify missing elements in repeating, growing, and shrinking patterns involving whole numbers and decimal numbers, and use algebraic representations of the pattern rules to solve for unknown values in linear growing patterns",
+    "band": "7",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "create and describe patterns to illustrate relationships among integers",
+    "band": "7",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "add and subtract monomials with a degree of 1 that involve whole numbers, using tools",
+    "band": "7",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "evaluate algebraic expressions that involve whole numbers and decimal numbers",
+    "band": "7",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "solve equations that involve multiple terms, whole numbers, and decimal numbers in various contexts, and verify solutions",
+    "band": "7",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.4",
+    "strand": "C",
+    "desc": "solve inequalities that involve multiple terms and whole numbers, and verify and graph the solutions",
+    "band": "7",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "solve problems and create computational representations of mathematical situations by writing and executing efficient code, including code that involves events influenced by a defined count and/or sub-program and other control structures",
+    "band": "7",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "read and alter existing code, including code that involves events influenced by a defined count and/or sub-program and other control structures, and describe how changes to the code affect the outcomes and the efficiency of the code",
+    "band": "7",
+    "overall": "Algebra"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "explain why percentages are used to represent the distribution of a variable for a population or sample in large sets of data, and provide examples",
+    "band": "7",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "collect qualitative data and discrete and continuous quantitative data to answer questions of interest, and organize the sets of data as appropriate, including using percentages",
+    "band": "7",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "select from among a variety of graphs, including circle graphs, the type of graph best suited to represent various sets of data; display the data in the graphs with proper sources, titles, and labels, and appropriate scales; and justify their choice of graphs",
+    "band": "7",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "create an infographic about a data set, representing the data in appropriate ways, including in tables and circle graphs, and incorporating any other relevant information that helps to tell a story about the data",
+    "band": "7",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "determine the impact of adding or removing data from a data set on a measure of central tendency, and describe how these changes alter the shape and distribution of the data",
+    "band": "7",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.6",
+    "strand": "D",
+    "desc": "analyse different sets of data presented in various ways, including in circle graphs and in misleading graphs, by asking and answering questions about the data, challenging preconceived notions, and drawing conclusions, then make convincing arguments and informed decisions",
+    "band": "7",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "describe the difference between independent and dependent events, and explain how their probabilities differ, providing examples",
+    "band": "7",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "determine and compare the theoretical and experimental probabilities of two independent events happening and of two dependent events happening",
+    "band": "7",
+    "overall": "Data"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "desc": "describe and classify cylinders, pyramids, and prisms according to their geometric properties, including plane and rotational symmetry",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.2",
+    "strand": "E",
+    "desc": "draw top, front, and side views, as well as perspective views, of objects and physical spaces, using appropriate scales",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.3",
+    "strand": "E",
+    "desc": "perform dilations and describe the similarity between the image and the original shape",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.4",
+    "strand": "E",
+    "desc": "describe and perform translations, reflections, and rotations on a Cartesian plane, and predict the results of these transformations",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "desc": "describe the differences and similarities between volume and capacity, and apply the relationship between millilitres (mL) and cubic centimetres (cm3) to solve problems",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "desc": "solve problems involving perimeter, area, and volume that require converting from one metric unit of measurement to another",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "desc": "use the relationships between the radius, diameter, and circumference of a circle to explain the formula for finding the circumference and to solve related problems",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.4",
+    "strand": "E",
+    "desc": "construct circles when given the radius, diameter, or circumference",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.5",
+    "strand": "E",
+    "desc": "show the relationships between the radius, diameter, and area of a circle, and use these relationships to explain the formula for measuring the area of a circle and to solve related problems",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.6",
+    "strand": "E",
+    "desc": "represent cylinders as nets and determine their surface area by adding the areas of their parts",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.7",
+    "strand": "E",
+    "desc": "show that the volume of a prism or cylinder can be determined by multiplying the area of its base by its height, and apply this relationship to find the area of the base, volume, and height of prisms and cylinders when given two of the three measurements",
+    "band": "7",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "F1.1",
+    "strand": "F",
+    "desc": "identify and compare exchange rates, and convert foreign currencies to Canadian dollars and vice versa",
+    "band": "7",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.2",
+    "strand": "F",
+    "desc": "identify and describe various reliable sources of information that can help with planning for and reaching a financial goal",
+    "band": "7",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.3",
+    "strand": "F",
+    "desc": "create, track, and adjust sample budgets designed to meet longer-term financial goals for various scenarios",
+    "band": "7",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.4",
+    "strand": "F",
+    "desc": "identify various societal and personal factors that may influence financial decision making, and describe the effects that each might have",
+    "band": "7",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.5",
+    "strand": "F",
+    "desc": "explain how interest rates can impact savings, investments, and the cost of borrowing to pay for goods and services over time",
+    "band": "7",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.6",
+    "strand": "F",
+    "desc": "compare interest rates and fees for different accounts and loans offered by various financial institutions, and determine the best option for different scenarios",
+    "band": "7",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "B1.1",
+    "strand": "B",
+    "desc": "represent and compare very large and very small numbers, including through the use of scientific notation, and describe various ways they are used in everyday life",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.2",
+    "strand": "B",
+    "desc": "describe, compare, and order numbers in the real number system (rational and irrational numbers), separately and in combination, in various contexts",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.3",
+    "strand": "B",
+    "desc": "estimate and calculate square roots, in various contexts",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B1.4",
+    "strand": "B",
+    "desc": "use fractions, decimal numbers, and percents, including percents of more than 100% or less than 1%, interchangeably and flexibly to solve a variety of problems",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.1",
+    "strand": "B",
+    "desc": "use the properties and order of operations, and the relationships between operations, to solve problems involving rational numbers, ratios, rates, and percents, including those requiring multiple steps or multiple operations",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.2",
+    "strand": "B",
+    "desc": "understand and recall commonly used square numbers and their square roots",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.3",
+    "strand": "B",
+    "desc": "use mental math strategies to multiply and divide whole numbers and decimal numbers up to thousandths by powers of ten, and explain the strategies used",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.4",
+    "strand": "B",
+    "desc": "add and subtract integers, using appropriate strategies, in various contexts",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.5",
+    "strand": "B",
+    "desc": "add and subtract fractions, using appropriate strategies, in various contexts",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.6",
+    "strand": "B",
+    "desc": "multiply and divide fractions by fractions, as well as by whole numbers and mixed numbers, in various contexts",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.7",
+    "strand": "B",
+    "desc": "multiply and divide integers, using appropriate strategies, in various contexts",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "B2.8",
+    "strand": "B",
+    "desc": "compare proportional situations and determine unknown values in proportional situations, and apply proportional reasoning to solve problems in various contexts",
+    "band": "8",
+    "overall": "Number"
+  },
+  {
+    "code": "C1.1",
+    "strand": "C",
+    "desc": "identify and compare a variety of repeating, growing, and shrinking patterns, including patterns found in real-life contexts, and compare linear growing and shrinking patterns on the basis of their constant rates and initial values",
+    "band": "8",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.2",
+    "strand": "C",
+    "desc": "create and translate repeating, growing, and shrinking patterns involving rational numbers using various representations, including algebraic expressions and equations for linear growing and shrinking patterns",
+    "band": "8",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.3",
+    "strand": "C",
+    "desc": "determine pattern rules and use them to extend patterns, make and justify predictions, and identify missing elements in growing and shrinking patterns involving rational numbers, and use algebraic representations of the pattern rules to solve for unknown values in linear growing and shrinking patterns",
+    "band": "8",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C1.4",
+    "strand": "C",
+    "desc": "create and describe patterns to illustrate relationships among rational numbers",
+    "band": "8",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.1",
+    "strand": "C",
+    "desc": "add and subtract monomials with a degree of 1, and add binomials with a degree of 1 that involve integers, using tools",
+    "band": "8",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.2",
+    "strand": "C",
+    "desc": "evaluate algebraic expressions that involve rational numbers",
+    "band": "8",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.3",
+    "strand": "C",
+    "desc": "solve equations that involve multiple terms, integers, and decimal numbers in various contexts, and verify solutions",
+    "band": "8",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C2.4",
+    "strand": "C",
+    "desc": "solve inequalities that involve integers, and verify and graph the solutions",
+    "band": "8",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.1",
+    "strand": "C",
+    "desc": "solve problems and create computational representations of mathematical situations by writing and executing code, including code that involves the analysis of data in order to inform and communicate decisions",
+    "band": "8",
+    "overall": "Algebra"
+  },
+  {
+    "code": "C3.2",
+    "strand": "C",
+    "desc": "read and alter existing code involving the analysis of data in order to inform and communicate decisions, and describe how changes to the code affect the outcomes and the efficiency of the code",
+    "band": "8",
+    "overall": "Algebra"
+  },
+  {
+    "code": "D1.1",
+    "strand": "D",
+    "desc": "identify situations involving one-variable data and situations involving two-variable data, and explain when each type of data is needed",
+    "band": "8",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.2",
+    "strand": "D",
+    "desc": "collect continuous data to answer questions of interest involving two variables, and organize the data sets as appropriate in a table of values",
+    "band": "8",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.3",
+    "strand": "D",
+    "desc": "select from among a variety of graphs, including scatter plots, the type of graph best suited to represent various sets of data; display the data in the graphs with proper sources, titles, and labels, and appropriate scales; and justify their choice of graphs",
+    "band": "8",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.4",
+    "strand": "D",
+    "desc": "create an infographic about a data set, representing the data in appropriate ways, including in tables and scatter plots, and incorporating any other relevant information that helps to tell a story about the data",
+    "band": "8",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.5",
+    "strand": "D",
+    "desc": "use mathematical language, including the terms “strong”, “weak”, “none”, “positive”, and “negative”, to describe the relationship between two variables for various data sets with and without outliers",
+    "band": "8",
+    "overall": "Data"
+  },
+  {
+    "code": "D1.6",
+    "strand": "D",
+    "desc": "analyse different sets of data presented in various ways, including in scatter plots and in misleading graphs, by asking and answering questions about the data, challenging preconceived notions, and drawing conclusions, then make convincing arguments and informed decisions",
+    "band": "8",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.1",
+    "strand": "D",
+    "desc": "solve various problems that involve probability, using appropriate tools and strategies, including Venn and tree diagrams",
+    "band": "8",
+    "overall": "Data"
+  },
+  {
+    "code": "D2.2",
+    "strand": "D",
+    "desc": "determine and compare the theoretical and experimental probabilities of multiple independent events happening and of multiple dependent events happening",
+    "band": "8",
+    "overall": "Data"
+  },
+  {
+    "code": "E1.1",
+    "strand": "E",
+    "desc": "identify geometric properties of tessellating shapes and identify the transformations that occur in the tessellations",
+    "band": "8",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.2",
+    "strand": "E",
+    "desc": "make objects and models using appropriate scales, given their top, front, and side views or their perspective views",
+    "band": "8",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.3",
+    "strand": "E",
+    "desc": "use scale drawings to calculate actual lengths and areas, and reproduce scale drawings at different ratios",
+    "band": "8",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E1.4",
+    "strand": "E",
+    "desc": "describe and perform translations, reflections, rotations, and dilations on a Cartesian plane, and predict the results of these transformations",
+    "band": "8",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.1",
+    "strand": "E",
+    "desc": "represent very large (mega, giga, tera) and very small (micro, nano, pico) metric units using models, base ten relationships, and exponential notation",
+    "band": "8",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.2",
+    "strand": "E",
+    "desc": "solve problems involving angle properties, including the properties of intersecting and parallel lines and of polygons",
+    "band": "8",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.3",
+    "strand": "E",
+    "desc": "solve problems involving the perimeter, circumference, area, volume, and surface area of composite two-dimensional shapes and three-dimensional objects, using appropriate formulas",
+    "band": "8",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "E2.4",
+    "strand": "E",
+    "desc": "describe the Pythagorean relationship using various geometric models, and apply the theorem to solve problems involving an unknown side length for a given right triangle",
+    "band": "8",
+    "overall": "Spatial Sense"
+  },
+  {
+    "code": "F1.1",
+    "strand": "F",
+    "desc": "describe some advantages and disadvantages of various methods of payment that can be used when dealing with multiple currencies and exchange rates",
+    "band": "8",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.2",
+    "strand": "F",
+    "desc": "create a financial plan to reach a long-term financial goal, accounting for income, expenses, and tax implications",
+    "band": "8",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.3",
+    "strand": "F",
+    "desc": "identify different ways to maintain a balanced budget, and use appropriate tools to track all income and spending, for several different scenarios",
+    "band": "8",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.4",
+    "strand": "F",
+    "desc": "determine the growth of simple and compound interest at various rates using digital tools, and explain the impact interest has on long-term financial planning",
+    "band": "8",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.5",
+    "strand": "F",
+    "desc": "compare various ways for consumers to get more value for their money when spending, including taking advantage of sales and customer loyalty and incentive programs, and determine the best choice for different scenarios",
+    "band": "8",
+    "overall": "Financial Literacy"
+  },
+  {
+    "code": "F1.6",
+    "strand": "F",
+    "desc": "compare interest rates, annual fees, and rewards and other incentives offered by various credit card companies and consumer contracts to determine the best value and the best choice for different scenarios",
+    "band": "8",
+    "overall": "Financial Literacy"
+  }
+]
