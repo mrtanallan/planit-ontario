@@ -142,14 +142,15 @@ strong { font-weight: 600; }
 </div>
 
 <script>
-let worksheetId=null, roster=[], matchedStudent=null, wsN=0;
+let worksheetId=null, shareToken=null, roster=[], matchedStudent=null, wsN=0;
 
 async function loadWorksheet(){
   const params=new URLSearchParams(window.location.search);
   worksheetId=params.get('id');
-  if(!worksheetId){showError();return;}
+  shareToken=params.get('t');
+  if(!worksheetId||!shareToken){showError();return;}
   try{
-    const res=await fetch(`/api/worksheet?id=${worksheetId}`);
+    const res=await fetch(`/api/worksheet?id=${encodeURIComponent(worksheetId)}&t=${encodeURIComponent(shareToken)}`);
     if(!res.ok){showError();return;}
     const data=await res.json();
     if(!data||!data.content){showError();return;}
@@ -408,7 +409,7 @@ async function submitWorksheet(){
   try{
     const res=await fetch('/api/worksheet',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({worksheet_id:worksheetId,student_name:name,student_id:matchedStudent?.id||null,responses:collectResponses()})
+      body:JSON.stringify({worksheet_id:worksheetId,share_token:shareToken,student_name:name,student_id:matchedStudent?.id||null,responses:collectResponses()})
     });
     if(!res.ok)throw new Error('Submit failed');
     // Hide grade picker if visible (split-grade link) and clear global state
