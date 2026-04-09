@@ -2684,7 +2684,15 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
         if (sel) sel.value = _matchingClass.id;
       }
     }
-    buildEditBlocks([...outputKeys,...answerKeyKeys], gradeDesc, subj, topic, lessonExpectations);
+    // Compute unit info for the "Part of Unit" badge (if this lesson is part of a unit)
+    const _unitInfoForBadge = (_pendingUnit && typeof _pendingIdx === 'number' && Array.isArray(_pendingUnit.lessons))
+      ? {
+          topic: _pendingUnit.topic || '',
+          lessonNumber: _pendingUnit.lessons[_pendingIdx]?.lesson_number || (_pendingIdx + 1),
+          totalLessons: _pendingUnit.lessons.length
+        }
+      : null;
+    buildEditBlocks([...outputKeys,...answerKeyKeys], gradeDesc, subj, topic, lessonExpectations, _unitInfoForBadge);
     buildShareCards(outputKeys);
     setProgress(100,'Done!');
     setTimeout(hideLoading, 400);
@@ -2728,7 +2736,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
 // ============================================================
 // BUILD EDIT BLOCKS (lesson output sections)
 // ============================================================
-function buildEditBlocks(outputs, gradeDesc, subj, topic, expectations) {
+function buildEditBlocks(outputs, gradeDesc, subj, topic, expectations, unitInfo) {
   const BLOCK_ORDER = ['lesson_plan','reading_resource','student_worksheet','assessment_rubric','answer_key','differentiation_tips'];
   outputs = [...outputs].sort((a,b) => {
     const ai=BLOCK_ORDER.findIndex(o=>a===o||a.startsWith(o+'_'));
@@ -2782,9 +2790,16 @@ function buildEditBlocks(outputs, gradeDesc, subj, topic, expectations) {
     </div>` : '';
 
   const c = document.getElementById('editBlocks');
+  // Optional "Part of Unit" badge — shown when this lesson is part of a unit plan.
+  // Supplied by both fresh generate() (from _pendingUnit) and loadLesson() (from DB).
+  // Shape: { topic, lessonNumber, totalLessons } or null/undefined.
+  const unitBadgeHtml = (unitInfo && unitInfo.topic)
+    ? `<span style="background:#8A3A1F;color:var(--cream);padding:2px 9px;border-radius:10px;font-family:DM Mono,monospace;font-size:.62rem;display:inline-flex;align-items:center;gap:4px;" title="${escHTML(unitInfo.topic)}">📚 Unit: ${escHTML(unitInfo.topic)}${unitInfo.lessonNumber && unitInfo.totalLessons ? ` · Lesson ${unitInfo.lessonNumber}/${unitInfo.totalLessons}` : ''}</span>`
+    : '';
   c.innerHTML = `<div style="display:flex;align-items:center;gap:9px;margin-bottom:14px;flex-wrap:wrap;">
     <span style="font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;">Generated Lesson</span>
     <span style="background:var(--amber-l);border:1px solid #E8C98A;color:var(--amber);padding:2px 9px;border-radius:10px;font-family:DM Mono,monospace;font-size:.62rem;">${escHTML(gradeDesc)}</span>
+    ${unitBadgeHtml}
     <span style="font-family:DM Mono,monospace;font-size:.62rem;color:var(--muted);">${escHTML((subj||'').replace('Language / Literacy','Language'))} · ${escHTML(topic)}</span>
   </div>${expHtml}`;
 
@@ -7485,7 +7500,31 @@ async function loadLesson(id) {
   const gradeDesc = (lesson.grades||[]).length > 1 ? (lesson.grades||[]).join(' / ')+' split class' : (lesson.grades||[])[0]||'';
   const displayKeys = Object.keys(content).filter(k => k!=='expectations' && !k.startsWith('answer_key') && !k.startsWith('_'));
   const answerKeyKeys = Object.keys(content).filter(k => k.startsWith('answer_key'));
-  buildEditBlocks([...displayKeys, ...answerKeyKeys], gradeDesc, lesson.subject||'', lesson.topic||'', lesson.expectations||[]);
+  // Resolve unit info for the "Part of Unit" badge when this lesson was saved from a unit card
+  let _loadUnitInfo = null;
+  if (lesson.unit_plan_id) {
+    let unit = savedUnitPlans.find(u => u.id === lesson.unit_plan_id);
+    // Fallback: savedUnitPlans may be empty if user hasn't visited the Units tab yet.
+    // Fetch just the one unit we need.
+    if (!unit) {
+      try {
+        const { data } = await db.from('unit_plans')
+          .select('id, topic, lessons')
+          .eq('id', lesson.unit_plan_id)
+          .single();
+        if (data) unit = data;
+      } catch(e) { /* non-fatal — badge just won't show */ }
+    }
+    if (unit && Array.isArray(unit.lessons)) {
+      const idx = unit.lessons.findIndex(l => l.title && lesson.topic && l.title.toLowerCase() === lesson.topic.toLowerCase());
+      _loadUnitInfo = {
+        topic: unit.topic || '',
+        lessonNumber: idx >= 0 ? (unit.lessons[idx]?.lesson_number || (idx + 1)) : null,
+        totalLessons: unit.lessons.length
+      };
+    }
+  }
+  buildEditBlocks([...displayKeys, ...answerKeyKeys], gradeDesc, lesson.subject||'', lesson.topic||'', lesson.expectations||[], _loadUnitInfo);
   buildShareCards(displayKeys.filter(k => SHAREABLE.includes(k)));
   unlock();
   document.getElementById('tr-plan').checked = true;
@@ -7877,20 +7916,36 @@ function renderUnitClassSelector() {
   if (activeClassId) autoFillUnitGradesFromClass();
 }
 
-function onUnitClassSelect() {
+async function onUnitClassSelect() {
   const sel = document.getElementById('unitClassSelector');
   if (!sel) return;
   if (!sel.value) {
+    activeClassId = null;
     document.querySelectorAll('#unitGradePillContainer .grade-pill-btn').forEach(b => b.classList.remove('selected'));
     return;
   }
-  const classStudents = students.filter(s => s.classId === sel.value);
-  const gradeOrder = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
-  const uniqueGrades = [...new Set(classStudents.map(s => s.grade))].filter(Boolean)
-    .sort((a,b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b));
-  document.querySelectorAll('#unitGradePillContainer .grade-pill-btn').forEach(b => {
-    b.classList.toggle('selected', uniqueGrades.includes(b.dataset.grade));
-  });
+  // Use the same class-switching pipeline as the Plan tab so students are
+  // re-queried from DB, activeClassId is updated, and everything stays in sync.
+  // switchClass() calls autoFillGradesFromClass() (for #gradePillContainer),
+  // then we fill the unit-specific pill container as well.
+  await switchClass(sel.value);
+  autoFillUnitGradesFromClass();
+  // Fallback: if no students in the class (or no grades set on students),
+  // try to parse a grade from the class name (e.g. "Gr. 3 Class" → "Grade 3").
+  const anySelected = document.querySelector('#unitGradePillContainer .grade-pill-btn.selected');
+  if (!anySelected) {
+    const cls = classes.find(c => c.id === sel.value);
+    if (cls && cls.name) {
+      const match = cls.name.match(/\b(?:Gr(?:ade)?\.?\s*)(K|[1-8])\b/i) || cls.name.match(/\b(Kindergarten)\b/i);
+      if (match) {
+        const gradeStr = match[1].toUpperCase() === 'K' ? 'Kindergarten'
+                       : /kindergarten/i.test(match[1]) ? 'Kindergarten'
+                       : 'Grade ' + match[1];
+        const btn = document.querySelector(`#unitGradePillContainer .grade-pill-btn[data-grade="${gradeStr}"]`);
+        if (btn) btn.classList.add('selected');
+      }
+    }
+  }
 }
 
 function autoFillUnitGradesFromClass() {
@@ -8573,6 +8628,47 @@ async function expandUnitLesson(unitId, subject, gradesStr, title, lessonIndex) 
     const btn = document.querySelector(`#gradePillContainer .grade-pill-btn[data-grade="${g}"]`);
     if (btn) btn.classList.add('selected');
   });
+
+  // Try to also sync the Class dropdown. We don't store class_id on unit_plans,
+  // so we match heuristically: a class whose name mentions any of the unit's grades
+  // (e.g. "Gr. 3 Class" matches a Grade 3 unit, "Gr. 5/6 Literacy" matches a 5/6 unit).
+  // Prefer the currently-active class if it already matches; otherwise pick the first
+  // matching class. If nothing matches, leave the dropdown untouched — don't mislead.
+  try {
+    const classMatchesGrade = (cls, g) => {
+      if (!cls || !cls.name) return false;
+      const n = cls.name;
+      const m = g.match(/\b(K|[1-8])\b/) || (g === 'Kindergarten' ? ['K','K'] : null);
+      if (!m) return false;
+      const gradeNum = m[1];
+      if (gradeNum === 'K') return /kindergarten|\bK\b/i.test(n);
+      // Match "Gr. 5", "Gr 5", "Grade 5", "5/6", "G5", but avoid matching "15"
+      const re = new RegExp(`(?:^|[^0-9])${gradeNum}(?:[^0-9]|$)`);
+      return re.test(n);
+    };
+    const classMatches = cls => grades.some(g => classMatchesGrade(cls, g));
+    const currentActive = classes.find(c => c.id === activeClassId);
+    const chosenClass = (currentActive && classMatches(currentActive))
+      ? currentActive
+      : classes.find(classMatches);
+    if (chosenClass && chosenClass.id !== activeClassId) {
+      // Update dropdown + switch class so students + activeClassId are correct
+      const classSel = document.getElementById('classSelector');
+      if (classSel) classSel.value = chosenClass.id;
+      await switchClass(chosenClass.id);
+      // switchClass calls autoFillGradesFromClass which may override pills based on
+      // the class's students — re-apply the unit's grades to ensure they match the unit.
+      document.querySelectorAll('#gradePillContainer .grade-pill-btn').forEach(btn => btn.classList.remove('selected'));
+      grades.forEach(g => {
+        const btn = document.querySelector(`#gradePillContainer .grade-pill-btn[data-grade="${g}"]`);
+        if (btn) btn.classList.add('selected');
+      });
+    } else if (chosenClass && chosenClass.id === activeClassId) {
+      // Already active — just make sure the dropdown reflects it
+      const classSel = document.getElementById('classSelector');
+      if (classSel) classSel.value = chosenClass.id;
+    }
+  } catch(e) { /* non-fatal — fall through with whatever class was active */ }
 
   // Directly set the hidden grade selects — don't rely on .click() / syncGradePillsToSelects
   const gradeSelectIds = ['gA','gB','gC','gD','gE','gF'];
