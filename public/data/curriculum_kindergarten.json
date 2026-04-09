@@ -1,0 +1,716 @@
+[
+  {
+    "code": "A1.1",
+    "strand": "A",
+    "desc": "listen and respond",
+    "band": "K",
+    "overall": "Oral and Non-Verbal Communication"
+  },
+  {
+    "code": "A1.2",
+    "strand": "A",
+    "desc": "use language conventions and non-verbal communication",
+    "band": "K",
+    "overall": "Oral and Non-Verbal Communication"
+  },
+  {
+    "code": "A1.3",
+    "strand": "A",
+    "desc": "understand and use new words and develop morphological awareness",
+    "band": "K",
+    "overall": "Oral and Non-Verbal Communication"
+  },
+  {
+    "code": "A2.1",
+    "strand": "A",
+    "desc": "name upper- and lowercase letters (both in and out of order)",
+    "band": "K",
+    "overall": "Foundations for Reading and Writing"
+  },
+  {
+    "code": "A2.2",
+    "strand": "A",
+    "desc": "use proper formation patterns to write letters",
+    "band": "K",
+    "overall": "Foundations for Reading and Writing"
+  },
+  {
+    "code": "A2.3",
+    "strand": "A",
+    "desc": "isolate and blend phonemes, and segment simple words into phonemes",
+    "band": "K",
+    "overall": "Foundations for Reading and Writing"
+  },
+  {
+    "code": "A2.4",
+    "strand": "A",
+    "desc": "identify simple grapheme-phoneme correspondences",
+    "band": "K",
+    "overall": "Foundations for Reading and Writing"
+  },
+  {
+    "code": "A2.5",
+    "strand": "A",
+    "desc": "read and spell simple words using phonemic awareness and phonics knowledge",
+    "band": "K",
+    "overall": "Foundations for Reading and Writing"
+  },
+  {
+    "code": "A2.6",
+    "strand": "A",
+    "desc": "read short sentences fluently, including those with explicitly taught words, with increasing accuracy, to support comprehension",
+    "band": "K",
+    "overall": "Foundations for Reading and Writing"
+  },
+  {
+    "code": "A3.1",
+    "strand": "A",
+    "desc": "identify purposes for choosing different texts",
+    "band": "K",
+    "overall": "Understanding and Responding to Texts"
+  },
+  {
+    "code": "A3.2",
+    "strand": "A",
+    "desc": "apply knowledge of words, sentence structure, and punctuation",
+    "band": "K",
+    "overall": "Understanding and Responding to Texts"
+  },
+  {
+    "code": "A3.3",
+    "strand": "A",
+    "desc": "read and understand simple texts, using background knowledge and beginning knowledge of words, grammar, and sentence structure",
+    "band": "K",
+    "overall": "Understanding and Responding to Texts"
+  },
+  {
+    "code": "A3.4",
+    "strand": "A",
+    "desc": "express personal thoughts and feelings about texts",
+    "band": "K",
+    "overall": "Understanding and Responding to Texts"
+  },
+  {
+    "code": "A3.5",
+    "strand": "A",
+    "desc": "make predictions about unfamiliar texts, using background knowledge",
+    "band": "K",
+    "overall": "Understanding and Responding to Texts"
+  },
+  {
+    "code": "A3.6",
+    "strand": "A",
+    "desc": "make connections to a variety of texts",
+    "band": "K",
+    "overall": "Understanding and Responding to Texts"
+  },
+  {
+    "code": "A4.1",
+    "strand": "A",
+    "desc": "use knowledge of letters, words, and sentences, with pictures and symbols, to create simple texts",
+    "band": "K",
+    "overall": "Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "A4.2",
+    "strand": "A",
+    "desc": "use classroom writing resources to support creating simple texts",
+    "band": "K",
+    "overall": "Expressing Ideas and Creating Texts"
+  },
+  {
+    "code": "A6.1",
+    "strand": "A",
+    "desc": "explore what numbers are used for",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.2",
+    "strand": "A",
+    "desc": "understand when counting forward, the quantity gets bigger and when counting backward, the quantity gets smaller",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.3",
+    "strand": "A",
+    "desc": "identify and write numbers to 20",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.4",
+    "strand": "A",
+    "desc": "subitize quantities to 5",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.5",
+    "strand": "A",
+    "desc": "compose and decompose quantities to 10",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.6",
+    "strand": "A",
+    "desc": "understand the concept of more than, the same (equal), or less than",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.7",
+    "strand": "A",
+    "desc": "estimate the number of objects in small collections and check by counting",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.8",
+    "strand": "A",
+    "desc": "count to 20 by 1s, starting from any number",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.9",
+    "strand": "A",
+    "desc": "solve equal-share problems using concrete materials",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.10",
+    "strand": "A",
+    "desc": "describe relationships between any two numbers from 0 to 20",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.11",
+    "strand": "A",
+    "desc": "recall addition facts to 5 and related subtraction facts",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.12",
+    "strand": "A",
+    "desc": "solve situations involving addition and subtraction to 10 using concrete materials",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A6.13",
+    "strand": "A",
+    "desc": "identify and explore the value of Canadian coins to 25¢ and coins and bills to $10",
+    "band": "K",
+    "overall": "Number Sense and Operations"
+  },
+  {
+    "code": "A7.1",
+    "strand": "A",
+    "desc": "identify, describe, and create patterns",
+    "band": "K",
+    "overall": "Patterns and Relationships"
+  },
+  {
+    "code": "A7.2",
+    "strand": "A",
+    "desc": "identify the core of a pattern and describe why it is important",
+    "band": "K",
+    "overall": "Patterns and Relationships"
+  },
+  {
+    "code": "A7.3",
+    "strand": "A",
+    "desc": "show that patterns can be represented in different ways because the core remains the same",
+    "band": "K",
+    "overall": "Patterns and Relationships"
+  },
+  {
+    "code": "A7.4",
+    "strand": "A",
+    "desc": "extend patterns in both directions and identify any missing elements",
+    "band": "K",
+    "overall": "Patterns and Relationships"
+  },
+  {
+    "code": "A8.1",
+    "strand": "A",
+    "desc": "sort objects or data using one attribute",
+    "band": "K",
+    "overall": "Data Literacy and Probability"
+  },
+  {
+    "code": "A8.2",
+    "strand": "A",
+    "desc": "collect and record data to answer questions of interest, and display it in concrete graphs or picture graphs",
+    "band": "K",
+    "overall": "Data Literacy and Probability"
+  },
+  {
+    "code": "A8.3",
+    "strand": "A",
+    "desc": "respond to data in concrete graphs and picture graphs by interpreting it and drawing conclusions",
+    "band": "K",
+    "overall": "Data Literacy and Probability"
+  },
+  {
+    "code": "A8.4",
+    "strand": "A",
+    "desc": "describe how likely familiar events are to happen",
+    "band": "K",
+    "overall": "Data Literacy and Probability"
+  },
+  {
+    "code": "A9.1",
+    "strand": "A",
+    "desc": "identify, sort, and compare the most common two-dimensional shapes, including circle, hexagon, rhombus, and trapezoid",
+    "band": "K",
+    "overall": "Geometric and Spatial Reasoning"
+  },
+  {
+    "code": "A9.2",
+    "strand": "A",
+    "desc": "identify, sort, and compare the most common three-dimensional objects, including cube, sphere, prisms, cone, and pyramid",
+    "band": "K",
+    "overall": "Geometric and Spatial Reasoning"
+  },
+  {
+    "code": "A9.3",
+    "strand": "A",
+    "desc": "in structures they have made, identify three-dimensional objects and two-dimensional shapes",
+    "band": "K",
+    "overall": "Geometric and Spatial Reasoning"
+  },
+  {
+    "code": "A9.4",
+    "strand": "A",
+    "desc": "construct two-dimensional pictures and three-dimensional structures with matching halves",
+    "band": "K",
+    "overall": "Geometric and Spatial Reasoning"
+  },
+  {
+    "code": "A9.5",
+    "strand": "A",
+    "desc": "put two-dimensional shapes together to make other shapes, break them into smaller shapes, and put them together in different ways",
+    "band": "K",
+    "overall": "Geometric and Spatial Reasoning"
+  },
+  {
+    "code": "A9.6",
+    "strand": "A",
+    "desc": "describe basic spatial relationships and movements, and visualize objects from different perspectives",
+    "band": "K",
+    "overall": "Geometric and Spatial Reasoning"
+  },
+  {
+    "code": "A9.7",
+    "strand": "A",
+    "desc": "give and follow directions for moving from one location to another",
+    "band": "K",
+    "overall": "Geometric and Spatial Reasoning"
+  },
+  {
+    "code": "A10.1",
+    "strand": "A",
+    "desc": "describe different ways that objects can be measured",
+    "band": "K",
+    "overall": "Measurement"
+  },
+  {
+    "code": "A10.2",
+    "strand": "A",
+    "desc": "compare the length, area, mass, and capacity of objects using concrete materials",
+    "band": "K",
+    "overall": "Measurement"
+  },
+  {
+    "code": "B11.1",
+    "strand": "B",
+    "desc": "use directional and positional language to create and follow instructions involving movement",
+    "band": "K",
+    "overall": "Coding Skills"
+  },
+  {
+    "code": "B11.2",
+    "strand": "B",
+    "desc": "test and refine instructions",
+    "band": "K",
+    "overall": "Coding Skills"
+  },
+  {
+    "code": "B11.3",
+    "strand": "B",
+    "desc": "communicate and record step-by-step instructions using symbols, words, or pictures",
+    "band": "K",
+    "overall": "Coding Skills"
+  },
+  {
+    "code": "B12.1",
+    "strand": "B",
+    "desc": "state problems and pose questions",
+    "band": "K",
+    "overall": "Scientific Investigation and Engineering Design"
+  },
+  {
+    "code": "B12.2",
+    "strand": "B",
+    "desc": "make predictions and observations while exploring, investigating, and designing",
+    "band": "K",
+    "overall": "Scientific Investigation and Engineering Design"
+  },
+  {
+    "code": "B12.3",
+    "strand": "B",
+    "desc": "select materials and tools to carry out investigations and to construct models and structures",
+    "band": "K",
+    "overall": "Scientific Investigation and Engineering Design"
+  },
+  {
+    "code": "B12.4",
+    "strand": "B",
+    "desc": "draw conclusions and communicate results",
+    "band": "K",
+    "overall": "Scientific Investigation and Engineering Design"
+  },
+  {
+    "code": "B12.5",
+    "strand": "B",
+    "desc": "design, build, and test models and structures",
+    "band": "K",
+    "overall": "Scientific Investigation and Engineering Design"
+  },
+  {
+    "code": "B12.6",
+    "strand": "B",
+    "desc": "follow safety rules to help prevent injuries, including concussion, and demonstrate an understanding of the importance of these practices",
+    "band": "K",
+    "overall": "Scientific Investigation and Engineering Design"
+  },
+  {
+    "code": "B13.1",
+    "strand": "B",
+    "desc": "ask questions about and describe some natural occurrences",
+    "band": "K",
+    "overall": "Exploring Environments"
+  },
+  {
+    "code": "B13.2",
+    "strand": "B",
+    "desc": "sort and classify groups of living and non-living things",
+    "band": "K",
+    "overall": "Exploring Environments"
+  },
+  {
+    "code": "B13.3",
+    "strand": "B",
+    "desc": "compare patterns in natural and built environments",
+    "band": "K",
+    "overall": "Exploring Environments"
+  },
+  {
+    "code": "C14.1",
+    "strand": "C",
+    "desc": "act and talk with peers and adults by expressing and accepting positive messages",
+    "band": "K",
+    "overall": "Social Skills"
+  },
+  {
+    "code": "C14.2",
+    "strand": "C",
+    "desc": "show the ability to take turns",
+    "band": "K",
+    "overall": "Social Skills"
+  },
+  {
+    "code": "C14.3",
+    "strand": "C",
+    "desc": "demonstrate an awareness of ways of making and keeping friends",
+    "band": "K",
+    "overall": "Social Skills"
+  },
+  {
+    "code": "C14.4",
+    "strand": "C",
+    "desc": "use problem-solving skills in social situations",
+    "band": "K",
+    "overall": "Social Skills"
+  },
+  {
+    "code": "C15.1",
+    "strand": "C",
+    "desc": "demonstrate self-reliance and a sense of responsibility",
+    "band": "K",
+    "overall": "Self-Regulation"
+  },
+  {
+    "code": "C15.2",
+    "strand": "C",
+    "desc": "demonstrate a willingness to try new experiences and to adapt to new situations",
+    "band": "K",
+    "overall": "Self-Regulation"
+  },
+  {
+    "code": "C15.3",
+    "strand": "C",
+    "desc": "demonstrate self-motivation, initiative, and confidence in their approach to learning",
+    "band": "K",
+    "overall": "Self-Regulation"
+  },
+  {
+    "code": "C15.4",
+    "strand": "C",
+    "desc": "demonstrate self-control and adapt behaviour to different contexts",
+    "band": "K",
+    "overall": "Self-Regulation"
+  },
+  {
+    "code": "C15.5",
+    "strand": "C",
+    "desc": "develop empathy for others, and acknowledge and respond to each other’s feelings",
+    "band": "K",
+    "overall": "Self-Regulation"
+  },
+  {
+    "code": "C16.1",
+    "strand": "C",
+    "desc": "demonstrate an understanding of the effects of healthy, active living on the mind and body",
+    "band": "K",
+    "overall": "Understanding Health Concepts"
+  },
+  {
+    "code": "C16.2",
+    "strand": "C",
+    "desc": "investigate the benefits of nutritious foods and explore ways of ensuring healthy eating",
+    "band": "K",
+    "overall": "Understanding Health Concepts"
+  },
+  {
+    "code": "C16.3",
+    "strand": "C",
+    "desc": "practise and discuss appropriate personal hygiene that promotes personal, family, and community health",
+    "band": "K",
+    "overall": "Understanding Health Concepts"
+  },
+  {
+    "code": "C16.4",
+    "strand": "C",
+    "desc": "discuss what action to take when they feel unsafe or uncomfortable, in person or online, and when and how to seek assistance",
+    "band": "K",
+    "overall": "Understanding Health Concepts"
+  },
+  {
+    "code": "C16.5",
+    "strand": "C",
+    "desc": "discuss and demonstrate in play what makes them happy and unhappy, and why",
+    "band": "K",
+    "overall": "Understanding Health Concepts"
+  },
+  {
+    "code": "C17.1",
+    "strand": "C",
+    "desc": "participate actively in creative movement and other daily physical activities",
+    "band": "K",
+    "overall": "Active Participation"
+  },
+  {
+    "code": "C17.2",
+    "strand": "C",
+    "desc": "demonstrate persistence while engaged in activities that require the use of both large and small muscles",
+    "band": "K",
+    "overall": "Active Participation"
+  },
+  {
+    "code": "C17.3",
+    "strand": "C",
+    "desc": "demonstrate strategies for engaging in cooperative play in a variety of games and activities",
+    "band": "K",
+    "overall": "Active Participation"
+  },
+  {
+    "code": "C18.1",
+    "strand": "C",
+    "desc": "demonstrate spatial awareness in activities that require the use of large muscles",
+    "band": "K",
+    "overall": "Movement Skills and Concepts"
+  },
+  {
+    "code": "C18.2",
+    "strand": "C",
+    "desc": "demonstrate control of large muscles with and without equipment",
+    "band": "K",
+    "overall": "Movement Skills and Concepts"
+  },
+  {
+    "code": "C18.3",
+    "strand": "C",
+    "desc": "demonstrate balance, whole-body and hand-eye coordination, and flexibility in movement",
+    "band": "K",
+    "overall": "Movement Skills and Concepts"
+  },
+  {
+    "code": "C18.4",
+    "strand": "C",
+    "desc": "demonstrate control of small muscles while working in a variety of learning areas and when using a variety of materials or equipment",
+    "band": "K",
+    "overall": "Movement Skills and Concepts"
+  },
+  {
+    "code": "C18.5",
+    "strand": "C",
+    "desc": "demonstrate spatial awareness by doing activities that require the use of small muscles",
+    "band": "K",
+    "overall": "Movement Skills and Concepts"
+  },
+  {
+    "code": "D19.1",
+    "strand": "D",
+    "desc": "recognize personal interests, strengths, and accomplishments",
+    "band": "K",
+    "overall": "Identity and Self-Image"
+  },
+  {
+    "code": "D19.2",
+    "strand": "D",
+    "desc": "identify and talk about their own interests and preferences",
+    "band": "K",
+    "overall": "Identity and Self-Image"
+  },
+  {
+    "code": "D19.3",
+    "strand": "D",
+    "desc": "express their thoughts and share experiences",
+    "band": "K",
+    "overall": "Identity and Self-Image"
+  },
+  {
+    "code": "D20.1",
+    "strand": "D",
+    "desc": "understand that everyone belongs to multiple groups and communities, and that these groups and communities together shape Canadian identity",
+    "band": "K",
+    "overall": "Understanding Perspectives and Canadian Identity"
+  },
+  {
+    "code": "D20.2",
+    "strand": "D",
+    "desc": "describe, both verbally and non-verbally, ways in which they contribute to the various groups to which they belong",
+    "band": "K",
+    "overall": "Understanding Perspectives and Canadian Identity"
+  },
+  {
+    "code": "D20.3",
+    "strand": "D",
+    "desc": "demonstrate respect for different perspectives and identify areas of connection",
+    "band": "K",
+    "overall": "Understanding Perspectives and Canadian Identity"
+  },
+  {
+    "code": "D21.1",
+    "strand": "D",
+    "desc": "stand up for themselves, and apply behaviours that enhance their own and others’ well- being",
+    "band": "K",
+    "overall": "Self-Confidence"
+  },
+  {
+    "code": "D21.2",
+    "strand": "D",
+    "desc": "think critically about fair/unfair and biased behaviour towards both themselves and others, and act with compassion and kindness",
+    "band": "K",
+    "overall": "Self-Confidence"
+  },
+  {
+    "code": "D21.3",
+    "strand": "D",
+    "desc": "recognize discriminatory and inequitable practices and behaviours and respond appropriately",
+    "band": "K",
+    "overall": "Self-Confidence"
+  },
+  {
+    "code": "D22.1",
+    "strand": "D",
+    "desc": "recognize people in their community and talk about what they do",
+    "band": "K",
+    "overall": "People and Communities"
+  },
+  {
+    "code": "D22.2",
+    "strand": "D",
+    "desc": "recognize places and buildings within their community, both natural and human-made, and talk about their functions",
+    "band": "K",
+    "overall": "People and Communities"
+  },
+  {
+    "code": "D23.1",
+    "strand": "D",
+    "desc": "identify similarities and differences between local environments",
+    "band": "K",
+    "overall": "Respect and Care for Nature"
+  },
+  {
+    "code": "D23.2",
+    "strand": "D",
+    "desc": "describe what would happen if something in the local environment changed",
+    "band": "K",
+    "overall": "Respect and Care for Nature"
+  },
+  {
+    "code": "D23.3",
+    "strand": "D",
+    "desc": "describe ways in which they care for and respect the environment",
+    "band": "K",
+    "overall": "Respect and Care for Nature"
+  },
+  {
+    "code": "D24.1",
+    "strand": "D",
+    "desc": "express their responses to dance and drama",
+    "band": "K",
+    "overall": "Responding to Art"
+  },
+  {
+    "code": "D24.2",
+    "strand": "D",
+    "desc": "respond to texts and art forms from various cultures and communities through classroom drama activities and make connections to their own experiences",
+    "band": "K",
+    "overall": "Responding to Art"
+  },
+  {
+    "code": "D24.3",
+    "strand": "D",
+    "desc": "express their responses to music by moving, by making connections to their own experiences, or by talking about the musical form",
+    "band": "K",
+    "overall": "Responding to Art"
+  },
+  {
+    "code": "D25.1",
+    "strand": "D",
+    "desc": "explore the elements of dance, drama, music, and design",
+    "band": "K",
+    "overall": "Exploring and Creating Art"
+  },
+  {
+    "code": "D25.2",
+    "strand": "D",
+    "desc": "experiment with different materials, techniques, and processes used in a variety of art forms",
+    "band": "K",
+    "overall": "Exploring and Creating Art"
+  },
+  {
+    "code": "D25.3",
+    "strand": "D",
+    "desc": "use problem-solving skills and imagination to create forms of art",
+    "band": "K",
+    "overall": "Exploring and Creating Art"
+  },
+  {
+    "code": "D25.4",
+    "strand": "D",
+    "desc": "communicate ideas through dance, drama, music, and visual arts",
+    "band": "K",
+    "overall": "Exploring and Creating Art"
+  }
+]
