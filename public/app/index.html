@@ -2393,21 +2393,19 @@ Use emoji headers. 4–6 varied activities. Start directly with the worksheet ti
     : isFinancialTopic ? 'PRIORITY: This is a FINANCIAL LITERACY topic. Lead with Strand F expectations (F1.x money and finances). Include at least 2 Strand F expectations.'
     : 'Select the 2-4 most relevant Ontario Math 2020 expectations across strands B, C, D, E, F that best match this topic.'
     : isWritingTopic
-    ? 'PRIORITY: This is a WRITING/COMPOSITION topic. You MUST select Strand D expectations (D1.x writing process, D2.x writing forms, D2.3/D2.4 writing craft). DO NOT select Strand C (comprehension) or B (oral/foundations) as the primary expectations for a writing topic. Include at least 2 Strand D expectations. Short Story, Narrative, and all writing genres are Strand D.'
+    ? 'PRIORITY: This is a WRITING/COMPOSITION topic. Lead with Strand D expectations (D1.x writing process, D2.x writing forms, D2.3/D2.4 writing craft). DO NOT select Strand C (comprehension) or B (oral/foundations) as the primary expectations for a writing topic. Short Story, Narrative, and all writing genres are Strand D.'
     : isReadingTopic
-    ? 'PRIORITY: This is a READING/COMPREHENSION topic. Lead with Strand C expectations (C2.x comprehension, C1.x knowledge about texts, C3.x critical thinking). Include at least 2 Strand C expectations.'
+    ? 'PRIORITY: This is a READING/COMPREHENSION topic. Lead with Strand C expectations (C2.x comprehension, C1.x knowledge about texts, C3.x critical thinking).'
     : isOralTopic
-    ? 'PRIORITY: This is an ORAL topic. Lead with Strand B expectations (B1.x oral communication). Include at least 1 Strand B expectation.'
-    : 'Select the 2-4 most relevant expectations across strands that best match this specific topic.';
+    ? 'PRIORITY: This is an ORAL topic. Lead with Strand B expectations (B1.x oral communication).'
+    : 'Lead with the expectations that best match this specific topic.';
 
   const splitExpNote = isSplit
-    ? `MANDATORY SPLIT CLASS RULE — READ CAREFULLY:
-This is a ${grades.join(' / ')} split class. The expectations list above is ALREADY SEPARATED BY GRADE.
-You MUST select AT LEAST ONE expectation from EACH grade section (${grades.map(g=>`"--- FOR ${g.toUpperCase()}"`).join(' AND ')}).
-Each expectation object MUST have "grade" set to the exact grade string (e.g. "${grades[0]}" or "${grades[1]}").
-Return ${grades.length * 2} expectations total — ${grades.length} per grade minimum.
-FAILURE TO INCLUDE EXPECTATIONS FOR ALL GRADES IS AN ERROR. ${strandGuidance}`
-    : 'Return 2-5 most relevant expectations for this grade. '+strandGuidance;
+    ? `SPLIT CLASS — ${grades.join(' / ')}:
+- Include at least one expectation per grade — pick from each grade's section in the curriculum list above.
+- Each expectation object MUST have "grade" set to the exact grade string (e.g. "${grades[0]}" or "${grades[1]}").
+${strandGuidance}`
+    : strandGuidance;
 
   const prompt = `You are an expert Ontario elementary SSC teacher. Generate a classroom-ready lesson package.
 Grade(s): ${gradeDesc}
@@ -2458,7 +2456,10 @@ ${isSplit && isScience && rdOutputKeys.length > 1 ? rdOutputKeys.map((k,i)=>`- $
 - assessment_rubric: Ontario Achievement Chart. Use ## for each category, ### Level 1–4 under each.${iepStudents.length?' Include modified criteria for IEP students.':''}
 - differentiation_tips: per-grade and per-student strategies
 ${akLines}
-- expectations: JSON array. Ontario 2023 Language curriculum. Each object: "code" (e.g. "C2.3"), "desc", "strand" (A/B/C/D), "band" ("1-3","4-6","7-8"), "grade" (e.g. "Grade 3" or "Grade 4"). ${splitExpNote}
+- expectations: JSON array of Ontario 2023 ${subj} expectations actually taught in THIS lesson. Each object: "code" (e.g. "C2.3"), "desc", "strand", "band", "grade".
+  COVERAGE RULE — CRITICAL: Only include an expectation if the lesson plan, worksheet, or assessment genuinely teaches or assesses it. One well-covered expectation is better than three loosely-related ones. Do not pad the list.
+  HARD CAP: ${isSplit ? `${grades.length}-${grades.length*2} expectations total (min 1 per grade, max 2 per grade)` : '1-3 expectations total'}. Err on the side of fewer. Quality over quantity.
+  ${splitExpNote}
 CRITICAL: Return ONLY valid JSON. No markdown fences.`;
 
   let progInterval = null;
@@ -2528,29 +2529,14 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     outputKeys.forEach(k => { genC[k] = {orig:parsed[k]||'', cur:parsed[k]||''}; });
     answerKeyKeys.forEach(k => { if(parsed[k]) genC[k]={orig:parsed[k],cur:parsed[k]}; });
     let lessonExpectations = parsed.expectations || preMatchedExp || [];
-    if (isSplit && lessonExpectations.length > 0) {
-      const _go = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
-      const _gradeNum = g => { const idx = _go.indexOf(g); return String(idx <= 0 ? 1 : idx); };
-      const _bf = g => _go.indexOf(g) <= 3 ? '1-3' : _go.indexOf(g) <= 6 ? '4-6' : '7-8';
-      const _bandMatch = (e, g) => e.band === _bf(g) || e.band === _gradeNum(g);
-      const _assigned = [];
-      grades.forEach(g => {
-        const pick = lessonExpectations.find(e => _bandMatch(e, g) && !_assigned.find(a => a.code===e.code && a.grade===g));
-        if (pick) _assigned.push({...pick, grade: g});
-      });
-      if (_assigned.length === grades.length) {
-        lessonExpectations = _assigned;
-      } else {
-        lessonExpectations = lessonExpectations.map(e => {
-          if (e.grade) return e;
-          const g = grades.find(gr => _bandMatch(e, gr));
-          return g ? {...e, grade: g} : e;
-        });
-      }
-    }
 
-    // SPLIT CLASS: Fix grade assignments — trust AI's expectation choices, just fix the grade field
-    if (isSplit) {
+    // SPLIT CLASS: Validate AI expectations against curriculum and assign grades.
+    // Chat 8 fix: previously narrowed to exactly 1 per grade, causing the badge
+    // count to disagree with the "Expectation(s):" line in the lesson plan body.
+    // Now: for each AI code, emit ONE badge per relevant grade (so "B1.3" in a
+    // 5/6 split becomes two badges — one for the Grade 5 meaning and one for
+    // the Grade 6 meaning, which are genuinely different expectations).
+    if (isSplit && lessonExpectations.length > 0) {
       const gradeOrder2 = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
       const bandForGrade2 = g => gradeOrder2.indexOf(g) <= 3 ? '1-3' : gradeOrder2.indexOf(g) <= 6 ? '4-6' : '7-8';
       const gradeNum2 = g => { const idx = gradeOrder2.indexOf(g); return String(idx <= 0 ? 1 : idx); };
@@ -2559,36 +2545,43 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
         : (subj||'').toLowerCase().includes('math') ? 'math' : 'language';
       const allCurrExp = EXPECTATIONS[subjKey] || [];
 
-      // Step 1: For each grade, find the best AI-suggested expectation from that grade's band
-      const builtExps = [];
-      grades.forEach(g => {
-        const band = bandForGrade2(g);
-        const gn = gradeNum2(g);
-        const bandPool = allCurrExp.filter(e => e.band === band || e.band === gn);
-        const aiExp = (parsed.expectations || []);
-
-        // Find an AI expectation whose code exists in this grade's band
-        const aiCodesForBand = aiExp.map(e => e.code);
-        let pick = bandPool.find(e => aiCodesForBand.includes(e.code));
-
-        // Fallback: find any expectation in this band that matches the topic keywords
-        if (!pick) {
-          const topicWords = topic.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-          pick = bandPool.find(e =>
-            topicWords.some(w => (e.desc||'').toLowerCase().includes(w))
-          );
-        }
-
-        // Last resort: use strand D (Composition/Writing) for language, otherwise first in band
-        if (!pick) {
-          pick = bandPool.find(e => e.strand === 'D') || bandPool[0];
-        }
-
-        if (pick) builtExps.push({...pick, grade: g});
+      // Build a code → list-of-curriculum-entries map. Math codes repeat across
+      // grades (e.g. B1.3 exists at band 1, 2, 3, ... 8 with different descriptions).
+      const currByCode = {};
+      allCurrExp.forEach(e => {
+        if (!currByCode[e.code]) currByCode[e.code] = [];
+        currByCode[e.code].push(e);
       });
 
-      if (builtExps.length === grades.length) {
-        lessonExpectations = builtExps;
+      // For each AI-suggested expectation, emit one badge per grade in this
+      // split class that has a matching curriculum entry. Hallucinated codes
+      // (not in the curriculum) are silently dropped.
+      const validated = [];
+      (parsed.expectations || []).forEach(aiExp => {
+        const currEntries = currByCode[aiExp.code];
+        if (!currEntries || !currEntries.length) return; // hallucinated
+        grades.forEach(g => {
+          const bandStr = bandForGrade2(g);
+          const gnStr = gradeNum2(g);
+          const match = currEntries.find(e => e.band === bandStr || e.band === gnStr);
+          if (match && !validated.find(v => v.code === match.code && v.grade === g)) {
+            validated.push({...match, grade: g});
+          }
+        });
+      });
+
+      // Only swap in the validated list if we successfully covered every grade.
+      // Otherwise fall back to the original AI list with best-effort grade
+      // tagging so a single weird case doesn't wipe the badges.
+      const gradesCovered = new Set(validated.map(v => v.grade));
+      if (gradesCovered.size === grades.length) {
+        lessonExpectations = validated;
+      } else {
+        lessonExpectations = lessonExpectations.map(e => {
+          if (e.grade) return e;
+          const g = grades.find(gr => e.band === bandForGrade2(gr) || e.band === gradeNum2(gr));
+          return g ? {...e, grade: g} : e;
+        });
       }
     }
     genC['_expectations'] = lessonExpectations;
@@ -3030,8 +3023,9 @@ function renderWS(text) {
 
 // Append 4 more questions to an existing worksheet block, in the same format.
 // Reads current worksheet from genC[k].cur + lesson meta from window._lessonMeta,
-// asks Claude for 4 new questions matching the format, appends, re-renders.
+// asks Claude for 4 new questions AND their answers, appends both, re-renders.
 // Chat 7 fix (Sibel feedback): "only shares one worksheet with a few questions"
+// Chat 8 fix: also appends to the matching answer key block so auto-mark still works.
 async function addMoreQuestions(k) {
   if (!window._lessonMeta) { showToast('Generate a lesson first'); return; }
   if (!genC[k] || !genC[k].cur) { showToast('No worksheet to extend'); return; }
@@ -3041,38 +3035,62 @@ async function addMoreQuestions(k) {
   // Split-grade worksheets are named student_worksheet_A/B/C/D — pick the matching grade from the array
   const splitMatch = k.match(/student_worksheet_([A-F])$/);
   const gradeForBlock = (splitMatch && grades) ? (grades[['A','B','C','D','E','F'].indexOf(splitMatch[1])] || gradeStr) : gradeStr;
+  // Matching answer key block: student_worksheet → answer_key, student_worksheet_A → answer_key_A
+  const akKey = k.replace('student_worksheet', 'answer_key');
+  const currentAK = genC[akKey] ? genC[akKey].cur : '';
+  // Figure out the next question number so numbering is continuous
+  const existingNums = (genC[k].cur.match(/^(\d+)\./gm) || []).map(s => parseInt(s, 10));
+  const startNum = existingNums.length ? Math.max.apply(null, existingNums) + 1 : 1;
   const current = genC[k].cur;
   const prompt = 'You are extending an Ontario ' + subj + ' worksheet for ' + gradeForBlock + ' on "' + topic + '".\n\n' +
     'Here is the CURRENT worksheet:\n---\n' + current + '\n---\n\n' +
+    (currentAK ? 'Here is the CURRENT answer key:\n---\n' + currentAK + '\n---\n\n' : '') +
     'Generate 4 NEW questions in EXACTLY the same format as the existing ones. Available tags:\n' +
     '- [CIRCLE ONE: A) option / B) option / C) option]\n' +
     '- [TEXT BOX] for short answer\n' +
     '- [LARGE BOX] for long answer\n' +
     '- [WORD BANK: word1, word2, word3]\n\n' +
     'CRITICAL RULES:\n' +
-    '- Do NOT repeat any existing question or its answer\n' +
+    '- Do NOT repeat any existing question\n' +
     '- Match the tone, difficulty, and topic coverage of existing questions\n' +
-    '- Number new questions to continue from where the worksheet left off\n' +
-    '- Return ONLY the 4 new questions, ready to append\n' +
-    '- No preamble, no heading, no markdown fences, no explanation';
+    '- Number new questions starting from ' + startNum + ' (continue from where the worksheet left off)\n' +
+    '- Also produce the answer key for each new question\n\n' +
+    'Return ONLY a valid JSON object with this exact shape, no markdown fences, no preamble:\n' +
+    '{"questions": "<the 4 new worksheet questions as markdown, ready to append>", "answer_key": "<answers in the format Q' + startNum + ': [question] -> [ideal answer], one per line, for all 4 new questions>"}';
   try {
     const res = await authFetch('/api/generate', { method: 'POST', body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514', max_tokens: 700,
+      model: 'claude-sonnet-4-20250514', max_tokens: 900,
       messages: [{ role: 'user', content: prompt }],
       meta: { type: 'worksheet_regen', grade: gradeForBlock || null, subject: subj || null }
     })});
     if (!res.ok) throw new Error('Server error (' + res.status + ')');
     const data = await res.json();
     if (data.error) throw new Error(data.error.message || 'API error');
-    let newQs = (data.content || []).map(b => b.text || '').join('').trim();
-    // Strip any accidental fences
-    newQs = newQs.replace(/^```[a-z]*\s*/i, '').replace(/\s*```\s*$/, '').trim();
-    if (!newQs) throw new Error('Empty response');
+    let raw = (data.content || []).map(b => b.text || '').join('').trim();
+    // Strip any accidental fences before JSON.parse
+    raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(raw); }
+    catch (_) {
+      // Fallback: try to pull JSON out of mixed content
+      const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
+      if (s !== -1 && e !== -1) parsed = JSON.parse(raw.slice(s, e + 1));
+      else throw new Error('Invalid response format');
+    }
+    const newQs = (parsed.questions || '').trim();
+    const newAK = (parsed.answer_key || '').trim();
+    if (!newQs) throw new Error('Empty questions');
+    // Append worksheet content
     genC[k].cur = genC[k].cur.trimEnd() + '\n\n' + newQs;
-    // Re-render just this block's body
     const body = document.getElementById('cbb-' + k);
     if (body) body.innerHTML = renderWS(genC[k].cur);
-    showToast('✅ Added more questions');
+    // Append answer key content (if the answer key block exists)
+    if (newAK && genC[akKey]) {
+      genC[akKey].cur = genC[akKey].cur.trimEnd() + '\n' + newAK;
+      const akBody = document.getElementById('cbb-' + akKey);
+      if (akBody) akBody.innerHTML = renderAnswerKey(genC[akKey].cur);
+    }
+    showToast(genC[akKey] ? '✅ Added more questions + answers' : '✅ Added more questions');
   } catch (e) {
     showToast('⚠️ Could not add questions: ' + e.message);
   } finally {
