@@ -2524,6 +2524,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
 
     genC = {};
     window._slideData = null; // clear cached slides — new lesson generated
+    window._lessonMeta = {topic, grades, subj, gradeStr:grades.join(' / ')}; // for worksheet regen (Chat 7 fix)
     outputKeys.forEach(k => { genC[k] = {orig:parsed[k]||'', cur:parsed[k]||''}; });
     answerKeyKeys.forEach(k => { if(parsed[k]) genC[k]={orig:parsed[k],cur:parsed[k]}; });
     let lessonExpectations = parsed.expectations || preMatchedExp || [];
@@ -2717,15 +2718,17 @@ function buildEditBlocks(outputs, gradeDesc, subj, topic, expectations) {
     const rendered = isWS ? renderWS(genC[k].cur) : isRubric ? renderRubric(genC[k].cur) : isAK ? renderAnswerKey(genC[k].cur) : renderMD(genC[k].cur);
 
     const slideBtns = k==='lesson_plan' ? `
-      <button class="btn b-sage b-sm" onclick="presentSlides(event)" style="white-space:nowrap;">▶ Present</button>
-      <button class="btn b-out b-sm" onclick="downloadSlidesPPTX()" style="white-space:nowrap;" title="Open slides">⬇ Slides</button>
+      <button class="btn b-sage b-sm" onclick="presentSlides(event)" style="white-space:nowrap;" title="Build slides and open the presenter">🎬 Build Slides</button>
+      <button class="btn b-out b-sm" onclick="downloadSlidesPPTX()" style="white-space:nowrap;" title="Download slides as a PowerPoint file">⬇ PowerPoint</button>
       <button class="btn b-out b-sm" id="gSlidesBtn" onclick="exportToGoogleSlides()" style="white-space:nowrap;display:none;" title="Export to Google Slides">🔗 Google Slides</button>` : '';
 
     const wsLinkBtns = isWS ? (k.match(/student_worksheet_[A-D]$/) ? `
+      <button class="btn b-out b-sm" data-morebtn="${k}" onclick="addMoreQuestions('${k}')" title="Add 4 more questions to this worksheet">➕ More Questions</button>
       <button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button>
       <button class="btn b-sage b-sm" onclick="getStudentLink('${k}',true)">🔗 One link (all grades)</button>
       <button class="btn b-out b-sm" onclick="getStudentLink('${k}',false)" style="font-size:.72rem;">🔗 This grade only</button>`
-      : `<button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button>
+      : `<button class="btn b-out b-sm" data-morebtn="${k}" onclick="addMoreQuestions('${k}')" title="Add 4 more questions to this worksheet">➕ More Questions</button>
+      <button class="btn b-out b-sm" onclick="downloadPDF('${k}')">📄 PDF</button>
       <button class="btn b-sage b-sm" onclick="getStudentLink('${k}',false)">🔗 Get Student Link</button>`) : '';
 
     c.innerHTML += `<div class="cb" id="cb-${k}">
@@ -3004,6 +3007,58 @@ function renderWS(text) {
     h+=`<p style="margin:2px 0;">${line.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</p>`;
   });
   return h+'</div>';
+}
+
+// Append 4 more questions to an existing worksheet block, in the same format.
+// Reads current worksheet from genC[k].cur + lesson meta from window._lessonMeta,
+// asks Claude for 4 new questions matching the format, appends, re-renders.
+// Chat 7 fix (Sibel feedback): "only shares one worksheet with a few questions"
+async function addMoreQuestions(k) {
+  if (!window._lessonMeta) { showToast('Generate a lesson first'); return; }
+  if (!genC[k] || !genC[k].cur) { showToast('No worksheet to extend'); return; }
+  const btn = document.querySelector('[data-morebtn="' + k + '"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Adding...'; }
+  const { topic, grades, subj, gradeStr } = window._lessonMeta;
+  // Split-grade worksheets are named student_worksheet_A/B/C/D — pick the matching grade from the array
+  const splitMatch = k.match(/student_worksheet_([A-F])$/);
+  const gradeForBlock = (splitMatch && grades) ? (grades[['A','B','C','D','E','F'].indexOf(splitMatch[1])] || gradeStr) : gradeStr;
+  const current = genC[k].cur;
+  const prompt = 'You are extending an Ontario ' + subj + ' worksheet for ' + gradeForBlock + ' on "' + topic + '".\n\n' +
+    'Here is the CURRENT worksheet:\n---\n' + current + '\n---\n\n' +
+    'Generate 4 NEW questions in EXACTLY the same format as the existing ones. Available tags:\n' +
+    '- [CIRCLE ONE: A) option / B) option / C) option]\n' +
+    '- [TEXT BOX] for short answer\n' +
+    '- [LARGE BOX] for long answer\n' +
+    '- [WORD BANK: word1, word2, word3]\n\n' +
+    'CRITICAL RULES:\n' +
+    '- Do NOT repeat any existing question or its answer\n' +
+    '- Match the tone, difficulty, and topic coverage of existing questions\n' +
+    '- Number new questions to continue from where the worksheet left off\n' +
+    '- Return ONLY the 4 new questions, ready to append\n' +
+    '- No preamble, no heading, no markdown fences, no explanation';
+  try {
+    const res = await authFetch('/api/generate', { method: 'POST', body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514', max_tokens: 700,
+      messages: [{ role: 'user', content: prompt }],
+      meta: { type: 'worksheet_regen', grade: gradeForBlock || null, subject: subj || null }
+    })});
+    if (!res.ok) throw new Error('Server error (' + res.status + ')');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+    let newQs = (data.content || []).map(b => b.text || '').join('').trim();
+    // Strip any accidental fences
+    newQs = newQs.replace(/^```[a-z]*\s*/i, '').replace(/\s*```\s*$/, '').trim();
+    if (!newQs) throw new Error('Empty response');
+    genC[k].cur = genC[k].cur.trimEnd() + '\n\n' + newQs;
+    // Re-render just this block's body
+    const body = document.getElementById('cbb-' + k);
+    if (body) body.innerHTML = renderWS(genC[k].cur);
+    showToast('✅ Added more questions');
+  } catch (e) {
+    showToast('⚠️ Could not add questions: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '➕ More Questions'; }
+  }
 }
 
 // Extract question keys for auto-mark
@@ -5479,7 +5534,11 @@ async function presentSlides(e) {
   if (!window._slideData) {
     if (btn) { btn.disabled=true; btn.textContent='⏳ Building...'; }
     const ok = await generateSlideData(null);
-    if (btn) { btn.disabled=false; btn.textContent='▶ Present'; }
+    if (btn) {
+      btn.disabled=false;
+      // After first successful build, button becomes "Present" — honest about state
+      btn.textContent = (ok && window._slideData) ? '▶ Present' : '🎬 Build Slides';
+    }
     if (!ok || !window._slideData) return;
   } else {
     openHTMLPresenter(window._slideData.sd, window._slideData.topic, window._slideData.subject, window._slideData.gradeStr, window._slideData.wikiImg, window._slideData.mindsonImg, window._slideData.wikiTitle, window._slideData.wikiLicense, window._slideData.slideImgs||[]);
@@ -5875,7 +5934,7 @@ async function urlToPng(imageUrl) {
 }
 
 async function downloadSlidesPPTX() {
-  if (!window._slideData) { showToast('Generate slides first — click ▶ Present'); return; }
+  if (!window._slideData) { showToast('Build slides first — click 🎬 Build Slides'); return; }
   const btn = document.querySelector('[onclick="downloadSlidesPPTX()"]');
   if (btn) { btn.textContent = '⏳ Building...'; btn.disabled = true; }
   try {
@@ -6089,7 +6148,7 @@ async function downloadSlidesPPTX() {
     showToast('⚠️ PPTX download failed: ' + e.message, 5000);
     console.error('downloadSlidesPPTX error:', e);
   } finally {
-    if (btn) { btn.textContent = '⬇ Slides'; btn.disabled = false; }
+    if (btn) { btn.textContent = '⬇ PowerPoint'; btn.disabled = false; }
   }
 }
 
