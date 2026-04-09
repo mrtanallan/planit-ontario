@@ -2310,6 +2310,34 @@ async function generate() {
     const priorLines = priorLessons.map(l => `  ✅ Lesson ${l.lesson_number}: ${l.title} — ${l.focus}`).join('\n');
     const currentLine = `  → Lesson ${allLessons[_pendingIdx]?.lesson_number||_pendingIdx+1}: ${topic} ← YOU ARE GENERATING THIS`;
     const laterLines = laterLessons.map(l => `  ○ Lesson ${l.lesson_number}: ${l.title} — ${l.focus}`).join('\n');
+
+    // Fetch already-built sibling lessons in this unit to get their expectation codes.
+    // This prevents Claude from re-picking the same codes for every lesson in the unit.
+    let siblingExpNote = '';
+    try {
+      const { data: siblings } = await db.from('lessons')
+        .select('topic, expectations')
+        .eq('unit_plan_id', _pendingUnit.id);
+      const claimedCodes = new Set();
+      const claimedDetail = [];
+      (siblings || []).forEach(s => {
+        // Skip the current lesson if it was somehow already saved
+        if (s.topic === topic) return;
+        (s.expectations || []).forEach(e => {
+          if (e && e.code && !claimedCodes.has(e.code)) {
+            claimedCodes.add(e.code);
+            claimedDetail.push(`${e.code} (${s.topic})`);
+          }
+        });
+      });
+      if (claimedCodes.size > 0) {
+        siblingExpNote = `\n\nEXPECTATIONS ALREADY USED BY SIBLING LESSONS IN THIS UNIT:
+${claimedDetail.map(c => '  • ' + c).join('\n')}
+
+CRITICAL: Pick DIFFERENT expectations for this lesson. A unit is stronger when each lesson covers distinct expectations that together build toward the big idea. Only re-use a code above if this lesson genuinely teaches the same expectation to a deeper level — and if you do re-use one, explain why in the lesson plan.`;
+      }
+    } catch(e) { /* non-fatal — proceed without sibling context */ }
+
     unitContext = `
 UNIT CONTEXT — this lesson is part of a planned unit:
 Unit topic: "${_pendingUnit.topic}" (${((_pendingUnit.grades||[]).join('/'))} ${(_pendingUnit.subject||'').replace('Language / Literacy','Language')}, ${_pendingUnit.lessons.length} lessons)
@@ -2323,7 +2351,7 @@ ${priorLessons.length > 0
   : 'This is the first lesson in the unit. Set the foundation for what follows.'}
 ${laterLessons.length > 0
   ? `Lessons ${allLessons[_pendingIdx+1]?.lesson_number||''}–${allLessons[allLessons.length-1]?.lesson_number||''} follow this one — don't cover their content yet, but plant seeds where appropriate.`
-  : 'This is the final lesson in the unit. Draw on all prior learning and bring the unit to a meaningful close.'}`;
+  : 'This is the final lesson in the unit. Draw on all prior learning and bring the unit to a meaningful close.'}${siblingExpNote}`;
   }
 
   const isScience = (subj||'').toLowerCase().includes('science');
@@ -2398,12 +2426,12 @@ Use emoji headers. 4–6 varied activities. Start directly with the worksheet ti
     : isFinancialTopic ? 'PRIORITY: This is a FINANCIAL LITERACY topic. Lead with Strand F expectations (F1.x money and finances). Include at least 2 Strand F expectations.'
     : 'Select the 2-4 most relevant Ontario Math 2020 expectations across strands B, C, D, E, F that best match this topic.'
     : isWritingTopic
-    ? 'PRIORITY: This is a WRITING/COMPOSITION topic. Lead with Strand D expectations (D1.x writing process, D2.x writing forms, D2.3/D2.4 writing craft). DO NOT select Strand C (comprehension) or B (oral/foundations) as the primary expectations for a writing topic. Short Story, Narrative, and all writing genres are Strand D.'
+    ? 'PRIORITY: This is a WRITING/COMPOSITION topic. You MUST select Strand D expectations (D1.x writing process, D2.x writing forms, D2.3/D2.4 writing craft). Short Story, Narrative, and all writing genres are Strand D. Do NOT use Strand A (Literacy Connections) — those are cross-curricular meta-skills, not specific writing skills. Do NOT use Strand C (Comprehension) or Strand B (Foundations) as primary expectations for a writing topic.'
     : isReadingTopic
-    ? 'PRIORITY: This is a READING/COMPREHENSION topic. Lead with Strand C expectations (C2.x comprehension, C1.x knowledge about texts, C3.x critical thinking).'
+    ? 'PRIORITY: This is a READING/COMPREHENSION topic. You MUST select Strand C expectations (C1.x knowledge about texts, C2.x comprehension strategies, C3.x critical thinking). Do NOT use Strand A (Literacy Connections) — those are cross-curricular meta-skills and do NOT describe specific reading skills. For inference topics, the canonical code is C2.3 (making inferences). For main idea/summarizing, use C2.x comprehension strategies. For author purpose/point of view, use C3.x critical thinking. If C.x expectations exist at the grade, you MUST pick from them — do not substitute A.x codes.'
     : isOralTopic
-    ? 'PRIORITY: This is an ORAL topic. Lead with Strand B expectations (B1.x oral communication).'
-    : 'Lead with the expectations that best match this specific topic.';
+    ? 'PRIORITY: This is an ORAL topic. You MUST select Strand B expectations (B1.x oral communication). Do NOT use Strand A (Literacy Connections) — those are cross-curricular meta-skills, not specific oral communication skills.'
+    : 'Lead with the expectations that best match this specific topic. Avoid Strand A (Literacy Connections) unless the topic is explicitly about transferable/cross-curricular skills.';
 
   const splitExpNote = isSplit
     ? `SPLIT CLASS — ${grades.join(' / ')}:
@@ -8027,10 +8055,11 @@ function renderUnitCard(u, linkedLessons, assessments, submissionCounts) {
               <div style="font-weight:600;font-size:.82rem;color:var(--ink);">Written Test</div>
               <div style="font-family:'DM Mono',monospace;font-size:.66rem;color:var(--muted);margin-top:1px;">${escHTML(aDate)} · ${subCount} submission${subCount!==1?'s':''}</div>
             </div>
-            <div style="display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+            <div style="display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;align-items:center;">
               <button class="btn b-out b-sm" onclick="copyUnitAssessmentLink('${escHTML(a.id)}', this)" style="font-size:.68rem;padding:4px 8px;" title="Copy student link">🔗 Link</button>
               <button class="btn b-out b-sm" onclick="reviewUnitAssessment('${escHTML(a.id)}')" style="font-size:.68rem;padding:4px 8px;" title="Open test and submissions">👁 Review</button>
               ${subCount > 0 ? `<button class="btn b-sage b-sm" onclick="autoMarkUnitTest('${escHTML(a.id)}')" style="font-size:.68rem;padding:4px 8px;" title="Auto-mark all submissions">🤖 Mark</button>` : ''}
+              <button onclick="deleteUnitAssessment('${escHTML(a.id)}', ${subCount})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:2px 4px;" title="Delete assessment">🗑</button>
             </div>
           </div>`;
         }).join('')}
@@ -8112,6 +8141,29 @@ async function reviewUnitAssessment(wsId) {
     </div>`;
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
   document.body.appendChild(modal);
+}
+
+// Delete a unit assessment (and its submissions) from the unit card
+async function deleteUnitAssessment(wsId, subCount) {
+  const warning = subCount > 0
+    ? `Delete this assessment AND all ${subCount} student submission${subCount!==1?'s':''}? This cannot be undone.`
+    : 'Delete this assessment? This cannot be undone.';
+  if (!confirm(warning)) return;
+  try {
+    // Delete submissions first (no cascade assumed)
+    if (subCount > 0) {
+      const { error: subErr } = await db.from('worksheet_submissions').delete().eq('worksheet_id', wsId);
+      if (subErr) throw subErr;
+    }
+    const { error: wsErr } = await db.from('worksheets').delete().eq('id', wsId);
+    if (wsErr) throw wsErr;
+    // Clean up cache
+    if (window._unitTestData) delete window._unitTestData[wsId];
+    showToast('✅ Assessment deleted');
+    renderUnitPlansList();
+  } catch (e) {
+    alert('Error deleting assessment: ' + e.message);
+  }
 }
 
 // ── UNIT ASSESSMENT ─────────────────────────────────────────────────────────
@@ -8339,6 +8391,8 @@ async function createUnitTestLink() {
     const container = modal.querySelector('div[style*="max-width:760px"]');
     container.insertBefore(linkDiv, assessText);
     if (btn) { btn.textContent = '✅ Link created'; }
+    // Re-render unit cards so the new assessment shows up immediately (no refresh needed)
+    if (typeof renderUnitPlansList === 'function') { renderUnitPlansList(); }
   } catch(e) {
     alert('Error creating link: ' + e.message);
     if (btn) { btn.disabled = false; btn.textContent = '🔗 Get Student Link'; }
@@ -8382,7 +8436,7 @@ function toggleUnitCard(uid) {
 
 async function expandUnitLesson(unitId, subject, gradesStr, title, lessonIndex) {
   const grades = gradesStr.split(',').filter(Boolean);
-  showToast('Opening Plan tab — pre-filled and ready to generate...', 4000);
+  showToast('Pre-filled from unit — review and click Generate', 4000);
 
   // Switch to Plan tab
   const planTab = document.getElementById('tr-plan');
@@ -8413,6 +8467,14 @@ async function expandUnitLesson(unitId, subject, gradesStr, title, lessonIndex) 
   const topicEl = document.getElementById('topic');
   if (topicEl) topicEl.value = title;
 
+  // Pre-select the app's default outputs (match what a fresh Plan tab would show).
+  // Don't second-guess the teacher's setup — they can toggle before clicking Generate.
+  const defaultOutputs = ['ck-lp', 'ck-ws', 'ck-rr', 'ck-rb'];
+  ['ck-lp','ck-ws','ck-rr','ck-rb','ck-dt'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = defaultOutputs.includes(id);
+  });
+
   // Store unit context for continuity
   window._pendingUnitPlanId = unitId;
   window._pendingUnitLessonIndex = lessonIndex;
@@ -8421,15 +8483,31 @@ async function expandUnitLesson(unitId, subject, gradesStr, title, lessonIndex) 
 
   await new Promise(r => setTimeout(r, 200));
 
-  // Verify grade was set before generating
+  // Verify grade was set
   const gA = document.getElementById('gA')?.value;
   if (!gA) { alert('Could not set grade — please select grade manually and click Generate.'); return; }
 
+  // Scroll to Generate button and highlight it — but DON'T auto-click.
+  // Teacher can review pre-filled fields and tweak before generating.
   const genBtn = document.getElementById('genBtn');
   if (genBtn) {
     genBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    await new Promise(r => setTimeout(r, 300));
-    generate();
+    // Pulse highlight for ~2.5s so the teacher's eye lands on it
+    const prevBoxShadow = genBtn.style.boxShadow;
+    const prevTransition = genBtn.style.transition;
+    genBtn.style.transition = 'box-shadow 0.4s ease';
+    let pulse = 0;
+    const pulseInterval = setInterval(() => {
+      genBtn.style.boxShadow = pulse % 2 === 0
+        ? '0 0 0 6px rgba(74,124,89,0.35), 0 0 20px rgba(74,124,89,0.5)'
+        : '0 0 0 0 rgba(74,124,89,0)';
+      pulse++;
+      if (pulse >= 6) {
+        clearInterval(pulseInterval);
+        genBtn.style.boxShadow = prevBoxShadow;
+        setTimeout(() => { genBtn.style.transition = prevTransition; }, 500);
+      }
+    }, 400);
   }
 }
 
