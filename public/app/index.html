@@ -2207,6 +2207,14 @@ async function generate() {
   const relevantExps = getExpectations(subj, grades, []);
   // Strand-aware expectation injection — prioritize relevant strand for topic
   const topicLower2 = (topic||'').toLowerCase();
+  // Language topic classification — must be declared here (not later) because the
+  // curriculum list injection below filters by strand based on these booleans.
+  // Keep these regexes in sync with the prompt-side declarations further down.
+  const lIsWriting = /writ|short story|story element|narrative|essay|paragraph|persuasive|report|journal|letter|poem|draft|composition|opinion|argument|claim|thesis|descriptive|procedural|recount|memoir|biograph|autobiograph|review|editorial|blog|script|fiction|non-?fiction piece|descriptive detail|add.*detail/.test(topicLower2);
+  const lIsReading = /read|comprehension|infer|main idea|text feature|author|visualiz|predict|connect|summar|theme|character|plot|setting|point of view|compare.*text|text evidence|close reading|retell|sequenc/.test(topicLower2);
+  const lIsFoundations = /phonic|phoneme|decod|spell|vocab|grammar|punctuat|syntax|word stud|sight word|root word|prefix|suffix|morph|part of speech|noun|verb|adjective|adverb|sentence structure|paragraph structure/.test(topicLower2);
+  const lIsOral = /speak|listen|oral|present|discuss|debate|talk|conversation|interview/.test(topicLower2);
+  const lIsTransferable = /transferable skill|cross.?curricular|digital citizen|metacogn|self.?reflect/.test(topicLower2);
   let primaryStrand2 = 'B'; // default
   if (isMathSubj) {
     // Math strand routing
@@ -2258,16 +2266,41 @@ async function generate() {
                 const gradeOrder = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
                 const bandForGrade = g => gradeOrder.indexOf(g) <= 3 ? '1-3' : gradeOrder.indexOf(g) <= 6 ? '4-6' : '7-8';
                 const gradeNum = g => String(gradeOrder.indexOf(g) === 0 ? 1 : gradeOrder.indexOf(g));
+                // Determine the primary strand for this topic (D=writing, C=reading, B=oral/foundations)
+                // Exclude Strand A (Literacy Connections) unless topic is explicitly about transferable skills
+                const langPrimary = lIsWriting ? 'D' : lIsReading ? 'C' : (lIsOral || lIsFoundations) ? 'B' : null;
+                const filterLangExp = e => {
+                  // Always exclude Strand A unless the topic is explicitly about transferable skills
+                  if (e.strand === 'A' && !lIsTransferable) return false;
+                  return true;
+                };
                 const sections = grades.map(g => {
                   const band = bandForGrade(g);
                   const gn = gradeNum(g);
                   const bandLabel = band==='1-3'?'[Gr.1-3]':band==='4-6'?'[Gr.4-6]':'[Gr.7-8]';
-                  const gradeExps = relevantExps.filter(e => e.band === band || e.band === gn).slice(0,8);
-                  return `--- FOR ${g.toUpperCase()} ${bandLabel} ---\n` + gradeExps.map(e => e.code+' '+e.desc).join('\n');
+                  let gradeExps = relevantExps.filter(e => (e.band === band || e.band === gn)).filter(filterLangExp);
+                  // Put primary strand first so Claude sees the right options
+                  if (langPrimary) {
+                    const primary = gradeExps.filter(e => e.strand === langPrimary);
+                    const other = gradeExps.filter(e => e.strand !== langPrimary);
+                    gradeExps = [...primary, ...other];
+                  }
+                  gradeExps = gradeExps.slice(0, 10);
+                  return `--- FOR ${g.toUpperCase()} ${bandLabel} ---\n` + gradeExps.map(e => e.code+' ['+e.strand+'] '+e.desc).join('\n');
                 });
                 return sections.join('\n\n');
               })()
-            : relevantExps.slice(0,15).map(e=>e.code+' '+e.desc).join('\n')))
+            : (() => {
+                // Single grade: filter out Strand A (unless transferable), prioritize primary strand
+                const langPrimary = lIsWriting ? 'D' : lIsReading ? 'C' : (lIsOral || lIsFoundations) ? 'B' : null;
+                let filtered = relevantExps.filter(e => !(e.strand === 'A' && !lIsTransferable));
+                if (langPrimary) {
+                  const primary = filtered.filter(e => e.strand === langPrimary);
+                  const other = filtered.filter(e => e.strand !== langPrimary);
+                  filtered = [...primary, ...other];
+                }
+                return filtered.slice(0,15).map(e=>e.code+' ['+e.strand+'] '+e.desc).join('\n');
+              })()))
     : '';
 
   const expHint = preMatchedExp.length
