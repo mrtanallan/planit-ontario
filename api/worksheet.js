@@ -1,11 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
+// NOTE: This route now uses the SERVICE KEY (bypasses RLS) and enforces
+// access control in application code via share_token. The anon key is
+// no longer sufficient here because the worksheets RLS policy will be
+// updated to restrict reads to teacher_id = auth.uid() — students are
+// unauthenticated and need a different path.
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_KEY
 );
 
-// Validate UUID format
+// Validate UUID format (used for both worksheet id and share_token)
 function isValidUUID(str) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 }
@@ -19,16 +24,20 @@ export default async function handler(req, res) {
 
   // ── GET: fetch worksheet for student ──────────────────────────
   if (req.method === 'GET') {
-    const { id } = req.query;
+    const { id, t } = req.query;
 
-    if (!id || !isValidUUID(id)) {
-      return res.status(400).json({ error: 'Invalid worksheet ID' });
+    // Both id and token are required and must be valid UUIDs.
+    // Return a generic 404 for any failure — never reveal whether
+    // the id exists when the token is wrong (prevents enumeration).
+    if (!id || !isValidUUID(id) || !t || !isValidUUID(t)) {
+      return res.status(404).json({ error: 'Worksheet not found' });
     }
 
     const { data: worksheet, error } = await supabase
       .from('worksheets')
       .select('id, topic, grades, subject, content, roster, created_at')
       .eq('id', id)
+      .eq('share_token', t)
       .single();
 
     if (error || !worksheet) {
@@ -72,21 +81,25 @@ export default async function handler(req, res) {
 
   // ── POST: save student submission ─────────────────────────────
   if (req.method === 'POST') {
-    const { worksheet_id, student_name, student_id, responses } = req.body;
+    const { worksheet_id, share_token, student_name, student_id, responses } = req.body;
 
-    // Validate inputs
+    // Validate inputs — both id and share_token required
     if (!worksheet_id || !isValidUUID(worksheet_id)) {
-      return res.status(400).json({ error: 'Invalid worksheet ID' });
+      return res.status(404).json({ error: 'Worksheet not found' });
+    }
+    if (!share_token || !isValidUUID(share_token)) {
+      return res.status(404).json({ error: 'Worksheet not found' });
     }
     if (!student_name || typeof student_name !== 'string') {
       return res.status(400).json({ error: 'Student name required' });
     }
 
-    // IDOR check — verify worksheet exists
+    // Verify worksheet exists AND token matches (single query)
     const { data: ws, error: wsErr } = await supabase
       .from('worksheets')
       .select('id')
       .eq('id', worksheet_id)
+      .eq('share_token', share_token)
       .single();
 
     if (wsErr || !ws) {
