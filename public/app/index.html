@@ -877,9 +877,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     </div>
     <div style="margin-bottom:16px;">
       <label style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px;">Unit Topic / Big Idea <span style="color:var(--rust);">✱</span></label>
-      <input type="text" id="unit-topic" placeholder="e.g. Persuasive Writing, Fractions, Habitats and Ecosystems..." autocapitalize="sentences"
+      <input type="text" id="unit-topic" placeholder="e.g. Persuasive Writing, Fractions, Habitats and Ecosystems..." autocapitalize="sentences" list="unitTopicSuggestions"
         style="width:100%;font-family:'DM Sans',sans-serif;font-size:1rem;padding:13px 16px;border:2px solid var(--border);border-radius:10px;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;"
         onfocus="this.style.borderColor='var(--sage)'" onblur="this.style.borderColor='var(--border)'">
+      <datalist id="unitTopicSuggestions"></datalist>
     </div>
     <button class="btn b-sage b-full" id="unitGenBtn" onclick="generateUnitPlan()">📋 Generate Unit Plan</button>
   </div>
@@ -2142,16 +2143,30 @@ const TOPIC_SUGGESTIONS = {
 };
 
 function updateTopicSuggestions() {
-  const subj = document.getElementById('subj')?.value || 'Language / Literacy';
-  const list = document.getElementById('topicSuggestions');
-  const placeholder = document.getElementById('topic');
+  updateTopicSuggestionsFor('plan');
+}
+
+function updateUnitTopicSuggestions() {
+  updateTopicSuggestionsFor('unit');
+}
+
+// Unified topic suggestion builder. Reads subject + grade pills from the
+// appropriate scope (Plan tab or Unit Plans tab) and writes suggestions to
+// the matching datalist. Single source of truth so the two tabs stay in sync.
+function updateTopicSuggestionsFor(scope) {
+  const subjEl = document.getElementById(scope === 'unit' ? 'unit-subj' : 'subj');
+  const subj = subjEl?.value || 'Language / Literacy';
+  const list = document.getElementById(scope === 'unit' ? 'unitTopicSuggestions' : 'topicSuggestions');
+  const inputEl = document.getElementById(scope === 'unit' ? 'unit-topic' : 'topic');
   if (!list) return;
+  const pillContainerSel = scope === 'unit' ? '#unitGradePillContainer .grade-pill-btn.selected' : '.grade-pill-btn.selected';
+  const kPillContainerSel = scope === 'unit' ? '#unitGradePillContainer .grade-pill-btn.selected' : '#gradePillContainer .grade-pill-btn.selected';
 
   // For Science/Math/Language: build suggestions with grade labels when multiple grades selected
   // suggestions = string[] (no grade labels) or {topic, grades[]}[] (with grade labels)
   let suggestions;
   if (subj === 'Science & Technology') {
-    const selectedGrades = [...document.querySelectorAll('.grade-pill-btn.selected')]
+    const selectedGrades = [...document.querySelectorAll(pillContainerSel)]
       .map(b => b.dataset.grade)
       .filter(Boolean)
       .map(g => g.replace('Grade ', '').replace('Kindergarten','K'));
@@ -2207,7 +2222,7 @@ function updateTopicSuggestions() {
       '8':  ['Critical Analysis','Argumentative Writing','Literary Devices','Research Writing','Point of View','Media Literacy','Figurative Language'],
       'all': ['Spelling Strategies','Grammar','Punctuation']
     };
-    const selectedGrades2 = [...document.querySelectorAll('.grade-pill-btn.selected')]
+    const selectedGrades2 = [...document.querySelectorAll(pillContainerSel)]
       .map(b => b.dataset.grade).filter(Boolean)
       .map(g => g.replace('Grade ', '').replace('Kindergarten','K'));
     const gradeMap = subj === 'Mathematics' ? MATH_BY_GRADE : LANG_BY_GRADE;
@@ -2229,7 +2244,7 @@ function updateTopicSuggestions() {
   } else {
     // K-specific override: when Kindergarten is the only selected grade AND
     // the subject is one of the K-only subjects, use the K-specific topic list.
-    const _selectedKGrades = [...document.querySelectorAll('#gradePillContainer .grade-pill-btn.selected')]
+    const _selectedKGrades = [...document.querySelectorAll(kPillContainerSel)]
       .map(b => b.dataset.grade);
     const _isKOnlyGrade = _selectedKGrades.length >= 1 && _selectedKGrades.every(g => g === 'Kindergarten');
     const _kKey = 'Kindergarten ' + subj;
@@ -2267,8 +2282,9 @@ function updateTopicSuggestions() {
     'Science & Technology': 'e.g. Habitats, States of Matter, Simple Machines...',
     'Social Studies': 'e.g. Indigenous Communities, Canadian Government...',
     'Health & Physical Education': 'e.g. Nutrition, Mental Health, Relationships...',
+    'The Arts': 'e.g. Drawing, Music, Drama, Movement...',
   };
-  if (placeholder) placeholder.placeholder = placeholders[subj] || 'e.g. Enter your topic...';
+  if (inputEl) inputEl.placeholder = placeholders[subj] || 'e.g. Enter your topic...';
 }
 
 function onSubjectChange() {
@@ -7546,15 +7562,70 @@ async function autoMarkStudent(sid, studentObj, responses, answerKey, rubric, bt
   const answeredCount = answeredEntries.length;
   const responsesText = answeredEntries.map(([q,a]) => q+': '+(Array.isArray(a)?a.join(', '):a)).join('\n');
   const completionNote = totalQuestions > 0 ? `Student answered ${answeredCount} of ${totalQuestions} questions. ${totalQuestions-answeredCount} left blank.` : '';
-  const prompt = `You are an Ontario elementary teacher marking a student worksheet. Use Ontario Achievement Chart levels (Level 1-4).
+  const prompt = `You are an experienced Ontario elementary teacher marking a student worksheet. Use Ontario Achievement Chart levels (Level 1-4).
+
 STUDENT: ${studentName} (${studentObj.grade||''})
-ANSWER KEY:\n${answerKey}
-${rubric?'RUBRIC:\n'+rubric:''}
+ANSWER KEY:
+${answerKey}
+${rubric?'RUBRIC:\n'+rubric+'\n':''}
 ${completionNote}
-STUDENT RESPONSES:\n${responsesText}
+STUDENT RESPONSES:
+${responsesText}
+
+══════════════════════════════════════════════════════════════
+MARKING PHILOSOPHY — read this carefully before assigning a level:
+══════════════════════════════════════════════════════════════
+
+1. BE A FAIR, ENCOURAGING TEACHER — NOT A STRICT GRADER.
+   Real Ontario teachers give credit for understanding, not just exact wording.
+   You are NOT comparing student responses against the answer key word-for-word.
+   You are assessing whether the student demonstrates understanding of the concept.
+
+2. LEVEL 3 IS THE EXPECTED STANDARD — IT IS THE NORM, NOT A CEILING.
+   The Ontario Achievement Chart defines Level 3 as "achievement at the provincial standard."
+   This means a student who shows competent understanding deserves Level 3 — not Level 2+.
+   - If a student answers most questions correctly with reasonable understanding → L3 or L3+
+   - Level 4 is for students whose work shows depth, insight, or going beyond what was asked
+   - Level 2 means the student is "approaching" the standard — use ONLY if work is genuinely incomplete or shows clear gaps in understanding
+   - Level 1 means significant gaps — reserve for work that mostly misses the concept
+   - When in doubt between two levels, lean HIGHER, not lower (a real teacher would)
+
+3. PARTIAL CREDIT IS EXPECTED AND GENEROUS.
+   - If a student gets the main idea but misses a detail, that's still mostly correct (✓ or partial ~, not ✗)
+   - If the answer key says "photosynthesis" and the student writes "plants making food from sun" — that's CORRECT, not partial
+   - If a math answer has the right approach but a small calculation error, give partial credit
+   - Synonyms, paraphrasing, and equivalent phrasing all count as correct
+
+4. IGNORE THESE THINGS WHEN MARKING (unless the question is specifically about them):
+   - Spelling mistakes — kids are still learning
+   - Capitalization
+   - Punctuation
+   - Grammar slips
+   - Handwriting-style typos in typed responses
+   Mark for CONTENT and UNDERSTANDING, not surface conventions.
+
+5. GRADE-APPROPRIATE EXPECTATIONS:
+   - A Grade 2 student writing "the bear is big and brown and lives in forest" is showing strong descriptive writing — that's L3+ for their grade
+   - A Grade 7 student writing the same thing would be L2 because the expectation is more developed
+   - Calibrate to "what would a competent ${studentObj.grade||'student at this grade'} produce?"
+
+6. BLANK ANSWERS:
+   - Blanks lower the level somewhat, but a student who answered 4 of 5 questions well is still at L3, not L2
+   - Only let blanks pull below L3 if more than half were left blank
+
+7. FEEDBACK TONE — Warm, specific, growth-oriented:
+   - In per_question feedback: 1 short sentence. Affirm what they did right OR offer a gentle next step. Never sarcastic, never harsh.
+   - In observation_note: 2-3 sentences addressed to ${studentObj.first} by first name. Lead with a specific strength you observed. End with one concrete next step framed positively ("Next time, try..." not "You need to...").
+
+══════════════════════════════════════════════════════════════
+
 Respond ONLY with valid JSON (no markdown fences):
-{"suggested_level":"L3","level_label":"Level 3","per_question":[{"question":"q1","feedback":"one sentence feedback","score":"✓"}],"observation_note":"2-3 sentence observation note addressed to ${studentObj.first} by first name. Warm, specific. Mention 1 strength and 1 next step."}
-For suggested_level use: L1, L1+, L2, L2+, L3, L3+, or L4. For score: ✓ (correct), ~ (partial), ✗ (incorrect).`;
+{"suggested_level":"L3","level_label":"Level 3","per_question":[{"question":"q1","feedback":"one sentence warm feedback","score":"✓"}],"observation_note":"Warm 2-3 sentence note to ${studentObj.first}, leading with a strength."}
+
+For suggested_level use: L1, L1+, L2, L2+, L3, L3+, L4, or L4+.
+For score: ✓ (correct or essentially correct), ~ (partial credit — got some of it), ✗ (incorrect or missing).
+
+Default toward L3 unless there is clear evidence the student is below or above the standard.`;
 
   try {
     const res = await authFetch('/api/generate', {method:'POST',body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,messages:[{role:'user',content:prompt}],meta:{type:'auto_mark',grade:studentObj.grade||null,subject:null}})});
@@ -8757,17 +8828,16 @@ function autoFillUnitGradesFromClass() {
 }
 
 function updateUnitTopicPlaceholder() {
-  const subj = document.getElementById('unit-subj')?.value || '';
-  const input = document.getElementById('unit-topic');
-  if (!input) return;
-  const ph = {
-    'Language / Literacy': 'e.g. Persuasive Writing, Short Story, Poetry, Making Inferences...',
-    'Mathematics': 'e.g. Fractions, Multiplication, Area and Perimeter, Data and Graphs...',
-    'Science & Technology': 'e.g. Habitats, States of Matter, Simple Machines, Ecosystems...',
-  };
-  input.placeholder = ph[subj] || 'e.g. Enter your unit topic...';
+  // Refresh the unit topic suggestions and placeholder via the unified helper.
+  // The unified helper handles both the suggestion datalist and the placeholder text,
+  // so this thin wrapper just delegates. Kept for backward compat with existing onchange wiring.
+  updateUnitTopicSuggestions();
 }
-function toggleUnitGradePill(btn) { btn.classList.toggle('selected'); updateKOnlySubjectOptions(); }
+function toggleUnitGradePill(btn) {
+  btn.classList.toggle('selected');
+  updateKOnlySubjectOptions();
+  updateUnitTopicSuggestions();  // Re-filter unit topics when grade changes
+}
 
 function getUnitSelectedGrades() {
   return [...document.querySelectorAll('#unitGradePillContainer .grade-pill-btn.selected')]
@@ -8775,7 +8845,13 @@ function getUnitSelectedGrades() {
 }
 
 async function generateUnitPlan() {
-  const topic = document.getElementById('unit-topic')?.value.trim();
+  const topicRaw = document.getElementById('unit-topic')?.value.trim();
+  // Strip grade label suffix added by topic suggestion datalist (e.g. "Persuasive Writing (Gr. 4/5)" → "Persuasive Writing")
+  // Mirrors the same handling in generate() for the lesson topic input.
+  const unitList = document.getElementById('unitTopicSuggestions');
+  const topic = (unitList?._topicMap && unitList._topicMap[topicRaw])
+    ? unitList._topicMap[topicRaw]
+    : (topicRaw||'').replace(/\s*\(Gr\.[^)]+\)\s*$/, '').replace(/\s*\(any grade\)\s*$/, '').trim();
   const subj  = document.getElementById('unit-subj')?.value;
   const duration = document.getElementById('unit-duration')?.value;
   const grades = getUnitSelectedGrades();
@@ -8964,20 +9040,18 @@ function renderUnitCard(u, linkedLessons, assessments, submissionCounts) {
     return 'var(--sage)'; // Language and default
   })();
   return `<div class="card" id="unit-${escHTML(uid)}" style="padding:0;overflow:hidden;margin-bottom:14px;border-left:4px solid ${subjAccent};">
-    <div style="padding:14px 18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;cursor:pointer;" onclick="toggleUnitCard('${escHTML(uid)}')">
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-          <span style="font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;color:var(--ink);">${escHTML(u.topic)}</span>
-          <span id="unit-chevron-${escHTML(uid)}" style="color:var(--muted);font-size:.7rem;">▸</span>
-        </div>
-        <div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.04em;">${escHTML(gradesStr)} · ${escHTML(subj)} · ${escHTML(u.duration||'')} · ${escHTML(date)}</div>
-        ${u.big_idea?`<div style="font-size:.8rem;color:var(--muted);margin-top:7px;line-height:1.55;font-style:italic;">${escHTML(u.big_idea)}</div>`:''}
+    <div style="padding:11px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;" onclick="toggleUnitCard('${escHTML(uid)}')">
+      <div style="flex:1;min-width:0;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+        <span style="font-family:'Fraunces',serif;font-size:1.02rem;font-weight:600;color:var(--ink);">${escHTML(u.topic)}</span>
+        <span id="unit-chevron-${escHTML(uid)}" style="color:var(--muted);font-size:.7rem;">▸</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.04em;">${escHTML(gradesStr)} · ${escHTML(subj)} · ${escHTML(u.duration||'')} · ${escHTML(date)}</span>
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0;align-items:center;">
         <span style="font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);white-space:nowrap;letter-spacing:.04em;">${expandedCount}/${lessons.length} built</span>
         <button onclick="event.stopPropagation();deleteUnitPlan('${escHTML(uid)}')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:2px 4px;opacity:.5;transition:opacity .15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.5'" title="Delete">🗑</button>
       </div>
     </div>
+    ${u.big_idea?`<div style="padding:0 16px 10px;font-size:.78rem;color:var(--muted);line-height:1.5;font-style:italic;">${escHTML(u.big_idea)}</div>`:''}
     <div id="unit-lessons-${escHTML(uid)}" style="display:none;">${lessonRows}</div>
     ${expandedCount > 0 ? `<div style="border-top:1px solid var(--border);background:var(--paper);">
       ${assessments.length > 0 ? `<div style="padding:10px 14px 6px;">
