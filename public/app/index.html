@@ -1426,6 +1426,7 @@ function showApp() {
   document.getElementById('authScreen').style.display='none';
   document.getElementById('appScreen').style.display='block';
   document.getElementById('navEmail').textContent = currentUser.email;
+  ensureFeedbackUI();
   const fbBtn = document.getElementById('feedbackBtn');
   if (fbBtn) fbBtn.style.display = 'flex';
   if (!localStorage.getItem('teacherai_tour_done')) setTimeout(startTour, 800);
@@ -8247,6 +8248,56 @@ initApp();
 // ============================================================
 let _feedbackCat = null;
 
+// Creates the feedback button + modal DOM if not already present.
+// Idempotent — safe to call repeatedly. Fix for Chat 8 bug where the
+// button/modal HTML was never added to the page.
+function ensureFeedbackUI() {
+  if (document.getElementById('feedbackBtn')) return;
+  const html =
+    '<button id="feedbackBtn" onclick="openFeedbackModal()" title="Send feedback" ' +
+    'style="display:none; position:fixed; bottom:20px; right:20px; z-index:998; ' +
+    'width:52px; height:52px; border-radius:50%; border:none; ' +
+    'background:var(--sage); color:#fff; font-size:22px; cursor:pointer; ' +
+    'box-shadow:0 4px 14px rgba(0,0,0,0.18); align-items:center; justify-content:center; ' +
+    'transition:transform .15s, box-shadow .15s;" ' +
+    'onmouseover="this.style.transform=\'scale(1.08)\';" ' +
+    'onmouseout="this.style.transform=\'scale(1)\';">&#128172;</button>' +
+    '<div id="feedbackModal" ' +
+    'style="display:none; position:fixed; inset:0; background:rgba(30,25,20,0.45); z-index:1000; ' +
+    'align-items:center; justify-content:center; padding:20px;">' +
+    '<div style="background:var(--paper); border-radius:14px; padding:24px 26px; max-width:440px; width:100%; ' +
+    'box-shadow:0 20px 60px rgba(0,0,0,0.25); font-family:inherit;">' +
+    '<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">' +
+    '<h3 style="margin:0; font-family:\'DM Serif Display\', serif; font-size:1.35rem; color:var(--ink);">Send feedback</h3>' +
+    '<button onclick="closeFeedbackModal()" aria-label="Close" ' +
+    'style="background:none; border:none; font-size:22px; color:var(--muted); cursor:pointer; line-height:1; padding:4px 8px;">&times;</button>' +
+    '</div>' +
+    '<p style="margin:0 0 14px; font-size:.82rem; color:var(--muted);">What\'s on your mind? Read by a human, not a bot.</p>' +
+    '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">' +
+    '<button class="fbcat" data-cat="bug" onclick="selectFeedbackCat(this)" ' +
+    'style="padding:9px 10px; border:1px solid var(--border); border-radius:8px; background:var(--paper); color:var(--ink); font-family:inherit; font-size:.85rem; cursor:pointer; text-align:left;">&#128027; Bug</button>' +
+    '<button class="fbcat" data-cat="feature_request" onclick="selectFeedbackCat(this)" ' +
+    'style="padding:9px 10px; border:1px solid var(--border); border-radius:8px; background:var(--paper); color:var(--ink); font-family:inherit; font-size:.85rem; cursor:pointer; text-align:left;">&#10024; Feature request</button>' +
+    '<button class="fbcat" data-cat="general" onclick="selectFeedbackCat(this)" ' +
+    'style="padding:9px 10px; border:1px solid var(--border); border-radius:8px; background:var(--paper); color:var(--ink); font-family:inherit; font-size:.85rem; cursor:pointer; text-align:left;">&#128172; General</button>' +
+    '<button class="fbcat" data-cat="love_it" onclick="selectFeedbackCat(this)" ' +
+    'style="padding:9px 10px; border:1px solid var(--border); border-radius:8px; background:var(--paper); color:var(--ink); font-family:inherit; font-size:.85rem; cursor:pointer; text-align:left;">&#10084;&#65039; Love it</button>' +
+    '</div>' +
+    '<textarea id="feedbackMsg" placeholder="Tell us what happened or what you\'d like..." ' +
+    'style="width:100%; min-height:100px; padding:11px 13px; border:1px solid var(--border); border-radius:8px; ' +
+    'font-family:inherit; font-size:.9rem; resize:vertical; box-sizing:border-box; background:var(--cream);"></textarea>' +
+    '<div id="feedbackErr" style="display:none; margin-top:8px; font-size:.8rem; color:#B91C1C;"></div>' +
+    '<div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">' +
+    '<button onclick="closeFeedbackModal()" ' +
+    'style="padding:9px 18px; border:1px solid var(--border); border-radius:8px; background:var(--paper); color:var(--ink); font-family:inherit; font-size:.88rem; cursor:pointer;">Cancel</button>' +
+    '<button id="feedbackSubmitBtn" onclick="submitFeedback()" ' +
+    'style="padding:9px 20px; border:none; border-radius:8px; background:var(--sage); color:#fff; font-family:inherit; font-size:.88rem; font-weight:600; cursor:pointer;">Send</button>' +
+    '</div>' +
+    '</div>' +
+    '</div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
 function openFeedbackModal() {
   _feedbackCat = null;
   document.getElementById('feedbackMsg').value = '';
@@ -8258,11 +8309,12 @@ function openFeedbackModal() {
     b.style.color = 'var(--ink)';
     b.style.fontWeight = '400';
   });
-  document.getElementById('feedbackModal').classList.add('open');
+  document.getElementById('feedbackModal').style.display = 'flex';
 }
 
 function closeFeedbackModal() {
-  document.getElementById('feedbackModal').classList.remove('open');
+  const m = document.getElementById('feedbackModal');
+  if (m) m.style.display = 'none';
 }
 
 function selectFeedbackCat(btn) {
