@@ -181,8 +181,18 @@ async function logGeneration(row) {
   }
 }
 
+const ALLOWED_ORIGINS = [
+  'https://www.teacherai.ca',
+  'https://teacherai.ca',
+];
+
 module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS: whitelist instead of wildcard. Chat 8 M1 fix.
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -298,7 +308,7 @@ module.exports = async function handler(req, res) {
     } catch (err) {
       console.error('generate.js stream error:', err);
       if (!res.headersSent) {
-        return res.status(500).json({ error: 'Server error: ' + err.message });
+        return res.status(500).json({ error: 'Server error. Please try again.' });
       }
       try { res.end(); } catch(_) {}
       return;
@@ -352,6 +362,6 @@ module.exports = async function handler(req, res) {
 
   } catch (err) {
     console.error('generate.js error:', err);
-    return res.status(500).json({ error: 'Server error: ' + err.message });
+    return res.status(500).json({ error: 'Server error. Please try again.' });
   }
 };
