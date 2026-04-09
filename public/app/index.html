@@ -2005,7 +2005,7 @@ function updateTopicSuggestions() {
       '6':  ['Fractions','Decimals','Percentages','Ratios','Area of Triangles and Parallelograms','Circle Graphs','Equations','Financial Literacy'],
       '7':  ['Fractions','Decimals','Percentages','Integers','Ratios and Rates','Circle Area and Circumference','Linear Relations','Probability','Financial Literacy'],
       '8':  ['Integers','Fractions','Percentages','Pythagorean Theorem','Linear Equations','Data Analysis','Scatter Plots','Financial Literacy - Compound Interest'],
-      'all': ['Addition','Subtraction','Multiplication','Division','Patterns','Data and Graphs','Measurement','Financial Literacy']
+      'all': ['Addition','Subtraction']
     };
     const LANG_BY_GRADE = {
       'K':  ['Oral Communication','Phonological Awareness','Letter Recognition','Rhyming','Story Elements'],
@@ -2017,7 +2017,7 @@ function updateTopicSuggestions() {
       '6':  ['Making Inferences','Compare and Contrast','Persuasive Writing','Short Story','Research Writing','Figurative Language','Media Literacy'],
       '7':  ['Making Inferences','Author’s Purpose','Argumentative Writing','Short Story','Research Writing','Figurative Language','Point of View','Media Literacy'],
       '8':  ['Critical Analysis','Argumentative Writing','Literary Devices','Research Writing','Point of View','Media Literacy','Figurative Language'],
-      'all': ['Reading Comprehension','Vocabulary','Oral Communication','Spelling Strategies','Grammar','Punctuation']
+      'all': ['Spelling Strategies','Grammar','Punctuation']
     };
     const selectedGrades2 = [...document.querySelectorAll('.grade-pill-btn.selected')]
       .map(b => b.dataset.grade).filter(Boolean)
@@ -2044,13 +2044,18 @@ function updateTopicSuggestions() {
 
   // Render datalist — attach grade label to option value when grades are known
   // Strip grade label before generating (handled in generate() via topicClean)
+  // Label rule: 1 grade → "(Gr. 4)", 2+ → "(Gr. 4/5)", 0 (universal topic) → "(any grade)"
   if (suggestions.length && typeof suggestions[0] === 'object') {
     list.innerHTML = suggestions.map(s => {
-      const label = s.grades.length === 1 ? ` (Gr. ${s.grades[0]})` : s.grades.length > 1 ? ` (Gr. ${s.grades.join('/')})` : '';
+      const label = s.grades.length === 1 ? ` (Gr. ${s.grades[0]})`
+                  : s.grades.length > 1 ? ` (Gr. ${s.grades.join('/')})`
+                  : ' (any grade)';
       return `<option value="${escHTML(s.topic+label)}">`;
     }).join('');
     list._topicMap = Object.fromEntries(suggestions.map(s => {
-      const label = s.grades.length === 1 ? ` (Gr. ${s.grades[0]})` : s.grades.length > 1 ? ` (Gr. ${s.grades.join('/')})` : '';
+      const label = s.grades.length === 1 ? ` (Gr. ${s.grades[0]})`
+                  : s.grades.length > 1 ? ` (Gr. ${s.grades.join('/')})`
+                  : ' (any grade)';
       return [`${s.topic}${label}`, s.topic];
     }));
   } else {
