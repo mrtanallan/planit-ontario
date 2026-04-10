@@ -214,6 +214,54 @@ module.exports = async function handler(req, res) {
   }
   // Expose for later logging / rate-limit use
   req.userId = auth.userId;
+
+  // ──────────────────────────────────────────────────────────────────
+  // RATE LIMITING — two layers (plan + daily ceiling)
+  // Layer 1: Lessons+units per 30 days (user-facing limit)
+  // Layer 2: Total API calls per 24 hours (abuse backstop)
+  // ──────────────────────────────────────────────────────────────────
+  try {
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+    if (SUPABASE_URL && SUPABASE_SERVICE_KEY) {
+      const callType = (req.body && req.body.meta && req.body.meta.type) || 'unknown';
+      const sbHeaders = { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` };
+
+      // Look up plan
+      const profRes = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${auth.userId}&select=plan`, { headers: sbHeaders });
+      const profRows = await profRes.json().catch(() => []);
+      const plan = (profRows[0] && profRows[0].plan) || 'free';
+
+      const PLAN_LIMITS = { free: 5, beta: Infinity, pro: Infinity };
+      const DAILY_CEILINGS = { free: 50, beta: 500, pro: 2000 };
+      const planLimit = PLAN_LIMITS[plan] != null ? PLAN_LIMITS[plan] : 5;
+      const dailyCeiling = DAILY_CEILINGS[plan] != null ? DAILY_CEILINGS[plan] : 50;
+
+      // Layer 1: lessons + units in last 30 days (only if not unlimited)
+      if (planLimit !== Infinity && (callType === 'lesson' || callType === 'unit')) {
+        const since30 = new Date(Date.now() - 30*24*60*60*1000).toISOString();
+        const cnt30Res = await fetch(`${SUPABASE_URL}/rest/v1/generations?user_id=eq.${auth.userId}&created_at=gte.${since30}&type=in.(lesson,unit)&select=id`, { headers: { ...sbHeaders, Prefer: 'count=exact', Range: '0-0' } });
+        const used30 = parseInt((cnt30Res.headers.get('content-range') || '0/0').split('/')[1]) || 0;
+        if (used30 >= planLimit) {
+          return res.status(429).json({ error: `You've used all ${planLimit} of your ${plan}-plan lessons this month. Resets after 30 days, or redeem a beta code for unlimited monthly lessons.`, plan, used: used30, limit: planLimit, layer: 'monthly' });
+        }
+      }
+
+      // Layer 2: ALL generation types in last 24 hours (always enforced)
+      if (dailyCeiling !== Infinity) {
+        const since24 = new Date(Date.now() - 24*60*60*1000).toISOString();
+        const cnt24Res = await fetch(`${SUPABASE_URL}/rest/v1/generations?user_id=eq.${auth.userId}&created_at=gte.${since24}&select=id`, { headers: { ...sbHeaders, Prefer: 'count=exact', Range: '0-0' } });
+        const used24 = parseInt((cnt24Res.headers.get('content-range') || '0/0').split('/')[1]) || 0;
+        if (used24 >= dailyCeiling) {
+          return res.status(429).json({ error: 'Too many requests in a short time. Please slow down and try again in a few minutes.', layer: 'daily' });
+        }
+      }
+    }
+  } catch (rateErr) {
+    // Fail-open on rate limit errors so a Supabase outage doesn't break generation.
+    // The Anthropic console spend cap is the absolute backstop.
+    console.error('[ratelimit] check failed, allowing through:', rateErr.message);
+  }
   // ──────────────────────────────────────────────────────────────────
 
   // ──────────────────────────────────────────────────────────────────
