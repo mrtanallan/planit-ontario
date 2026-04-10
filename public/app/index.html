@@ -417,6 +417,9 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <h3>➕ Add Student</h3>
       <button onclick="closeAddStudentModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);">✕</button>
     </div>
+    <div style="background:var(--sage-l);border:1px solid #A8C4AB;border-radius:8px;padding:10px 13px;margin-bottom:14px;font-size:.76rem;line-height:1.5;color:#1C3A2B;">
+      🔒 <strong>Privacy tip:</strong> Use first names only or nicknames if you prefer. Paraphrase accommodations in your own words — don't paste text from IEP documents. <a href="/privacy.html#mfippa" target="_blank" style="color:var(--sage);">MFIPPA guidance →</a>
+    </div>
     <div class="fg">
       <div class="fi"><label>First Name <span style="color:var(--rust);">✱</span></label><input type="text" id="sF" placeholder="First" autocapitalize="words" oninput="this.value=this.value.replace(/^(.)/,c=>c.toUpperCase())" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('sL')?.focus();}"></div>
       <div class="fi"><label>Last Name <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label><input type="text" id="sL" placeholder="Last" autocapitalize="words" oninput="this.value=this.value.replace(/^(.)/,c=>c.toUpperCase())"></div>
@@ -1689,7 +1692,7 @@ function renderClassTabs() {
     el.innerHTML = `<div style="text-align:center;padding:28px 20px 32px;max-width:520px;margin:0 auto;">
       <div style="font-size:2.4rem;margin-bottom:10px;">🏫</div>
       <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin-bottom:6px;color:var(--ink);">Let's set up your first class</div>
-      <div style="color:var(--muted);font-size:.88rem;margin-bottom:22px;line-height:1.5;">Takes about 30 seconds. Your class details get baked into every lesson TeacherAI generates for you.</div>
+      <div style="color:var(--muted);font-size:.88rem;margin-bottom:22px;line-height:1.5;">Set up a class once, and every lesson, assessment, and report card comment from here on is tailored to your students.</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px;text-align:left;">
         <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
           <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">🎯</div>
@@ -1744,8 +1747,12 @@ function renderClassSelector() {
   const sel = document.getElementById('classSelector');
   const row = document.getElementById('classSelectorRow');
   if (!sel||!row) return;
-  if (!classes.length) { row.style.display='none'; return; }
   row.style.display='flex';
+  if (!classes.length) {
+    sel.innerHTML = `<option value="" selected>✏️ Custom / no class</option>`;
+    activeClassId = null;
+    return;
+  }
   sel.innerHTML = `<option value="">✏️ Custom / no class</option>` +
     classes.map(c => `<option value="${c.id}" ${c.id===activeClassId?'selected':''}>${c.name}${c.subject_focus?' · '+c.subject_focus:''}</option>`).join('');
   if (activeClassId) autoFillGradesFromClass();
