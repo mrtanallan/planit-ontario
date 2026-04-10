@@ -4194,6 +4194,23 @@ async function generateSlideData(callerBtn) {
   const activeClass2 = classes.find(c=>c.id===activeClassId);
   const ctx  = activeClass2?.context?.trim() || document.getElementById('ctx')?.value?.trim() || '';
   if (!topic) { alert('Generate a lesson first.'); return false; }
+
+  // Fast path: reuse saved slide data if we already have it
+  if (window._slideData && window._slideData.sd) {
+    const _sd = window._slideData.sd;
+    const _t  = window._slideData.topic    || topic;
+    const _s  = window._slideData.subject  || subject;
+    const _g  = window._slideData.gradeStr || gradeStr;
+    const _wi = window._slideData.wikiImg    || null;
+    const _mi = window._slideData.mindsonImg || null;
+    const _wt = window._slideData.wikiTitle  || null;
+    const _wl = window._slideData.wikiLicense|| null;
+    const _si = window._slideData.slideImgs  || [];
+    openHTMLPresenter(_sd, _t, _s, _g, _wi, _mi, _wt, _wl, _si);
+    if (callerBtn) { callerBtn.disabled = false; callerBtn.textContent = '▶ Present'; }
+    return true;
+  }
+
   const lpText = genC['lesson_plan']?.cur || '';
   if (callerBtn) { callerBtn.disabled=true; callerBtn.textContent='⏳ Building slides...'; }
   try {
@@ -8337,7 +8354,8 @@ async function loadLesson(id) {
   genC['_expectations'] = lesson.expectations || [];
   curSess = { id:null, date:new Date().toLocaleDateString('en-CA'), subject:lesson.subject||'Language / Literacy', strand:'General', grades:lesson.grades||[], task:lesson.topic||'', marks:{} };
   window._curSessGrades = lesson.grades || [];
-  window._slideData = null;
+  window._slideData = (content._slideData) ? content._slideData : null;
+  _pendingSlideSave = !content._slideData;
   _combinedLinkCache = null;
   Object.keys(_gradeLinksCache).forEach(k => delete _gradeLinksCache[k]);
   // Auto-switch active class to match lesson grades
