@@ -7963,7 +7963,26 @@ async function renderTracker() {
 
   // Grade table
   const gTable = document.getElementById('gTable');
-  if (!students.length) { gTable.innerHTML='<div style="color:var(--muted);font-size:.83rem;font-style:italic;">No students yet.</div>'; }
+  if (!students.length) { gTable.innerHTML=`<div style="text-align:center;padding:32px 20px;max-width:520px;margin:0 auto;">
+      <div style="font-size:2.4rem;margin-bottom:10px;">📊</div>
+      <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.35rem;margin-bottom:6px;color:var(--ink);">Track every student, every assessment</div>
+      <div style="color:var(--muted);font-size:.86rem;margin-bottom:22px;line-height:1.5;">The Trackers tab shows each student's progress across every assessment you give them. Add students to your class roster to start tracking.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px;text-align:left;">
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
+          <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">📈</div>
+          <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Running averages</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Ontario Achievement Chart levels averaged across every task.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
+          <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">🎯</div>
+          <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Expectation coverage</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">See which Ontario expectations each student has been assessed on.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
+          <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">📤</div>
+          <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">CSV export</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Download everything as a spreadsheet for your records.</div></div>
+        </div>
+      </div>
+      <label for="tr-roster" class="btn b-sage" style="font-size:.92rem;padding:10px 22px;cursor:pointer;display:inline-block;">+ Set Up Your Class Roster →</label>
+    </div>`; }
   else {
     const gradeOrder=['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
     // Mirror the Class Roster sort preference (change it there to change it everywhere)
