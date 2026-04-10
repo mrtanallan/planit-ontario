@@ -8,6 +8,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <style>
+
+.setup-pill{display:inline-flex;align-items:center;gap:.55rem;margin-left:.9rem;padding:.35rem .75rem .35rem .7rem;background:linear-gradient(135deg,#F5C842,#E8B82E);border:1px solid #D4A422;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:.76rem;font-weight:600;color:#2C2520;cursor:pointer;box-shadow:0 2px 8px rgba(212,164,34,.25);transition:transform .15s ease,box-shadow .15s ease;}
+.setup-pill:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(212,164,34,.35);}
+.sp-dots{display:inline-flex;gap:3px;}
+.sp-dot{width:7px;height:7px;border-radius:50%;background:rgba(44,37,32,.25);}
+.sp-dot.on{background:#2C2520;}
+.sp-label{letter-spacing:.01em;}
+.sp-x{opacity:.45;font-size:.72rem;padding:0 2px;margin-left:.2rem;}
+.sp-x:hover{opacity:1;}
+@media (max-width:700px){.setup-pill{margin-left:.4rem;padding:.3rem .55rem;font-size:.68rem;}.sp-label{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}}
+
 /* ============================================================
    DESIGN TOKENS
    ============================================================ */
@@ -408,20 +419,6 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 </div>
 
 <!-- ── Tour overlay ── -->
-<div id="tourOverlay" class="tour-overlay" style="display:none;" onclick="if(event.target===this)skipTour()">
-  <div class="tour-box">
-    <span id="tourEmoji" class="tour-emoji">👋</span>
-    <div id="tourStep" class="tour-step">Step 1 of 5</div>
-    <div id="tourTitle" class="tour-title">Welcome to TeacherAI</div>
-    <div id="tourBody" class="tour-body"></div>
-    <div class="tour-dots" id="tourDots"></div>
-    <div class="tour-actions">
-      <button onclick="skipTour()" style="background:none;border:none;font-size:.78rem;color:var(--muted);cursor:pointer;padding:4px;">Skip tour</button>
-      <button class="btn b-sage" id="tourNext" onclick="tourNext()">Next →</button>
-    </div>
-  </div>
-</div>
-
 <!-- ── Add student modal ── -->
 <div class="mbg" id="addStudentModal" onclick="if(event.target===this)closeAddStudentModal()">
   <div class="modal" style="max-width:500px;">
@@ -514,6 +511,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <label class="tab" for="tr-plan"><span class="tab-full">✨ Plan</span><span class="tab-short">✨</span></label>
     <label class="tab" for="tr-lessons"><span class="tab-full">📚 My Lessons</span><span class="tab-short">📚</span></label>
     <label class="tab" for="tr-assess"><span class="tab-full">📊 Trackers</span><span class="tab-short">📊</span></label>
+<div id="setupPill" class="setup-pill" style="display:none;" title="Click to continue setup"></div>
     <label class="tab" for="tr-rc"><span class="tab-full">📝 Report Cards</span><span class="tab-short">📝</span></label>
   </div>
   <div class="nav-user">
@@ -529,33 +527,6 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
      PLAN TAB
      ══════════════════════════════════════════════════════════ -->
 <div class="page" id="pg-plan">
-
-  <!-- Onboarding banner -->
-  <div id="welcomeBanner" style="display:none;margin-bottom:20px;">
-    <div style="background:linear-gradient(135deg,#1C3A2B,#2D5C38);border-radius:12px;padding:22px 24px;color:white;margin-bottom:12px;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
-        <div style="flex:1;">
-          <div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;margin-bottom:4px;">👋 Welcome to TeacherAI</div>
-          <div style="font-size:.86rem;opacity:.85;line-height:1.6;">Stop spending evenings planning. AI lesson plans, auto-marking &amp; report card comments — built for Ontario teachers.</div>
-        </div>
-        <button onclick="dismissWelcomeBanner(false)" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:1.1rem;padding:0;line-height:1;">✕</button>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="onboardingSteps">
-      <div class="card onboard-step" id="ostep1" style="border-left:3px solid var(--sage);cursor:pointer;" onclick="document.getElementById('tr-roster').checked=true;">
-        <div style="font-size:1.4rem;margin-bottom:6px;">👥</div>
-        <div style="font-weight:600;font-size:.88rem;margin-bottom:3px;">Step 1 — Add Students</div>
-        <div style="font-size:.78rem;color:var(--muted);line-height:1.5;">Go to Class Roster and add your students.</div>
-        <div style="margin-top:10px;font-size:.75rem;color:var(--sage);font-weight:600;">Go to Class Roster →</div>
-      </div>
-      <div class="card onboard-step" id="ostep2" style="border-left:3px solid var(--amber);">
-        <div style="font-size:1.4rem;margin-bottom:6px;">✨</div>
-        <div style="font-weight:600;font-size:.88rem;margin-bottom:3px;">Step 2 — Generate a Lesson</div>
-        <div style="font-size:.78rem;color:var(--muted);line-height:1.5;">Type a topic, pick your grade, and hit Generate.</div>
-        <div style="margin-top:10px;font-size:.75rem;color:var(--amber);font-weight:600;">Complete Step 1 first</div>
-      </div>
-    </div>
-  </div>
 
   <!-- Workflow steps -->
   <div class="wf">
@@ -1545,16 +1516,16 @@ function showApp() {
   ensureFeedbackUI();
   const fbBtn = document.getElementById('feedbackBtn');
   if (fbBtn) fbBtn.style.display = 'flex';
-  if (!localStorage.getItem('teacherai_tour_done')) setTimeout(startTour, 800);
+  // Old guided-tour removed; unified Setup pill handles onboarding now
   const savedTab = localStorage.getItem('teacherai_tab') || 'tr-plan';
   const tabEl = document.getElementById(savedTab);
   if (tabEl) tabEl.checked = true;
-  updateWelcomeBanner();
+  /*updateWelcomeBanner*/updateSetupPill();
   document.querySelectorAll('.tab-r').forEach(r => {
     r.addEventListener('change', function() {
       if (!this.checked) return;
       localStorage.setItem('teacherai_tab', this.id);
-      if (this.id==='tr-plan')    { renderClassSelector(); updateWelcomeBanner(); resetWorkflow(); }
+      if (this.id==='tr-plan')    { renderClassSelector(); /*updateWelcomeBanner*/updateSetupPill(); resetWorkflow(); }
       if (this.id==='tr-assess')  { loadUserData().then(() => { renderTracker(); loadSubmissions(); renderAssessClassTabs(); loadUnitTestResults(); const v=localStorage.getItem('teacherai_tracker_view')||'grade'; switchTrackerView(v); }); }
       if (this.id==='tr-rc')      { populateRCFilters().then(() => loadSavedRCPage()); }
       if (this.id==='tr-account') { loadAccountPage(); }
@@ -1575,7 +1546,7 @@ function showApp() {
     switchTrackerView(localStorage.getItem('teacherai_tracker_view') || 'grade');
   });
   loadSubmissions();
-  updateWelcomeBanner();
+  /*updateWelcomeBanner*/updateSetupPill();
   if (savedTab === 'tr-units') renderUnitPlansList();
   if (savedTab === 'tr-lessons') renderLessonsList();
   if (savedTab === 'tr-assess') { loadUnitTestResults(); }
@@ -1692,7 +1663,7 @@ async function switchClass(classId) {
   }));
   renderClassTabs(); renderClassSelector(); renderUnitClassSelector();
   autoFillGradesFromClass();
-  renderR(); renderTracker(); updateWelcomeBanner();
+  renderR(); renderTracker(); /*updateWelcomeBanner*/updateSetupPill();
 }
 
 async function deleteClass(classId) {
@@ -1724,7 +1695,26 @@ function renderClassTabs() {
   const el = document.getElementById('classTabs');
   if (!el) return;
   if (!classes.length) {
-    el.innerHTML = `<div style="text-align:center;padding:12px 8px;"><div style="font-size:1.5rem;margin-bottom:6px;">🏫</div><div style="font-weight:600;font-size:.9rem;margin-bottom:4px;">Start by creating a class</div><div style="color:var(--muted);font-size:.8rem;margin-bottom:12px;">Each class has its own roster, lessons, and data.</div><button class="btn b-sage" onclick="toggleNewClassForm()" style="font-size:.85rem;">+ Create Your First Class</button></div>`;
+    el.innerHTML = `<div style="text-align:center;padding:28px 20px 32px;max-width:520px;margin:0 auto;">
+      <div style="font-size:2.4rem;margin-bottom:10px;">🏫</div>
+      <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin-bottom:6px;color:var(--ink);">Let's set up your first class</div>
+      <div style="color:var(--muted);font-size:.88rem;margin-bottom:22px;line-height:1.5;">Takes about 30 seconds. Your class details get baked into every lesson TeacherAI generates for you.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px;text-align:left;">
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
+          <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">🎯</div>
+          <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Personalized lessons</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Grade, subject focus, and IEP info get used automatically.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
+          <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">📊</div>
+          <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Student tracking</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Add students once, track them across every assessment.</div></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
+          <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">🧩</div>
+          <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Split-grade ready</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Add multiple grades to one class for 4/5, 5/6, K/1, etc.</div></div>
+        </div>
+      </div>
+      <button class="btn b-sage" onclick="toggleNewClassForm()" style="font-size:.92rem;padding:10px 22px;">+ Create Your First Class</button>
+    </div>`;
     return;
   }
   el.innerHTML = classes.map(c => {
@@ -1815,36 +1805,24 @@ function autoFillGradesFromClass(gradesHint) {
 // ============================================================
 // ONBOARDING BANNER
 // ============================================================
-function updateWelcomeBanner() {
-  const banner = document.getElementById('welcomeBanner');
-  if (!banner) return;
-  if (localStorage.getItem('teacherai_welcomed')) { banner.style.display='none'; return; }
-  const hasLessons = savedLessons.length > 0;
-  banner.style.display='none';
-  db.from('students').select('id').eq('teacher_id',currentUser.id).limit(1).then(({ data }) => {
-    const hasStudents = data && data.length > 0;
-    if (hasStudents && hasLessons) { dismissWelcomeBanner(true); return; }
-    const planTab = document.getElementById('tr-plan');
-    if (!planTab||!planTab.checked) return;
-    banner.style.display='block';
-    const step1 = document.getElementById('ostep1');
-    const step2 = document.getElementById('ostep2');
-    if (step1 && hasStudents) {
-      step1.style.borderLeftColor='#4A7C59'; step1.style.background='#EAF0EA';
-      step1.querySelector('div:last-child').textContent='✅ Done'; step1.style.cursor='default'; step1.onclick=null;
-    }
-    if (step2) {
-      if (!hasStudents) { step2.style.opacity='.5'; step2.style.cursor='not-allowed'; }
-      else if (hasLessons) {
-        step2.style.borderLeftColor='#4A7C59'; step2.style.background='#EAF0EA';
-        step2.style.opacity='1'; step2.querySelector('div:last-child').textContent='✅ Done';
-      } else {
-        step2.style.opacity='1'; step2.style.cursor='default';
-        step2.querySelector('div:last-child').innerHTML='<span style="color:var(--amber);">👇 Do this next</span>';
-      }
-    }
-  });
+
+function updateSetupPill() {
+  const pill = document.getElementById('setupPill');
+  if (!pill) return;
+  if (localStorage.getItem('teacherai_setup_done')==='1') { pill.style.display='none'; return; }
+  const hasClass = (typeof classes!=='undefined') && classes.length > 0;
+  const hasStudents = (typeof students!=='undefined') && students.length > 0;
+  const hasLesson = (typeof savedLessons!=='undefined') && savedLessons.length > 0;
+  const done = [hasClass, hasStudents, hasLesson].filter(Boolean).length;
+  if (done === 3) { localStorage.setItem('teacherai_setup_done','1'); pill.style.display='none'; return; }
+  pill.style.display='inline-flex';
+  const next = !hasClass ? 'Create a class' : !hasStudents ? 'Add students' : 'Generate a lesson';
+  const tab  = !hasClass ? 'tr-roster' : !hasStudents ? 'tr-roster' : 'tr-plan';
+  pill.innerHTML = `<span class="sp-dots">${[0,1,2].map(i=>`<span class="sp-dot ${i<done?'on':''}"></span>`).join('')}</span><span class="sp-label">Next: ${next}</span><span class="sp-x" onclick="event.stopPropagation();localStorage.setItem('teacherai_setup_done','1');document.getElementById('setupPill').style.display='none';" title="Dismiss setup">✕</span>`;
+  pill.onclick = () => { document.getElementById(tab).checked = true; };
 }
+
+function updateWelcomeBanner() { updateSetupPill(); }
 function dismissWelcomeBanner(permanent) {
   if (permanent) localStorage.setItem('teacherai_welcomed','1');
   const banner = document.getElementById('welcomeBanner');
@@ -7338,7 +7316,7 @@ async function addStu() {
   document.getElementById('sF').value=''; document.getElementById('sL').value='';
   document.getElementById('sN').value=''; document.getElementById('sI').value='';
   document.getElementById('sF')?.focus();
-  renderR(); updateWelcomeBanner();
+  renderR(); /*updateWelcomeBanner*/updateSetupPill();
 }
 
 async function loadSample() {
@@ -7358,7 +7336,7 @@ async function loadSample() {
   hideLoading();
   if (error) { alert('Error: '+error.message); return; }
   data.forEach(s => students.push({id:s.id,first:s.first_name,last:s.last_name||'',grade:s.grade,notes:s.notes||'',iep:s.learning_profile||'',dbId:s.id,classId:s.class_id}));
-  renderR(); updateWelcomeBanner();
+  renderR(); /*updateWelcomeBanner*/updateSetupPill();
 }
 
 async function clearR() {
@@ -9754,19 +9732,7 @@ async function deleteUnitPlan(id) {
 // GUIDED TOUR
 
 // ============================================================
-const TOUR_STEPS = [
-  {emoji:'👋',title:'Welcome to TeacherAI',body:'Built for Ontario K–8 teachers. This quick tour shows you exactly how to use it — takes 60 seconds.'},
-  {emoji:'🏫',title:'Step 1: Set up your class',body:'Go to <strong>Class Roster</strong> → create a class → add your students. TeacherAI uses this to personalize every lesson for your grade(s) and IEP students.'},
-  {emoji:'✨',title:'Step 2: Generate a lesson',body:"Go to <strong>Plan</strong> → pick your class, subject, and topic → click Generate. You'll get a lesson plan, worksheet, reading resource, and rubric in one shot."},
-  {emoji:'📊',title:'Step 3: Assess your class',body:'After teaching, tap a level (1–4) for each student in the <strong>Assess</strong> step. Students can submit worksheets via the digital link — auto-mark them all at once.'},
-  {emoji:'📝',title:'Step 4: Report Cards',body:'Go to <strong>Report Cards</strong> → select your class and term → generate Ontario-style PowerSchool comments for every student in seconds.'}
-];
-let _tourIndex = 0;
-
-function startTour(){_tourIndex=0;renderTourStep();document.getElementById('tourOverlay').style.display='flex';}
-function renderTourStep(){const step=TOUR_STEPS[_tourIndex];document.getElementById('tourEmoji').textContent=step.emoji;document.getElementById('tourTitle').textContent=step.title;document.getElementById('tourBody').innerHTML=step.body;document.getElementById('tourStep').textContent=`Step ${_tourIndex+1} of ${TOUR_STEPS.length}`;const nextBtn=document.getElementById('tourNext');nextBtn.textContent=_tourIndex===TOUR_STEPS.length-1?"Let's go! →":'Next →';const dots=document.getElementById('tourDots');dots.innerHTML=TOUR_STEPS.map((_,i)=>`<div class="tour-dot ${i===_tourIndex?'on':''}"></div>`).join('');}
-function tourNext(){if(_tourIndex<TOUR_STEPS.length-1){_tourIndex++;renderTourStep();}else{skipTour();}}
-function skipTour(){document.getElementById('tourOverlay').style.display='none';localStorage.setItem('teacherai_tour_done','1');}
+// Guided tour removed - unified Setup pill handles onboarding
 
 // ============================================================
 // BOOT
