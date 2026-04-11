@@ -4220,12 +4220,51 @@ async function getStudentLink(k, allGrades) {
 }
 
 // ============================================================
+// SLIDES — grade-band profiles (Phase 1: additive constraints)
+// ============================================================
+const BAND_PROFILES = {
+  'K':   { slideCount: 3, maxKeyPointChars: 45,  maxSentenceWords: 6,  bloomCeiling: 'Understand', hookStyle: 'song/movement/picture',  exitTicketStyle: 'thumbs up/down or draw' },
+  '1-3': { slideCount: 4, maxKeyPointChars: 70,  maxSentenceWords: 10, bloomCeiling: 'Apply',      hookStyle: 'short story or visual',  exitTicketStyle: 'one-sentence answer or drawing' },
+  '4-6': { slideCount: 4, maxKeyPointChars: 110, maxSentenceWords: 16, bloomCeiling: 'Analyze',    hookStyle: 'real-world scenario',    exitTicketStyle: '2-3 sentence response' },
+  '7-8': { slideCount: 5, maxKeyPointChars: 140, maxSentenceWords: 22, bloomCeiling: 'Evaluate',   hookStyle: 'provocation or debate',  exitTicketStyle: 'short paragraph w/ justification' }
+};
+const GRADE_FINETUNE = {
+  'K': { maxSentenceWords: 5,  vocabNote: 'concrete nouns only, no abstractions' },
+  '1': { maxSentenceWords: 7,  vocabNote: 'common sight words, decodable phonics' },
+  '2': { maxSentenceWords: 9,  vocabNote: 'simple compound words OK' },
+  '3': { maxSentenceWords: 11, vocabNote: 'intro academic vocab with definition in context' },
+  '4': { maxSentenceWords: 14, vocabNote: 'subject-specific terms with brief context' },
+  '5': { maxSentenceWords: 16, vocabNote: 'multi-syllable academic vocab acceptable' },
+  '6': { maxSentenceWords: 18, vocabNote: 'discipline-specific terminology' },
+  '7': { maxSentenceWords: 20, vocabNote: 'abstract and technical vocab' },
+  '8': { maxSentenceWords: 22, vocabNote: 'precise academic register' }
+};
+function resolveSlideProfile(grades) {
+  const gs = (grades && grades.length) ? grades : ['4'];
+  const order = ['K','1-3','4-6','7-8'];
+  const bands = gs.map(g => (typeof getBand === 'function' ? getBand(g) : '4-6'));
+  const highest = bands.slice().sort((a,b)=>order.indexOf(b)-order.indexOf(a))[0] || '4-6';
+  const nums = gs.map(g => g==='K'?0:parseInt(g,10)).filter(n=>!isNaN(n));
+  const lowest = nums.length ? (Math.min(...nums)===0?'K':String(Math.min(...nums))) : '4';
+  const base = BAND_PROFILES[highest] || BAND_PROFILES['4-6'];
+  const fine = GRADE_FINETUNE[lowest] || GRADE_FINETUNE['4'];
+  return {
+    ...base,
+    maxSentenceWords: Math.min(base.maxSentenceWords, fine.maxSentenceWords),
+    vocabNote: fine.vocabNote,
+    band: highest,
+    anchorGrade: lowest
+  };
+}
+
+// ============================================================
 // SLIDES — generate data
 // ============================================================
 async function generateSlideData(callerBtn) {
   const topic   = curSess?.task || document.getElementById('topic')?.value || 'Lesson';
   const subject = curSess?.subject || '';
   const grades  = curSess?.grades || [];
+  const profile = resolveSlideProfile(grades);
   const gradeStr = grades.join(' / ') || '';
   const dur  = document.getElementById('dur')?.value || '';
   const activeClass2 = classes.find(c=>c.id===activeClassId);
@@ -4289,7 +4328,8 @@ async function generateSlideData(callerBtn) {
       '  ],',
       '  "practice_problem": {"question": "one problem students solve", "solution_steps": ["step 1", "step 2", "step 3"]},',
       '  "discussion_questions": ["recall question", "apply question", "evaluate question"],',
-      '  "exit_ticket": {"question": "consolidation question", "answer_hint": "expected answer"}',
+      '  "exit_ticket": {"question": "consolidation question", "answer_hint": "expected answer"},',
+      '  "factual_claims": ["any specific date/number/name asserted in slides — list each verbatim, or [] if none"]',
       '}',
       '',
       '══ VISUAL TYPE LIBRARY ══',
@@ -4305,10 +4345,26 @@ async function generateSlideData(callerBtn) {
       '== LITERACY: anchor_chart({title:"Fact vs Opinion",left_label:"Facts",right_label:"Opinions",left_items:["Snow is white","Dogs have fur"],right_items:["Dogs are the best","Winter is awful"],color:"#1D9E75"}) | story_map({title:"Story Map",characters:"Maya, her dog",setting:"A forest in autumn",problem:"Maya\'s dog gets lost",solution:"She follows his paw prints home"}) | reading_strategy({strategy_name:"Visualizing",before:["Preview the title and pictures","Predict what the text is about"],during:["Create mental images as you read","Notice details that help you see the scene"],after:["Draw or describe your mental image","Compare with a partner"]}) | sentence_frames({title:"Discussion Sentence Frames",frames:[{stem:"I think... because...",example:"I think the character was brave because she didn\'t give up."},{stem:"I agree/disagree with ___ because...",example:"I agree with Maya because the text says..."},{stem:"This connects to...",example:"This connects to when I..."}],color:"#6B63D4"}) | word_web({center_word:"Resilience",connections:[{label:"Definition",detail:"bouncing back from difficulty"},{label:"Example",detail:"trying again after failing"},{label:"Synonym",detail:"perseverance"},{label:"Sentence",detail:"She showed resilience."}],color:"#E07B39"}) | writing_process({title:"The Writing Process"})',
       '== SCIENCE: cycle_diagram({title:"Water Cycle",steps:[{label:"Evaporation",description:"Water heats up",color:"#E07B39"},{label:"Condensation",description:"Forms clouds",color:"#6B63D4"},{label:"Precipitation",description:"Rain or snow",color:"#1D9E75"},{label:"Collection",description:"Back to ground",color:"#1D3461"}],center_label:"Water Cycle"}) | food_chain({title:"Forest Food Chain",organisms:[{name:"Sun",role:"Energy Source",emoji:"☀️",color:"#F5C842"},{name:"Grass",role:"Producer",emoji:"🌿",color:"#1D9E75"},{name:"Rabbit",role:"Primary Consumer",emoji:"🐇",color:"#E07B39"},{name:"Fox",role:"Secondary Consumer",emoji:"🦊",color:"#6B63D4"}]}) | science_diagram({title:"Parts of a Flower",subject:"🌸",labels:[{text:"Petal",position:"top-left"},{text:"Stamen",position:"top-right"},{text:"Pistil",position:"top"},{text:"Sepal",position:"bottom-left"},{text:"Stem",position:"bottom"},{text:"Roots",position:"bottom-right"}],color:"#1D9E75"})',
       '== UNIVERSAL: comparison_table({headers:["Shape","Formula","Example"],rows:[["Rectangle","l×w","6×4=24cm²"]]}) | concept_card({title:"Types",items:[{name:"Equilateral",detail:"3 equal sides"}]}) | venn_diagram({left_label:"A",right_label:"B",overlap_label:"Both",left_items:["only A"],right_items:["only B"],overlap_items:["shared"]})',
+      '',
+      '══ GRADE-BAND CONSTRAINTS (band: '+profile.band+', anchor grade: '+profile.anchorGrade+') ══',
+      '- Slide count: '+profile.slideCount,
+      '- key_point: max '+profile.maxKeyPointChars+' characters, written for the LOWEST grade in the split',
+      '- Sentences: max '+profile.maxSentenceWords+' words each across ALL fields (hook, prompt, key_point, definitions, questions)',
+      '- Bloom ceiling: do not exceed "'+profile.bloomCeiling+'" — discussion_questions and exit_ticket must respect this',
+      '- Hook style: '+profile.hookStyle,
+      '- Exit ticket style: '+profile.exitTicketStyle,
+      '- Vocabulary: '+profile.vocabNote,
+      '- These constraints OVERRIDE any conflicting defaults below. A Grade 1 deck and Grade 5 deck on the same topic MUST look visibly different.',
+      '',
+      '══ ACCURACY GUARDRAIL ══',
+      '- DO NOT invent facts, dates, statistics, names, quotes, or events. If you are not certain, omit it or phrase generally.',
+      '- Every entry in "factual_claims" must be something you are confident is true. If unsure, leave the array empty.',
+      '- Prefer concept explanations over trivia. No fabricated historical dates or made-up scientist names.',
+      '',
       'RULES:',
       '- learning_goals: exactly 2-3',
       '- vocabulary: 3-5 words',
-      '- content_slides: exactly 4 — choose type that best shows the concept',
+      '- content_slides: exactly '+profile.slideCount+' — choose type that best shows the concept',
       isMath ? '- MATH SLIDE SEQUENCE: slide1=formula/concept intro, slide2=worked_steps or visual model, slide3=labelled diagram or data visual, slide4=comparison_table or harder worked_steps'
       : (subject||'').toLowerCase().includes('science') ? '- SCIENCE SLIDE SEQUENCE: slide1=science_diagram or cycle_diagram (introduce concept), slide2=food_chain or cycle_diagram (process/system), slide3=comparison_table or anchor_chart (compare/classify), slide4=concept_card or worked_steps (consolidate). NEVER use math renderers for science.'
       : '- LITERACY SLIDE SEQUENCE: slide1=anchor_chart or word_web (introduce concept), slide2=story_map or reading_strategy (apply strategy), slide3=sentence_frames (language support), slide4=writing_process or anchor_chart (consolidate). Also valid: concept_card, comparison_table, venn_diagram. NEVER use math renderers for literacy.',
@@ -4418,6 +4474,7 @@ async function generateSlideData(callerBtn) {
     let sd;
     try { sd = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
     catch(e) { try { const s=raw.indexOf('{'),en=raw.lastIndexOf('}'); sd=JSON.parse(raw.slice(s,en+1)); } catch(e2) { throw new Error('Could not parse slide structure.'); } }
+    try { validateSlideData(sd, profile); } catch(_){}
 
     // Extract theme from topic if present (e.g. "Fractions - hockey themed")
     const themeMatch = topic.match(/[-–—:]\s*(.{4,40?}?)\s*(theme[d]?|context|setting|focus)?$/i);
@@ -6269,6 +6326,38 @@ const SVG_RENDERERS = {
 // ══════════════════════════════════════════════════════════════════════════════
 // VISUAL ROUTING — hardcoded first, agent loop fallback
 // ══════════════════════════════════════════════════════════════════════════════
+// ============================================================
+// SLIDES — Phase 1 validator (detect-only, no regeneration)
+// ============================================================
+function validateSlideData(sd, profile) {
+  if (!sd || !profile) return { ok: false, issues: ['missing sd or profile'] };
+  const issues = [];
+  const wc = s => String(s||'').trim().split(/\s+/).filter(Boolean).length;
+  const checkSentence = (label, text) => {
+    if (!text) return;
+    String(text).split(/(?<=[.!?])\s+/).forEach((sent, i) => {
+      const w = wc(sent);
+      if (w > profile.maxSentenceWords) issues.push(`${label}[${i}] ${w}w > ${profile.maxSentenceWords}w max`);
+    });
+  };
+  if (sd.minds_on) { checkSentence('minds_on.hook', sd.minds_on.hook); checkSentence('minds_on.prompt', sd.minds_on.prompt); }
+  (sd.learning_goals||[]).forEach((g,i) => checkSentence(`learning_goals[${i}]`, g));
+  (sd.vocabulary||[]).forEach((v,i) => { checkSentence(`vocabulary[${i}].definition`, v.definition); checkSentence(`vocabulary[${i}].example`, v.example); });
+  const slides = sd.content_slides||[];
+  if (slides.length !== profile.slideCount) issues.push(`content_slides: ${slides.length} got, ${profile.slideCount} expected`);
+  slides.forEach((s,i) => {
+    const kp = String(s.key_point||'');
+    if (kp.length > profile.maxKeyPointChars) issues.push(`slide[${i}].key_point ${kp.length}ch > ${profile.maxKeyPointChars}ch max`);
+    checkSentence(`slide[${i}].key_point`, kp);
+  });
+  (sd.discussion_questions||[]).forEach((q,i) => checkSentence(`discussion_questions[${i}]`, q));
+  if (sd.exit_ticket) checkSentence('exit_ticket.question', sd.exit_ticket.question);
+  if (!Array.isArray(sd.factual_claims)) issues.push('factual_claims: missing array');
+  const ok = issues.length === 0;
+  console.log(`[validateSlideData] band=${profile.band} anchor=${profile.anchorGrade} ok=${ok} issues=${issues.length}`, issues);
+  return { ok, issues };
+}
+
 function renderHardcoded(visual_type, visual_params) {
   const TYPE_ALIASES = {
     'sentence_frame':'sentence_frames','discussion_frames':'sentence_frames',
