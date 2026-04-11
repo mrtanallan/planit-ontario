@@ -4631,6 +4631,21 @@ async function generateSlideData(callerBtn) {
 // ══════════════════════════════════════════════════════════════════════════════
 // HARDCODED SVG RENDERERS — mathematically accurate, zero API cost
 // ══════════════════════════════════════════════════════════════════════════════
+// ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
+// Centralised values for all SVG renderers — projected-slide optimised
+const DT = {
+  // Typography
+  TITLE: 22, BODY: 16, BIG: 40, CAPTION: 14, LABEL: 15,
+  FONT: 'Arial,sans-serif',
+  // Colors
+  PRIMARY: '#1D3461', SECONDARY: '#6B6966', ACCENT: '#1D9E75',
+  ACCENT2: '#E07B39', ACCENT3: '#6B63D4', ACCENT4: '#F5C842',
+  HIGHLIGHT: '#0F6E56', BG: '#F4F3EF', BG_LIGHT: '#F8F7F4',
+  ACCENT_LIGHT: '#E8F5E9', ACCENT2_LIGHT: '#FFF3E0', WHITE: '#ffffff',
+  // Layout
+  W: 600, PAD: 32, RAD: 8,
+};
+
 const SVG_RENDERERS = {
 
   // ── STRAND B: NUMBER ────────────────────────────────────────────────────────
@@ -4814,17 +4829,17 @@ const SVG_RENDERERS = {
 
   worked_steps(p) {
     const steps=(p.steps||[]).slice(0,6);
-    const rh=50, oy=50, totalH=oy+steps.length*rh+80;
+    const rh=56, oy=56, totalH=oy+steps.length*rh+80;
     const rows=steps.map((s,i)=>{
       const y=oy+i*rh, isLast=(i===steps.length-1);
-      return `<rect x="10" y="${y}" width="480" height="${rh-4}" rx="6" fill="${isLast?'#1D9E75':'#F4F3EF'}"/>
-        <circle cx="36" cy="${y+rh/2-2}" r="16" fill="${isLast?'#0F6E56':'#1D9E75'}"/>
-        <text x="36" cy="${y+rh/2-2}" y="${y+rh/2+5}" text-anchor="middle" font-size="14" font-weight="700" fill="white" font-family="Arial,sans-serif">${i+1}</text>
-        <text x="62" y="${y+18}" font-size="11" fill="${isLast?'rgba(255,255,255,.7)':'#888780'}" font-family="Arial,sans-serif">${s.label||''}</text>
-        <text x="62" y="${y+38}" font-size="18" font-weight="700" fill="${isLast?'white':'#1D3461'}" font-family="Arial,sans-serif">${s.work||''}</text>`;
+      return `<rect x="${DT.PAD/2}" y="${y}" width="${DT.W - DT.PAD}" height="${rh-4}" rx="${DT.RAD}" fill="${isLast?DT.ACCENT:DT.BG}"/>
+        <circle cx="${DT.PAD/2 + 26}" cy="${y+rh/2-2}" r="18" fill="${isLast?DT.HIGHLIGHT:DT.ACCENT}"/>
+        <text x="${DT.PAD/2 + 26}" cy="${y+rh/2-2}" y="${y+rh/2+5}" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="white" font-family="${DT.FONT}">${i+1}</text>
+        <text x="${DT.PAD/2 + 54}" y="${y+20}" font-size="${DT.CAPTION}" fill="${isLast?'rgba(255,255,255,.7)':DT.SECONDARY}" font-family="${DT.FONT}">${s.label||''}</text>
+        <text x="${DT.PAD/2 + 54}" y="${y+42}" font-size="20" font-weight="700" fill="${isLast?'white':DT.PRIMARY}" font-family="${DT.FONT}">${s.work||''}</text>`;
     }).join('');
-    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
-      <text x="10" y="36" font-size="15" font-weight="600" fill="#5F5E5A" font-family="Arial,sans-serif">${p.problem||''}</text>
+    return `<svg viewBox="0 0 ${DT.W} ${Math.min(totalH,360)}" width="100%" height="100%">
+      <text x="${DT.PAD/2}" y="40" font-size="${DT.TITLE}" font-weight="600" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${p.problem||''}</text>
       ${rows}
     </svg>`;
   },
@@ -5110,25 +5125,25 @@ const SVG_RENDERERS = {
   bar_graph(p) {
     const labels=p.labels||[], values=p.values||[];
     const maxVal=Math.max(...values,1);
-    const gh=160, bw=Math.min(Math.floor(380/Math.max(labels.length,1)),70);
-    const ox=50, oy=20;
+    const gh=180, bw=Math.min(Math.floor((DT.W - 100)/Math.max(labels.length,1)),75);
+    const ox=60, oy=DT.PAD;
     const bars=labels.map((lbl,i)=>{
       const bh=Math.round((values[i]/maxVal)*gh);
-      const x=ox+i*(bw+12);
-      const colors=['#1D9E75','#E07B39','#F5C842','#6B63D4','#1D3461'];
-      return `<rect x="${x}" y="${oy+gh-bh}" width="${bw}" height="${bh}" rx="4" fill="${colors[i%colors.length]}"/>
-        <text x="${x+bw/2}" y="${oy+gh-bh-8}" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${values[i]}</text>
-        <text x="${x+bw/2}" y="${oy+gh+18}" text-anchor="middle" font-size="12" fill="#5F5E5A" font-family="Arial,sans-serif">${lbl}</text>`;
+      const x=ox+i*(bw+14);
+      const colors=[DT.ACCENT,DT.ACCENT2,DT.ACCENT4,DT.ACCENT3,DT.PRIMARY];
+      return `<rect x="${x}" y="${oy+gh-bh}" width="${bw}" height="${bh}" rx="${DT.RAD/2}" fill="${colors[i%colors.length]}"/>
+        <text x="${x+bw/2}" y="${oy+gh-bh-10}" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${values[i]}</text>
+        <text x="${x+bw/2}" y="${oy+gh+20}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${lbl}</text>`;
     }).join('');
     const yTicks=[0,Math.round(maxVal/2),maxVal].map(v=>`
-      <line x1="${ox-4}" y1="${oy+gh-(v/maxVal)*gh}" x2="${ox}" y2="${oy+gh-(v/maxVal)*gh}" stroke="#1D3461" stroke-width="1.5"/>
-      <text x="${ox-8}" y="${oy+gh-(v/maxVal)*gh+4}" text-anchor="end" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${v}</text>`).join('');
-    return `<svg viewBox="0 0 500 240" width="100%" height="100%">
-      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2"/>
-      <line x1="${ox}" y1="${oy+gh}" x2="${ox+labels.length*(bw+12)}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2"/>
+      <line x1="${ox-4}" y1="${oy+gh-(v/maxVal)*gh}" x2="${ox}" y2="${oy+gh-(v/maxVal)*gh}" stroke="${DT.PRIMARY}" stroke-width="1.5"/>
+      <text x="${ox-8}" y="${oy+gh-(v/maxVal)*gh+5}" text-anchor="end" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${v}</text>`).join('');
+    return `<svg viewBox="0 0 ${DT.W} 270" width="100%" height="100%">
+      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh}" stroke="${DT.PRIMARY}" stroke-width="2"/>
+      <line x1="${ox}" y1="${oy+gh}" x2="${ox+labels.length*(bw+14)}" y2="${oy+gh}" stroke="${DT.PRIMARY}" stroke-width="2"/>
       ${yTicks}${bars}
-      <text x="${ox/2}" y="${oy+gh/2}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif" transform="rotate(-90,${ox/2},${oy+gh/2})">${p.y_label||''}</text>
-      <text x="250" y="230" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+      <text x="${ox/2}" y="${oy+gh/2}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}" transform="rotate(-90,${ox/2},${oy+gh/2})">${p.y_label||''}</text>
+      <text x="${DT.W/2}" y="260" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.title||''}</text>
     </svg>`;
   },
 
@@ -5772,51 +5787,49 @@ const SVG_RENDERERS = {
   comparison_table(p) {
     const hdrs=p.headers||[], rows=p.rows||[];
     const cols=Math.max(hdrs.length,...rows.map(r=>r.length));
-    const cw=Math.floor(460/cols);
+    const cw=Math.floor((DT.W - DT.PAD)/cols);
 
-    // Use foreignObject for proper text wrapping in cells
     const fo = (x,y,w,h,text,bold,color) => {
       const fw=bold?'700':'400';
       return `<foreignObject x="${x}" y="${y}" width="${w}" height="${h}">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:Arial,sans-serif;font-size:12px;font-weight:${fw};color:${color};padding:2px 4px;box-sizing:border-box;overflow:visible;word-wrap:break-word;line-height:1.35">${String(text)}</div>
+        <div xmlns="http://www.w3.org/1999/xhtml" style="width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:${DT.FONT};font-size:${DT.LABEL}px;font-weight:${fw};color:${color};padding:2px 6px;box-sizing:border-box;overflow:visible;word-wrap:break-word;line-height:1.35">${String(text)}</div>
       </foreignObject>`;
     };
 
-    const hdrH=38, oy=8;
+    const hdrH=44, oy=DT.PAD/2;
     const thCells=hdrs.map((h,i)=>`
-      <rect x="${20+i*cw}" y="${oy}" width="${cw-3}" height="${hdrH}" rx="4" fill="#1D9E75"/>
-      ${fo(20+i*cw, oy, cw-3, hdrH, h, true, 'white')}`).join('');
+      <rect x="${DT.PAD/2+i*cw}" y="${oy}" width="${cw-3}" height="${hdrH}" rx="${DT.RAD}" fill="${DT.ACCENT}"/>
+      ${fo(DT.PAD/2+i*cw, oy, cw-3, hdrH, h, true, 'white')}`).join('');
 
-    // Dynamic row height based on content length
     const getRowH = (row) => {
       const maxLen = Math.max(...row.map(c=>String(c).length));
-      return maxLen > 25 ? 56 : maxLen > 15 ? 48 : 40;
+      return maxLen > 25 ? 60 : maxLen > 15 ? 50 : 44;
     };
 
     let curY = oy + hdrH + 4;
     const dataRows = rows.map((row, ri) => {
       const rh = getRowH(row);
       const cells = row.map((cell,ci) => `
-        <rect x="${20+ci*cw}" y="${curY}" width="${cw-3}" height="${rh-2}" rx="4" fill="${ri%2===0?'#F4F3EF':'white'}"/>
-        ${fo(20+ci*cw, curY, cw-3, rh-2, cell, ci===0, ci===0?'#0F6E56':'#1D3461')}`).join('');
+        <rect x="${DT.PAD/2+ci*cw}" y="${curY}" width="${cw-3}" height="${rh-2}" rx="${DT.RAD/2}" fill="${ri%2===0?DT.BG:DT.WHITE}"/>
+        ${fo(DT.PAD/2+ci*cw, curY, cw-3, rh-2, cell, ci===0, ci===0?DT.HIGHLIGHT:DT.PRIMARY)}`).join('');
       curY += rh;
       return cells;
     }).join('');
 
-    const totalH = curY + 16;
-    return `<svg viewBox="0 0 500 ${Math.min(totalH, 320)}" width="100%" height="100%">${thCells}${dataRows}</svg>`;
+    const totalH = curY + 20;
+    return `<svg viewBox="0 0 ${DT.W} ${Math.min(totalH, 380)}" width="100%" height="100%">${thCells}${dataRows}</svg>`;
   },
 
   concept_card(p) {
     const items=(p.items||[]).slice(0,5);
-    const rh=46, oy=60, totalH=oy+items.length*rh+30;
+    const rh=52, oy=64, totalH=oy+items.length*rh+30;
     const rows=items.map((item,i)=>`
-      <rect x="10" y="${oy+i*rh}" width="480" height="${rh-4}" rx="8" fill="${i%2===0?'#E8F5E9':'#F4F3EF'}"/>
-      <rect x="10" y="${oy+i*rh}" width="6" height="${rh-4}" rx="3" fill="#1D9E75"/>
-      <text x="26" y="${oy+i*rh+18}" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${item.name||''}</text>
-      <foreignObject x="26" y="${oy+i*rh+22}" width="450" height="${rh-26}"><div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:12px;color:#5F5E5A;line-height:1.4;word-wrap:break-word;overflow:visible">${item.detail||''}</div></foreignObject>`).join('');
-    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
-      <text x="250" y="38" text-anchor="middle" font-size="18" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+      <rect x="${DT.PAD/2}" y="${oy+i*rh}" width="${DT.W - DT.PAD}" height="${rh-4}" rx="${DT.RAD}" fill="${i%2===0?DT.ACCENT_LIGHT:DT.BG}"/>
+      <rect x="${DT.PAD/2}" y="${oy+i*rh}" width="6" height="${rh-4}" rx="3" fill="${DT.ACCENT}"/>
+      <text x="${DT.PAD/2 + 18}" y="${oy+i*rh+20}" font-size="${DT.BODY}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${item.name||''}</text>
+      <foreignObject x="${DT.PAD/2 + 18}" y="${oy+i*rh+24}" width="${DT.W - DT.PAD - 24}" height="${rh-28}"><div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.CAPTION}px;color:${DT.SECONDARY};line-height:1.4;word-wrap:break-word;overflow:visible">${item.detail||''}</div></foreignObject>`).join('');
+    return `<svg viewBox="0 0 ${DT.W} ${Math.min(totalH,360)}" width="100%" height="100%">
+      <text x="${DT.W/2}" y="42" text-anchor="middle" font-size="${DT.TITLE}" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.title||''}</text>
       ${rows}
     </svg>`;
   },
@@ -5825,15 +5838,16 @@ const SVG_RENDERERS = {
     const left=(p.left_items||[]).slice(0,3);
     const overlap=(p.overlap_items||[]).slice(0,3);
     const right=(p.right_items||[]).slice(0,3);
-    const leftItems=left.map((t,i)=>`<text x="120" y="${90+i*22}" text-anchor="middle" font-size="13" fill="#1D3461" font-family="Arial,sans-serif">${t}</text>`).join('');
-    const overlapItems=overlap.map((t,i)=>`<text x="250" y="${90+i*22}" text-anchor="middle" font-size="12" fill="#1D3461" font-family="Arial,sans-serif">${t}</text>`).join('');
-    const rightItems=right.map((t,i)=>`<text x="380" y="${90+i*22}" text-anchor="middle" font-size="13" fill="#1D3461" font-family="Arial,sans-serif">${t}</text>`).join('');
-    return `<svg viewBox="0 0 500 250" width="100%" height="100%">
-      <circle cx="185" cy="130" r="110" fill="#E8F5E9" stroke="#1D9E75" stroke-width="2.5" opacity="0.75"/>
-      <circle cx="315" cy="130" r="110" fill="#FFF3E0" stroke="#E07B39" stroke-width="2.5" opacity="0.75"/>
-      <text x="120" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${p.left_label||'A'}</text>
-      <text x="250" y="34" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.overlap_label||'Both'}</text>
-      <text x="380" y="50" text-anchor="middle" font-size="14" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">${p.right_label||'B'}</text>
+    const W=DT.W;
+    const leftItems=left.map((t,i)=>`<text x="${W*0.24}" y="${100+i*24}" text-anchor="middle" font-size="${DT.LABEL}" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${t}</text>`).join('');
+    const overlapItems=overlap.map((t,i)=>`<text x="${W/2}" y="${100+i*24}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${t}</text>`).join('');
+    const rightItems=right.map((t,i)=>`<text x="${W*0.76}" y="${100+i*24}" text-anchor="middle" font-size="${DT.LABEL}" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${t}</text>`).join('');
+    return `<svg viewBox="0 0 ${W} 280" width="100%" height="100%">
+      <circle cx="${W*0.37}" cy="145" r="120" fill="${DT.ACCENT_LIGHT}" stroke="${DT.ACCENT}" stroke-width="2.5" opacity="0.75"/>
+      <circle cx="${W*0.63}" cy="145" r="120" fill="${DT.ACCENT2_LIGHT}" stroke="${DT.ACCENT2}" stroke-width="2.5" opacity="0.75"/>
+      <text x="${W*0.24}" y="52" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${p.left_label||'A'}</text>
+      <text x="${W/2}" y="36" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.overlap_label||'Both'}</text>
+      <text x="${W*0.76}" y="52" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="#C05A20" font-family="${DT.FONT}">${p.right_label||'B'}</text>
       ${leftItems}${overlapItems}${rightItems}
     </svg>`;
   },
@@ -5847,47 +5861,43 @@ const SVG_RENDERERS = {
     const rightLabel = p.right_label || 'Column B';
     const leftItems = (p.left_items || []).slice(0, 6);
     const rightItems = (p.right_items || []).slice(0, 6);
-    const accentColor = p.color || '#1D9E75';
+    const accentColor = p.color || DT.ACCENT;
 
-    const W = 500, titleH = 44, headerH = 36, oy = titleH + 8;
-    const colW = Math.floor((W - 20) / 2);
-    const itemH = 34;
+    const W = DT.W, titleH = 50, headerH = 42, oy = titleH + 10;
+    const colW = Math.floor((W - DT.PAD) / 2);
+    const itemH = 40;
     const maxItems = Math.max(leftItems.length, rightItems.length, 1);
-    const bodyH = maxItems * itemH + 12;
-    const totalH = Math.min(oy + headerH + bodyH + 16, 310);
+    const bodyH = maxItems * itemH + 16;
+    const totalH = Math.min(oy + headerH + bodyH + 20, 380);
 
-    // Title bar
     const titleSVG = title
       ? `<rect x="0" y="0" width="${W}" height="${titleH}" rx="0" fill="${accentColor}"/>
-         <text x="${W/2}" y="${titleH - 11}" text-anchor="middle" font-size="16" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>`
+         <text x="${W/2}" y="${titleH - 14}" text-anchor="middle" font-size="${DT.TITLE}" font-weight="900" fill="white" font-family="${DT.FONT}">${title}</text>`
       : '';
 
-    // Column headers
     const headerSVG = `
-      <rect x="10" y="${oy}" width="${colW}" height="${headerH}" rx="4" fill="${accentColor}" opacity="0.85"/>
-      <text x="${10 + colW/2}" y="${oy + 23}" text-anchor="middle" font-size="13" font-weight="700" fill="white" font-family="Arial,sans-serif">${leftLabel}</text>
-      <rect x="${10 + colW + 4}" y="${oy}" width="${colW}" height="${headerH}" rx="4" fill="${accentColor}" opacity="0.6"/>
-      <text x="${10 + colW + 4 + colW/2}" y="${oy + 23}" text-anchor="middle" font-size="13" font-weight="700" fill="white" font-family="Arial,sans-serif">${rightLabel}</text>`;
+      <rect x="${DT.PAD/2}" y="${oy}" width="${colW}" height="${headerH}" rx="${DT.RAD}" fill="${accentColor}" opacity="0.85"/>
+      <text x="${DT.PAD/2 + colW/2}" y="${oy + 27}" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="white" font-family="${DT.FONT}">${leftLabel}</text>
+      <rect x="${DT.PAD/2 + colW + 4}" y="${oy}" width="${colW}" height="${headerH}" rx="${DT.RAD}" fill="${accentColor}" opacity="0.6"/>
+      <text x="${DT.PAD/2 + colW + 4 + colW/2}" y="${oy + 27}" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="white" font-family="${DT.FONT}">${rightLabel}</text>`;
 
-    // Centre dividing line
-    const dividerX = 10 + colW + 2;
+    const dividerX = DT.PAD/2 + colW + 2;
     const divider = `<line x1="${dividerX}" y1="${oy + headerH}" x2="${dividerX}" y2="${oy + headerH + bodyH}" stroke="${accentColor}" stroke-width="2" opacity="0.3"/>`;
 
-    // Rows
     let rows = '';
     for (let i = 0; i < maxItems; i++) {
       const rowY = oy + headerH + i * itemH;
-      const bg = i % 2 === 0 ? '#F4F3EF' : 'white';
+      const bg = i % 2 === 0 ? DT.BG : DT.WHITE;
       const lText = leftItems[i] || '';
       const rText = rightItems[i] || '';
       rows += `
-        <rect x="10" y="${rowY + 2}" width="${colW}" height="${itemH - 2}" fill="${bg}" rx="2"/>
-        <rect x="${10 + colW + 4}" y="${rowY + 2}" width="${colW}" height="${itemH - 2}" fill="${bg}" rx="2"/>
-        <foreignObject x="14" y="${rowY + 2}" width="${colW - 8}" height="${itemH - 2}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="height:${itemH - 2}px;display:flex;align-items:center;font-family:Arial,sans-serif;font-size:12px;color:#1D3461;padding:0 4px;line-height:1.3;word-wrap:break-word">${lText}</div>
+        <rect x="${DT.PAD/2}" y="${rowY + 2}" width="${colW}" height="${itemH - 2}" fill="${bg}" rx="${DT.RAD/2}"/>
+        <rect x="${DT.PAD/2 + colW + 4}" y="${rowY + 2}" width="${colW}" height="${itemH - 2}" fill="${bg}" rx="${DT.RAD/2}"/>
+        <foreignObject x="${DT.PAD/2 + 4}" y="${rowY + 2}" width="${colW - 8}" height="${itemH - 2}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="height:${itemH - 2}px;display:flex;align-items:center;font-family:${DT.FONT};font-size:${DT.LABEL}px;color:${DT.PRIMARY};padding:0 6px;line-height:1.3;word-wrap:break-word">${lText}</div>
         </foreignObject>
-        <foreignObject x="${10 + colW + 8}" y="${rowY + 2}" width="${colW - 8}" height="${itemH - 2}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="height:${itemH - 2}px;display:flex;align-items:center;font-family:Arial,sans-serif;font-size:12px;color:#1D3461;padding:0 4px;line-height:1.3;word-wrap:break-word">${rText}</div>
+        <foreignObject x="${DT.PAD/2 + colW + 8}" y="${rowY + 2}" width="${colW - 8}" height="${itemH - 2}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="height:${itemH - 2}px;display:flex;align-items:center;font-family:${DT.FONT};font-size:${DT.LABEL}px;color:${DT.PRIMARY};padding:0 6px;line-height:1.3;word-wrap:break-word">${rText}</div>
         </foreignObject>`;
     }
 
@@ -5901,45 +5911,45 @@ const SVG_RENDERERS = {
   story_map(p) {
     const title = p.title || 'Story Map';
     const defaults = [
-      { label: 'Characters', content: p.characters || '', color: '#1D9E75' },
-      { label: 'Setting',    content: p.setting    || '', color: '#E07B39' },
-      { label: 'Problem',    content: p.problem    || '', color: '#6B63D4' },
-      { label: 'Solution',   content: p.solution   || '', color: '#F5C842' },
+      { label: 'Characters', content: p.characters || '', color: DT.ACCENT },
+      { label: 'Setting',    content: p.setting    || '', color: DT.ACCENT2 },
+      { label: 'Problem',    content: p.problem    || '', color: DT.ACCENT3 },
+      { label: 'Solution',   content: p.solution   || '', color: DT.ACCENT4 },
     ];
     const elements = p.elements
       ? p.elements.slice(0, 4).map((e, i) => ({ ...defaults[i], ...e }))
       : defaults;
 
-    const W = 500, titleH = 40;
+    const W = DT.W, titleH = 48;
     const cols = 2, rows = Math.ceil(elements.length / cols);
-    const boxW = Math.floor((W - 30) / cols);
+    const boxW = Math.floor((W - DT.PAD - 10) / cols);
     const maxContentLen = Math.max(...elements.map(e => (e.content||'').length));
-    const boxH = maxContentLen > 80 ? 120 : maxContentLen > 40 ? 106 : 96;
-    const gap = 10;
-    const totalH = titleH + rows * (boxH + gap) + gap + 10;
+    const boxH = maxContentLen > 80 ? 130 : maxContentLen > 40 ? 114 : 104;
+    const gap = 12;
+    const totalH = titleH + rows * (boxH + gap) + gap + 12;
 
     const titleSVG = `
-      <rect x="0" y="0" width="${W}" height="${titleH}" fill="#1D3461"/>
-      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="16" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>`;
+      <rect x="0" y="0" width="${W}" height="${titleH}" fill="${DT.PRIMARY}"/>
+      <text x="${W/2}" y="${titleH - 13}" text-anchor="middle" font-size="${DT.TITLE}" font-weight="900" fill="white" font-family="${DT.FONT}">${title}</text>`;
 
     const boxes = elements.map((el, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const bx = 10 + col * (boxW + gap);
+      const bx = DT.PAD/2 + col * (boxW + gap);
       const by = titleH + gap + row * (boxH + gap);
-      const labelColor = el.color || '#1D9E75';
-      const isDark = labelColor === '#1D3461' || labelColor === '#6B63D4';
+      const labelColor = el.color || DT.ACCENT;
+      const isDark = labelColor === DT.PRIMARY || labelColor === DT.ACCENT3;
       return `
-        <rect x="${bx}" y="${by}" width="${boxW}" height="${boxH}" rx="8" fill="white" stroke="${labelColor}" stroke-width="2.5"/>
-        <rect x="${bx}" y="${by}" width="${boxW}" height="28" rx="8" fill="${labelColor}"/>
-        <rect x="${bx}" y="${by + 18}" width="${boxW}" height="10" fill="${labelColor}"/>
-        <text x="${bx + boxW/2}" y="${by + 19}" text-anchor="middle" font-size="13" font-weight="700" fill="${isDark ? 'white' : '#1D3461'}" font-family="Arial,sans-serif">${el.label}</text>
-        <foreignObject x="${bx + 6}" y="${by + 30}" width="${boxW - 12}" height="${boxH - 36}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:12px;color:#1D3461;line-height:1.45;word-wrap:break-word;overflow:visible">${el.content}</div>
+        <rect x="${bx}" y="${by}" width="${boxW}" height="${boxH}" rx="${DT.RAD}" fill="white" stroke="${labelColor}" stroke-width="2.5"/>
+        <rect x="${bx}" y="${by}" width="${boxW}" height="32" rx="${DT.RAD}" fill="${labelColor}"/>
+        <rect x="${bx}" y="${by + 22}" width="${boxW}" height="10" fill="${labelColor}"/>
+        <text x="${bx + boxW/2}" y="${by + 22}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${isDark ? 'white' : DT.PRIMARY}" font-family="${DT.FONT}">${el.label}</text>
+        <foreignObject x="${bx + 8}" y="${by + 36}" width="${boxW - 16}" height="${boxH - 42}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.CAPTION}px;color:${DT.PRIMARY};line-height:1.45;word-wrap:break-word;overflow:visible">${el.content}</div>
         </foreignObject>`;
     }).join('');
 
-    return `<svg viewBox="0 0 ${W} ${Math.min(totalH, 310)}" width="100%" height="100%">
+    return `<svg viewBox="0 0 ${W} ${Math.min(totalH, 370)}" width="100%" height="100%">
       ${titleSVG}${boxes}
     </svg>`;
   },
@@ -5949,37 +5959,35 @@ const SVG_RENDERERS = {
   reading_strategy(p) {
     const name = p.strategy_name || 'Reading Strategy';
     const sections = [
-      { label: 'Before Reading',  icon: '👁', items: (p.before  || []).slice(0, 4), color: '#E07B39' },
-      { label: 'During Reading',  icon: '📖', items: (p.during  || []).slice(0, 4), color: '#1D9E75' },
-      { label: 'After Reading',   icon: '💬', items: (p.after   || []).slice(0, 4), color: '#6B63D4' },
+      { label: 'Before Reading',  icon: '👁', items: (p.before  || []).slice(0, 4), color: DT.ACCENT2 },
+      { label: 'During Reading',  icon: '📖', items: (p.during  || []).slice(0, 4), color: DT.ACCENT },
+      { label: 'After Reading',   icon: '💬', items: (p.after   || []).slice(0, 4), color: DT.ACCENT3 },
     ];
 
-    const W = 500, titleH = 40, colW = Math.floor((W - 28) / 3), gap = 6;
-    const itemH = 38;
+    const W = DT.W, titleH = 48, colW = Math.floor((W - DT.PAD - 12) / 3), gap = 8;
+    const itemH = 42;
     const maxItems = Math.max(...sections.map(s => s.items.length), 1);
-    const bodyH = 36 + maxItems * itemH + 16;
+    const bodyH = 40 + maxItems * itemH + 16;
     const totalH = titleH + bodyH;
 
     const titleSVG = `
-      <rect x="0" y="0" width="${W}" height="${titleH}" fill="#1D3461"/>
-      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="15" font-weight="900" fill="white" font-family="Arial,sans-serif">${name}</text>`;
+      <rect x="0" y="0" width="${W}" height="${titleH}" fill="${DT.PRIMARY}"/>
+      <text x="${W/2}" y="${titleH - 13}" text-anchor="middle" font-size="${DT.TITLE}" font-weight="900" fill="white" font-family="${DT.FONT}">${name}</text>`;
 
     const cols = sections.map((sec, i) => {
-      const cx = 8 + i * (colW + gap);
-      const cy = titleH + 8;
+      const cx = DT.PAD/2 + i * (colW + gap);
+      const cy = titleH + 10;
 
-      // Column header
       const header = `
-        <rect x="${cx}" y="${cy}" width="${colW}" height="32" rx="6" fill="${sec.color}"/>
-        <text x="${cx + colW/2}" y="${cy + 21}" text-anchor="middle" font-size="13" font-weight="700" fill="white" font-family="Arial,sans-serif">${sec.icon} ${sec.label}</text>`;
+        <rect x="${cx}" y="${cy}" width="${colW}" height="36" rx="${DT.RAD}" fill="${sec.color}"/>
+        <text x="${cx + colW/2}" y="${cy + 24}" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="white" font-family="${DT.FONT}">${sec.icon} ${sec.label}</text>`;
 
-      // Items
       const items = sec.items.map((item, j) => {
-        const iy = cy + 36 + j * itemH;
+        const iy = cy + 40 + j * itemH;
         return `
-          <rect x="${cx}" y="${iy}" width="${colW}" height="${itemH - 2}" rx="4" fill="${j % 2 === 0 ? '#F4F3EF' : 'white'}"/>
-          <foreignObject x="${cx + 4}" y="${iy + 2}" width="${colW - 8}" height="${itemH - 4}">
-            <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;color:#1D3461;line-height:1.4;word-wrap:break-word;padding:2px;overflow:visible">${item}</div>
+          <rect x="${cx}" y="${iy}" width="${colW}" height="${itemH - 2}" rx="${DT.RAD/2}" fill="${j % 2 === 0 ? DT.BG : DT.WHITE}"/>
+          <foreignObject x="${cx + 6}" y="${iy + 3}" width="${colW - 12}" height="${itemH - 6}">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.CAPTION}px;color:${DT.PRIMARY};line-height:1.4;word-wrap:break-word;padding:2px;overflow:visible">${item}</div>
           </foreignObject>`;
       }).join('');
 
@@ -5996,31 +6004,30 @@ const SVG_RENDERERS = {
   sentence_frames(p) {
     const title = p.title || 'Sentence Frames';
     const frames = (p.frames || []).slice(0, 5);
-    const accentColor = p.color || '#6B63D4';
+    const accentColor = p.color || DT.ACCENT3;
 
-    const W = 500, titleH = 40, gap = 8;
-    const getFrameH = (f) => { const sl=(f.stem||f||'').length,el=(f.example||'').length; return (sl>60?40:sl>30?30:22)+(el>80?36:el>40?28:el>0?22:0)+20; };
+    const W = DT.W, titleH = 48, gap = 10;
+    const getFrameH = (f) => { const sl=(f.stem||f||'').length,el=(f.example||'').length; return (sl>60?44:sl>30?34:26)+(el>80?40:el>40?32:el>0?26:0)+22; };
 
     const titleSVG = `
       <rect x="0" y="0" width="${W}" height="${titleH}" fill="${accentColor}"/>
-      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="15" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>`;
+      <text x="${W/2}" y="${titleH - 13}" text-anchor="middle" font-size="${DT.TITLE}" font-weight="900" fill="white" font-family="${DT.FONT}">${title}</text>`;
 
-    // Pre-compute frame heights and y positions
     const frameHeights = frames.map(f => getFrameH(f));
-    const totalH = titleH + 8 + frameHeights.reduce((s,h) => s+h+gap, 0);
+    const totalH = titleH + 10 + frameHeights.reduce((s,h) => s+h+gap, 0);
     const framesSVG = frames.map((f, i) => {
       const frameH = frameHeights[i];
-      const fy = titleH + 8 + frames.slice(0,i).reduce((sum,_,j) => sum + frameHeights[j] + gap, 0);
+      const fy = titleH + 10 + frames.slice(0,i).reduce((sum,_,j) => sum + frameHeights[j] + gap, 0);
       const stem = f.stem || f || '';
       const example = f.example || '';
       return `
-        <rect x="10" y="${fy}" width="${W - 20}" height="${frameH}" rx="8" fill="white" stroke="${accentColor}" stroke-width="1.5" opacity="${0.5 + i * 0.1}"/>
-        <rect x="10" y="${fy}" width="6" height="${frameH}" rx="4" fill="${accentColor}"/>
-        <foreignObject x="22" y="${fy + 4}" width="${W - 36}" height="${example ? 28 : frameH - 8}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:13px;font-weight:700;color:#1D3461;line-height:1.4;word-wrap:break-word">${stem}</div>
+        <rect x="${DT.PAD/2}" y="${fy}" width="${W - DT.PAD}" height="${frameH}" rx="${DT.RAD}" fill="white" stroke="${accentColor}" stroke-width="1.5" opacity="${0.5 + i * 0.1}"/>
+        <rect x="${DT.PAD/2}" y="${fy}" width="6" height="${frameH}" rx="4" fill="${accentColor}"/>
+        <foreignObject x="${DT.PAD/2 + 14}" y="${fy + 6}" width="${W - DT.PAD - 20}" height="${example ? 32 : frameH - 12}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.BODY}px;font-weight:700;color:${DT.PRIMARY};line-height:1.4;word-wrap:break-word">${stem}</div>
         </foreignObject>
-        ${example ? `<foreignObject x="22" y="${fy + 30}" width="${W - 36}" height="20">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;color:#5F5E5A;font-style:italic;line-height:1.3">${example}</div>
+        ${example ? `<foreignObject x="${DT.PAD/2 + 14}" y="${fy + 34}" width="${W - DT.PAD - 20}" height="24">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.CAPTION}px;color:${DT.SECONDARY};font-style:italic;line-height:1.3">${example}</div>
         </foreignObject>` : ''}`;
     }).join('');
 
@@ -6034,16 +6041,15 @@ const SVG_RENDERERS = {
   word_web(p) {
     const centerWord = p.center_word || p.word || 'Word';
     const connections = (p.connections || []).slice(0, 6);
-    const accentColor = p.color || '#1D9E75';
+    const accentColor = p.color || DT.ACCENT;
 
-    const W = 500, H = 310;
+    const W = DT.W, H = 360;
     const cx = W / 2, cy = H / 2 + 4;
-    const centerR = 44;
-    // Scale orbit radius based on node count — more nodes need tighter orbit
+    const centerR = 50;
     const count = connections.length || 1;
-    const orbitR = count <= 4 ? 108 : 100;
-    const nodeW = 100;  // wider nodes to fit longer labels
-    const nodeH = 52;   // taller nodes for wrapping text
+    const orbitR = count <= 4 ? 125 : 115;
+    const nodeW = 115;
+    const nodeH = 58;
 
     const angleStep = (2 * Math.PI) / count;
     const startAngle = -Math.PI / 2;
@@ -6055,10 +6061,9 @@ const SVG_RENDERERS = {
       const label = conn.label || conn || '';
       const detail = conn.detail || '';
 
-      // Clamp node position to stay within viewBox with margin
-      const margin = nodeW / 2 + 4;
+      const margin = nodeW / 2 + 6;
       const clampedNx = Math.max(margin, Math.min(W - margin, nx));
-      const clampedNy = Math.max(nodeH / 2 + 4, Math.min(H - nodeH / 2 - 4, ny));
+      const clampedNy = Math.max(nodeH / 2 + 6, Math.min(H - nodeH / 2 - 6, ny));
 
       const dx = clampedNx - cx, dy = clampedNy - cy;
       const dist = Math.sqrt(dx*dx + dy*dy) || 1;
@@ -6069,23 +6074,23 @@ const SVG_RENDERERS = {
 
       return `
         <line x1="${lx1.toFixed(1)}" y1="${ly1.toFixed(1)}" x2="${lx2.toFixed(1)}" y2="${ly2.toFixed(1)}" stroke="${accentColor}" stroke-width="2" opacity="0.5" stroke-dasharray="4,3"/>
-        <rect x="${(clampedNx - nodeW/2).toFixed(1)}" y="${(clampedNy - nodeH/2).toFixed(1)}" width="${nodeW}" height="${nodeH}" rx="8" fill="white" stroke="${accentColor}" stroke-width="2"/>
-        <foreignObject x="${(clampedNx - nodeW/2 + 4).toFixed(1)}" y="${(clampedNy - nodeH/2 + 3).toFixed(1)}" width="${nodeW - 8}" height="${nodeH - 6}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;color:#1D3461;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;width:${nodeW-8}px;height:${nodeH-6}px;word-wrap:break-word;overflow:visible;line-height:1.3">
+        <rect x="${(clampedNx - nodeW/2).toFixed(1)}" y="${(clampedNy - nodeH/2).toFixed(1)}" width="${nodeW}" height="${nodeH}" rx="${DT.RAD}" fill="white" stroke="${accentColor}" stroke-width="2"/>
+        <foreignObject x="${(clampedNx - nodeW/2 + 5).toFixed(1)}" y="${(clampedNy - nodeH/2 + 4).toFixed(1)}" width="${nodeW - 10}" height="${nodeH - 8}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.CAPTION}px;font-weight:700;color:${DT.PRIMARY};text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;width:${nodeW-10}px;height:${nodeH-8}px;word-wrap:break-word;overflow:visible;line-height:1.3">
             <span style="display:block">${label}</span>
-            ${detail ? `<span style="font-weight:400;font-size:9px;color:#5F5E5A;display:block;margin-top:2px">${detail}</span>` : ''}
+            ${detail ? `<span style="font-weight:400;font-size:12px;color:${DT.SECONDARY};display:block;margin-top:2px">${detail}</span>` : ''}
           </div>
         </foreignObject>`;
     }).join('');
 
     const centerSVG = `
       <circle cx="${cx}" cy="${cy}" r="${centerR}" fill="${accentColor}"/>
-      <foreignObject x="${cx - centerR + 3}" y="${cy - centerR + 3}" width="${(centerR-3)*2}" height="${(centerR-3)*2}">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Arial Black',Arial,sans-serif;font-size:12px;font-weight:900;color:white;text-align:center;display:flex;align-items:center;justify-content:center;width:${(centerR-3)*2}px;height:${(centerR-3)*2}px;word-wrap:break-word;line-height:1.2">${centerWord}</div>
+      <foreignObject x="${cx - centerR + 4}" y="${cy - centerR + 4}" width="${(centerR-4)*2}" height="${(centerR-4)*2}">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Arial Black',${DT.FONT};font-size:${DT.LABEL}px;font-weight:900;color:white;text-align:center;display:flex;align-items:center;justify-content:center;width:${(centerR-4)*2}px;height:${(centerR-4)*2}px;word-wrap:break-word;line-height:1.2">${centerWord}</div>
       </foreignObject>`;
 
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">
-      <rect width="${W}" height="${H}" fill="#F4F3EF"/>
+      <rect width="${W}" height="${H}" fill="${DT.BG}"/>
       ${nodesSVG}${centerSVG}
     </svg>`;
   },
