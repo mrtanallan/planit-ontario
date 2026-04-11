@@ -7890,7 +7890,7 @@ async function loadUnitTestResults() {
 
   // Find worksheets with " — Unit Test" in topic
   const { data: unitTests } = await db.from('worksheets')
-    .select('id, topic, grades, content, created_at')
+    .select('id, topic, grades, content, created_at, unit_plan_id')
     .eq('teacher_id', currentUser.id)
     .ilike('topic', '% — Unit Test')
     .order('created_at', { ascending: false })
@@ -7916,7 +7916,7 @@ async function loadUnitTestResults() {
     html += `<div style="border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden;">
       <div style="padding:10px 14px;background:var(--sage-l);display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <div>
-          <div style="font-weight:600;font-size:.88rem;color:var(--ink);">${ws.topic}</div>
+          <div style="font-weight:600;font-size:.88rem;color:var(--ink);">${ws.topic}${ws.unit_plan_id===null?' <span style="display:inline-block;font-family:\'DM Mono\',monospace;font-size:.58rem;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);background:var(--cream);border:1px solid var(--border);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle;font-weight:500;">Unit removed</span>':''}</div>
           <div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);">${gradesStr} · ${date} · ${subCount} submission${subCount!==1?'s':''}</div>
         </div>
         ${akText ? `<button class="btn b-sage b-sm" onclick="autoMarkUnitTest('${ws.id}')" style="font-size:.72rem;white-space:nowrap;">🤖 Auto-mark All</button>` : ''}
