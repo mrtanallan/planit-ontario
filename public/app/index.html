@@ -4652,88 +4652,87 @@ const SVG_RENDERERS = {
 
   place_value(p) {
     const cols = Object.entries(p.digits||{});
-    const cw = Math.floor(460/Math.max(cols.length,1));
+    const cw = Math.floor((DT.W-2*DT.PAD)/Math.max(cols.length,1));
     const headers = cols.map(([name],i) => {
-      const x = 20+i*cw, hl = (name===p.highlight);
-      return `<rect x="${x}" y="20" width="${cw-6}" height="44" rx="6" fill="${hl?'#1D9E75':'#1D3461'}"/>
-        <text x="${x+(cw-6)/2}" y="47" text-anchor="middle" font-size="13" font-weight="700" fill="white" font-family="Arial,sans-serif">${name.charAt(0).toUpperCase()+name.slice(1)}</text>`;
+      const x = DT.PAD+i*cw, hl = (name===p.highlight);
+      return `<rect x="${x}" y="20" width="${cw-6}" height="48" rx="${DT.RAD}" fill="${hl?DT.ACCENT:DT.PRIMARY}"/>
+        <text x="${x+(cw-6)/2}" y="50" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="white" font-family="${DT.FONT}">${name.charAt(0).toUpperCase()+name.slice(1)}</text>`;
     }).join('');
     const values = cols.map(([name,val],i) => {
-      const x = 20+i*cw, hl = (name===p.highlight);
-      return `<rect x="${x}" y="72" width="${cw-6}" height="60" rx="6" fill="${hl?'#E8F5E9':'#F4F3EF'}"/>
-        <text x="${x+(cw-6)/2}" y="110" text-anchor="middle" font-size="36" font-weight="900" fill="${hl?'#0F6E56':'#1D3461'}" font-family="Arial,sans-serif">${val}</text>`;
+      const x = DT.PAD+i*cw, hl = (name===p.highlight);
+      return `<rect x="${x}" y="76" width="${cw-6}" height="68" rx="${DT.RAD}" fill="${hl?DT.ACCENT_LIGHT:DT.BG}"/>
+        <text x="${x+(cw-6)/2}" y="120" text-anchor="middle" font-size="${DT.BIG}" font-weight="900" fill="${hl?DT.HIGHLIGHT:DT.PRIMARY}" font-family="${DT.FONT}">${val}</text>`;
     }).join('');
     const chips = cols.map(([name,val],i) => {
-      const x = 20+i*cw;
+      const x = DT.PAD+i*cw;
       return Array.from({length:Math.min(val,10)},(_,j)=>
-        `<circle cx="${x+14+j*(Math.min((cw-20)/Math.max(val,1),22))}" cy="168" r="9" fill="#1D9E75" opacity="0.7"/>`
+        `<circle cx="${x+14+j*(Math.min((cw-20)/Math.max(val,1),22))}" cy="178" r="10" fill="${DT.ACCENT}" opacity="0.7"/>`
       ).join('');
     }).join('');
-    return `<svg viewBox="0 0 500 210" width="100%" height="100%">${headers}${values}${chips}</svg>`;
+    return `<svg viewBox="0 0 ${DT.W} 230" width="100%" height="100%">${headers}${values}${chips}</svg>`;
   },
 
   array(p) {
     const rows=Math.min(p.rows||4,10), cols=Math.min(p.cols||6,12);
-    const cs=Math.min(Math.floor(420/Math.max(cols,rows)),36);
-    const ox=Math.round((500-cols*cs)/2), oy=20;
+    const cs=Math.min(Math.floor((DT.W-2*DT.PAD)/Math.max(cols,rows)),40);
+    const ox=Math.round((DT.W-cols*cs)/2), oy=DT.PAD;
     let cells='';
     for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
-      cells+=`<circle cx="${ox+c*cs+cs/2}" cy="${oy+r*cs+cs/2}" r="${cs/2-4}" fill="#1D9E75" opacity="0.8"/>`;
+      cells+=`<circle cx="${ox+c*cs+cs/2}" cy="${oy+r*cs+cs/2}" r="${cs/2-4}" fill="${DT.ACCENT}" opacity="0.8"/>`;
     }
-    const totalH=oy+rows*cs+50;
-    return `<svg viewBox="0 0 500 ${totalH}" width="100%" height="100%">
+    const totalH=oy+rows*cs+56;
+    return `<svg viewBox="0 0 ${DT.W} ${totalH}" width="100%" height="100%">
       ${cells}
-      <text x="250" y="${oy+rows*cs+34}" text-anchor="middle" font-size="20" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.label||rows+' × '+cols+' = '+(rows*cols)}</text>
+      <text x="${DT.W/2}" y="${oy+rows*cs+40}" text-anchor="middle" font-size="${DT.TITLE}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.label||rows+' × '+cols+' = '+(rows*cols)}</text>
     </svg>`;
   },
 
   fraction_bar(p) {
     const n=Math.max(1,p.numerator||1), d=Math.max(1,p.denominator||4);
-    const sw=460, sh=80, ox=20, oy=40;
+    const sw=DT.W-2*DT.PAD, sh=90, ox=DT.PAD, oy=48;
     const cw=sw/d;
     let cells='';
     for(let i=0;i<d;i++) {
-      cells+=`<rect x="${ox+i*cw+1}" y="${oy}" width="${cw-2}" height="${sh}" rx="4"
-        fill="${i<n?(p.color||'#1D9E75'):'#F4F3EF'}" stroke="white" stroke-width="2"/>`;
+      cells+=`<rect x="${ox+i*cw+1}" y="${oy}" width="${cw-2}" height="${sh}" rx="${DT.RAD/2}"
+        fill="${i<n?(p.color||DT.ACCENT):DT.BG}" stroke="white" stroke-width="2"/>`;
     }
-    return `<svg viewBox="0 0 500 200" width="100%" height="100%">
-      <text x="250" y="30" text-anchor="middle" font-size="16" fill="#5F5E5A" font-family="Arial,sans-serif">${d} equal parts</text>
+    return `<svg viewBox="0 0 ${DT.W} 230" width="100%" height="100%">
+      <text x="${DT.W/2}" y="34" text-anchor="middle" font-size="${DT.BODY}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${d} equal parts</text>
       ${cells}
-      <rect x="${ox}" y="${oy}" width="${sw}" height="${sh}" rx="4" fill="none" stroke="#1D3461" stroke-width="2.5"/>
-      <text x="${ox+n*cw/2}" y="${oy+sh/2+6}" text-anchor="middle" font-size="22" font-weight="700" fill="white" font-family="Arial,sans-serif">${p.label||n+'/'+d}</text>
-      <text x="250" y="${oy+sh+36}" text-anchor="middle" font-size="28" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${p.label||n+'/'+d}</text>
-      <text x="250" y="${oy+sh+64}" text-anchor="middle" font-size="14" fill="#5F5E5A" font-family="Arial,sans-serif">${n} out of ${d} parts shaded</text>
+      <rect x="${ox}" y="${oy}" width="${sw}" height="${sh}" rx="${DT.RAD/2}" fill="none" stroke="${DT.PRIMARY}" stroke-width="2.5"/>
+      <text x="${ox+n*cw/2}" y="${oy+sh/2+7}" text-anchor="middle" font-size="24" font-weight="700" fill="white" font-family="${DT.FONT}">${p.label||n+'/'+d}</text>
+      <text x="${DT.W/2}" y="${oy+sh+40}" text-anchor="middle" font-size="${DT.BIG-6}" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.label||n+'/'+d}</text>
+      <text x="${DT.W/2}" y="${oy+sh+66}" text-anchor="middle" font-size="${DT.BODY}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${n} out of ${d} parts shaded</text>
     </svg>`;
   },
 
   fraction_compare(p) {
     const fracs=(p.fractions||[{n:1,d:2,label:'1/2'},{n:3,d:4,label:'3/4'}]).slice(0,2);
-    const sw=200, sh=60, gap=60;
-    const totalW=fracs.length*sw+(fracs.length-1)*gap+40;
+    const sw=230, sh=70, gap=70;
+    const totalW=fracs.length*sw+(fracs.length-1)*gap+DT.PAD;
     const bars=fracs.map((f,fi)=>{
-      const ox=20+fi*(sw+gap), n=f.n||f.numerator||1, d=f.d||f.denominator||2;
+      const ox=DT.PAD/2+fi*(sw+gap), n=f.n||f.numerator||1, d=f.d||f.denominator||2;
       const cw=sw/d;
       const cells=Array.from({length:d},(_,i)=>
-        `<rect x="${ox+i*cw+1}" y="50" width="${cw-2}" height="${sh}" rx="3"
-          fill="${i<n?'#1D9E75':'#F4F3EF'}" stroke="white" stroke-width="1.5"/>`
+        `<rect x="${ox+i*cw+1}" y="56" width="${cw-2}" height="${sh}" rx="${DT.RAD/2}"
+          fill="${i<n?DT.ACCENT:DT.BG}" stroke="white" stroke-width="1.5"/>`
       ).join('');
       return `${cells}
-        <rect x="${ox}" y="50" width="${sw}" height="${sh}" rx="3" fill="none" stroke="#1D3461" stroke-width="2"/>
-        <text x="${ox+sw/2}" y="32" text-anchor="middle" font-size="22" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${f.label||n+'/'+d}</text>`;
+        <rect x="${ox}" y="56" width="${sw}" height="${sh}" rx="${DT.RAD/2}" fill="none" stroke="${DT.PRIMARY}" stroke-width="2"/>
+        <text x="${ox+sw/2}" y="38" text-anchor="middle" font-size="24" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${f.label||n+'/'+d}</text>`;
     }).join('');
-    const mid=fracs.length===2 ? 20+sw+(gap/2) : 250;
-    return `<svg viewBox="0 0 ${Math.max(totalW,500)} 180" width="100%" height="100%">
+    const mid=fracs.length===2 ? DT.PAD/2+sw+(gap/2) : DT.W/2;
+    return `<svg viewBox="0 0 ${Math.max(totalW,DT.W)} 200" width="100%" height="100%">
       ${bars}
-      ${fracs.length===2?`<text x="${mid}" y="82" text-anchor="middle" font-size="28" font-weight="900" fill="#E07B39" font-family="Arial,sans-serif">vs</text>`:''}
+      ${fracs.length===2?`<text x="${mid}" y="94" text-anchor="middle" font-size="${DT.BIG-8}" font-weight="900" fill="${DT.ACCENT2}" font-family="${DT.FONT}">vs</text>`:''}
     </svg>`;
   },
 
   // fraction_circle — single circle showing n/d
   fraction_circle(p) {
     const n=Math.max(1,p.numerator||1), d=Math.max(2,p.denominator||4);
-    const cx=250, cy=130, r=100;
-    // Draw d equal slices, shade n of them
-    let paths='', lines='';
+    const cx=DT.W/2, cy=140, r=110;
+    let paths='';
     for(let i=0;i<d;i++) {
       const a1=-Math.PI/2 + i*(2*Math.PI/d);
       const a2=-Math.PI/2 + (i+1)*(2*Math.PI/d);
@@ -4741,14 +4740,14 @@ const SVG_RENDERERS = {
       const x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1);
       const x2=cx+r*Math.cos(a2), y2=cy+r*Math.sin(a2);
       const lg=sweep>Math.PI?1:0;
-      const fill=i<n?(p.color||'#1D9E75'):'#F4F3EF';
+      const fill=i<n?(p.color||DT.ACCENT):DT.BG;
       paths+=`<path d="M${cx},${cy} L${Math.round(x1*10)/10},${Math.round(y1*10)/10} A${r},${r} 0 ${lg},1 ${Math.round(x2*10)/10},${Math.round(y2*10)/10} Z" fill="${fill}" stroke="white" stroke-width="2.5"/>`;
     }
     const label=p.label||(n+'/'+d);
-    return `<svg viewBox="0 0 500 220" width="100%" height="100%">
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1D3461" stroke-width="3"/>
+    return `<svg viewBox="0 0 ${DT.W} 260" width="100%" height="100%">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${DT.PRIMARY}" stroke-width="3"/>
       ${paths}
-      <text x="${cx}" y="${cy+r+32}" text-anchor="middle" font-size="26" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${label}</text>
+      <text x="${cx}" y="${cy+r+36}" text-anchor="middle" font-size="${DT.BIG-10}" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${label}</text>
     </svg>`;
   },
 
@@ -4756,13 +4755,13 @@ const SVG_RENDERERS = {
   fraction_circle_compare(p) {
     const fracs=(p.fractions||[{n:1,d:2},{n:1,d:3},{n:1,d:4}]).slice(0,4);
     const count=fracs.length;
-    const r=Math.min(70, Math.floor(420/(count*2.8)));
-    const spacing=Math.floor(460/count);
-    const cy=110, oy=20;
+    const r=Math.min(80, Math.floor((DT.W-2*DT.PAD)/(count*2.8)));
+    const spacing=Math.floor((DT.W-2*DT.PAD)/count);
+    const cy=120, oy=24;
     let circles='';
     fracs.forEach((f,fi)=>{
       const n=f.n||f.numerator||1, d=f.d||f.denominator||4;
-      const cx=20+fi*spacing+spacing/2;
+      const cx=DT.PAD+fi*spacing+spacing/2;
       let slices='';
       for(let i=0;i<d;i++){
         const a1=-Math.PI/2+i*(2*Math.PI/d);
@@ -4773,39 +4772,38 @@ const SVG_RENDERERS = {
         const x2=Math.round((cx+r*Math.cos(a2))*10)/10;
         const y2=Math.round((cy+r*Math.sin(a2))*10)/10;
         const lg=sweep>Math.PI?1:0;
-        slices+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${lg},1 ${x2},${y2} Z" fill="${i<n?'#1D9E75':'#F4F3EF'}" stroke="white" stroke-width="2"/>`;
+        slices+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${lg},1 ${x2},${y2} Z" fill="${i<n?DT.ACCENT:DT.BG}" stroke="white" stroke-width="2"/>`;
       }
-      circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1D3461" stroke-width="2.5"/>
+      circles+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${DT.PRIMARY}" stroke-width="2.5"/>
         ${slices}
-        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1D3461" stroke-width="2.5"/>
-        <text x="${cx}" y="${cy+r+24}" text-anchor="middle" font-size="20" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${f.label||(n+'/'+d)}</text>`;
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${DT.PRIMARY}" stroke-width="2.5"/>
+        <text x="${cx}" y="${cy+r+28}" text-anchor="middle" font-size="${DT.TITLE}" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${f.label||(n+'/'+d)}</text>`;
     });
     const comparison=p.comparison||'';
-    return `<svg viewBox="0 0 500 ${oy+cy+r+80}" width="100%" height="100%">
+    return `<svg viewBox="0 0 ${DT.W} ${oy+cy+r+86}" width="100%" height="100%">
       ${circles}
-      ${comparison?`<text x="250" y="${oy+cy+r+65}" text-anchor="middle" font-size="22" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${comparison}</text>`:''}
+      ${comparison?`<text x="${DT.W/2}" y="${oy+cy+r+72}" text-anchor="middle" font-size="${DT.TITLE}" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${comparison}</text>`:''}
     </svg>`;
   },
 
   number_line(p) {
-    // Enforce 0 is always in range — number lines must include 0
     let mn=parseFloat(p.min??0), mx=parseFloat(p.max??10);
-    if (mn > 0) mn = 0; // never start above 0
+    if (mn > 0) mn = 0;
     const step=parseFloat(p.step||1);
     const range=mx-mn||1;
-    const px=v=>40+((v-mn)/range)*420;
+    const px=v=>DT.PAD+((v-mn)/range)*(DT.W-2*DT.PAD-20);
     const ticks=[];
     for(let v=mn;v<=mx+0.001;v+=step) ticks.push(v);
     const tickSVG=ticks.map(v=>`
-      <line x1="${px(v)}" y1="90" x2="${px(v)}" y2="110" stroke="#1D3461" stroke-width="2"/>
-      <text x="${px(v)}" y="128" text-anchor="middle" font-size="14" fill="#1D3461" font-family="Arial,sans-serif">${Number(v.toFixed(4))}</text>`).join('');
+      <line x1="${px(v)}" y1="95" x2="${px(v)}" y2="115" stroke="${DT.PRIMARY}" stroke-width="2"/>
+      <text x="${px(v)}" y="136" text-anchor="middle" font-size="${DT.BODY}" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${Number(v.toFixed(4))}</text>`).join('');
     const hlSVG=(p.highlights||[]).map(h=>`
-      <circle cx="${px(h.value)}" cy="100" r="12" fill="#1D9E75" stroke="white" stroke-width="2"/>
-      <text x="${px(h.value)}" y="75" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${h.label||h.value}</text>
-      <line x1="${px(h.value)}" y1="80" x2="${px(h.value)}" y2="88" stroke="#0F6E56" stroke-width="2"/>`).join('');
-    return `<svg viewBox="0 0 500 170" width="100%" height="100%">
-      <line x1="30" y1="100" x2="470" y2="100" stroke="#1D3461" stroke-width="3"/>
-      <polygon points="470,95 482,100 470,105" fill="#1D3461"/>
+      <circle cx="${px(h.value)}" cy="105" r="14" fill="${DT.ACCENT}" stroke="white" stroke-width="2"/>
+      <text x="${px(h.value)}" y="78" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${h.label||h.value}</text>
+      <line x1="${px(h.value)}" y1="82" x2="${px(h.value)}" y2="91" stroke="${DT.HIGHLIGHT}" stroke-width="2"/>`).join('');
+    return `<svg viewBox="0 0 ${DT.W} 190" width="100%" height="100%">
+      <line x1="${DT.PAD-4}" y1="105" x2="${DT.W-DT.PAD+4}" y2="105" stroke="${DT.PRIMARY}" stroke-width="3"/>
+      <polygon points="${DT.W-DT.PAD+4},100 ${DT.W-DT.PAD+16},105 ${DT.W-DT.PAD+4},110" fill="${DT.PRIMARY}"/>
       ${tickSVG}${hlSVG}
     </svg>`;
   },
@@ -4816,12 +4814,13 @@ const SVG_RENDERERS = {
 
   percent_bar(p) {
     const pct=Math.min(100,Math.max(0,p.percent||75));
-    return `<svg viewBox="0 0 500 200" width="100%" height="100%">
-      <rect x="20" y="60" width="460" height="70" rx="8" fill="#F4F3EF" stroke="#D0D0D0" stroke-width="1.5"/>
-      <rect x="20" y="60" width="${460*pct/100}" height="70" rx="8" fill="#1D9E75"/>
-      <text x="${20+460*pct/100/2}" y="102" text-anchor="middle" font-size="26" font-weight="900" fill="white" font-family="Arial,sans-serif">${p.part_label||pct}</text>
-      <text x="250" y="28" text-anchor="middle" font-size="15" fill="#5F5E5A" font-family="Arial,sans-serif">out of ${p.whole_label||100}</text>
-      <text x="250" y="162" text-anchor="middle" font-size="32" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${p.label||pct+'%'}</text>
+    const bw=DT.W-2*DT.PAD;
+    return `<svg viewBox="0 0 ${DT.W} 220" width="100%" height="100%">
+      <rect x="${DT.PAD}" y="64" width="${bw}" height="76" rx="${DT.RAD}" fill="${DT.BG}" stroke="#D0D0D0" stroke-width="1.5"/>
+      <rect x="${DT.PAD}" y="64" width="${bw*pct/100}" height="76" rx="${DT.RAD}" fill="${DT.ACCENT}"/>
+      <text x="${DT.PAD+bw*pct/100/2}" y="110" text-anchor="middle" font-size="${DT.BIG-10}" font-weight="900" fill="white" font-family="${DT.FONT}">${p.part_label||pct}</text>
+      <text x="${DT.W/2}" y="34" text-anchor="middle" font-size="${DT.BODY}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">out of ${p.whole_label||100}</text>
+      <text x="${DT.W/2}" y="176" text-anchor="middle" font-size="${DT.BIG}" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.label||pct+'%'}</text>
     </svg>`;
   },
 
@@ -4849,29 +4848,29 @@ const SVG_RENDERERS = {
     const vw=Math.floor(460/Math.max(vars.length,1));
     const varBoxes=vars.map((v,i)=>`
       <rect x="${20+i*vw}" y="130" width="${vw-8}" height="60" rx="8" fill="#E8F5E9" stroke="#1D9E75" stroke-width="1.5"/>
-      <text x="${20+i*vw+(vw-8)/2}" y="157" text-anchor="middle" font-size="22" font-weight="900" fill="#0F6E56" font-family="Arial,sans-serif">${v.symbol}</text>
-      <text x="${20+i*vw+(vw-8)/2}" y="178" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${v.meaning}${v.unit?' ('+v.unit+')':''}</text>`).join('');
-    return `<svg viewBox="0 0 500 220" width="100%" height="100%">
-      <rect x="10" y="20" width="480" height="90" rx="10" fill="#1D3461"/>
-      <text x="250" y="76" text-anchor="middle" font-size="38" font-weight="900" fill="white" font-family="Arial,sans-serif">${p.formula||''}</text>
-      <text x="250" y="115" text-anchor="middle" font-size="12" fill="#9FACC4" font-family="Arial,sans-serif">WHERE:</text>
+      <text x="${20+i*vw+(vw-8)/2}" y="157" text-anchor="middle" font-size="22" font-weight="900" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${v.symbol}</text>
+      <text x="${20+i*vw+(vw-8)/2}" y="178" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${v.meaning}${v.unit?' ('+v.unit+')':''}</text>`).join('');
+    return `<svg viewBox="0 0 600 220" width="100%" height="100%">
+      <rect x="10" y="20" width="480" height="90" rx="10" fill="${DT.PRIMARY}"/>
+      <text x="250" y="76" text-anchor="middle" font-size="38" font-weight="900" fill="white" font-family="${DT.FONT}">${p.formula||''}</text>
+      <text x="250" y="115" text-anchor="middle" font-size="${DT.CAPTION}" fill="#9FACC4" font-family="${DT.FONT}">WHERE:</text>
       ${varBoxes}
     </svg>`;
   },
 
   balance_scale(p) {
-    return `<svg viewBox="0 0 500 260" width="100%" height="100%">
-      <line x1="250" y1="40" x2="250" y2="120" stroke="#1D3461" stroke-width="4"/>
-      <line x1="100" y1="120" x2="400" y2="120" stroke="#1D3461" stroke-width="4"/>
+    return `<svg viewBox="0 0 600 260" width="100%" height="100%">
+      <line x1="250" y1="40" x2="250" y2="120" stroke="${DT.PRIMARY}" stroke-width="4"/>
+      <line x1="100" y1="120" x2="400" y2="120" stroke="${DT.PRIMARY}" stroke-width="4"/>
       <circle cx="250" cy="40" r="8" fill="#1D9E75"/>
-      <line x1="100" y1="120" x2="100" y2="160" stroke="#1D3461" stroke-width="3"/>
-      <line x1="400" y1="120" x2="400" y2="160" stroke="#1D3461" stroke-width="3"/>
+      <line x1="100" y1="120" x2="100" y2="160" stroke="${DT.PRIMARY}" stroke-width="3"/>
+      <line x1="400" y1="120" x2="400" y2="160" stroke="${DT.PRIMARY}" stroke-width="3"/>
       <rect x="40" y="160" width="120" height="50" rx="8" fill="#E8F5E9" stroke="#1D9E75" stroke-width="2"/>
       <rect x="340" y="160" width="120" height="50" rx="8" fill="#FFF3E0" stroke="#E07B39" stroke-width="2"/>
-      <text x="100" y="192" text-anchor="middle" font-size="18" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${p.left||''}</text>
-      <text x="400" y="192" text-anchor="middle" font-size="18" font-weight="700" fill="#E07B39" font-family="Arial,sans-serif">${p.right||''}</text>
-      <text x="250" y="145" text-anchor="middle" font-size="22" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">=</text>
-      <text x="250" y="240" text-anchor="middle" font-size="20" font-weight="700" fill="#1D9E75" font-family="Arial,sans-serif">${p.solution||''}</text>
+      <text x="100" y="192" text-anchor="middle" font-size="${DT.TITLE-2}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${p.left||''}</text>
+      <text x="400" y="192" text-anchor="middle" font-size="${DT.TITLE-2}" font-weight="700" fill="#E07B39" font-family="${DT.FONT}">${p.right||''}</text>
+      <text x="250" y="145" text-anchor="middle" font-size="22" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">=</text>
+      <text x="250" y="240" text-anchor="middle" font-size="20" font-weight="700" fill="#1D9E75" font-family="${DT.FONT}">${p.solution||''}</text>
     </svg>`;
   },
 
@@ -4879,17 +4878,17 @@ const SVG_RENDERERS = {
     const rows=(p.rows||[]).slice(0,6), hdrs=p.headers||['x','y'];
     const rh=38, oy=50, totalH=oy+rows.length*rh+50;
     const hdrSVG=hdrs.map((h,i)=>`
-      <rect x="${10+i*240}" y="12" width="228" height="34" rx="4" fill="#1D3461"/>
-      <text x="${10+i*240+114}" y="34" text-anchor="middle" font-size="16" font-weight="700" fill="white" font-family="Arial,sans-serif">${h}</text>`).join('');
+      <rect x="${10+i*240}" y="12" width="228" height="34" rx="${DT.RAD/2}" fill="${DT.PRIMARY}"/>
+      <text x="${10+i*240+114}" y="34" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="white" font-family="${DT.FONT}">${h}</text>`).join('');
     const rowSVG=rows.map((row,ri)=>{
       const y=oy+ri*rh;
       return row.map((cell,ci)=>`
-        <rect x="${10+ci*240}" y="${y}" width="228" height="${rh-2}" rx="4" fill="${ri%2===0?'#F4F3EF':'white'}"/>
-        <text x="${10+ci*240+114}" y="${y+rh/2+6}" text-anchor="middle" font-size="16" fill="#1D3461" font-family="Arial,sans-serif">${cell}</text>`).join('');
+        <rect x="${10+ci*240}" y="${y}" width="228" height="${rh-2}" rx="${DT.RAD/2}" fill="${ri%2===0?DT.BG:'white'}"/>
+        <text x="${10+ci*240+114}" y="${y+rh/2+6}" text-anchor="middle" font-size="${DT.BODY}" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${cell}</text>`).join('');
     }).join('');
-    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 ${Math.min(totalH,300)}" width="100%" height="100%">
       ${hdrSVG}${rowSVG}
-      ${p.rule?`<text x="250" y="${Math.min(totalH-12,285)}" text-anchor="middle" font-size="14" fill="#1D9E75" font-weight="700" font-family="Arial,sans-serif">${p.rule}</text>`:''}
+      ${p.rule?`<text x="250" y="${Math.min(totalH-12,285)}" text-anchor="middle" font-size="${DT.CAPTION}" fill="#1D9E75" font-weight="700" font-family="${DT.FONT}">${p.rule}</text>`:''}
     </svg>`;
   },
 
@@ -4900,11 +4899,11 @@ const SVG_RENDERERS = {
     for(let x=0;x<=xm;x++) grid+=`<line x1="${ox+x*gs}" y1="${oy}" x2="${ox+x*gs}" y2="${oy+gh}" stroke="#E0E0E0" stroke-width="0.8"/>`;
     for(let y=0;y<=ym;y++) grid+=`<line x1="${ox}" y1="${oy+y*gs}" x2="${ox+gw}" y2="${oy+y*gs}" stroke="#E0E0E0" stroke-width="0.8"/>`;
     const axisLabels=[];
-    for(let x=0;x<=xm;x+=2) axisLabels.push(`<text x="${ox+x*gs}" y="${oy+gh+16}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${x}</text>`);
-    for(let y=0;y<=ym;y+=2) axisLabels.push(`<text x="${ox-8}" y="${oy+gh-y*gs+4}" text-anchor="end" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${y}</text>`);
+    for(let x=0;x<=xm;x+=2) axisLabels.push(`<text x="${ox+x*gs}" y="${oy+gh+16}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${x}</text>`);
+    for(let y=0;y<=ym;y+=2) axisLabels.push(`<text x="${ox-8}" y="${oy+gh-y*gs+4}" text-anchor="end" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${y}</text>`);
     const pts=(p.points||[]).map(pt=>`
       <circle cx="${ox+pt.x*gs}" cy="${oy+gh-pt.y*gs}" r="7" fill="#1D9E75" stroke="white" stroke-width="2"/>
-      <text x="${ox+pt.x*gs+10}" y="${oy+gh-pt.y*gs-8}" font-size="12" fill="#1D3461" font-family="Arial,sans-serif">${pt.label||'('+pt.x+','+pt.y+')'}</text>`).join('');
+      <text x="${ox+pt.x*gs+10}" y="${oy+gh-pt.y*gs-8}" font-size="${DT.CAPTION}" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${pt.label||'('+pt.x+','+pt.y+')'}</text>`).join('');
     let line='';
     if(p.line&&(p.points||[]).length>=2) {
       const sorted=[...(p.points||[])].sort((a,b)=>a.x-b.x);
@@ -4914,12 +4913,12 @@ const SVG_RENDERERS = {
     const totalH=oy+gh+30;
     return `<svg viewBox="0 0 ${ox+gw+20} ${totalH}" width="100%" height="100%">
       ${grid}
-      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh+4}" stroke="#1D3461" stroke-width="2.5"/>
-      <line x1="${ox-4}" y1="${oy+gh}" x2="${ox+gw+4}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2.5"/>
-      <polygon points="${ox+gw+4},${oy+gh-4} ${ox+gw+12},${oy+gh} ${ox+gw+4},${oy+gh+4}" fill="#1D3461"/>
-      <polygon points="${ox-4},${oy} ${ox},${oy-8} ${ox+4},${oy}" fill="#1D3461"/>
-      <text x="${ox+gw+14}" y="${oy+gh+4}" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">x</text>
-      <text x="${ox+4}" y="${oy-4}" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">y</text>
+      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh+4}" stroke="${DT.PRIMARY}" stroke-width="2.5"/>
+      <line x1="${ox-4}" y1="${oy+gh}" x2="${ox+gw+4}" y2="${oy+gh}" stroke="${DT.PRIMARY}" stroke-width="2.5"/>
+      <polygon points="${ox+gw+4},${oy+gh-4} ${ox+gw+12},${oy+gh} ${ox+gw+4},${oy+gh+4}" fill="${DT.PRIMARY}"/>
+      <polygon points="${ox-4},${oy} ${ox},${oy-8} ${ox+4},${oy}" fill="${DT.PRIMARY}"/>
+      <text x="${ox+gw+14}" y="${oy+gh+4}" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">x</text>
+      <text x="${ox+4}" y="${oy-4}" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">y</text>
       ${axisLabels.join('')}${line}${pts}
     </svg>`;
   },
@@ -4928,12 +4927,12 @@ const SVG_RENDERERS = {
     const items=(p.items||['▲','■','▲','■','▲','■']).slice(0,10);
     const iw=Math.min(Math.floor(440/items.length),60);
     const shapes=items.map((item,i)=>`
-      <rect x="${20+i*iw}" y="40" width="${iw-6}" height="${iw-6}" rx="8" fill="${i%2===0?'#E8F5E9':'#FFF3E0'}" stroke="${i%2===0?'#1D9E75':'#E07B39'}" stroke-width="2"/>
-      <text x="${20+i*iw+(iw-6)/2}" y="${40+(iw-6)/2+8}" text-anchor="middle" font-size="${Math.max(14,iw-20)}" font-family="Arial,sans-serif">${item}</text>`).join('');
-    return `<svg viewBox="0 0 500 180" width="100%" height="100%">
+      <rect x="${20+i*iw}" y="40" width="${iw-6}" height="${iw-6}" rx="8" fill="${i%2===0?'#E8F5E9':'#FFF3E0'}" stroke="${i%2===0?DT.ACCENT:DT.ACCENT2}" stroke-width="2"/>
+      <text x="${20+i*iw+(iw-6)/2}" y="${40+(iw-6)/2+8}" text-anchor="middle" font-size="${Math.max(14,iw-20)}" font-family="${DT.FONT}">${item}</text>`).join('');
+    return `<svg viewBox="0 0 600 180" width="100%" height="100%">
       ${shapes}
-      <text x="250" y="${40+iw+24}" text-anchor="middle" font-size="14" fill="#1D9E75" font-weight="700" font-family="Arial,sans-serif">${p.rule||''}</text>
-      ${p.next?`<text x="250" y="${40+iw+50}" text-anchor="middle" font-size="14" fill="#5F5E5A" font-family="Arial,sans-serif">Next: ${p.next}</text>`:''}
+      <text x="250" y="${40+iw+24}" text-anchor="middle" font-size="${DT.CAPTION}" fill="#1D9E75" font-weight="700" font-family="${DT.FONT}">${p.rule||''}</text>
+      ${p.next?`<text x="250" y="${40+iw+50}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">Next: ${p.next}</text>`:''}
     </svg>`;
   },
 
@@ -4949,12 +4948,12 @@ const SVG_RENDERERS = {
       const col=i%cols, row=Math.floor(i/cols);
       const x=ox+col*gap+r, y=oy+row*gap+r;
       dots += `<circle cx="${x}" cy="${y}" r="${r}" fill="#1D9E75" stroke="white" stroke-width="3"/>
-        <text x="${x}" y="${y+7}" text-anchor="middle" font-size="18" font-weight="700" fill="white" font-family="Arial,sans-serif">${i+1}</text>`;
+        <text x="${x}" y="${y+7}" text-anchor="middle" font-size="${DT.TITLE-2}" font-weight="700" fill="white" font-family="${DT.FONT}">${i+1}</text>`;
     }
     const totalH = oy + rows*gap + r + 50;
-    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 ${Math.min(totalH,300)}" width="100%" height="100%">
       ${dots}
-      <text x="250" y="${Math.min(totalH-10,288)}" text-anchor="middle" font-size="24" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${p.label||'Count: '+n}</text>
+      <text x="250" y="${Math.min(totalH-10,288)}" text-anchor="middle" font-size="24" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.label||'Count: '+n}</text>
     </svg>`;
   },
 
@@ -4968,27 +4967,27 @@ const SVG_RENDERERS = {
       const col=i%5, row=Math.floor(i/5);
       const x=ox+col*(cellW+gap), y=oy+row*(cellH+gap);
       const isFilled = i < filled;
-      cells += `<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="6"
-        fill="${isFilled?'#1D9E75':'#F4F3EF'}" stroke="#1D3461" stroke-width="2"/>
+      cells += `<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="${DT.RAD}"
+        fill="${isFilled?DT.ACCENT:DT.BG}" stroke="${DT.PRIMARY}" stroke-width="2"/>
         ${isFilled?`<circle cx="${x+cellW/2}" cy="${y+cellH/2}" r="20" fill="white" opacity="0.4"/>`:''}`; 
     }
     const num2 = p.second_count != null ? p.second_count : null;
-    return `<svg viewBox="0 0 500 240" width="100%" height="100%">
-      <rect x="${ox-8}" y="${oy-8}" width="${5*(cellW+gap)+gap}" height="${2*(cellH+gap)+gap}" rx="8" fill="none" stroke="#1D3461" stroke-width="3"/>
+    return `<svg viewBox="0 0 600 240" width="100%" height="100%">
+      <rect x="${ox-8}" y="${oy-8}" width="${5*(cellW+gap)+gap}" height="${2*(cellH+gap)+gap}" rx="8" fill="none" stroke="${DT.PRIMARY}" stroke-width="3"/>
       ${cells}
-      <text x="250" y="195" text-anchor="middle" font-size="22" font-weight="900" fill="#1D9E75" font-family="Arial,sans-serif">${filled} filled</text>
-      <text x="250" y="222" text-anchor="middle" font-size="18" fill="#888780" font-family="Arial,sans-serif">${10-filled} empty · Total: 10</text>
-      ${p.label?`<text x="250" y="20" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.label}</text>`:''}
+      <text x="250" y="195" text-anchor="middle" font-size="22" font-weight="900" fill="#1D9E75" font-family="${DT.FONT}">${filled} filled</text>
+      <text x="250" y="222" text-anchor="middle" font-size="${DT.TITLE-2}" fill="#888780" font-family="${DT.FONT}">${10-filled} empty · Total: 10</text>
+      ${p.label?`<text x="250" y="20" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.label}</text>`:''}
     </svg>`;
   },
 
   shape_grid(p) {
     // 4 basic 2D shapes drawn with SVG + name labels — K/Gr1 shape recognition
     const shapes = p.shapes || [
-      {name:'Circle', color:'#1D9E75'},
-      {name:'Square', color:'#E07B39'},
-      {name:'Triangle', color:'#F5C842'},
-      {name:'Rectangle', color:'#6B63D4'}
+      {name:'Circle', color:DT.ACCENT},
+      {name:'Square', color:DT.ACCENT2},
+      {name:'Triangle', color:DT.ACCENT4},
+      {name:'Rectangle', color:DT.ACCENT3}
     ];
     const count = Math.min(shapes.length, 4);
     const cw = 110, ch = 110, gap = 10;
@@ -4998,25 +4997,25 @@ const SVG_RENDERERS = {
 
     const drawShape = (s, x, cy, size) => {
       const name = (s.name||'').toLowerCase();
-      const fill = s.color||'#1D9E75';
+      const fill = s.color||DT.ACCENT;
       const label = s.name||'Shape';
       const cx = x + cw/2;
       if(name.includes('circle')) {
         return `<circle cx="${cx}" cy="${cy}" r="${size*0.45}" fill="${fill}" opacity="0.85" stroke="${fill}" stroke-width="2"/>
-          <text x="${cx}" y="${cy+size*0.45+22}" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${label}</text>`;
+          <text x="${cx}" y="${cy+size*0.45+22}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${label}</text>`;
       } else if(name.includes('triangle')) {
         const s2=size*0.45;
         return `<polygon points="${cx},${cy-s2} ${cx-s2*1.1},${cy+s2*0.8} ${cx+s2*1.1},${cy+s2*0.8}" fill="${fill}" opacity="0.85" stroke="${fill}" stroke-width="2"/>
-          <text x="${cx}" y="${cy+s2*0.8+22}" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${label}</text>`;
+          <text x="${cx}" y="${cy+s2*0.8+22}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${label}</text>`;
       } else if(name.includes('rectangle')) {
         const rw=size*0.85, rh=size*0.5;
-        return `<rect x="${cx-rw/2}" y="${cy-rh/2}" width="${rw}" height="${rh}" rx="4" fill="${fill}" opacity="0.85" stroke="${fill}" stroke-width="2"/>
-          <text x="${cx}" y="${cy+rh/2+22}" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${label}</text>`;
+        return `<rect x="${cx-rw/2}" y="${cy-rh/2}" width="${rw}" height="${rh}" rx="${DT.RAD/2}" fill="${fill}" opacity="0.85" stroke="${fill}" stroke-width="2"/>
+          <text x="${cx}" y="${cy+rh/2+22}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${label}</text>`;
       } else {
         // Square (default)
         const sq=size*0.65;
-        return `<rect x="${cx-sq/2}" y="${cy-sq/2}" width="${sq}" height="${sq}" rx="4" fill="${fill}" opacity="0.85" stroke="${fill}" stroke-width="2"/>
-          <text x="${cx}" y="${cy+sq/2+22}" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${label}</text>`;
+        return `<rect x="${cx-sq/2}" y="${cy-sq/2}" width="${sq}" height="${sq}" rx="${DT.RAD/2}" fill="${fill}" opacity="0.85" stroke="${fill}" stroke-width="2"/>
+          <text x="${cx}" y="${cy+sq/2+22}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${label}</text>`;
       }
     };
 
@@ -5027,10 +5026,10 @@ const SVG_RENDERERS = {
 
     const propRows = (p.properties||[]).slice(0,4).map((prop,i) => {
       const x = ox + i*(cw+gap);
-      return prop ? `<text x="${x+cw/2}" y="${oy+ch+44}" text-anchor="middle" font-size="12" fill="#5F5E5A" font-family="Arial,sans-serif">${prop}</text>` : '';
+      return prop ? `<text x="${x+cw/2}" y="${oy+ch+44}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${prop}</text>` : '';
     }).join('');
 
-    return `<svg viewBox="0 0 500 ${oy+ch+70}" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 ${oy+ch+70}" width="100%" height="100%">
       ${svgShapes}${propRows}
     </svg>`;
   },
@@ -5038,10 +5037,10 @@ const SVG_RENDERERS = {
   // 3d_shapes — K/Gr1 3D object identification with isometric-style drawings
   three_d_shapes(p) {
     const shapes = p.shapes || [
-      {name:'Cube', color:'#1D9E75'},
-      {name:'Sphere', color:'#E07B39'},
-      {name:'Cylinder', color:'#F5C842'},
-      {name:'Cone', color:'#6B63D4'},
+      {name:'Cube', color:DT.ACCENT},
+      {name:'Sphere', color:DT.ACCENT2},
+      {name:'Cylinder', color:DT.ACCENT4},
+      {name:'Cone', color:DT.ACCENT3},
     ];
     const count = Math.min(shapes.length, 4);
     const cw = 110, ch = 100, gap = 10;
@@ -5051,7 +5050,7 @@ const SVG_RENDERERS = {
 
     const drawShape = (s, x) => {
       const cx = x + cw/2, cy = oy + ch/2;
-      const fill = s.color || '#1D9E75';
+      const fill = s.color || DT.ACCENT;
       const name = (s.name||'').toLowerCase();
       let svg = '';
       if (name.includes('cube')) {
@@ -5074,9 +5073,9 @@ const SVG_RENDERERS = {
       } else {
         // Default: cube
         const sz=34;
-        svg = `<rect x="${cx-sz}" y="${cy-sz}" width="${sz*2}" height="${sz*2}" rx="6" fill="${fill}" opacity="0.85"/>`;
+        svg = `<rect x="${cx-sz}" y="${cy-sz}" width="${sz*2}" height="${sz*2}" rx="${DT.RAD}" fill="${fill}" opacity="0.85"/>`;
       }
-      return svg + `<text x="${cx}" y="${oy+ch+22}" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${s.name}</text>`;
+      return svg + `<text x="${cx}" y="${oy+ch+22}" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${s.name}</text>`;
     };
 
     const svgShapes = shapes.slice(0,4).map((s,i) => {
@@ -5084,7 +5083,7 @@ const SVG_RENDERERS = {
       return drawShape(s, x);
     }).join('');
 
-    return `<svg viewBox="0 0 500 ${oy+ch+40}" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 ${oy+ch+40}" width="100%" height="100%">
       ${svgShapes}
     </svg>`;
   },
@@ -5104,15 +5103,15 @@ const SVG_RENDERERS = {
       const col=i%3, row=Math.floor(i/3);
       const x=startX+16+col*62, y=startY+10+row*52;
       return `<rect x="${x}" y="${y}" width="52" height="40" rx="8" fill="white" stroke="#D0D0D0" stroke-width="1.5"/>
-        <text x="${x+26}" y="${y+26}" text-anchor="middle" font-size="13" font-weight="600" fill="#1D3461" font-family="Arial,sans-serif">${item}</text>`;
+        <text x="${x+26}" y="${y+26}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="600" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${item}</text>`;
     }).join('');
 
-    return `<svg viewBox="0 0 500 270" width="100%" height="100%">
-      ${rule?`<text x="250" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#1D9E75" font-family="Arial,sans-serif">Sort by: ${rule}</text>`:''}
+    return `<svg viewBox="0 0 600 270" width="100%" height="100%">
+      ${rule?`<text x="250" y="22" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="#1D9E75" font-family="${DT.FONT}">Sort by: ${rule}</text>`:''}
       <rect x="${ox}" y="${oy}" width="${bw}" height="${bh}" rx="12" fill="#E8F5E9" stroke="#1D9E75" stroke-width="2.5"/>
       <rect x="${ox+gap+bw}" y="${oy}" width="${bw}" height="${bh}" rx="12" fill="#FFF3E0" stroke="#E07B39" stroke-width="2.5"/>
-      <text x="${ox+bw/2}" y="${oy-10}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${left}</text>
-      <text x="${ox+gap+bw+bw/2}" y="${oy-10}" text-anchor="middle" font-size="15" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">${right}</text>
+      <text x="${ox+bw/2}" y="${oy-10}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${left}</text>
+      <text x="${ox+gap+bw+bw/2}" y="${oy-10}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="#C05A20" font-family="${DT.FONT}">${right}</text>
       ${renderItems(leftItems, ox, oy)}
       ${renderItems(rightItems, ox+gap+bw, oy)}
     </svg>`;
@@ -5155,14 +5154,14 @@ const SVG_RENDERERS = {
     const pts=values.map((v,i)=>`${ox+i*xStep},${oy+gh-(v/maxVal)*gh}`).join(' ');
     const dots=values.map((v,i)=>`
       <circle cx="${ox+i*xStep}" cy="${oy+gh-(v/maxVal)*gh}" r="7" fill="#1D9E75" stroke="white" stroke-width="2"/>
-      <text x="${ox+i*xStep}" y="${oy+gh-(v/maxVal)*gh-12}" text-anchor="middle" font-size="12" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${v}</text>
-      <text x="${ox+i*xStep}" y="${oy+gh+16}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${labels[i]}</text>`).join('');
-    return `<svg viewBox="0 0 500 240" width="100%" height="100%">
+      <text x="${ox+i*xStep}" y="${oy+gh-(v/maxVal)*gh-12}" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${v}</text>
+      <text x="${ox+i*xStep}" y="${oy+gh+16}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${labels[i]}</text>`).join('');
+    return `<svg viewBox="0 0 600 240" width="100%" height="100%">
       <polyline points="${pts}" fill="none" stroke="#1D9E75" stroke-width="2.5"/>
-      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2"/>
-      <line x1="${ox}" y1="${oy+gh}" x2="${ox+380}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2"/>
+      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh}" stroke="${DT.PRIMARY}" stroke-width="2"/>
+      <line x1="${ox}" y1="${oy+gh}" x2="${ox+380}" y2="${oy+gh}" stroke="${DT.PRIMARY}" stroke-width="2"/>
       ${dots}
-      <text x="250" y="230" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+      <text x="250" y="230" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.title||''}</text>
     </svg>`;
   },
 
@@ -5177,15 +5176,15 @@ const SVG_RENDERERS = {
       const x1=cx+r*Math.cos(angle), y1=cy+r*Math.sin(angle);
       const x2=cx+r*Math.cos(angle+sweep), y2=cy+r*Math.sin(angle+sweep);
       const lg=sweep>Math.PI?1:0;
-      paths+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${lg},1 ${x2},${y2} Z" fill="${sl.color||'#1D9E75'}" stroke="white" stroke-width="2"/>`;
+      paths+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${lg},1 ${x2},${y2} Z" fill="${sl.color||DT.ACCENT}" stroke="white" stroke-width="2"/>`;
       const lAngle=angle+sweep/2;
       const lx=cx+(r+24)*Math.cos(lAngle), ly=cy+(r+24)*Math.sin(lAngle);
-      labels+=`<text x="${lx}" y="${ly+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${sl.label||''} (${sl.value}%)</text>`;
+      labels+=`<text x="${lx}" y="${ly+4}" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${sl.label||''} (${sl.value}%)</text>`;
       angle+=sweep;
     });
-    return `<svg viewBox="0 0 500 280" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 280" width="100%" height="100%">
       ${paths}${labels}
-      <text x="360" y="40" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+      <text x="360" y="40" font-size="${DT.CAPTION}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.title||''}</text>
     </svg>`;
   },
 
@@ -5196,16 +5195,16 @@ const SVG_RENDERERS = {
     const rowSVG=rows.map((row,ri)=>{
       const count=Math.round((row.count||0)/scale);
       const symbols=Array.from({length:Math.min(count,12)},(_,i)=>
-        `<text x="${120+i*28}" y="${oy+ri*rh+24}" font-size="20" font-family="Arial,sans-serif">${p.symbol||'●'}</text>`
+        `<text x="${120+i*28}" y="${oy+ri*rh+24}" font-size="20" font-family="${DT.FONT}">${p.symbol||'●'}</text>`
       ).join('');
-      return `<text x="10" y="${oy+ri*rh+24}" font-size="14" fill="#1D3461" font-family="Arial,sans-serif">${row.label||''}</text>
+      return `<text x="10" y="${oy+ri*rh+24}" font-size="${DT.CAPTION}" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${row.label||''}</text>
         ${symbols}`;
     }).join('');
     const totalH=oy+rows.length*rh+40;
-    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
-      <text x="250" y="24" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+    return `<svg viewBox="0 0 600 ${Math.min(totalH,300)}" width="100%" height="100%">
+      <text x="250" y="24" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.title||''}</text>
       ${rowSVG}
-      <text x="250" y="${Math.min(totalH-8,288)}" text-anchor="middle" font-size="13" fill="#5F5E5A" font-family="Arial,sans-serif">${p.symbol||'●'} ${p.scale_label||'= '+scale}</text>
+      <text x="250" y="${Math.min(totalH-8,288)}" text-anchor="middle" font-size="${DT.LABEL}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${p.symbol||'●'} ${p.scale_label||'= '+scale}</text>
     </svg>`;
   },
 
@@ -5219,20 +5218,20 @@ const SVG_RENDERERS = {
       const gx=ox+gi*(groupW+groupGap);
       const bs=series.map((s,si)=>{
         const v=s.values[gi]||0, bh=Math.round((v/maxVal)*gh);
-        return `<rect x="${gx+si*(bw+gap)}" y="${oy+gh-bh}" width="${bw}" height="${bh}" rx="3" fill="${s.color||'#1D9E75'}"/>
-          <text x="${gx+si*(bw+gap)+bw/2}" y="${oy+gh-bh-5}" text-anchor="middle" font-size="10" fill="#1D3461" font-family="Arial,sans-serif">${v}</text>`;
+        return `<rect x="${gx+si*(bw+gap)}" y="${oy+gh-bh}" width="${bw}" height="${bh}" rx="${DT.RAD/2}" fill="${s.color||DT.ACCENT}"/>
+          <text x="${gx+si*(bw+gap)+bw/2}" y="${oy+gh-bh-5}" text-anchor="middle" font-size="10" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${v}</text>`;
       }).join('');
-      return `${bs}<text x="${gx+groupW/2}" y="${oy+gh+16}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${lbl}</text>`;
+      return `${bs}<text x="${gx+groupW/2}" y="${oy+gh+16}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${lbl}</text>`;
     }).join('');
     const legend=series.map((s,i)=>`
-      <rect x="${50+i*110}" y="0" width="16" height="12" rx="2" fill="${s.color||'#1D9E75'}"/>
-      <text x="${70+i*110}" y="11" font-size="11" fill="#1D3461" font-family="Arial,sans-serif">${s.name||''}</text>`).join('');
-    return `<svg viewBox="0 0 500 240" width="100%" height="100%">
+      <rect x="${50+i*110}" y="0" width="16" height="12" rx="2" fill="${s.color||DT.ACCENT}"/>
+      <text x="${70+i*110}" y="11" font-size="${DT.CAPTION}" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${s.name||''}</text>`).join('');
+    return `<svg viewBox="0 0 600 240" width="100%" height="100%">
       <g transform="translate(0,8)">${legend}</g>
-      <line x1="${ox}" y1="${oy+20}" x2="${ox}" y2="${oy+gh+20}" stroke="#1D3461" stroke-width="2"/>
-      <line x1="${ox}" y1="${oy+gh+20}" x2="480" y2="${oy+gh+20}" stroke="#1D3461" stroke-width="2"/>
+      <line x1="${ox}" y1="${oy+20}" x2="${ox}" y2="${oy+gh+20}" stroke="${DT.PRIMARY}" stroke-width="2"/>
+      <line x1="${ox}" y1="${oy+gh+20}" x2="480" y2="${oy+gh+20}" stroke="${DT.PRIMARY}" stroke-width="2"/>
       <g transform="translate(0,20)">${bars}</g>
-      <text x="250" y="235" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+      <text x="250" y="235" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.title||''}</text>
     </svg>`;
   },
 
@@ -5241,15 +5240,15 @@ const SVG_RENDERERS = {
     const px=v=>40+v*420;
     const dots=events.map((e,i)=>`
       <circle cx="${px(e.value)}" cy="80" r="12" fill="#1D9E75" stroke="white" stroke-width="2"/>
-      <text x="${px(e.value)}" y="${i%2===0?54:120}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${e.label||''}</text>
+      <text x="${px(e.value)}" y="${i%2===0?54:120}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${e.label||''}</text>
       <line x1="${px(e.value)}" y1="${i%2===0?60:94}" x2="${px(e.value)}" y2="${i%2===0?68:92}" stroke="#1D9E75" stroke-width="1.5"/>`).join('');
-    return `<svg viewBox="0 0 500 170" width="100%" height="100%">
-      <line x1="30" y1="80" x2="470" y2="80" stroke="#1D3461" stroke-width="3"/>
-      <text x="30" y="152" text-anchor="middle" font-size="13" fill="#E07B39" font-weight="700" font-family="Arial,sans-serif">0</text>
-      <text x="250" y="152" text-anchor="middle" font-size="13" fill="#F5C842" font-weight="700" font-family="Arial,sans-serif">½</text>
-      <text x="470" y="152" text-anchor="middle" font-size="13" fill="#1D9E75" font-weight="700" font-family="Arial,sans-serif">1</text>
-      <text x="30" y="170" text-anchor="middle" font-size="10" fill="#888780" font-family="Arial,sans-serif">Impossible</text>
-      <text x="470" y="170" text-anchor="middle" font-size="10" fill="#888780" font-family="Arial,sans-serif">Certain</text>
+    return `<svg viewBox="0 0 600 170" width="100%" height="100%">
+      <line x1="30" y1="80" x2="470" y2="80" stroke="${DT.PRIMARY}" stroke-width="3"/>
+      <text x="30" y="152" text-anchor="middle" font-size="${DT.LABEL}" fill="#E07B39" font-weight="700" font-family="${DT.FONT}">0</text>
+      <text x="250" y="152" text-anchor="middle" font-size="${DT.LABEL}" fill="#F5C842" font-weight="700" font-family="${DT.FONT}">½</text>
+      <text x="470" y="152" text-anchor="middle" font-size="${DT.LABEL}" fill="#1D9E75" font-weight="700" font-family="${DT.FONT}">1</text>
+      <text x="30" y="170" text-anchor="middle" font-size="10" fill="#888780" font-family="${DT.FONT}">Impossible</text>
+      <text x="470" y="170" text-anchor="middle" font-size="10" fill="#888780" font-family="${DT.FONT}">Certain</text>
       ${dots}
     </svg>`;
   },
@@ -5260,16 +5259,16 @@ const SVG_RENDERERS = {
     const rows=stems.map((row,ri)=>{
       const y=oy+ri*rh;
       const leaves=(row.leaves||[]).join('  ');
-      return `<rect x="10" y="${y}" width="480" height="${rh-2}" rx="4" fill="${ri%2===0?'#F4F3EF':'white'}"/>
-        <rect x="10" y="${y}" width="60" height="${rh-2}" rx="4" fill="#1D3461"/>
-        <text x="40" y="${y+rh/2+5}" text-anchor="middle" font-size="16" font-weight="700" fill="white" font-family="Arial,sans-serif">${row.stem}</text>
-        <text x="80" y="${y+rh/2+5}" font-size="16" fill="#1D3461" font-family="Arial,sans-serif">${leaves}</text>`;
+      return `<rect x="10" y="${y}" width="480" height="${rh-2}" rx="${DT.RAD/2}" fill="${ri%2===0?DT.BG:'white'}"/>
+        <rect x="10" y="${y}" width="60" height="${rh-2}" rx="${DT.RAD/2}" fill="${DT.PRIMARY}"/>
+        <text x="40" y="${y+rh/2+5}" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="white" font-family="${DT.FONT}">${row.stem}</text>
+        <text x="80" y="${y+rh/2+5}" font-size="${DT.BODY}" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${leaves}</text>`;
     }).join('');
-    return `<svg viewBox="0 0 500 ${Math.min(totalH,300)}" width="100%" height="100%">
-      <text x="250" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title||''}</text>
+    return `<svg viewBox="0 0 600 ${Math.min(totalH,300)}" width="100%" height="100%">
+      <text x="250" y="30" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.title||''}</text>
       <rect x="10" y="34" width="60" height="12" rx="2" fill="#1D9E75"/>
-      <text x="40" y="44" text-anchor="middle" font-size="10" font-weight="700" fill="white" font-family="Arial,sans-serif">Stem</text>
-      <text x="80" y="44" font-size="10" font-weight="700" fill="#1D9E75" font-family="Arial,sans-serif">Leaf</text>
+      <text x="40" y="44" text-anchor="middle" font-size="10" font-weight="700" fill="white" font-family="${DT.FONT}">Stem</text>
+      <text x="80" y="44" font-size="10" font-weight="700" fill="#1D9E75" font-family="${DT.FONT}">Leaf</text>
       ${rows}
     </svg>`;
   },
@@ -5280,21 +5279,21 @@ const SVG_RENDERERS = {
     let grid='';
     for(let x=0;x<=xMax;x+=2) grid+=`<line x1="${ox+x*gs}" y1="${oy}" x2="${ox+x*gs}" y2="${oy+gh}" stroke="#E0E0E0" stroke-width="0.8"/>`;
     for(let y=0;y<=yMax;y+=2) grid+=`<line x1="${ox}" y1="${oy+y*gs}" x2="${ox+gw}" y2="${oy+y*gs}" stroke="#E0E0E0" stroke-width="0.8"/>`;
-    const xLabels = Array.from({length:Math.floor(xMax/2)+1},(_,i)=>`<text x="${ox+i*2*gs}" y="${oy+gh+16}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${i*2}</text>`).join('');
-    const yLabels = Array.from({length:Math.floor(yMax/2)+1},(_,i)=>`<text x="${ox-8}" y="${oy+gh-i*2*gs+4}" text-anchor="end" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${i*2}</text>`).join('');
+    const xLabels = Array.from({length:Math.floor(xMax/2)+1},(_,i)=>`<text x="${ox+i*2*gs}" y="${oy+gh+16}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${i*2}</text>`).join('');
+    const yLabels = Array.from({length:Math.floor(yMax/2)+1},(_,i)=>`<text x="${ox-8}" y="${oy+gh-i*2*gs+4}" text-anchor="end" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${i*2}</text>`).join('');
     const dots = pts.map(pt=>`<circle cx="${ox+pt.x*gs}" cy="${oy+gh-pt.y*gs}" r="6" fill="#1D9E75" stroke="white" stroke-width="1.5" opacity="0.8"/>`).join('');
     const lobf = p.line_of_best_fit ? `<line x1="${ox}" y1="${oy+gh}" x2="${ox+gw}" y2="${oy}" stroke="#E07B39" stroke-width="2" stroke-dasharray="8,4" opacity="0.7"/>` : '';
     const totalH = oy+gh+50;
     return `<svg viewBox="0 0 ${ox+gw+40} ${totalH}" width="100%" height="100%">
       ${grid}
-      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh+4}" stroke="#1D3461" stroke-width="2.5"/>
-      <line x1="${ox-4}" y1="${oy+gh}" x2="${ox+gw+4}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2.5"/>
-      <polygon points="${ox+gw+4},${oy+gh-4} ${ox+gw+12},${oy+gh} ${ox+gw+4},${oy+gh+4}" fill="#1D3461"/>
-      <polygon points="${ox-4},${oy} ${ox},${oy-8} ${ox+4},${oy}" fill="#1D3461"/>
-      <text x="${ox+gw/2}" y="${totalH-4}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.x_label||'x'}</text>
-      <text x="14" y="${oy+gh/2}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif" transform="rotate(-90,14,${oy+gh/2})">${p.y_label||'y'}</text>
+      <line x1="${ox}" y1="${oy}" x2="${ox}" y2="${oy+gh+4}" stroke="${DT.PRIMARY}" stroke-width="2.5"/>
+      <line x1="${ox-4}" y1="${oy+gh}" x2="${ox+gw+4}" y2="${oy+gh}" stroke="${DT.PRIMARY}" stroke-width="2.5"/>
+      <polygon points="${ox+gw+4},${oy+gh-4} ${ox+gw+12},${oy+gh} ${ox+gw+4},${oy+gh+4}" fill="${DT.PRIMARY}"/>
+      <polygon points="${ox-4},${oy} ${ox},${oy-8} ${ox+4},${oy}" fill="${DT.PRIMARY}"/>
+      <text x="${ox+gw/2}" y="${totalH-4}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.x_label||'x'}</text>
+      <text x="14" y="${oy+gh/2}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}" transform="rotate(-90,14,${oy+gh/2})">${p.y_label||'y'}</text>
       ${xLabels}${yLabels}${dots}${lobf}
-      ${p.title?`<text x="${ox+gw/2}" y="14" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.title}</text>`:''}
+      ${p.title?`<text x="${ox+gw/2}" y="14" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.title}</text>`:''}
     </svg>`;
   },
 
@@ -5308,15 +5307,15 @@ const SVG_RENDERERS = {
     for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
       cells+=`<rect x="${ox+c*cs}" y="${oy+r*cs}" width="${cs}" height="${cs}" fill="${(r+c)%2===0?'#C8E6C9':'#E8F5E9'}" stroke="white" stroke-width="1"/>`;
     }
-    return `<svg viewBox="0 0 500 ${gh+130}" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 ${gh+130}" width="100%" height="100%">
       ${cells}
       <rect x="${ox}" y="${oy}" width="${gw}" height="${gh}" fill="none" stroke="#0F6E56" stroke-width="3"/>
       <line x1="${ox}" y1="${oy-28}" x2="${ox+gw}" y2="${oy-28}" stroke="#0F6E56" stroke-width="2" marker-end="url(#da)" marker-start="url(#da)"/>
-      <text x="${ox+gw/2}" y="${oy-10}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${p.label_top||''}</text>
+      <text x="${ox+gw/2}" y="${oy-10}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${p.label_top||''}</text>
       <line x1="${ox+gw+28}" y1="${oy}" x2="${ox+gw+28}" y2="${oy+gh}" stroke="#0F6E56" stroke-width="2" marker-end="url(#da)" marker-start="url(#da)"/>
-      <text x="${ox+gw+48}" y="${oy+gh/2+5}" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${p.label_right||''}</text>
+      <text x="${ox+gw+48}" y="${oy+gh/2+5}" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${p.label_right||''}</text>
       <rect x="${ox+gw/2-62}" y="${oy+gh/2-18}" width="124" height="36" rx="8" fill="rgba(29,158,117,.9)"/>
-      <text x="${ox+gw/2}" y="${oy+gh/2+7}" text-anchor="middle" font-size="18" font-weight="700" fill="white" font-family="Arial,sans-serif">${p.area_label||''}</text>
+      <text x="${ox+gw/2}" y="${oy+gh/2+7}" text-anchor="middle" font-size="${DT.TITLE-2}" font-weight="700" fill="white" font-family="${DT.FONT}">${p.area_label||''}</text>
       <defs>
         <marker id="da" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
           <path d="M2 2L8 5L2 8" fill="none" stroke="#0F6E56" stroke-width="1.5"/>
@@ -5328,30 +5327,30 @@ const SVG_RENDERERS = {
   perimeter_shape(p) {
     const sides=p.sides||{top:'6 cm',bottom:'6 cm',left:'4 cm',right:'4 cm'};
     const W=260, H=160, ox=110, oy=50;
-    return `<svg viewBox="0 0 500 290" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 290" width="100%" height="100%">
       <defs><marker id="dp" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 2L8 5L2 8" fill="none" stroke="#0F6E56" stroke-width="1.5"/></marker></defs>
-      <rect x="${ox}" y="${oy}" width="${W}" height="${H}" rx="4" fill="#E8F5E9" stroke="#0F6E56" stroke-width="3" stroke-dasharray="${p.trace?'12,6':'none'}"/>
+      <rect x="${ox}" y="${oy}" width="${W}" height="${H}" rx="${DT.RAD/2}" fill="#E8F5E9" stroke="#0F6E56" stroke-width="3" stroke-dasharray="${p.trace?'12,6':'none'}"/>
       ${sides.top?`<line x1="${ox+12}" y1="${oy-22}" x2="${ox+W-12}" y2="${oy-22}" stroke="#0F6E56" stroke-width="2" marker-end="url(#dp)" marker-start="url(#dp)"/>
-        <text x="${ox+W/2}" y="${oy-6}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${sides.top}</text>`:''}
+        <text x="${ox+W/2}" y="${oy-6}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${sides.top}</text>`:''}
       ${sides.bottom?`<line x1="${ox+12}" y1="${oy+H+22}" x2="${ox+W-12}" y2="${oy+H+22}" stroke="#0F6E56" stroke-width="2" marker-end="url(#dp)" marker-start="url(#dp)"/>
-        <text x="${ox+W/2}" y="${oy+H+38}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${sides.bottom}</text>`:''}
+        <text x="${ox+W/2}" y="${oy+H+38}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${sides.bottom}</text>`:''}
       ${sides.left?`<line x1="${ox-22}" y1="${oy+12}" x2="${ox-22}" y2="${oy+H-12}" stroke="#0F6E56" stroke-width="2" marker-end="url(#dp)" marker-start="url(#dp)"/>
-        <text x="${ox-38}" y="${oy+H/2+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${sides.left}</text>`:''}
+        <text x="${ox-38}" y="${oy+H/2+5}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${sides.left}</text>`:''}
       ${sides.right?`<line x1="${ox+W+22}" y1="${oy+12}" x2="${ox+W+22}" y2="${oy+H-12}" stroke="#0F6E56" stroke-width="2" marker-end="url(#dp)" marker-start="url(#dp)"/>
-        <text x="${ox+W+42}" y="${oy+H/2+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${sides.right}</text>`:''}
-      <text x="250" y="260" text-anchor="middle" font-size="20" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.perimeter_label||''}</text>
+        <text x="${ox+W+42}" y="${oy+H/2+5}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${sides.right}</text>`:''}
+      <text x="250" y="260" text-anchor="middle" font-size="20" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.perimeter_label||''}</text>
     </svg>`;
   },
 
   circle_diagram(p) {
     const r=Math.min(p.radius||5,8)*14, cx=200, cy=150;
-    return `<svg viewBox="0 0 500 300" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 300" width="100%" height="100%">
       <circle cx="${cx}" cy="${cy}" r="${r}" fill="#E8F5E9" stroke="#0F6E56" stroke-width="3"/>
-      ${p.show_diameter!==false?`<line x1="${cx-r}" y1="${cy}" x2="${cx+r}" y2="${cy}" stroke="#1D3461" stroke-width="2.5"/>
-        <text x="${cx}" y="${cy-12}" text-anchor="middle" font-size="14" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.diameter_label||'d'}</text>`:''}
+      ${p.show_diameter!==false?`<line x1="${cx-r}" y1="${cy}" x2="${cx+r}" y2="${cy}" stroke="${DT.PRIMARY}" stroke-width="2.5"/>
+        <text x="${cx}" y="${cy-12}" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.diameter_label||'d'}</text>`:''}
       ${p.show_radius!==false?`<line x1="${cx}" y1="${cy}" x2="${cx+r}" y2="${cy}" stroke="#E07B39" stroke-width="2.5" stroke-dasharray="6,4"/>
-        <text x="${cx+r/2}" y="${cy+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#E07B39" font-family="Arial,sans-serif">${p.radius_label||'r'}</text>`:''}
-      ${p.formula?`<text x="380" y="100" font-size="14" font-weight="700" fill="#1D9E75" font-family="Arial,sans-serif">${p.formula}</text>`:''}
+        <text x="${cx+r/2}" y="${cy+18}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="#E07B39" font-family="${DT.FONT}">${p.radius_label||'r'}</text>`:''}
+      ${p.formula?`<text x="380" y="100" font-size="${DT.CAPTION}" font-weight="700" fill="#1D9E75" font-family="${DT.FONT}">${p.formula}</text>`:''}
     </svg>`;
   },
 
@@ -5363,13 +5362,13 @@ const SVG_RENDERERS = {
     const x3=cx+len*Math.cos(-rad), y3=cy+len*Math.sin(-rad);
     const arcR=50, ax=cx+arcR*Math.cos(-rad/2), ay=cy+arcR*Math.sin(-rad/2);
     const arcPath=`M${cx+arcR},${cy} A${arcR},${arcR} 0 0,1 ${cx+arcR*Math.cos(-rad)},${cy+arcR*Math.sin(-rad)}`;
-    return `<svg viewBox="0 0 500 280" width="100%" height="100%">
-      <line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="#1D3461" stroke-width="3"/>
-      <line x1="${cx}" y1="${cy}" x2="${x3}" y2="${y3}" stroke="#1D3461" stroke-width="3"/>
+    return `<svg viewBox="0 0 600 280" width="100%" height="100%">
+      <line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" stroke="${DT.PRIMARY}" stroke-width="3"/>
+      <line x1="${cx}" y1="${cy}" x2="${x3}" y2="${y3}" stroke="${DT.PRIMARY}" stroke-width="3"/>
       <path d="${arcPath}" fill="none" stroke="#E07B39" stroke-width="2.5"/>
-      <text x="${cx+80}" y="${cy-40}" text-anchor="middle" font-size="26" font-weight="900" fill="#E07B39" font-family="Arial,sans-serif">${deg}°</text>
-      <text x="250" y="240" text-anchor="middle" font-size="16" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.type||''} angle</text>
-      <circle cx="${cx}" cy="${cy}" r="5" fill="#1D3461"/>
+      <text x="${cx+80}" y="${cy-40}" text-anchor="middle" font-size="26" font-weight="900" fill="#E07B39" font-family="${DT.FONT}">${deg}°</text>
+      <text x="250" y="240" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.type||''} angle</text>
+      <circle cx="${cx}" cy="${cy}" r="5" fill="${DT.PRIMARY}"/>
     </svg>`;
   },
 
@@ -5402,8 +5401,8 @@ const SVG_RENDERERS = {
     const dx=p.dx||4, dy=p.dy||0;
     const origPts=SVG_RENDERERS._shapePoints(p.shape||'rectangle',sc,sr,sw,sh,cs,ox,oy);
     const imgPts=SVG_RENDERERS._shapePoints(p.shape||'rectangle',sc+dx,sr+dy,sw,sh,cs,ox,oy);
-    const orig=SVG_RENDERERS._poly(origPts,'#1D9E75','#0F6E56',2);
-    const img=SVG_RENDERERS._poly(imgPts,'#E07B39','#C05A20',2,0.85);
+    const orig=SVG_RENDERERS._poly(origPts,DT.ACCENT,DT.HIGHLIGHT,2);
+    const img=SVG_RENDERERS._poly(imgPts,DT.ACCENT2,'#C05A20',2,0.85);
     const cx1=ox+(sc+sw/2)*cs, cy1=oy+(sr+sh/2)*cs;
     const cx2=ox+(sc+dx+sw/2)*cs, cy2=oy+(sr+dy+sh/2)*cs;
     const gw=cols*cs, gh=rows*cs, totalH=oy+gh+50;
@@ -5411,11 +5410,11 @@ const SVG_RENDERERS = {
     return `<svg viewBox="0 0 ${ox+gw+20} ${totalH}" width="100%" height="100%">
       ${SVG_RENDERERS._grid(cols,rows,cs,ox,oy)}
       ${orig}${img}
-      <line x1="${cx1}" y1="${cy1}" x2="${cx2}" y2="${cy2}" stroke="#1D3461" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#dt)"/>
-      <defs><marker id="dt" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#1D3461" stroke-width="1.5"/></marker></defs>
-      <text x="${ox+(sc+sw/2)*cs}" y="${oy+(sr+sh)*cs+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">Original</text>
-      <text x="${ox+(sc+dx+sw/2)*cs}" y="${oy+(sr+dy+sh)*cs+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">Image</text>
-      <text x="${(cx1+cx2)/2}" y="${Math.min(cy1,cy2)-10}" text-anchor="middle" font-size="12" fill="#1D3461" font-family="Arial,sans-serif">${label}</text>
+      <line x1="${cx1}" y1="${cy1}" x2="${cx2}" y2="${cy2}" stroke="${DT.PRIMARY}" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#dt)"/>
+      <defs><marker id="dt" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="${DT.PRIMARY}" stroke-width="1.5"/></marker></defs>
+      <text x="${ox+(sc+sw/2)*cs}" y="${oy+(sr+sh)*cs+18}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">Original</text>
+      <text x="${ox+(sc+dx+sw/2)*cs}" y="${oy+(sr+dy+sh)*cs+18}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="#C05A20" font-family="${DT.FONT}">Image</text>
+      <text x="${(cx1+cx2)/2}" y="${Math.min(cy1,cy2)-10}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${label}</text>
     </svg>`;
   },
 
@@ -5433,19 +5432,19 @@ const SVG_RENDERERS = {
       const ar=p.axis_row||4;
       imgPts=origPts.map(([x,y])=>[x,2*(oy+ar*cs)-y]);
     }
-    const orig=SVG_RENDERERS._poly(origPts,'#1D9E75','#0F6E56',2);
-    const img=SVG_RENDERERS._poly(imgPts,'#E07B39','#C05A20',2,0.85);
+    const orig=SVG_RENDERERS._poly(origPts,DT.ACCENT,DT.HIGHLIGHT,2);
+    const img=SVG_RENDERERS._poly(imgPts,DT.ACCENT2,'#C05A20',2,0.85);
     const axisX=ox+ac*cs;
     const gw=cols*cs, gh=rows*cs, totalH=oy+gh+50;
     return `<svg viewBox="0 0 ${ox+gw+20} ${totalH}" width="100%" height="100%">
       ${SVG_RENDERERS._grid(cols,rows,cs,ox,oy)}
       ${orig}${img}
       ${axis==='vertical'||axis==='y'
-        ?`<line x1="${axisX}" y1="${oy}" x2="${axisX}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2.5" stroke-dasharray="10,6"/>`
-        :`<line x1="${ox}" y1="${oy+(p.axis_row||4)*cs}" x2="${ox+gw}" y2="${oy+(p.axis_row||4)*cs}" stroke="#1D3461" stroke-width="2.5" stroke-dasharray="10,6"/>`}
-      <text x="${origPts.reduce((s,p)=>s+p[0],0)/origPts.length}" y="${Math.max(...origPts.map(p=>p[1]))+16}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">Original</text>
-      <text x="${imgPts.reduce((s,p)=>s+p[0],0)/imgPts.length}" y="${Math.max(...imgPts.map(p=>p[1]))+16}" text-anchor="middle" font-size="13" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">Image</text>
-      <text x="${axisX}" y="${oy-6}" text-anchor="middle" font-size="12" fill="#1D3461" font-weight="700" font-family="Arial,sans-serif">Mirror Line</text>
+        ?`<line x1="${axisX}" y1="${oy}" x2="${axisX}" y2="${oy+gh}" stroke="${DT.PRIMARY}" stroke-width="2.5" stroke-dasharray="10,6"/>`
+        :`<line x1="${ox}" y1="${oy+(p.axis_row||4)*cs}" x2="${ox+gw}" y2="${oy+(p.axis_row||4)*cs}" stroke="${DT.PRIMARY}" stroke-width="2.5" stroke-dasharray="10,6"/>`}
+      <text x="${origPts.reduce((s,p)=>s+p[0],0)/origPts.length}" y="${Math.max(...origPts.map(p=>p[1]))+16}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">Original</text>
+      <text x="${imgPts.reduce((s,p)=>s+p[0],0)/imgPts.length}" y="${Math.max(...imgPts.map(p=>p[1]))+16}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="#C05A20" font-family="${DT.FONT}">Image</text>
+      <text x="${axisX}" y="${oy-6}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.PRIMARY}" font-weight="700" font-family="${DT.FONT}">Mirror Line</text>
     </svg>`;
   },
 
@@ -5463,8 +5462,8 @@ const SVG_RENDERERS = {
       const dx=x-pivX, dy=y-pivY;
       return [pivX+dx*Math.cos(rad)-dy*Math.sin(rad), pivY+dx*Math.sin(rad)+dy*Math.cos(rad)];
     });
-    const orig=SVG_RENDERERS._poly(origPts,'#1D9E75','#0F6E56',2);
-    const img=SVG_RENDERERS._poly(imgPts,'#E07B39','#C05A20',2,0.85);
+    const orig=SVG_RENDERERS._poly(origPts,DT.ACCENT,DT.HIGHLIGHT,2);
+    const img=SVG_RENDERERS._poly(imgPts,DT.ACCENT2,'#C05A20',2,0.85);
     const arcR=40;
     const a1=-Math.PI/4, a2=a1+cw*rad;
     const arcPath=`M${pivX+arcR*Math.cos(a1)},${pivY+arcR*Math.sin(a1)} A${arcR},${arcR} 0 ${Math.abs(deg)>180?1:0},${cw>0?1:0} ${pivX+arcR*Math.cos(a2)},${pivY+arcR*Math.sin(a2)}`;
@@ -5473,11 +5472,11 @@ const SVG_RENDERERS = {
       <defs><marker id="dr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#E07B39" stroke-width="1.5"/></marker></defs>
       ${SVG_RENDERERS._grid(cols,rows,cs,ox,oy)}
       ${orig}${img}
-      <circle cx="${pivX}" cy="${pivY}" r="7" fill="#1D3461" stroke="white" stroke-width="2"/>
+      <circle cx="${pivX}" cy="${pivY}" r="7" fill="${DT.PRIMARY}" stroke="white" stroke-width="2"/>
       <path d="${arcPath}" fill="none" stroke="#E07B39" stroke-width="2.5" marker-end="url(#dr)"/>
-      <text x="${pivX+12}" y="${pivY-10}" font-size="12" fill="#1D3461" font-weight="700" font-family="Arial,sans-serif">${deg}° ${p.direction||'clockwise'}</text>
-      <text x="${ox+(sc+sw/2)*cs}" y="${oy+(sr+sh)*cs+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">Original</text>
-      <text x="${imgPts.reduce((s,q)=>s+q[0],0)/imgPts.length}" y="${Math.max(...imgPts.map(q=>q[1]))+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">Image</text>
+      <text x="${pivX+12}" y="${pivY-10}" font-size="${DT.CAPTION}" fill="${DT.PRIMARY}" font-weight="700" font-family="${DT.FONT}">${deg}° ${p.direction||'clockwise'}</text>
+      <text x="${ox+(sc+sw/2)*cs}" y="${oy+(sr+sh)*cs+18}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">Original</text>
+      <text x="${imgPts.reduce((s,q)=>s+q[0],0)/imgPts.length}" y="${Math.max(...imgPts.map(q=>q[1]))+18}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="#C05A20" font-family="${DT.FONT}">Image</text>
     </svg>`;
   },
 
@@ -5497,22 +5496,22 @@ const SVG_RENDERERS = {
     const ro_img=ro_orig.map(([x,y])=>[pivX+(x-pivX)*Math.cos(Math.PI/2)-(y-pivY)*Math.sin(Math.PI/2),pivY+(x-pivX)*Math.sin(Math.PI/2)+(y-pivY)*Math.cos(Math.PI/2)]);
     return `<svg viewBox="0 0 ${ox+gw+10} ${oy+gh+60}" width="100%" height="100%">
       ${SVG_RENDERERS._grid(cols,rows,cs,ox,oy)}
-      ${SVG_RENDERERS._poly(t_orig,'#1D9E75','#0F6E56',2)}
-      ${SVG_RENDERERS._poly(t_img,'#E07B39','#C05A20',2,0.85)}
-      <line x1="${ox+cs}" y1="${oy+3*cs}" x2="${ox+3*cs}" y2="${oy+3*cs}" stroke="#1D3461" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#ov)"/>
-      ${SVG_RENDERERS._poly(r_orig,'#1D9E75','#0F6E56',2)}
-      ${SVG_RENDERERS._poly(r_img,'#E07B39','#C05A20',2,0.85)}
-      <line x1="${axX}" y1="${oy}" x2="${axX}" y2="${oy+gh}" stroke="#1D3461" stroke-width="2" stroke-dasharray="8,5"/>
-      ${SVG_RENDERERS._poly(ro_orig,'#1D9E75','#0F6E56',2)}
-      ${SVG_RENDERERS._poly(ro_img,'#E07B39','#C05A20',2,0.85)}
-      <circle cx="${pivX}" cy="${pivY}" r="5" fill="#1D3461"/>
-      <defs><marker id="ov" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#1D3461" stroke-width="1.5"/></marker></defs>
-      <text x="${ox+cs}" y="${oy+gh+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">Translation</text>
-      <text x="${axX}" y="${oy+gh+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">Reflection</text>
-      <text x="${ox+12*cs}" y="${oy+gh+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">Rotation</text>
-      <text x="${ox+cs}" y="${oy+gh+36}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">(Slide)</text>
-      <text x="${axX}" y="${oy+gh+36}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">(Flip)</text>
-      <text x="${ox+12*cs}" y="${oy+gh+36}" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">(Turn)</text>
+      ${SVG_RENDERERS._poly(t_orig,DT.ACCENT,DT.HIGHLIGHT,2)}
+      ${SVG_RENDERERS._poly(t_img,DT.ACCENT2,'#C05A20',2,0.85)}
+      <line x1="${ox+cs}" y1="${oy+3*cs}" x2="${ox+3*cs}" y2="${oy+3*cs}" stroke="${DT.PRIMARY}" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#ov)"/>
+      ${SVG_RENDERERS._poly(r_orig,DT.ACCENT,DT.HIGHLIGHT,2)}
+      ${SVG_RENDERERS._poly(r_img,DT.ACCENT2,'#C05A20',2,0.85)}
+      <line x1="${axX}" y1="${oy}" x2="${axX}" y2="${oy+gh}" stroke="${DT.PRIMARY}" stroke-width="2" stroke-dasharray="8,5"/>
+      ${SVG_RENDERERS._poly(ro_orig,DT.ACCENT,DT.HIGHLIGHT,2)}
+      ${SVG_RENDERERS._poly(ro_img,DT.ACCENT2,'#C05A20',2,0.85)}
+      <circle cx="${pivX}" cy="${pivY}" r="5" fill="${DT.PRIMARY}"/>
+      <defs><marker id="ov" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="${DT.PRIMARY}" stroke-width="1.5"/></marker></defs>
+      <text x="${ox+cs}" y="${oy+gh+18}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">Translation</text>
+      <text x="${axX}" y="${oy+gh+18}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">Reflection</text>
+      <text x="${ox+12*cs}" y="${oy+gh+18}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">Rotation</text>
+      <text x="${ox+cs}" y="${oy+gh+36}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">(Slide)</text>
+      <text x="${axX}" y="${oy+gh+36}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">(Flip)</text>
+      <text x="${ox+12*cs}" y="${oy+gh+36}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">(Turn)</text>
     </svg>`;
   },
 
@@ -5520,15 +5519,15 @@ const SVG_RENDERERS = {
     const shape=(p.shape||'triangle').toLowerCase();
     const sides=p.sides||[], angles=p.angles||[];
     if(shape==='triangle') {
-      return `<svg viewBox="0 0 500 280" width="100%" height="100%">
+      return `<svg viewBox="0 0 600 280" width="100%" height="100%">
         <polygon points="250,40 100,230 400,230" fill="#E8F5E9" stroke="#0F6E56" stroke-width="3"/>
-        ${p.area_label?`<text x="250" y="178" text-anchor="middle" font-size="15" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${p.area_label}</text>`:''}
-        ${sides[0]?`<text x="250" y="26" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${sides[0]}</text>`:''}
-        ${sides[1]?`<text x="78" y="160" text-anchor="end" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${sides[1]}</text>`:''}
-        ${sides[2]?`<text x="422" y="160" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${sides[2]}</text>`:''}
-        ${angles[0]?`<text x="250" y="268" text-anchor="middle" font-size="13" fill="#E07B39" font-family="Arial,sans-serif">${angles[0]}</text>`:''}
-        ${angles[1]?`<text x="108" y="252" font-size="13" fill="#E07B39" font-family="Arial,sans-serif">${angles[1]}</text>`:''}
-        ${angles[2]?`<text x="388" y="252" text-anchor="end" font-size="13" fill="#E07B39" font-family="Arial,sans-serif">${angles[2]}</text>`:''}
+        ${p.area_label?`<text x="250" y="178" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${p.area_label}</text>`:''}
+        ${sides[0]?`<text x="250" y="26" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${sides[0]}</text>`:''}
+        ${sides[1]?`<text x="78" y="160" text-anchor="end" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${sides[1]}</text>`:''}
+        ${sides[2]?`<text x="422" y="160" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${sides[2]}</text>`:''}
+        ${angles[0]?`<text x="250" y="268" text-anchor="middle" font-size="${DT.LABEL}" fill="#E07B39" font-family="${DT.FONT}">${angles[0]}</text>`:''}
+        ${angles[1]?`<text x="108" y="252" font-size="${DT.LABEL}" fill="#E07B39" font-family="${DT.FONT}">${angles[1]}</text>`:''}
+        ${angles[2]?`<text x="388" y="252" text-anchor="end" font-size="${DT.LABEL}" fill="#E07B39" font-family="${DT.FONT}">${angles[2]}</text>`:''}
       </svg>`;
     }
     return SVG_RENDERERS.perimeter_shape({sides:{top:sides[0],bottom:sides[2],left:sides[1],right:sides[3]},perimeter_label:p.area_label||''});
@@ -5546,7 +5545,7 @@ const SVG_RENDERERS = {
     const x1 = cx - bw/2, x2 = cx + bw/2;
     // Foot of height from apex — for isoceles, directly below apex
     const footX = cx;
-    return `<svg viewBox="0 0 500 310" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 310" width="100%" height="100%">
       <polygon points="${x1},${baseY} ${x2},${baseY} ${cx},${apexY}"
         fill="#E8F5E9" stroke="#0F6E56" stroke-width="3"/>
       <!-- Dashed height line -->
@@ -5557,19 +5556,19 @@ const SVG_RENDERERS = {
         fill="none" stroke="#E07B39" stroke-width="1.5"/>
       <!-- Base label -->
       <text x="${cx}" y="${baseY+22}" text-anchor="middle" font-size="17"
-        font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">base = ${base} ${u}</text>
+        font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">base = ${base} ${u}</text>
       <!-- Height label -->
-      <text x="${footX+18}" y="${apexY + bh/2 + 5}" font-size="15"
-        font-weight="700" fill="#E07B39" font-family="Arial,sans-serif">h = ${height} ${u}</text>
+      <text x="${footX+18}" y="${apexY + bh/2 + 5}" font-size="${DT.LABEL}"
+        font-weight="700" fill="#E07B39" font-family="${DT.FONT}">h = ${height} ${u}</text>
       <!-- Height arrow tips -->
       <line x1="${footX}" y1="${apexY}" x2="${footX}" y2="${apexY+10}"
         stroke="#E07B39" stroke-width="2"/>
       <line x1="${footX}" y1="${baseY}" x2="${footX}" y2="${baseY-14}"
         stroke="#E07B39" stroke-width="2"/>
       <!-- Formula -->
-      <rect x="60" y="268" width="380" height="34" rx="8" fill="#1D3461"/>
-      <text x="250" y="290" text-anchor="middle" font-size="15"
-        font-weight="700" fill="white" font-family="Arial,sans-serif">${areaLabel}</text>
+      <rect x="60" y="268" width="380" height="34" rx="8" fill="${DT.PRIMARY}"/>
+      <text x="250" y="290" text-anchor="middle" font-size="${DT.LABEL}"
+        font-weight="700" fill="white" font-family="${DT.FONT}">${areaLabel}</text>
     </svg>`;
   },
 
@@ -5586,7 +5585,7 @@ const SVG_RENDERERS = {
     // parallelogram: bottom-left, bottom-right, top-right+slant, top-left+slant
     const pts = `${x1},${baseY} ${x2},${baseY} ${x2+slant},${topY} ${x1+slant},${topY}`;
     const footX = x1 + 40; // foot of height on base
-    return `<svg viewBox="0 0 500 300" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 300" width="100%" height="100%">
       <polygon points="${pts}" fill="#E8F5E9" stroke="#0F6E56" stroke-width="3"/>
       <!-- Dashed height -->
       <line x1="${footX}" y1="${topY}" x2="${footX}" y2="${baseY}"
@@ -5595,27 +5594,27 @@ const SVG_RENDERERS = {
         fill="none" stroke="#E07B39" stroke-width="1.5"/>
       <!-- Labels -->
       <text x="${x1+bw/2}" y="${baseY+22}" text-anchor="middle" font-size="17"
-        font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">base = ${base} ${u}</text>
-      <text x="${footX+18}" y="${topY + bh/2 + 5}" font-size="15"
-        font-weight="700" fill="#E07B39" font-family="Arial,sans-serif">h = ${height} ${u}</text>
+        font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">base = ${base} ${u}</text>
+      <text x="${footX+18}" y="${topY + bh/2 + 5}" font-size="${DT.LABEL}"
+        font-weight="700" fill="#E07B39" font-family="${DT.FONT}">h = ${height} ${u}</text>
       <!-- Formula -->
-      <rect x="50" y="262" width="400" height="30" rx="8" fill="#1D3461"/>
-      <text x="250" y="282" text-anchor="middle" font-size="14"
-        font-weight="700" fill="white" font-family="Arial,sans-serif">${areaLabel}</text>
+      <rect x="50" y="262" width="400" height="30" rx="8" fill="${DT.PRIMARY}"/>
+      <text x="250" y="282" text-anchor="middle" font-size="${DT.CAPTION}"
+        font-weight="700" fill="white" font-family="${DT.FONT}">${areaLabel}</text>
     </svg>`;
   },
 
   pythagorean(p) {
     const a=p.a||3, b=p.b||4, c=p.c||5, u=p.units||'cm';
     const sc=24, ox=140, oy=60;
-    return `<svg viewBox="0 0 500 320" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 320" width="100%" height="100%">
       <polygon points="${ox},${oy+a*sc} ${ox+b*sc},${oy+a*sc} ${ox},${oy}" fill="#E8F5E9" stroke="#0F6E56" stroke-width="3"/>
       <rect x="${ox}" y="${oy+a*sc}" width="${b*sc}" height="${b*sc}" fill="#FFF3E0" stroke="#E07B39" stroke-width="2" opacity="0.8"/>
       <rect x="${ox-a*sc}" y="${oy}" width="${a*sc}" height="${a*sc}" fill="#EDE7F6" stroke="#6B63D4" stroke-width="2" opacity="0.8"/>
-      <text x="${ox+b*sc/2}" y="${oy+a*sc+b*sc/2+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#E07B39" font-family="Arial,sans-serif">b²=${b*b}</text>
-      <text x="${ox-a*sc/2}" y="${oy+a*sc/2+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#6B63D4" font-family="Arial,sans-serif">a²=${a*a}</text>
-      <text x="${ox+b*sc/2-16}" y="${oy+a*sc/2-10}" text-anchor="middle" font-size="14" fill="#0F6E56" font-family="Arial,sans-serif">c=${c}${u}</text>
-      <text x="250" y="300" text-anchor="middle" font-size="18" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">a² + b² = c²  →  ${a*a} + ${b*b} = ${c*c}</text>
+      <text x="${ox+b*sc/2}" y="${oy+a*sc+b*sc/2+6}" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="#E07B39" font-family="${DT.FONT}">b²=${b*b}</text>
+      <text x="${ox-a*sc/2}" y="${oy+a*sc/2+6}" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="#6B63D4" font-family="${DT.FONT}">a²=${a*a}</text>
+      <text x="${ox+b*sc/2-16}" y="${oy+a*sc/2-10}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">c=${c}${u}</text>
+      <text x="250" y="300" text-anchor="middle" font-size="${DT.TITLE-2}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">a² + b² = c²  →  ${a*a} + ${b*b} = ${c*c}</text>
     </svg>`;
   },
 
@@ -5643,13 +5642,13 @@ const SVG_RENDERERS = {
         const dx=gx+2+10+col*(dotR*2+6), dy=oy+10+row*(dotR*2+6);
         groups_svg += `<circle cx="${dx+dotR}" cy="${dy+dotR}" r="${dotR}" fill="#1D9E75"/>`;
       }
-      groups_svg += `<text x="${gx+gw/2-4}" y="${oy+gh+18}" text-anchor="middle" font-size="13" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${per_group}</text>`;
+      groups_svg += `<text x="${gx+gw/2-4}" y="${oy+gh+18}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${per_group}</text>`;
     }
     const equationY = oy + gh + 46;
-    return `<svg viewBox="0 0 500 ${Math.min(equationY+40, 300)}" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 ${Math.min(equationY+40, 300)}" width="100%" height="100%">
       ${groups_svg}
-      <text x="250" y="${equationY}" text-anchor="middle" font-size="20" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${groups} ${operator} ${per_group} = ${total}</text>
-      <text x="250" y="${Math.min(equationY+26, 295)}" text-anchor="middle" font-size="14" fill="#5F5E5A" font-family="Arial,sans-serif">${label}</text>
+      <text x="250" y="${equationY}" text-anchor="middle" font-size="20" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${groups} ${operator} ${per_group} = ${total}</text>
+      <text x="250" y="${Math.min(equationY+26, 295)}" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${label}</text>
     </svg>`;
   },
 
@@ -5663,8 +5662,8 @@ const SVG_RENDERERS = {
     const ruler_y = 160, obj_y = 60, obj_h = 40;
 
     // Object being measured
-    const obj_svg = `<rect x="${ox}" y="${obj_y}" width="${count*unit_w}" height="${obj_h}" rx="6" fill="#FFF3E0" stroke="#E07B39" stroke-width="2.5"/>
-      <text x="${ox + count*unit_w/2}" y="${obj_y+obj_h/2+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#C05A20" font-family="Arial,sans-serif">${obj_label}</text>`;
+    const obj_svg = `<rect x="${ox}" y="${obj_y}" width="${count*unit_w}" height="${obj_h}" rx="${DT.RAD}" fill="#FFF3E0" stroke="#E07B39" stroke-width="2.5"/>
+      <text x="${ox + count*unit_w/2}" y="${obj_y+obj_h/2+6}" text-anchor="middle" font-size="${DT.BODY}" font-weight="700" fill="#C05A20" font-family="${DT.FONT}">${obj_label}</text>`;
 
     // Arrows from object to ruler
     const arrow_svg = `<line x1="${ox}" y1="${obj_y+obj_h}" x2="${ox}" y2="${ruler_y}" stroke="#888780" stroke-width="1" stroke-dasharray="4,3"/>
@@ -5672,15 +5671,15 @@ const SVG_RENDERERS = {
 
     // Non-standard units (ruler)
     let units_svg = '';
-    const colors = ['#1D9E75','#C8E6C9'];
+    const colors = [DT.ACCENT,'#C8E6C9'];
     for(let i=0;i<count;i++){
-      units_svg += `<rect x="${ox+i*unit_w}" y="${ruler_y}" width="${unit_w-2}" height="30" rx="3" fill="${colors[i%2]}" stroke="white" stroke-width="1.5"/>
-        <text x="${ox+i*unit_w+unit_w/2-1}" y="${ruler_y+20}" text-anchor="middle" font-size="11" font-weight="700" fill="${i%2===0?'white':'#0F6E56'}" font-family="Arial,sans-serif">${i+1}</text>`;
+      units_svg += `<rect x="${ox+i*unit_w}" y="${ruler_y}" width="${unit_w-2}" height="30" rx="${DT.RAD/2}" fill="${colors[i%2]}" stroke="white" stroke-width="1.5"/>
+        <text x="${ox+i*unit_w+unit_w/2-1}" y="${ruler_y+20}" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="${i%2===0?'white':DT.HIGHLIGHT}" font-family="${DT.FONT}">${i+1}</text>`;
     }
-    const label_svg = `<text x="250" y="${ruler_y+52}" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">Length = ${count} ${unit_name}s</text>
-      <text x="250" y="${ruler_y+72}" text-anchor="middle" font-size="13" fill="#5F5E5A" font-family="Arial,sans-serif">(1 ${unit_name} = each box)</text>`;
+    const label_svg = `<text x="250" y="${ruler_y+52}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">Length = ${count} ${unit_name}s</text>
+      <text x="250" y="${ruler_y+72}" text-anchor="middle" font-size="${DT.LABEL}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">(1 ${unit_name} = each box)</text>`;
 
-    return `<svg viewBox="0 0 500 255" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 255" width="100%" height="100%">
       ${obj_svg}${arrow_svg}${units_svg}${label_svg}
     </svg>`;
   },
@@ -5688,9 +5687,9 @@ const SVG_RENDERERS = {
   // angle_types — all 3 angle types side by side (Gr4)
   angle_types(p) {
     const types = p.types || [
-      {degrees:45, label:'Acute', desc:'Less than 90°', color:'#1D9E75'},
-      {degrees:90, label:'Right', desc:'Exactly 90°', color:'#1D3461'},
-      {degrees:130, label:'Obtuse', desc:'Greater than 90°', color:'#E07B39'},
+      {degrees:45, label:'Acute', desc:'Less than 90°', color:DT.ACCENT},
+      {degrees:90, label:'Right', desc:'Exactly 90°', color:DT.PRIMARY},
+      {degrees:130, label:'Obtuse', desc:'Greater than 90°', color:DT.ACCENT2},
     ];
     const count = Math.min(types.length, 3);
     const cw = Math.floor(480/count);
@@ -5713,12 +5712,12 @@ const SVG_RENDERERS = {
         ${rightBox}
         <path d="${arc}" fill="none" stroke="${t.color}" stroke-width="2"/>
         <circle cx="${ox}" cy="${cy}" r="4" fill="${t.color}"/>
-        <text x="${ox}" y="${cy+38}" text-anchor="middle" font-size="15" font-weight="900" fill="${t.color}" font-family="Arial,sans-serif">${t.label}</text>
-        <text x="${ox}" y="${cy+56}" text-anchor="middle" font-size="13" fill="#5F5E5A" font-family="Arial,sans-serif">${t.degrees}°</text>
-        <text x="${ox}" y="${cy+74}" text-anchor="middle" font-size="12" fill="#888780" font-family="Arial,sans-serif">${t.desc}</text>`;
+        <text x="${ox}" y="${cy+38}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="900" fill="${t.color}" font-family="${DT.FONT}">${t.label}</text>
+        <text x="${ox}" y="${cy+56}" text-anchor="middle" font-size="${DT.LABEL}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${t.degrees}°</text>
+        <text x="${ox}" y="${cy+74}" text-anchor="middle" font-size="${DT.CAPTION}" fill="#888780" font-family="${DT.FONT}">${t.desc}</text>`;
     }).join('');
 
-    return `<svg viewBox="0 0 500 165" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 165" width="100%" height="100%">
       ${angle_svgs}
     </svg>`;
   },
@@ -5733,14 +5732,14 @@ const SVG_RENDERERS = {
     const front=[[ox,oy],[ox+lx,oy-ly],[ox+lx,oy-ly+hh],[ox,oy+hh]];
     const side=[[ox+lx,oy-ly],[ox+lx+wx,oy-ly+wy],[ox+lx+wx,oy-ly+wy+hh],[ox+lx,oy-ly+hh]];
     const poly=pts=>`<polygon points="${pts.map(([x,y])=>`${x},${y}`).join(' ')}"`;
-    return `<svg viewBox="0 0 500 280" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 280" width="100%" height="100%">
       ${poly(top)} fill="#C8E6C9" stroke="#0F6E56" stroke-width="2"/>
       ${poly(front)} fill="#E8F5E9" stroke="#0F6E56" stroke-width="2"/>
       ${poly(side)} fill="#A5D6A7" stroke="#0F6E56" stroke-width="2"/>
-      <text x="${ox+lx/2}" y="${oy-ly/2+18}" text-anchor="middle" font-size="14" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${l} ${p.unit||'cm'}</text>
-      <text x="${ox+lx+wx/2}" y="${oy-ly+wy/2+18}" font-size="14" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${w} ${p.unit||'cm'}</text>
-      <text x="${ox-14}" y="${oy+hh/2+6}" text-anchor="end" font-size="14" font-weight="700" fill="#0F6E56" font-family="Arial,sans-serif">${h} ${p.unit||'cm'}</text>
-      ${p.volume_label?`<text x="250" y="260" text-anchor="middle" font-size="18" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">${p.volume_label}</text>`:''}
+      <text x="${ox+lx/2}" y="${oy-ly/2+18}" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${l} ${p.unit||'cm'}</text>
+      <text x="${ox+lx+wx/2}" y="${oy-ly+wy/2+18}" font-size="${DT.CAPTION}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${w} ${p.unit||'cm'}</text>
+      <text x="${ox-14}" y="${oy+hh/2+6}" text-anchor="end" font-size="${DT.CAPTION}" font-weight="700" fill="${DT.HIGHLIGHT}" font-family="${DT.FONT}">${h} ${p.unit||'cm'}</text>
+      ${p.volume_label?`<text x="250" y="260" text-anchor="middle" font-size="${DT.TITLE-2}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${p.volume_label}</text>`:''}
     </svg>`;
   },
 
@@ -5752,13 +5751,13 @@ const SVG_RENDERERS = {
     let items='', x=20, y=60;
     breakdown.forEach(({coin,count})=>{
       for(let i=0;i<Math.min(count,8);i++) {
-        items+=`<text x="${x}" y="${y}" font-size="28" font-family="Arial,sans-serif">${coinSVG[coin]||'●'}</text>`;
+        items+=`<text x="${x}" y="${y}" font-size="28" font-family="${DT.FONT}">${coinSVG[coin]||'●'}</text>`;
         x+=36; if(x>460){x=20;y+=44;}
       }
       x+=10;
     });
-    return `<svg viewBox="0 0 500 200" width="100%" height="100%">
-      <text x="250" y="36" text-anchor="middle" font-size="24" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">$${p.amount||'0.00'}</text>
+    return `<svg viewBox="0 0 600 200" width="100%" height="100%">
+      <text x="250" y="36" text-anchor="middle" font-size="24" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">$${p.amount||'0.00'}</text>
       ${items}
     </svg>`;
   },
@@ -5768,16 +5767,16 @@ const SVG_RENDERERS = {
     const total=expenses.reduce((s,e)=>s+(e.amount||0),0);
     const savings=income-total;
     const all=[...expenses,{label:'Savings',amount:Math.max(0,savings)}];
-    const colors=['#E07B39','#6B63D4','#F5C842','#1D9E75','#1D3461'];
+    const colors=[DT.ACCENT2,DT.ACCENT3,DT.ACCENT4,DT.ACCENT,DT.PRIMARY];
     const bw=420/all.length-10;
     const bars=all.map((e,i)=>{
       const bh=Math.round((e.amount/income)*140);
-      return `<rect x="${20+i*(bw+10)}" y="${170-bh}" width="${bw}" height="${bh}" rx="4" fill="${colors[i%colors.length]}"/>
-        <text x="${20+i*(bw+10)+bw/2}" y="${170-bh-6}" text-anchor="middle" font-size="13" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">$${e.amount}</text>
-        <text x="${20+i*(bw+10)+bw/2}" y="190" text-anchor="middle" font-size="11" fill="#5F5E5A" font-family="Arial,sans-serif">${e.label}</text>`;
+      return `<rect x="${20+i*(bw+10)}" y="${170-bh}" width="${bw}" height="${bh}" rx="${DT.RAD/2}" fill="${colors[i%colors.length]}"/>
+        <text x="${20+i*(bw+10)+bw/2}" y="${170-bh-6}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">$${e.amount}</text>
+        <text x="${20+i*(bw+10)+bw/2}" y="190" text-anchor="middle" font-size="${DT.CAPTION}" fill="${DT.SECONDARY}" font-family="${DT.FONT}">${e.label}</text>`;
     }).join('');
-    return `<svg viewBox="0 0 500 230" width="100%" height="100%">
-      <text x="250" y="24" text-anchor="middle" font-size="15" font-weight="700" fill="#1D3461" font-family="Arial,sans-serif">Income: $${income}</text>
+    return `<svg viewBox="0 0 600 230" width="100%" height="100%">
+      <text x="250" y="24" text-anchor="middle" font-size="${DT.LABEL}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">Income: $${income}</text>
       ${bars}
     </svg>`;
   },
@@ -5825,7 +5824,7 @@ const SVG_RENDERERS = {
     const rh=52, oy=64, totalH=oy+items.length*rh+30;
     const rows=items.map((item,i)=>`
       <rect x="${DT.PAD/2}" y="${oy+i*rh}" width="${DT.W - DT.PAD}" height="${rh-4}" rx="${DT.RAD}" fill="${i%2===0?DT.ACCENT_LIGHT:DT.BG}"/>
-      <rect x="${DT.PAD/2}" y="${oy+i*rh}" width="6" height="${rh-4}" rx="3" fill="${DT.ACCENT}"/>
+      <rect x="${DT.PAD/2}" y="${oy+i*rh}" width="6" height="${rh-4}" rx="${DT.RAD/2}" fill="${DT.ACCENT}"/>
       <text x="${DT.PAD/2 + 18}" y="${oy+i*rh+20}" font-size="${DT.BODY}" font-weight="700" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${item.name||''}</text>
       <foreignObject x="${DT.PAD/2 + 18}" y="${oy+i*rh+24}" width="${DT.W - DT.PAD - 24}" height="${rh-28}"><div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.CAPTION}px;color:${DT.SECONDARY};line-height:1.4;word-wrap:break-word;overflow:visible">${item.detail||''}</div></foreignObject>`).join('');
     return `<svg viewBox="0 0 ${DT.W} ${Math.min(totalH,360)}" width="100%" height="100%">
@@ -6022,7 +6021,7 @@ const SVG_RENDERERS = {
       const example = f.example || '';
       return `
         <rect x="${DT.PAD/2}" y="${fy}" width="${W - DT.PAD}" height="${frameH}" rx="${DT.RAD}" fill="white" stroke="${accentColor}" stroke-width="1.5" opacity="${0.5 + i * 0.1}"/>
-        <rect x="${DT.PAD/2}" y="${fy}" width="6" height="${frameH}" rx="4" fill="${accentColor}"/>
+        <rect x="${DT.PAD/2}" y="${fy}" width="6" height="${frameH}" rx="${DT.RAD/2}" fill="${accentColor}"/>
         <foreignObject x="${DT.PAD/2 + 14}" y="${fy + 6}" width="${W - DT.PAD - 20}" height="${example ? 32 : frameH - 12}">
           <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.BODY}px;font-weight:700;color:${DT.PRIMARY};line-height:1.4;word-wrap:break-word">${stem}</div>
         </foreignObject>
@@ -6099,7 +6098,7 @@ const SVG_RENDERERS = {
   // params: title, steps[{label, description, color}]
   writing_process(p) {
     const title = p.title || 'The Writing Process';
-    const defaultColors = ['#E07B39','#1D9E75','#6B63D4','#F5C842','#1D3461'];
+    const defaultColors = [DT.ACCENT2,DT.ACCENT,DT.ACCENT3,DT.ACCENT4,DT.PRIMARY];
     const defaultSteps = [
       { label: 'Pre-Writing',  description: 'Plan and gather ideas',        color: defaultColors[0] },
       { label: 'Drafting',     description: 'Write your first draft',        color: defaultColors[1] },
@@ -6117,15 +6116,15 @@ const SVG_RENDERERS = {
     const totalH = oy + stepH + 16;
 
     const titleSVG = `
-      <rect x="0" y="0" width="${W}" height="${titleH}" fill="#1D3461"/>
-      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="15" font-weight="900" fill="white" font-family="Arial,sans-serif">${title}</text>`;
+      <rect x="0" y="0" width="${W}" height="${titleH}" fill="${DT.PRIMARY}"/>
+      <text x="${W/2}" y="${titleH - 10}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="900" fill="white" font-family="${DT.FONT}">${title}</text>`;
 
     const stepsSVG = steps.map((step, i) => {
       const sx = 10 + i * (stepW + 8);
       const color = step.color || defaultColors[i % defaultColors.length];
       const label = step.label || '';
       const desc = step.description || step.desc || '';
-      const isDark = color === '#1D3461';
+      const isDark = color === DT.PRIMARY;
 
       // Arrow connector (not on last step)
       const arrow = i < count - 1
@@ -6134,12 +6133,12 @@ const SVG_RENDERERS = {
 
       return `
         <rect x="${sx}" y="${oy}" width="${stepW}" height="${stepH}" rx="8" fill="${color}"/>
-        <text x="${sx + stepW/2}" y="${oy + 22}" text-anchor="middle" font-size="20" font-family="Arial,sans-serif">${i + 1}</text>
+        <text x="${sx + stepW/2}" y="${oy + 22}" text-anchor="middle" font-size="20" font-family="${DT.FONT}">${i + 1}</text>
         <foreignObject x="${sx + 4}" y="${oy + 28}" width="${stepW - 8}" height="38">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Arial Black',Arial,sans-serif;font-size:11px;font-weight:900;color:${isDark ? 'white' : '#1D3461'};text-align:center;word-wrap:break-word;line-height:1.3">${label}</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:'Arial Black',${DT.FONT};font-size:${DT.CAPTION}px;font-weight:900;color:${isDark ? 'white' : DT.PRIMARY};text-align:center;word-wrap:break-word;line-height:1.3">${label}</div>
         </foreignObject>
         <foreignObject x="${sx + 4}" y="${oy + 64}" width="${stepW - 8}" height="32">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;color:${isDark ? 'rgba(255,255,255,0.85)' : 'rgba(29,52,97,0.8)'};text-align:center;word-wrap:break-word;line-height:1.3">${desc}</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:12px;color:${isDark ? 'rgba(255,255,255,0.85)' : 'rgba(29,52,97,0.8)'};text-align:center;word-wrap:break-word;line-height:1.3">${desc}</div>
         </foreignObject>
         ${arrow}`;
     }).join('');
@@ -6156,28 +6155,25 @@ const SVG_RENDERERS = {
   cycle_diagram(p) {
     const title = p.title || 'Cycle Diagram';
     const centerLabel = p.center_label || '';
-    const defaultColors = ['#1D9E75','#E07B39','#6B63D4','#F5C842','#1D3461','#3BBFAD'];
+    const defaultColors = [DT.ACCENT,DT.ACCENT2,DT.ACCENT3,DT.ACCENT4,DT.PRIMARY,'#3BBFAD'];
     const steps = (p.steps || []).slice(0, 6);
     const count = steps.length;
-    if (count < 2) return '<svg viewBox="0 0 500 300" width="100%" height="100%"><text x="250" y="150" text-anchor="middle" font-size="16" fill="#888">Add at least 2 steps</text></svg>';
+    if (count < 2) return `<svg viewBox="0 0 ${DT.W} 340" width="100%" height="100%"><text x="${DT.W/2}" y="170" text-anchor="middle" font-size="${DT.BODY}" fill="${DT.SECONDARY}">Add at least 2 steps</text></svg>`;
 
-    const W = 500, H = 300;
-    const cx = W / 2, cy = H / 2;
-    const orbitR = Math.min(cx, cy) - 68;
-    const nodeR = 44;
+    const W = DT.W, H = 350;
+    const cx = W / 2, cy = H / 2 + 10;
+    const orbitR = Math.min(cx, cy) - 76;
+    const nodeR = 50;
     const angleStep = (2 * Math.PI) / count;
-    const startAngle = -Math.PI / 2; // top
+    const startAngle = -Math.PI / 2;
 
-    // Node positions
     const positions = steps.map((_, i) => ({
       x: cx + orbitR * Math.cos(startAngle + i * angleStep),
       y: cy + orbitR * Math.sin(startAngle + i * angleStep),
     }));
 
-    // Draw curved arrows between consecutive nodes (and last back to first)
     const arrows = positions.map((pos, i) => {
       const next = positions[(i + 1) % count];
-      // Midpoint control point — curve outward slightly
       const midX = (pos.x + next.x) / 2;
       const midY = (pos.y + next.y) / 2;
       const dx = midX - cx, dy = midY - cy;
@@ -6186,7 +6182,6 @@ const SVG_RENDERERS = {
       const cpX = midX + dx/dist * orbitR * curveFactor;
       const cpY = midY + dy/dist * orbitR * curveFactor;
 
-      // Shorten endpoints to not overlap node circles
       const shrink = nodeR + 5;
       const d1x = pos.x - cpX, d1y = pos.y - cpY;
       const d1 = Math.sqrt(d1x*d1x + d1y*d1y) || 1;
@@ -6202,7 +6197,6 @@ const SVG_RENDERERS = {
         <defs><marker id="arr${i}" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><polygon points="0 0, 7 3, 0 6" fill="${color}"/></marker></defs>`;
     }).join('');
 
-    // Draw nodes
     const nodes = steps.map((step, i) => {
       const { x, y } = positions[i];
       const color = step.color || defaultColors[i % defaultColors.length];
@@ -6210,27 +6204,25 @@ const SVG_RENDERERS = {
       const desc = step.description || step.desc || '';
       return `
         <circle cx="${x}" cy="${y}" r="${nodeR}" fill="${color}"/>
-        <foreignObject x="${x - nodeR + 4}" y="${y - nodeR + 4}" width="${(nodeR-4)*2}" height="${(nodeR-4)*2}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="width:${(nodeR-4)*2}px;height:${(nodeR-4)*2}px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:Arial,sans-serif;color:white;line-height:1.25">
-            <div style="font-size:11px;font-weight:900;word-wrap:break-word">${label}</div>
-            ${desc ? `<div style="font-size:9px;opacity:0.85;margin-top:2px;word-wrap:break-word">${desc}</div>` : ''}
+        <foreignObject x="${x - nodeR + 5}" y="${y - nodeR + 5}" width="${(nodeR-5)*2}" height="${(nodeR-5)*2}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="width:${(nodeR-5)*2}px;height:${(nodeR-5)*2}px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:${DT.FONT};color:white;line-height:1.25">
+            <div style="font-size:${DT.CAPTION}px;font-weight:900;word-wrap:break-word">${label}</div>
+            ${desc ? `<div style="font-size:${DT.CAPTION}px;opacity:0.85;margin-top:2px;word-wrap:break-word">${desc}</div>` : ''}
           </div>
         </foreignObject>`;
     }).join('');
 
-    // Center label
     const center = centerLabel
-      ? `<circle cx="${cx}" cy="${cy}" r="36" fill="white" stroke="#D0D0D0" stroke-width="1.5"/>
-         <foreignObject x="${cx-30}" y="${cy-16}" width="60" height="32">
-           <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:#1D3461;text-align:center;word-wrap:break-word;line-height:1.3">${centerLabel}</div>
+      ? `<circle cx="${cx}" cy="${cy}" r="40" fill="white" stroke="#D0D0D0" stroke-width="1.5"/>
+         <foreignObject x="${cx-34}" y="${cy-18}" width="68" height="36">
+           <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.CAPTION}px;font-weight:700;color:${DT.PRIMARY};text-align:center;word-wrap:break-word;line-height:1.3">${centerLabel}</div>
          </foreignObject>`
       : '';
 
-    // Title
-    const titleSVG = `<text x="${W/2}" y="18" text-anchor="middle" font-size="14" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${title}</text>`;
+    const titleSVG = `<text x="${W/2}" y="22" text-anchor="middle" font-size="${DT.BODY}" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${title}</text>`;
 
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">
-      <rect width="${W}" height="${H}" fill="#F4F3EF"/>
+      <rect width="${W}" height="${H}" fill="${DT.BG}"/>
       ${titleSVG}${arrows}${nodes}${center}
     </svg>`;
   },
@@ -6240,10 +6232,10 @@ const SVG_RENDERERS = {
   food_chain(p) {
     const title = p.title || 'Food Chain';
     const defaultOrganisms = [
-      { name: 'Sun',          role: 'Energy Source', emoji: '☀️', color: '#F5C842' },
-      { name: 'Grass',        role: 'Producer',      emoji: '🌿', color: '#1D9E75' },
-      { name: 'Rabbit',       role: 'Primary Consumer', emoji: '🐇', color: '#E07B39' },
-      { name: 'Fox',          role: 'Secondary Consumer', emoji: '🦊', color: '#6B63D4' },
+      { name: 'Sun',          role: 'Energy Source', emoji: '☀️', color: DT.ACCENT4 },
+      { name: 'Grass',        role: 'Producer',      emoji: '🌿', color: DT.ACCENT },
+      { name: 'Rabbit',       role: 'Primary Consumer', emoji: '🐇', color: DT.ACCENT2 },
+      { name: 'Fox',          role: 'Secondary Consumer', emoji: '🦊', color: DT.ACCENT3 },
     ];
     const organisms = (p.organisms || defaultOrganisms).slice(0, 6);
     const count = organisms.length;
@@ -6255,11 +6247,11 @@ const SVG_RENDERERS = {
     const oy = (H - nodeH) / 2 + 20;
     const titleY = 20;
 
-    const titleSVG = `<text x="${W/2}" y="${titleY}" text-anchor="middle" font-size="14" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${title}</text>`;
+    const titleSVG = `<text x="${W/2}" y="${titleY}" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${title}</text>`;
 
     const nodesSVG = organisms.map((org, i) => {
       const nx = 10 + i * (nodeW + gap);
-      const color = org.color || '#1D9E75';
+      const color = org.color || DT.ACCENT;
       const emoji = org.emoji || '🌿';
       const name = org.name || '';
       const role = org.role || '';
@@ -6277,18 +6269,18 @@ const SVG_RENDERERS = {
         <rect x="${nx}" y="${oy}" width="${nodeW}" height="${nodeH}" rx="10" fill="white" stroke="${color}" stroke-width="2.5"/>
         <rect x="${nx}" y="${oy}" width="${nodeW}" height="32" rx="10" fill="${color}"/>
         <rect x="${nx}" y="${oy + 22}" width="${nodeW}" height="10" fill="${color}"/>
-        <text x="${nx + nodeW/2}" y="${oy + 22}" text-anchor="middle" font-size="20" font-family="Arial,sans-serif">${emoji}</text>
+        <text x="${nx + nodeW/2}" y="${oy + 22}" text-anchor="middle" font-size="20" font-family="${DT.FONT}">${emoji}</text>
         <foreignObject x="${nx + 3}" y="${oy + 34}" width="${nodeW - 6}" height="36">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:900;color:#1D3461;text-align:center;word-wrap:break-word;line-height:1.3">${name}</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.CAPTION}px;font-weight:900;color:${DT.PRIMARY};text-align:center;word-wrap:break-word;line-height:1.3">${name}</div>
         </foreignObject>
         <foreignObject x="${nx + 3}" y="${oy + 70}" width="${nodeW - 6}" height="36">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:10px;color:#5F5E5A;text-align:center;word-wrap:break-word;line-height:1.3;font-style:italic">${role}</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:12px;color:${DT.SECONDARY};text-align:center;word-wrap:break-word;line-height:1.3;font-style:italic">${role}</div>
         </foreignObject>
         ${arrow}`;
     }).join('');
 
     // Energy flow label
-    const flowLabel = `<text x="${W/2}" y="${H - 8}" text-anchor="middle" font-size="11" fill="#888780" font-family="Arial,sans-serif" font-style="italic">Energy flows →</text>`;
+    const flowLabel = `<text x="${W/2}" y="${H - 8}" text-anchor="middle" font-size="${DT.CAPTION}" fill="#888780" font-family="${DT.FONT}" font-style="italic">Energy flows →</text>`;
 
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">
       <rect width="${W}" height="${H}" fill="#F4F3EF"/>
@@ -6303,7 +6295,7 @@ const SVG_RENDERERS = {
     const title = p.title || '';
     const subject = p.subject || '🌱';
     const labels = (p.labels || []).slice(0, 8);
-    const accentColor = p.color || '#1D9E75';
+    const accentColor = p.color || DT.ACCENT;
 
     const W = 500, H = 300;
     const cx = W / 2, cy = H / 2 + 8;
@@ -6346,17 +6338,17 @@ const SVG_RENDERERS = {
         <circle cx="${lx2}" cy="${ly2}" r="3" fill="${accentColor}" opacity="0.7"/>
         <rect x="${lbx}" y="${lby}" width="${labelW}" height="${labelH}" rx="5" fill="${accentColor}" opacity="0.9"/>
         <foreignObject x="${lbx + 4}" y="${lby + 2}" width="${labelW - 8}" height="${labelH - 4}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;color:white;text-align:center;display:flex;align-items:center;justify-content:center;height:${labelH - 4}px;word-wrap:break-word;line-height:1.2">${text}</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:${DT.FONT};font-size:${DT.CAPTION}px;font-weight:700;color:white;text-align:center;display:flex;align-items:center;justify-content:center;height:${labelH - 4}px;word-wrap:break-word;line-height:1.2">${text}</div>
         </foreignObject>`;
     }).join('');
 
     // Central subject
     const subjectSVG = `
       <circle cx="${cx}" cy="${cy}" r="${subjectR}" fill="white" stroke="${accentColor}" stroke-width="3"/>
-      <text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="44" font-family="Arial,sans-serif">${subject}</text>`;
+      <text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="44" font-family="${DT.FONT}">${subject}</text>`;
 
     const titleSVG = title
-      ? `<text x="${W/2}" y="20" text-anchor="middle" font-size="14" font-weight="900" fill="#1D3461" font-family="Arial,sans-serif">${title}</text>`
+      ? `<text x="${W/2}" y="20" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="900" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${title}</text>`
       : '';
 
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%">
