@@ -9811,21 +9811,13 @@ async function deleteAllUnitPlans() {
 async function deleteUnitPlan(id) {
   if (!confirm('Delete this unit plan? All unit assessments and their submissions will also be deleted. Lessons generated from it will not be deleted.')) return;
   try {
-    // 1. Find any unit assessments (worksheets) tied to this unit
-    const { data: unitWs, error: wsFetchErr } = await db.from('worksheets').select('id').eq('unit_plan_id', id);
-    if (wsFetchErr) throw wsFetchErr;
+    const { data: unitWs } = await db.from('worksheets').select('id').eq('unit_plan_id', id);
     const wsIds = (unitWs || []).map(w => w.id);
-    // 2. Delete submissions for those worksheets first (no cascade assumed)
     if (wsIds.length) {
-      const { error: subErr } = await db.from('worksheet_submissions').delete().in('worksheet_id', wsIds);
-      if (subErr) throw subErr;
-      // 3. Delete the worksheets themselves
-      const { error: wsErr } = await db.from('worksheets').delete().in('id', wsIds);
-      if (wsErr) throw wsErr;
-      // 4. Clean up any in-memory cache
+      await db.from('worksheet_submissions').delete().in('worksheet_id', wsIds);
+      await db.from('worksheets').delete().in('id', wsIds);
       if (window._unitTestData) wsIds.forEach(wid => delete window._unitTestData[wid]);
     }
-    // 5. Finally delete the unit plan row
     const { error } = await db.from('unit_plans').delete().eq('id', id);
     if (error) throw error;
     savedUnitPlans = savedUnitPlans.filter(u => u.id !== id);
