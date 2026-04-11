@@ -4510,7 +4510,7 @@ async function generateSlideData(callerBtn) {
       const slides = (sd.content_slides||[]).slice(0, profile.slideCount);
       if (!slides.length) return;
       const promises = slides.map(async (cs, i) => {
-        const slidePrompt = cs.title || topic;
+        const slidePrompt = ((cs.key_point || cs.title || topic) + '').slice(0, 80);
         try {
           const r = await authFetch('/api/generate-image', {
             method: 'POST',
