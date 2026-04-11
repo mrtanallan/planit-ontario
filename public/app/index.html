@@ -4223,15 +4223,15 @@ async function getStudentLink(k, allGrades) {
 // SLIDES — grade-band profiles (Phase 1: additive constraints)
 // ============================================================
 const BAND_PROFILES = {
-  'K':   { slideCount: 3, maxKeyPointChars: 45,  maxSentenceWords: 6,  bloomCeiling: 'Understand', hookStyle: 'song/movement/picture',  exitTicketStyle: 'thumbs up/down or draw' },
-  '1-3': { slideCount: 4, maxKeyPointChars: 70,  maxSentenceWords: 10, bloomCeiling: 'Apply',      hookStyle: 'short story or visual',  exitTicketStyle: 'one-sentence answer or drawing' },
+  'K':   { slideCount: 3, maxKeyPointChars: 50,  maxSentenceWords: 7,  bloomCeiling: 'Understand', hookStyle: 'song/movement/picture',  exitTicketStyle: 'thumbs up/down or draw' },
+  '1-3': { slideCount: 4, maxKeyPointChars: 75,  maxSentenceWords: 11, bloomCeiling: 'Apply',      hookStyle: 'short story or visual',  exitTicketStyle: 'one-sentence answer or drawing' },
   '4-6': { slideCount: 4, maxKeyPointChars: 110, maxSentenceWords: 16, bloomCeiling: 'Analyze',    hookStyle: 'real-world scenario',    exitTicketStyle: '2-3 sentence response' },
   '7-8': { slideCount: 5, maxKeyPointChars: 140, maxSentenceWords: 22, bloomCeiling: 'Evaluate',   hookStyle: 'provocation or debate',  exitTicketStyle: 'short paragraph w/ justification' }
 };
 const GRADE_FINETUNE = {
-  'K': { maxSentenceWords: 5,  vocabNote: 'concrete nouns only, no abstractions' },
-  '1': { maxSentenceWords: 7,  vocabNote: 'common sight words, decodable phonics' },
-  '2': { maxSentenceWords: 9,  vocabNote: 'simple compound words OK' },
+  'K': { maxSentenceWords: 6,  vocabNote: 'concrete nouns only, no abstractions' },
+  '1': { maxSentenceWords: 8,  vocabNote: 'common sight words, decodable phonics' },
+  '2': { maxSentenceWords: 10, vocabNote: 'simple compound words OK' },
   '3': { maxSentenceWords: 11, vocabNote: 'intro academic vocab with definition in context' },
   '4': { maxSentenceWords: 14, vocabNote: 'subject-specific terms with brief context' },
   '5': { maxSentenceWords: 16, vocabNote: 'multi-syllable academic vocab acceptable' },
@@ -4339,7 +4339,8 @@ async function generateSlideData(callerBtn) {
       '      "key_point": "core concept in 1 clear sentence",',
       '      "teacher_note": "delivery tip max 10 words",',
       '      "visual_type": "ONE OF THE TYPES BELOW",',
-      '      "visual_params": { ... }',
+      '      "visual_params": { ... },',
+      '      "image_prompt": "literal visual scene for image generator, concrete nouns, no abstractions, no meta-language, max 120 chars"',
       '    }',
       '  ],',
       '  "practice_problem": {"question": "one problem students solve", "solution_steps": ["step 1", "step 2", "step 3"]},',
@@ -4371,11 +4372,34 @@ async function generateSlideData(callerBtn) {
       '- Exit ticket style: '+profile.exitTicketStyle,
       '- Vocabulary: '+profile.vocabNote,
       '- These constraints OVERRIDE any conflicting defaults below. A Grade 1 deck and Grade 5 deck on the same topic MUST look visibly different.',
+      (profile.band === 'K' || profile.band === '1-3') ? [
+        '',
+        '── BOTTOM-BAND SENTENCE EXAMPLES (study before writing) ──',
+        'GOOD (K, 6w): "A puppy can be soft and warm."',
+        'GOOD (K, 5w): "Look at this fluffy bunny!"',
+        'BAD  (K, 9w): "A puppy is soft, warm, and very cuddly indeed." — too long, drop adjectives',
+        'GOOD (Gr1, 8w): "Soft means it feels nice and gentle."',
+        'GOOD (Gr1, 7w): "Big means really, really, really large."',
+        'BAD  (Gr1, 12w): "When something is soft it feels nice and gentle to touch." — split into two sentences',
+        'RULE: count every word in every sentence. If over the cap, split or shorten before returning.'
+      ].join('\n') : '',
       '',
       '══ ACCURACY GUARDRAIL ══',
       '- DO NOT invent facts, dates, statistics, names, quotes, or events. If you are not certain, omit it or phrase generally.',
       '- Every entry in "factual_claims" must be something you are confident is true. If unsure, leave the array empty.',
       '- Prefer concept explanations over trivia. No fabricated historical dates or made-up scientist names.',
+      '',
+      '══ IMAGE PROMPT GUIDANCE ══',
+      '- Each content slide needs an image_prompt — a literal visual scene description for an AI image generator.',
+      '- Write what a camera would SEE, not what the slide TEACHES. Concrete nouns only.',
+      '- BAD: "Strong adjectives create vivid pictures" (abstract, no visual)',
+      '- BAD: "An illustration showing students learning" (meta, generic)',
+      '- GOOD: "A fluffy orange kitten curled up on a red knitted blanket"',
+      '- GOOD: "A scientist in a white coat pouring blue liquid into a beaker"',
+      '- GOOD: "A wooden bridge over a rushing mountain river at sunrise"',
+      '- Match the slide concept to a real visual moment that illustrates it.',
+      '- '+(profile.band==='K'||profile.band==='1-3' ? 'Use simple, friendly, picture-book scenes with one clear subject.' : profile.band==='4-6' ? 'Use realistic detailed scenes with clear context and 2-3 elements.' : 'Use sophisticated atmospheric scenes with depth and meaningful detail.'),
+      '- Max 120 characters per image_prompt.',
       '',
       'RULES:',
       '- learning_goals: exactly 2-3',
@@ -4526,7 +4550,7 @@ async function generateSlideData(callerBtn) {
       const slides = (sd.content_slides||[]).slice(0, profile.slideCount);
       if (!slides.length) return;
       const promises = slides.map(async (cs, i) => {
-        const slidePrompt = ((cs.key_point || cs.title || topic) + '').slice(0, 80);
+        const slidePrompt = ((cs.image_prompt || cs.key_point || cs.title || topic) + '').slice(0, 120);
         try {
           const r = await authFetch('/api/generate-image', {
             method: 'POST',
