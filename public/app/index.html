@@ -4648,7 +4648,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-11-A (cycle_diagram fix + cache invalidation)';
+const TA_BUILD = '2026-04-11-B (cycle_diagram labels-only)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
@@ -6221,17 +6221,10 @@ const SVG_RENDERERS = {
       const { x, y } = positions[i];
       const color = step.color || defaultColors[i % defaultColors.length];
       const label = step.label || '';
-      const desc = step.description || step.desc || '';
-      const hasDesc = desc && desc.length > 0;
-      const labelSize = hasDesc ? 12 : DT.CAPTION;
-      const descSize = 10;
       return `
         <circle cx="${x}" cy="${y}" r="${nodeR}" fill="${color}"/>
         <foreignObject x="${x - nodeR + 4}" y="${y - nodeR + 4}" width="${(nodeR-4)*2}" height="${(nodeR-4)*2}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="width:${(nodeR-4)*2}px;height:${(nodeR-4)*2}px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-family:${DT.FONT};color:white;line-height:1.2;overflow:hidden">
-            <div style="font-size:${hasDesc ? 12 : 14}px;font-weight:900;word-wrap:break-word;max-width:${(nodeR-8)*2}px">${label}</div>
-            ${hasDesc ? `<div style="font-size:${descSize}px;opacity:0.85;margin-top:1px;word-wrap:break-word;max-width:${(nodeR-8)*2}px">${desc}</div>` : ''}
-          </div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="width:${(nodeR-4)*2}px;height:${(nodeR-4)*2}px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:${DT.FONT};color:white;line-height:1.2;overflow:hidden;font-size:14px;font-weight:900;word-wrap:break-word;padding:0 6px;box-sizing:border-box">${label}</div>
         </foreignObject>`;
     }).join('');
 
