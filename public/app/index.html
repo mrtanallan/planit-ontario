@@ -3032,6 +3032,14 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       const relevantCount = (relevantExps || []).length;
       const sortedCount = (sortedExps2 || []).length;
       console.warn('[EXPECTATIONS] Empty expectations array for lesson:', { topic, subj, grades, parsedHadExpectations: !!(parsed.expectations && parsed.expectations.length), preMatchedCount: (preMatchedExp||[]).length, curriculumPoolSize: currPoolSize, relevantExpsCount: relevantCount, sortedExpsCount: sortedCount, primaryStrand: primaryStrand2 });
+      // Deterministic fallback: if AI didn't return expectations but we have relevant curriculum
+      // entries in memory, use the top 2-3 from the sorted (strand-prioritized) list. This
+      // guarantees a banner always appears for Ontario-curriculum-backed lessons.
+      if (sortedExps2 && sortedExps2.length) {
+        lessonExpectations = sortedExps2.slice(0, 3).map(e => ({...e}));
+        genC['_expectations'] = lessonExpectations;
+        console.log('[EXPECTATIONS] Applied fallback — using top 3 from sortedExps2:', lessonExpectations.map(e => e.code));
+      }
     }
 
     loadUsageMeter();
@@ -4656,7 +4664,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-12-B (expanded expectations diagnostic)';
+const TA_BUILD = '2026-04-12-C (expectations fallback from sortedExps2)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
