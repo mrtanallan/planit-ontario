@@ -317,7 +317,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
    Print-optimized variants live in the K PDF template function.
    ============================================================ */
 .kwsw { font-size: 1.02rem; line-height: 1.9; font-family: 'DM Sans', sans-serif; }
-.kwsw .kwsh2 { font-family: 'Fraunces', serif; font-size: 1.35rem; font-weight: 600; margin: 18px 0 12px; padding: 10px 16px; background: var(--amber-l); border-left: 5px solid var(--amber); border-radius: 0 6px 6px 0; color: #5A3010; }
+.kwsw .kwsh2 { font-family: Georgia, 'Times New Roman', serif; font-size: 1.35rem; font-weight: 600; margin: 18px 0 12px; padding: 10px 16px; background: var(--amber-l); border-left: 5px solid var(--amber); border-radius: 0 6px 6px 0; color: #5A3010; }
 .kwsw .kwsh3 { font-size: 0.85rem; font-weight: 600; color: var(--amber); text-transform: uppercase; letter-spacing: .7px; margin: 14px 0 6px; }
 .kws-instr { font-size: 1.05rem; font-weight: 500; margin: 12px 0 6px; color: #3A2810; }
 .kws-para { margin: 4px 0; font-size: 0.95rem; }
@@ -329,7 +329,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 .kimg-spinner { font-size: 1.6rem; animation: kspin 1.2s linear infinite; }
 @keyframes kspin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .kimg-label { font-size: 0.7rem; color: var(--muted); margin-top: 4px; line-height: 1.2; }
-.kimg { width: 130px; height: 130px; object-fit: contain; border-radius: 8px; margin: 6px; background: white; border: 1px solid var(--border); cursor: pointer; }
+.kimg { width: 150px; height: 150px; object-fit: contain; border-radius: 8px; margin: 6px; background: white; border: 1px solid var(--border); cursor: pointer; }
 .kimg:hover { border-color: var(--amber); }
 .kimg-failed { border-style: dotted; }
 /* Single-image block (e.g. [IMAGE: apple]) */
@@ -341,10 +341,13 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 /* Trace */
 .kws-trace-block { display: flex; align-items: center; gap: 14px; margin: 12px 0; padding: 12px 16px; background: var(--sage-l); border-left: 4px solid var(--sage); border-radius: 6px; }
 .kws-trace-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--sage); }
-.kws-trace-word { font-family: 'Fraunces', serif; font-size: 2.2rem; color: #888; letter-spacing: .12em; text-decoration: underline dotted; text-decoration-thickness: 2px; }
+.kws-trace-word { font-family: Georgia, 'Times New Roman', serif; font-size: 2.2rem; color: #888; letter-spacing: .12em; text-decoration: underline dotted; text-decoration-thickness: 2px; }
 /* Count */
 .kws-count-block { margin: 14px 0; padding: 12px 16px; background: var(--blue-l); border-radius: 8px; }
 .kws-count-items { font-size: 1.8rem; letter-spacing: .1em; margin-bottom: 8px; text-align: center; }
+.kws-count-items-img { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.kws-count-items-img .kws-count-img { display: inline-block; }
+.kws-count-items-img .kimg, .kws-count-items-img .kimg-placeholder { width: 80px; height: 80px; margin: 2px; }
 .kws-count-answer { font-size: 1rem; display: flex; align-items: center; gap: 10px; }
 .kws-count-blank { display: inline-block; width: 60px; border-bottom: 2px solid var(--ink); }
 /* Circle picture */
@@ -352,6 +355,10 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 .kws-cp-prompt { font-size: 1.05rem; font-weight: 500; margin-bottom: 8px; color: #3A2810; }
 .kws-cp-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 10px; background: var(--cream); border-radius: 10px; }
 .kws-cp-item { display: flex; flex-direction: column; align-items: center; }
+/* Teacher says — teacher reads aloud, K kids can't read */
+.kws-teacher-says { margin: 14px 0 10px; padding: 10px 14px; background: var(--amber-l); border-left: 4px solid var(--amber); border-radius: 6px; font-size: .95rem; line-height: 1.5; }
+.kws-ts-label { font-family: 'DM Mono', monospace; font-size: .65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: var(--amber); display: block; margin-bottom: 2px; }
+.kws-ts-text { font-size: 1.05rem; color: #3A2810; font-weight: 500; }
 
 /* ============================================================
    TOUR
@@ -2853,14 +2860,28 @@ ${strandGuidance}`
     const kWorksheetFormat = hasWorksheet ? `
 K WORKSHEET FORMAT — print-and-write for Kindergarten students (4–5 years old).
 Students cannot read full sentences yet. Worksheets must be visual and hands-on.
-Use ONLY these question formats, and keep total questions to 3–6:
-(1) [IMAGE: simple object description] — generates a line-drawing illustration. Use for: things to count, things to identify, things to circle. Max 6 images per worksheet. Keep descriptions simple: "red apple", "smiling bear cub", "yellow sun with rays".
-(2) [DRAW: prompt] — large empty box where a student draws something. e.g. [DRAW: Draw your family]
-(3) [TRACE: word or letter] — a word or letter shown in tracing style for students to trace. Keep to single letters, short CVC words, or numbers 0-10. e.g. [TRACE: cat]  [TRACE: A]  [TRACE: 5]
-(4) [COUNT: emoji or simple item, blank for number] — a row of items, student writes the count. e.g. [COUNT: 🐟🐟🐟]
-(5) [CIRCLE PICTURE: item1 | item2 | item3 | item4] — row of picture options, student circles matching ones. Generates line drawings for each item. Max 4 items per row.
-NEVER use [TEXT BOX], [LARGE BOX] with text input expectation, [WORD BANK], or anything requiring students to type or read sentences.
-Title line is short and uses ONE emoji (e.g. "🌼 Spring Counting"). Instructions must be 3-6 words max, at a level a teacher reads aloud. Student follows visually.` : '';
+
+CRITICAL OUTPUT RULES:
+- Every activity MUST have a "Teacher says:" line immediately before any visual tag. Children cannot read student-facing prose. The teacher reads the Teacher says line aloud. Keep Teacher says lines to 4-8 words.
+- Do NOT wrap question numbers in **bold** (no \`**1. [TRACE: 2]**\`). Just plain \`1. [TRACE: 2]\`.
+- Do NOT use \`---\` horizontal rules anywhere in the worksheet.
+- Never put instructional prose addressed to the student (e.g. "Draw your own way to sort:"). Always rewrite as Teacher says.
+- Every numbered activity should start with a short title line beginning with "### " (e.g. "### Sort by size") so subsequent pages keep consistent structure.
+
+Use ONLY these tag formats, and keep total activities to 3–5:
+
+(1) [IMAGE: simple object description] — generates ONE line-drawing. Use only when the activity truly needs a single focal image. Keep descriptions simple: "red apple", "smiling bear cub". Never use [IMAGE:] for sorting or matching tasks — those MUST use [CIRCLE PICTURE:] with 3-4 items.
+
+(2) [DRAW: prompt] — large empty box. The prompt inside [DRAW:] is a short teacher-facing caption (e.g. "Draw your family"). Pair it with a Teacher says line.
+
+(3) [TRACE: target] — dotted tracing. ONLY use for: single letters (A, b, c), numbers 0-10, or short CVC words (cat, sun, bed). NEVER use for adjectives like "big" or "red" — those are not traceable.
+
+(4) [COUNT: item name x N] — renders N line-drawings of the same item for students to count. Example: [COUNT: red apple x 3]. Use N between 1 and 10. NEVER use raw emoji (🐶🍎) in COUNT — always use the "item name x N" syntax so we get consistent line-drawings.
+
+(5) [CIRCLE PICTURE: item1 | item2 | item3 | item4] — row of 3-4 different line-drawings, students circle the matching ones. Use this for ALL sorting and matching tasks.
+
+NEVER use [TEXT BOX], [LARGE BOX], [WORD BANK], [CIRCLE ONE], or anything requiring students to read or type. Those are Grade 1-8 formats only.
+Title line uses ONE emoji (e.g. "🌼 Spring Counting"). Max 6 images ([IMAGE] + [CIRCLE PICTURE] + one per [COUNT]) total — each triggers a slow image gen.` : '';
 
     prompt = `You are an expert Ontario Kindergarten educator designing a play-based Kindergarten lesson for ages 4–5.
 This is a KINDERGARTEN lesson. The curriculum is Ontario Kindergarten Curriculum (2026), which replaces The Kindergarten Program (2016) and is effective starting 2026–27.
@@ -3681,7 +3702,19 @@ function renderKWS(text) {
   };
 
   lines.forEach(line => {
-    const trimmed = line.trim();
+    let trimmed = line.trim();
+
+    // Normalize: strip outer **bold** markdown that the AI sometimes wraps
+    // around question lines (e.g. "**1. [TRACE: 2] [TRACE: 5]**"). Without
+    // this, the trace regex below fails and the raw tag text leaks through
+    // as a bolded string. Also strip a literal "N. **...**" where just the
+    // body is bolded.
+    trimmed = trimmed.replace(/^\*\*(.+)\*\*$/, '$1').trim();
+    trimmed = trimmed.replace(/^(\d+\.\s*)\*\*(.+)\*\*$/, '$1$2').trim();
+
+    // Drop markdown horizontal-rule lines ("---"). The AI emits these between
+    // activities and they render as literal "---" text under "How many?".
+    if (/^-{3,}$/.test(trimmed)) return;
 
     // Headers
     if (trimmed.startsWith('## ')) { h += `<h2 class="kwsh2">${escHTML(trimmed.slice(3))}</h2>`; return; }
@@ -3721,7 +3754,28 @@ function renderKWS(text) {
       return;
     }
 
-    // [COUNT: emoji or items] — row of items with blank for the count
+    // [COUNT: item_name x N] — row of N line-drawing images to count.
+    // Example: [COUNT: red apple x 3] renders 3 apple line-drawings.
+    // Uses ascii 'x' OR unicode '×' (\u00d7) as the multiplier. This is the
+    // canonical form for K worksheets now — no more raw emoji.
+    m = trimmed.match(/^\s*(?:\d+\.\s*)?\[COUNT:\s*(.+?)\s*[x×]\s*(\d+)\s*\]\s*(.*)$/i);
+    if (m) {
+      const itemName = m[1].trim();
+      const count = Math.min(parseInt(m[2], 10) || 1, 10);
+      const after = (m[3] || '').trim();
+      const imgs = Array.from({ length: count }, () =>
+        `<span class="kws-count-img">${emitImage(itemName, 'square_hd')}</span>`
+      ).join('');
+      h += `<div class="kws-count-block">
+        <div class="kws-count-items kws-count-items-img">${imgs}</div>
+        <div class="kws-count-answer">How many? <span class="kws-count-blank"></span></div>
+        ${after ? `<div class="kws-caption">${md(after)}</div>` : ''}
+      </div>`;
+      return;
+    }
+
+    // [COUNT: emoji or items] — legacy form, kept so old worksheets don't
+    // regress. New generations should use the "x N" form above.
     m = trimmed.match(/^\s*(?:\d+\.\s*)?\[COUNT:\s*([^\]]+)\]\s*(.*)$/i);
     if (m) {
       const items = m[1].trim();
@@ -3745,6 +3799,14 @@ function renderKWS(text) {
           ${items.map(it => `<div class="kws-cp-item">${emitImage(it, 'square_hd')}</div>`).join('')}
         </div>
       </div>`;
+      return;
+    }
+
+    // "Teacher says: ..." — styled as a teacher-facing instruction so K teachers
+    // know to read aloud. Works whether the line is bare or numbered.
+    const tsMatch = trimmed.match(/^\s*(?:\d+\.\s*)?Teacher\s+says:\s*(.+)$/i);
+    if (tsMatch) {
+      h += `<div class="kws-teacher-says"><span class="kws-ts-label">Teacher says:</span> <span class="kws-ts-text">${md(tsMatch[1].trim())}</span></div>`;
       return;
     }
 
@@ -3892,25 +3954,23 @@ async function addMoreQuestions(k) {
   const prompt = isKMoreQ
     ? `You are extending an Ontario Kindergarten worksheet on "${topic}". The worksheet is for ages 4-5 and is print-and-write (children draw/trace/circle on paper).
 
-Here is the CURRENT worksheet:
+Here is the CURRENT worksheet — study its format carefully:
 ---
 ${current}
 ---
 
-Generate 2-3 NEW activities in EXACTLY the same format as the existing ones. Available K worksheet tags:
-- [IMAGE: simple object description] → generates a line-drawing illustration
-- [DRAW: prompt] → large empty box a child draws in
-- [TRACE: word or letter] → dotted text for tracing (single letters, numbers 0-10, or CVC words)
-- [COUNT: emoji row] → items to count, child writes the number
-- [CIRCLE PICTURE: item1 | item2 | item3 | item4] → row of line drawings, child circles matching ones
+Generate 2-3 NEW activities using EXACTLY the same tag format, structure, and conventions as the existing activities above. Pattern-match — do not invent new tags or headers.
 
 CRITICAL RULES:
-- Do NOT repeat any existing activity
-- Match the tone and topic focus of existing activities
-- Number new activities starting from ${startNum}
-- Instructions must be 3-6 words max, for the teacher to read aloud
-- Max 6 total [IMAGE] and [CIRCLE PICTURE] items across these new activities (they trigger image generation which is slow)
-- NEVER use [TEXT BOX], [LARGE BOX], [WORD BANK], or [CIRCLE ONE] — those are Grade 1-8 formats
+- Match the existing worksheet's format for Teacher says lines, subsection headers (### ...), and numbered activities. If the worksheet above uses "Teacher says:" before every visual, yours must too.
+- Do NOT repeat any existing activity.
+- Number new activities starting from ${startNum}.
+- Do NOT wrap question numbers in **bold** (plain \`${startNum}. [...]\`, not \`**${startNum}. [...]**\`).
+- Do NOT emit \`---\` horizontal rule lines between activities.
+- [TRACE: ...] is ONLY for single letters, numbers 0-10, or short CVC words. Never trace adjectives ("big", "red") — those cannot be traced.
+- [COUNT: item name x N] uses the line-drawing syntax (e.g. [COUNT: red apple x 3]), never raw emoji.
+- Sorting and matching tasks use [CIRCLE PICTURE: a | b | c | d] with 3-4 items, never a single [IMAGE:].
+- Max 4 total image-generating tags (each [IMAGE], [CIRCLE PICTURE] item, and [COUNT] counts once).
 
 Return ONLY a valid JSON object with this exact shape, no markdown fences, no preamble:
 {"questions": "<the 2-3 new K activities as markdown, ready to append>"}`
@@ -4030,8 +4090,8 @@ function downloadPDF(k) {
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>*{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:white;color:#16120E;padding:32px 40px;max-width:820px;margin:0 auto;font-size:13px;line-height:1.7;}
-h1{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:600;border-bottom:3px solid #4A7C59;padding-bottom:10px;margin-bottom:20px;}
-h2.sec{font-family:'Fraunces',serif;font-size:.95rem;font-weight:600;background:#EAF0EA;border-left:4px solid #4A7C59;padding:7px 12px;margin:18px 0 8px;border-radius:0 5px 5px 0;}
+h1{font-family:Georgia,'Times New Roman',serif;font-size:1.5rem;font-weight:600;border-bottom:3px solid #4A7C59;padding-bottom:10px;margin-bottom:20px;}
+h2.sec{font-family:Georgia,'Times New Roman',serif;font-size:.95rem;font-weight:600;background:#EAF0EA;border-left:4px solid #4A7C59;padding:7px 12px;margin:18px 0 8px;border-radius:0 5px 5px 0;}
 h3{font-size:.78rem;font-weight:700;color:#4A7C59;text-transform:uppercase;letter-spacing:.8px;margin:14px 0 4px;}
 p{margin:4px 0;}li{margin-bottom:3px;margin-left:18px;list-style:disc;}strong{font-weight:600;}
 .check{display:flex;gap:8px;margin:5px 0;padding:5px 10px;background:#EAF0EA;border-radius:5px;border-left:3px solid #4A7C59;}
@@ -4073,6 +4133,9 @@ async function downloadKPDF(k) {
   const neededImages = [];
   const imageRe = /\[IMAGE:\s*([^\]]+)\]/gi;
   const cpRe = /\[CIRCLE PICTURE:\s*([^\]]+)\]/gi;
+  // [COUNT: name x N] needs a line-drawing for `name`. Legacy [COUNT: 🐶🐶🐶]
+  // (no " x N") is pure text so we don't prefetch for it.
+  const countImgRe = /\[COUNT:\s*(.+?)\s*[x×]\s*\d+\s*\]/gi;
   let m;
   while ((m = imageRe.exec(rawText)) !== null) {
     const prompt = m[1].trim();
@@ -4084,6 +4147,11 @@ async function downloadKPDF(k) {
       const key = _kImgKey(item + '|square_hd');
       neededImages.push({ key, prompt: item, size: 'square_hd' });
     });
+  }
+  while ((m = countImgRe.exec(rawText)) !== null) {
+    const itemName = m[1].trim();
+    const key = _kImgKey(itemName + '|square_hd');
+    neededImages.push({ key, prompt: itemName, size: 'square_hd' });
   }
 
   // If there are un-resolved images, show a toast and kick off fetches.
@@ -4097,7 +4165,13 @@ async function downloadKPDF(k) {
   const lines = rawText.split('\n');
   let body = '';
   lines.forEach(line => {
-    const trimmed = line.trim();
+    let trimmed = line.trim();
+
+    // Normalize: strip outer **bold** wrappers + skip --- horizontal rules
+    // (mirrors renderKWS fixes).
+    trimmed = trimmed.replace(/^\*\*(.+)\*\*$/, '$1').trim();
+    trimmed = trimmed.replace(/^(\d+\.\s*)\*\*(.+)\*\*$/, '$1$2').trim();
+    if (/^-{3,}$/.test(trimmed)) return;
 
     if (trimmed.startsWith('## ')) { body += `<h2 class="sec">${escHTML(trimmed.slice(3))}</h2>`; return; }
     if (trimmed.startsWith('### ')) { body += `<h3>${escHTML(trimmed.slice(4))}</h3>`; return; }
@@ -4141,7 +4215,24 @@ async function downloadKPDF(k) {
       return;
     }
 
-    // [COUNT: items]
+    // [COUNT: name x N] — N line-drawings to count (new canonical form)
+    mm = trimmed.match(/^\s*(?:\d+\.\s*)?\[COUNT:\s*(.+?)\s*[x×]\s*(\d+)\s*\]\s*(.*)$/i);
+    if (mm) {
+      const itemName = mm[1].trim();
+      const count = Math.min(parseInt(mm[2], 10) || 1, 10);
+      const after = (mm[3] || '').trim();
+      const key = _kImgKey(itemName + '|square_hd');
+      const url = window._kImageCache[key] || '';
+      const imgs = Array.from({ length: count }, () =>
+        url
+          ? `<img class="countimg" src="${url}" alt="${escHTML(itemName)}">`
+          : `<span class="countimg countimg-fail">[${escHTML(itemName)}]</span>`
+      ).join('');
+      body += `<div class="countblk"><div class="countitems countitems-img">${imgs}</div><div class="countq">How many? <span class="countblank"></span></div>${after?`<div class="cap">${escHTML(after)}</div>`:''}</div>`;
+      return;
+    }
+
+    // [COUNT: items] — legacy form (emoji or plain text)
     mm = trimmed.match(/^\s*(?:\d+\.\s*)?\[COUNT:\s*([^\]]+)\]\s*(.*)$/i);
     if (mm) {
       const items = mm[1].trim();
@@ -4163,6 +4254,14 @@ async function downloadKPDF(k) {
           : `<div class="cpitem imgfail"><div class="imgbox imgbox-sm">[${escHTML(item)}]</div></div>`;
       }).join('');
       body += `<div class="cpblk">${after?`<div class="cpprompt">${escHTML(after)}</div>`:''}<div class="cprow">${row}</div></div>`;
+      return;
+    }
+
+    // "Teacher says: ..." — teacher-facing instruction block
+    const tsMatch = trimmed.match(/^\s*(?:\d+\.\s*)?Teacher\s+says:\s*(.+)$/i);
+    if (tsMatch) {
+      const clean = tsMatch[1].trim().replace(/\*\*(.+?)\*\*/g, '$1');
+      body += `<div class="teachersays"><span class="tslabel">Teacher says:</span> <span class="tstext">${escHTML(clean)}</span></div>`;
       return;
     }
 
@@ -4188,11 +4287,11 @@ async function downloadKPDF(k) {
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'DM Sans',sans-serif;background:white;color:#000;padding:36px 48px;max-width:820px;margin:0 auto;font-size:16px;line-height:1.9;}
-h1{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:600;border-bottom:3px solid #000;padding-bottom:10px;margin-bottom:22px;text-align:center;}
+h1{font-family:Georgia,'Times New Roman',serif;font-size:1.8rem;font-weight:600;border-bottom:3px solid #000;padding-bottom:10px;margin-bottom:22px;text-align:center;}
 .name-line{font-size:1.1rem;margin-bottom:18px;display:flex;gap:24px;align-items:center;}
 .name-line span{font-weight:600;}
 .name-line .blank{flex:1;border-bottom:2px solid #000;height:1.4rem;display:inline-block;}
-h2.sec{font-family:'Fraunces',serif;font-size:1.15rem;font-weight:600;margin:22px 0 10px;padding:0;border:none;background:none;color:#000;}
+h2.sec{font-family:Georgia,'Times New Roman',serif;font-size:1.15rem;font-weight:600;margin:22px 0 10px;padding:0;border:none;background:none;color:#000;}
 h3{font-size:1rem;font-weight:600;margin:14px 0 6px;color:#000;}
 p{margin:6px 0;font-size:1rem;}
 .instr{font-size:1.15rem;font-weight:600;margin:14px 0 8px;color:#000;}
@@ -4200,10 +4299,10 @@ p{margin:6px 0;font-size:1rem;}
 .gap{height:10px;}
 /* Single image */
 .imgblk{display:flex;flex-direction:column;align-items:center;margin:14px 0;page-break-inside:avoid;}
-.imgblk img{width:160px;height:160px;object-fit:contain;}
+.imgblk img{width:180px;height:180px;object-fit:contain;}
 .imgblk .cap{font-size:.95rem;margin-top:6px;text-align:center;}
-.imgfail .imgbox{width:160px;height:160px;border:2px dashed #999;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#666;text-align:center;padding:6px;}
-.imgbox-sm{width:110px;height:110px;}
+.imgfail .imgbox{width:180px;height:180px;border:2px dashed #999;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#666;text-align:center;padding:6px;}
+.imgbox-sm{width:150px;height:150px;}
 /* Draw box */
 .drawblk{margin:16px 0;page-break-inside:avoid;}
 .drawp{font-size:1.15rem;font-weight:600;margin-bottom:8px;}
@@ -4211,10 +4310,13 @@ p{margin:6px 0;font-size:1rem;}
 /* Trace */
 .traceblk{margin:14px 0;padding:14px 18px;border:2px solid #000;border-radius:6px;display:flex;align-items:center;gap:16px;page-break-inside:avoid;}
 .tracelbl{font-size:.95rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;}
-.traceword{font-family:'Fraunces',serif;font-size:3rem;color:#aaa;letter-spacing:.15em;text-decoration:underline dotted;text-decoration-thickness:2px;}
+.traceword{font-family:Georgia,'Times New Roman',serif;font-size:3rem;color:#aaa;letter-spacing:.15em;text-decoration:underline dotted;text-decoration-thickness:2px;}
 /* Count */
 .countblk{margin:14px 0;padding:14px 18px;border:2px solid #000;border-radius:6px;page-break-inside:avoid;}
 .countitems{font-size:2.2rem;letter-spacing:.1em;margin-bottom:10px;text-align:center;}
+.countitems-img{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;font-size:1rem;}
+.countimg{width:80px;height:80px;object-fit:contain;display:inline-block;}
+.countimg-fail{display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;border:1.5px dashed #999;font-size:.7rem;color:#666;padding:4px;text-align:center;}
 .countq{font-size:1.15rem;display:flex;align-items:center;gap:12px;}
 .countblank{display:inline-block;width:80px;border-bottom:2.5px solid #000;height:1.4rem;}
 /* Circle picture row */
@@ -4222,7 +4324,11 @@ p{margin:6px 0;font-size:1rem;}
 .cpprompt{font-size:1.15rem;font-weight:600;margin-bottom:10px;}
 .cprow{display:flex;gap:14px;justify-content:center;padding:10px;border:2px solid #000;border-radius:8px;}
 .cpitem{display:flex;flex-direction:column;align-items:center;}
-.cpitem img{width:110px;height:110px;object-fit:contain;}
+.cpitem img{width:150px;height:150px;object-fit:contain;}
+/* Teacher says */
+.teachersays{margin:14px 0 10px;padding:11px 16px;border-left:4px solid #000;background:#f6f2eb;page-break-inside:avoid;}
+.tslabel{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#666;display:block;margin-bottom:3px;}
+.tstext{font-size:1.1rem;color:#000;font-weight:500;line-height:1.5;}
 /* Meta */
 .meta{font-size:.78rem;color:#666;margin-top:30px;border-top:1px solid #000;padding-top:10px;text-align:center;}
 button.print-btn{position:fixed;top:14px;right:14px;background:#000;color:white;border:none;border-radius:6px;padding:10px 18px;font-size:.92rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
@@ -4232,7 +4338,10 @@ button.print-btn{position:fixed;top:14px;right:14px;background:#000;color:white;
   h1{font-size:1.6rem;}
   .drawbox{height:200px;}
   .countitems{font-size:2rem;}
+  .countimg{width:70px;height:70px;}
   .traceword{font-size:2.6rem;}
+  .cpitem img{width:130px;height:130px;}
+  .imgblk img{width:160px;height:160px;}
 }
 </style></head><body>
 <button class="print-btn" onclick="window.print()">🖨️ Print</button>
@@ -4803,7 +4912,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-12-J (deterministic renumbering on More Questions/Activities)';
+const TA_BUILD = '2026-04-13-K (K worksheet fixes: Georgia font, TRACE/--- regex fix, COUNT x N syntax with line-drawings, Teacher says instruction blocks, bigger images, prompt consistency across initial+extend)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
