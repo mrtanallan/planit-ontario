@@ -4645,6 +4645,12 @@ async function generateSlideData(callerBtn) {
 // ══════════════════════════════════════════════════════════════════════════════
 // HARDCODED SVG RENDERERS — mathematically accurate, zero API cost
 // ══════════════════════════════════════════════════════════════════════════════
+// ── BUILD VERSION ──────────────────────────────────────────────────────────
+// Bump this string every time you deploy. If you don't see it in console,
+// Cloudflare is still serving a cached version — purge cache and hard refresh.
+const TA_BUILD = '2026-04-11-A (cycle_diagram fix + cache invalidation)';
+console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
+
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
 // Centralised values for all SVG renderers — projected-slide optimised
 const DT = {
