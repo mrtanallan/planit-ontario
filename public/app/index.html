@@ -3026,7 +3026,12 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     }
     genC['_expectations'] = lessonExpectations;
     if (!lessonExpectations || lessonExpectations.length === 0) {
-      console.warn('[EXPECTATIONS] Empty expectations array for lesson:', { topic, subj, grades, parsedHadExpectations: !!(parsed.expectations && parsed.expectations.length), preMatchedCount: (preMatchedExp||[]).length });
+      const subjKeyDiag = (subj||'').toLowerCase().includes('science') ? 'science'
+        : (subj||'').toLowerCase().includes('math') ? 'math' : 'language';
+      const currPoolSize = (EXPECTATIONS[subjKeyDiag] || []).length;
+      const relevantCount = (relevantExps || []).length;
+      const sortedCount = (sortedExps2 || []).length;
+      console.warn('[EXPECTATIONS] Empty expectations array for lesson:', { topic, subj, grades, parsedHadExpectations: !!(parsed.expectations && parsed.expectations.length), preMatchedCount: (preMatchedExp||[]).length, curriculumPoolSize: currPoolSize, relevantExpsCount: relevantCount, sortedExpsCount: sortedCount, primaryStrand: primaryStrand2 });
     }
 
     loadUsageMeter();
@@ -4651,7 +4656,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-12-A (grade pill scope fix + expectations diagnostic)';
+const TA_BUILD = '2026-04-12-B (expanded expectations diagnostic)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
