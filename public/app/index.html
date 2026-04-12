@@ -595,8 +595,13 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <label style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px;">What are you teaching? <span style="color:var(--rust);">✱</span></label>
         <input type="text" id="topic" list="topicSuggestions" placeholder="e.g. Making Inferences, Persuasive Writing, Fractions..." autocapitalize="sentences"
           style="width:100%;font-family:'DM Sans',sans-serif;font-size:1rem;padding:13px 16px;border:2px solid var(--border);border-radius:10px;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;"
-          onfocus="this.style.borderColor='var(--sage)'" onblur="this.style.borderColor='var(--border)'">
+          onfocus="this.style.borderColor='var(--sage)'" onblur="this.style.borderColor='var(--border)'"
+          oninput="checkGradeAlignment()">
         <datalist id="topicSuggestions"></datalist>
+        <div id="gradeAlignmentHint" style="display:none;margin-top:8px;padding:9px 12px;background:var(--amber-l);border:1px solid #E8C98A;border-radius:8px;font-size:.82rem;color:var(--ink);line-height:1.45;">
+          <span style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--amber);font-weight:600;display:block;margin-bottom:3px;">ℹ️ Heads up</span>
+          <span id="gradeAlignmentHintText"></span>
+        </div>
       </div>
 
       <!-- Subject note for non-literacy subjects -->
@@ -2163,6 +2168,52 @@ const TOPIC_SUGGESTIONS = {
 
 function updateTopicSuggestions() {
   updateTopicSuggestionsFor('plan');
+  checkGradeAlignment();
+}
+
+// Warn when topic keywords don't appear in the selected grade's curriculum descriptions.
+// Runs client-side on topic/grade changes. Suggests better-fitting grades if found.
+function checkGradeAlignment() {
+  const hint = document.getElementById('gradeAlignmentHint');
+  const hintText = document.getElementById('gradeAlignmentHintText');
+  if (!hint || !hintText) return;
+  hint.style.display = 'none';
+  const topic = (document.getElementById('topic')?.value || '').toLowerCase().trim();
+  const subj = document.getElementById('subj')?.value || '';
+  const selectedGrades = [...document.querySelectorAll('#gradePillContainer .grade-pill-btn.selected')].map(b => b.dataset.grade);
+  if (!topic || topic.length < 4 || !subj || !selectedGrades.length) return;
+  const subjKey = subj === 'Science & Technology' ? 'science'
+    : subj === 'Mathematics' ? 'math'
+    : subj === 'Language / Literacy' ? 'language' : null;
+  if (!subjKey) return;
+  const pool = EXPECTATIONS[subjKey] || [];
+  if (pool.length < 10) return; // curriculum not loaded yet
+  const STOP = new Set(['the','a','an','of','and','or','in','on','to','for','with','is','are','about','using','into','through','from','how','what','why','when','where','basic','intro','introduction','learning']);
+  const topicWords = topic.replace(/[^a-z\s]/g,' ').split(/\s+/).filter(w => w.length > 3 && !STOP.has(w));
+  if (!topicWords.length) return;
+  // Score each grade by how many topic words appear in that grade's expectation descriptions
+  const gradesAll = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
+  const scoreByGrade = {};
+  gradesAll.forEach(g => {
+    const gradeExps = pool.filter(e => expectationMatchesGrade(e, g));
+    const hits = new Set();
+    gradeExps.forEach(e => {
+      const descLower = (e.desc||'').toLowerCase();
+      topicWords.forEach(w => { if (descLower.includes(w)) hits.add(w); });
+    });
+    scoreByGrade[g] = hits.size;
+  });
+  const maxScore = Math.max(...Object.values(scoreByGrade));
+  if (maxScore === 0) return; // topic doesn't map anywhere in this subject — don't nag
+  const selectedMaxScore = Math.max(...selectedGrades.map(g => scoreByGrade[g]||0));
+  if (selectedMaxScore >= maxScore) return; // selected grade(s) are the best fit
+  if (selectedMaxScore >= Math.ceil(maxScore * 0.6)) return; // selected is close enough
+  const betterGrades = gradesAll.filter(g => scoreByGrade[g] === maxScore && !selectedGrades.includes(g));
+  if (!betterGrades.length) return;
+  const topicDisplay = document.getElementById('topic')?.value || topic;
+  const shortList = betterGrades.slice(0,2).map(g => g.replace('Grade ','Gr. ')).join(' or ');
+  hintText.textContent = `"${topicDisplay}" aligns more closely with ${shortList} ${subj}. We'll still generate it for ${selectedGrades.map(g=>g.replace('Grade ','Gr. ')).join(' / ')} — expectations may be a loose fit.`;
+  hint.style.display = 'block';
 }
 
 function updateUnitTopicSuggestions() {
@@ -2308,7 +2359,8 @@ function updateTopicSuggestionsFor(scope) {
 
 function onSubjectChange() {
   const subj = document.getElementById('subj').value;
-  loadCurriculum(subj); // preload curriculum JSON for selected subject
+  // Preload curriculum then refresh hint (curriculum is needed for keyword lookup)
+  loadCurriculum(subj).then(() => { if (typeof checkGradeAlignment === 'function') checkGradeAlignment(); }).catch(() => {});
   updateTopicSuggestions();
   const isLiteracy = subj === 'Language / Literacy';
   const strandSection = document.getElementById('strandSection');
@@ -3032,13 +3084,25 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       const relevantCount = (relevantExps || []).length;
       const sortedCount = (sortedExps2 || []).length;
       console.warn('[EXPECTATIONS] Empty expectations array for lesson:', { topic, subj, grades, parsedHadExpectations: !!(parsed.expectations && parsed.expectations.length), preMatchedCount: (preMatchedExp||[]).length, curriculumPoolSize: currPoolSize, relevantExpsCount: relevantCount, sortedExpsCount: sortedCount, primaryStrand: primaryStrand2 });
-      // Deterministic fallback: if AI didn't return expectations but we have relevant curriculum
-      // entries in memory, use the top 2-3 from the sorted (strand-prioritized) list. This
-      // guarantees a banner always appears for Ontario-curriculum-backed lessons.
+      // Content-matched fallback: only use curriculum codes whose descriptions
+      // actually share vocabulary with the generated lesson body. This prevents
+      // showing Gr.7 rocks expectations on a Gr.4 water habitats lesson.
       if (sortedExps2 && sortedExps2.length) {
-        lessonExpectations = sortedExps2.slice(0, 3).map(e => ({...e}));
-        genC['_expectations'] = lessonExpectations;
-        console.log('[EXPECTATIONS] Applied fallback — using top 3 from sortedExps2:', lessonExpectations.map(e => e.code));
+        const STOP = new Set(['the','a','an','of','and','or','in','on','to','for','with','is','are','by','as','from','that','this','at','be','how','can','use','using','will','their','them','it','its','into','they','also','one','two','three','etc']);
+        const lessonText = ((parsed.lesson_plan||'') + ' ' + (parsed.student_worksheet||'') + ' ' + topic).toLowerCase();
+        const lessonWords = new Set(lessonText.replace(/[^a-z\s]/g,' ').split(/\s+/).filter(w => w.length > 3 && !STOP.has(w)));
+        const scored = sortedExps2.map(e => {
+          const descWords = (e.desc||'').toLowerCase().replace(/[^a-z\s]/g,' ').split(/\s+/).filter(w => w.length > 3 && !STOP.has(w));
+          const overlap = descWords.filter(w => lessonWords.has(w)).length;
+          return { exp: e, score: overlap };
+        }).filter(x => x.score >= 2).sort((a,b) => b.score - a.score);
+        if (scored.length >= 2) {
+          lessonExpectations = scored.slice(0, 3).map(x => ({...x.exp}));
+          genC['_expectations'] = lessonExpectations;
+          console.log('[EXPECTATIONS] Applied content-matched fallback:', lessonExpectations.map(e => e.code), 'scores:', scored.slice(0,3).map(x => x.score));
+        } else {
+          console.warn('[EXPECTATIONS] No curriculum codes strongly match lesson content — banner will be suppressed rather than show misleading codes');
+        }
       }
     }
 
@@ -4664,7 +4728,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-12-C (expectations fallback from sortedExps2)';
+const TA_BUILD = '2026-04-12-D (content-matched expectations fallback + grade alignment hint)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
