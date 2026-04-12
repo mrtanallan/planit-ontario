@@ -1053,7 +1053,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div id="acct-usage"><div style="color:var(--muted);font-size:.83rem;">Loading...</div></div>
   </div>
 
-  <div class="card" style="margin-bottom:14px;">
+  <div class="card" style="margin-bottom:14px;display:none;">
     <div class="ct">🔗 Google Integration</div>
     <p style="font-size:.83rem;color:var(--muted);margin-bottom:12px;">Connect Google to export slides directly to Google Slides.</p>
     <div id="acct-google-status" style="font-size:.83rem;margin-bottom:12px;color:var(--muted);">Checking...</div>
@@ -2192,6 +2192,22 @@ function checkGradeAlignment() {
     const taggedGrades = gradeTagMatch[1].split('/').map(g => g.trim().toUpperCase());
     const selectedTagged = selectedGrades.map(g => g === 'Kindergarten' ? 'K' : g.replace('Grade ','').trim());
     if (selectedTagged.some(g => taggedGrades.includes(g))) return;
+  }
+  // Also suppress if the typed topic (without grade tag) matches any suggestion
+  // currently in our datalist that's tagged for the selected grade. This catches
+  // the case where a user types "sorting" manually but "Sorting (Gr. K)" is a
+  // valid K-appropriate suggestion we offer.
+  const list = document.getElementById('topicSuggestions');
+  if (list && list.options && list.options.length) {
+    const typedBare = topicRaw.replace(/\(Gr\.\s*[K\d/]+\)\s*$/i,'').trim().toLowerCase();
+    const selectedTagged2 = selectedGrades.map(g => g === 'Kindergarten' ? 'K' : g.replace('Grade ','').trim());
+    for (const opt of list.options) {
+      const m = (opt.value||'').match(/^(.*?)\s*\(Gr\.\s*([K\d/]+)\)\s*$/i);
+      if (!m) continue;
+      const suggestionTopic = m[1].trim().toLowerCase();
+      const suggestionGrades = m[2].split('/').map(g => g.trim().toUpperCase());
+      if (suggestionTopic === typedBare && selectedTagged2.some(g => suggestionGrades.includes(g))) return;
+    }
   }
   const subjKey = subj === 'Science & Technology' ? 'science'
     : subj === 'Mathematics' ? 'math'
@@ -4748,7 +4764,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-12-F (hint suppresses when topic tagged for selected grade)';
+const TA_BUILD = '2026-04-12-G (hint matches typed topic to suggestions + Google card hidden)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
