@@ -3044,18 +3044,26 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     outputKeys.forEach(k => { genC[k] = {orig:parsed[k]||'', cur:parsed[k]||''}; });
     // Always create answer key entries (even if empty) so the pill + content block stay in sync.
     // Previously `if (parsed[k])` silently dropped missing keys, producing a pill with no matching content.
-    answerKeyKeys.forEach(k => {
-      const val = parsed[k];
-      if (val && val.trim()) {
-        genC[k] = {orig:val, cur:val};
-      } else {
-        // Claude didn't return this answer key — surface the gap with a visible placeholder
-        // so teachers know to regenerate rather than wondering why the block is blank.
-        const gradeLabel = isSplit ? (grades[answerKeyKeys.indexOf(k)] || '') : '';
-        const placeholder = `⚠️ Answer key was not generated${gradeLabel ? ' for '+gradeLabel : ''}. This sometimes happens on long split-class lessons when the AI hits its token limit.\n\nClick **✏️ Edit** to write one manually, or click **🔄 Regenerate Lesson** at the top to try again.`;
-        genC[k] = {orig:placeholder, cur:placeholder};
-      }
-    });
+    // EXCEPTION: For K-only lessons, skip entirely — K doesn't use traditional answer keys
+    // (observation-based assessment is embedded in the lesson plan instead).
+    const _isKOnlyLesson = grades.length >= 1 && grades.every(g => g === 'Kindergarten');
+    if (!_isKOnlyLesson) {
+      answerKeyKeys.forEach(k => {
+        const val = parsed[k];
+        if (val && val.trim()) {
+          genC[k] = {orig:val, cur:val};
+        } else {
+          // Claude didn't return this answer key — surface the gap with a visible placeholder
+          // so teachers know to regenerate rather than wondering why the block is blank.
+          const gradeLabel = isSplit ? (grades[answerKeyKeys.indexOf(k)] || '') : '';
+          const placeholder = `⚠️ Answer key was not generated${gradeLabel ? ' for '+gradeLabel : ''}. This sometimes happens on long split-class lessons when the AI hits its token limit.\n\nClick **✏️ Edit** to write one manually, or click **🔄 Regenerate Lesson** at the top to try again.`;
+          genC[k] = {orig:placeholder, cur:placeholder};
+        }
+      });
+    } else {
+      // For K: remove assessment_rubric from genC since K uses observation notes in the lesson plan
+      if (genC['assessment_rubric']) delete genC['assessment_rubric'];
+    }
     let lessonExpectations = parsed.expectations || preMatchedExp || [];
 
     // SPLIT CLASS: Validate AI expectations against curriculum and assign grades.
@@ -3163,7 +3171,13 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
           totalLessons: _pendingUnit.lessons.length
         }
       : null;
-    buildEditBlocks([...outputKeys,...answerKeyKeys], gradeDesc, subj, topic, lessonExpectations, _unitInfoForBadge);
+    // For K lessons, filter assessment_rubric and answer_key* out of UI keys
+    // so those panels don't render as empty blocks. K uses observation-based
+    // assessment embedded in the lesson plan itself.
+    const _uiKeys = _isKOnlyLesson
+      ? outputKeys.filter(k => k !== 'assessment_rubric')
+      : [...outputKeys, ...answerKeyKeys];
+    buildEditBlocks(_uiKeys, gradeDesc, subj, topic, lessonExpectations, _unitInfoForBadge);
     buildShareCards(outputKeys);
     setProgress(100,'Done!');
     setTimeout(hideLoading, 400);
@@ -3691,6 +3705,15 @@ function renderKWS(text) {
     }
 
     // [TRACE: word] — dotted text for tracing
+    // Handle both single-line match and multi-TRACE-per-line (e.g. "1. [TRACE: 2] [TRACE: 5]")
+    const traceMulti = trimmed.match(/^\s*(?:\d+\.\s*)?(\[TRACE:\s*[^\]]+\]\s*){2,}$/i);
+    if (traceMulti) {
+      const targets = [...trimmed.matchAll(/\[TRACE:\s*([^\]]+)\]/gi)].map(m => m[1].trim());
+      h += `<div class="kws-trace-block"><div class="kws-trace-label">Trace:</div>` +
+        targets.map(t => `<div class="kws-trace-word" style="display:inline-block;margin:0 12px;">${escHTML(t)}</div>`).join('') +
+        `</div>`;
+      return;
+    }
     m = trimmed.match(/^\s*(?:\d+\.\s*)?\[TRACE:\s*([^\]]+)\]\s*$/i);
     if (m) {
       const target = m[1].trim();
@@ -3926,16 +3949,24 @@ Return ONLY a valid JSON object with this exact shape, no markdown fences, no pr
       if (s !== -1 && e !== -1) parsed = JSON.parse(raw.slice(s, e + 1));
       else throw new Error('Invalid response format');
     }
-    const newQs = (parsed.questions || '').trim();
+    const newQsRaw = (parsed.questions || '').trim();
     const newAK = (parsed.answer_key || '').trim();
-    if (!newQs) throw new Error('Empty questions');
+    if (!newQsRaw) throw new Error('Empty questions');
+    // Force client-side renumbering — the AI often ignores "start from N" and
+    // returns 1/2/3. Rewrite leading "N." tokens so numbering continues from
+    // startNum regardless of what the model produced.
+    let _counter = startNum;
+    const newQs = newQsRaw.replace(/^\s*\d+\.\s+/gm, () => _counter++ + '. ');
     // Append worksheet content
     genC[k].cur = genC[k].cur.trimEnd() + '\n\n' + newQs;
     const body = document.getElementById('cbb-' + k);
     if (body) body.innerHTML = renderWSAuto(genC[k].cur);
     // Append answer key content (if the answer key block exists)
     if (newAK && genC[akKey]) {
-      genC[akKey].cur = genC[akKey].cur.trimEnd() + '\n' + newAK;
+      // Renumber answer key entries (Q1 → Q{startNum}, Q2 → Q{startNum+1}, etc)
+      let _akCounter = startNum;
+      const renumberedAK = newAK.replace(/^(\s*)Q\d+(\s*:)/gm, (_, pre, post) => pre + 'Q' + (_akCounter++) + post);
+      genC[akKey].cur = genC[akKey].cur.trimEnd() + '\n' + renumberedAK;
       const akBody = document.getElementById('cbb-' + akKey);
       if (akBody) akBody.innerHTML = renderAnswerKey(genC[akKey].cur);
     }
@@ -4095,7 +4126,15 @@ async function downloadKPDF(k) {
       return;
     }
 
-    // [TRACE: word]
+    // [TRACE: word] — handle multi-tag lines too
+    const traceMultiB = trimmed.match(/^\s*(?:\d+\.\s*)?(\[TRACE:\s*[^\]]+\]\s*){2,}$/i);
+    if (traceMultiB) {
+      const targetsB = [...trimmed.matchAll(/\[TRACE:\s*([^\]]+)\]/gi)].map(m => m[1].trim());
+      body += `<div class="traceblk"><span class="tracelbl">Trace:</span>` +
+        targetsB.map(t => `<span class="traceword" style="margin:0 12px;">${escHTML(t)}</span>`).join('') +
+        `</div>`;
+      return;
+    }
     mm = trimmed.match(/^\s*(?:\d+\.\s*)?\[TRACE:\s*([^\]]+)\]\s*$/i);
     if (mm) {
       body += `<div class="traceblk"><span class="tracelbl">Trace:</span><span class="traceword">${escHTML(mm[1].trim())}</span></div>`;
@@ -4764,7 +4803,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-12-G (hint matches typed topic to suggestions + Google card hidden)';
+const TA_BUILD = '2026-04-12-J (deterministic renumbering on More Questions/Activities)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
@@ -5237,9 +5276,12 @@ const SVG_RENDERERS = {
 
     const renderItems = (items, startX, startY) => items.map((item, i) => {
       const col=i%3, row=Math.floor(i/3);
-      const x=startX+16+col*62, y=startY+10+row*52;
-      return `<rect x="${x}" y="${y}" width="52" height="40" rx="8" fill="white" stroke="#D0D0D0" stroke-width="1.5"/>
-        <text x="${x+26}" y="${y+26}" text-anchor="middle" font-size="${DT.LABEL}" font-weight="600" fill="${DT.PRIMARY}" font-family="${DT.FONT}">${item}</text>`;
+      const x=startX+10+col*65, y=startY+10+row*52;
+      const boxW=60, boxH=40;
+      return `<rect x="${x}" y="${y}" width="${boxW}" height="${boxH}" rx="8" fill="white" stroke="#D0D0D0" stroke-width="1.5"/>
+        <foreignObject x="${x+2}" y="${y+2}" width="${boxW-4}" height="${boxH-4}">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="width:${boxW-4}px;height:${boxH-4}px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:${DT.FONT};font-size:11px;font-weight:600;color:${DT.PRIMARY};line-height:1.1;overflow:hidden;padding:2px;box-sizing:border-box;word-break:break-word;">${item}</div>
+        </foreignObject>`;
     }).join('');
 
     return `<svg viewBox="0 0 600 270" width="100%" height="100%">
