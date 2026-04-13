@@ -66,18 +66,24 @@ async function generateAIImage({ topic, subject, grade, theme, style, imageSize 
 
   // Build prompt. K line-drawing mode skips the "Grade X classroom" filler
   // and decorative words because we want a clean single object, not a scene.
+  // STYLE-FIRST ORDERING: Flux Schnell at 8 steps locks onto the first
+  // concept in the prompt. If we put "buttons" before "watercolour", it
+  // generates 3D photoreal buttons and ignores the style. Style descriptors
+  // MUST lead, then subject context, then the topic. Topic should be phrased
+  // as the painted/illustrated subject, not the standalone noun.
   const isKLineDrawing = resolvedStyle === K_LINE_DRAWING_STYLE;
   const prompt = isKLineDrawing
-    ? [resolvedStyle, topic, 'no text anywhere in image', 'no signatures, no artist names, no watermarks'].join(', ')
+    ? [resolvedStyle, 'of ' + topic, 'no text anywhere in image', 'no signatures, no artist names, no watermarks'].join(', ')
     : [
-        `${topic}${themeStr}`,
-        `Grade ${gradeNum || 'K-8'} classroom`,
-        resolvedStyle,
+        resolvedStyle,                                    // style FIRST — Flux locks here
+        `depicting ${topic}${themeStr}`,                  // topic as subject of the style
+        `for a Grade ${gradeNum || 'K-8'} classroom poster`,
         'beautiful artwork',
         'soft warm colours',
         'high quality',
         'no text anywhere in image',
         'no signatures, no artist names, no watermarks, no logos',
+        'not a photograph, not photorealistic, not 3D rendered',  // negative-prompt-as-positive (Flux ignores neg prompts)
       ].join(', ');
 
   const negativePrompt = [
@@ -139,11 +145,11 @@ export default async function handler(req, res) {
   } = req.body || {};
   if (!topic) return res.status(400).json({ error: 'topic required' });
 
-  // Cache key bumped to v4 to include style + subKey. Old v3 entries are
-  // left alone (no deletion) — they just won't match new requests. Over time
-  // the cache will repopulate with v4 entries.
+  // Cache key bumped to v8 because the Flux prompt structure changed
+  // (style now leads). Old v7 entries are left alone — they just won't match
+  // new requests.
   //
-  // Key format: v7:subject:grade:topic:style-code:subKey
+  // Key format: v8:subject:grade:topic:style-code:subKey
   // style is hashed to a short code (l=line, s=science, m=math, c=children) to
   // keep keys short. subKey is optional; if not passed, defaults to '_' so
   // cover-art calls still share a cache slot per topic.
@@ -152,7 +158,7 @@ export default async function handler(req, res) {
     : !style && (subject || '').toLowerCase().includes('math') ? 'm'
     : 'c';
   const subKeyClean = (subKey || '_').slice(0, 40).replace(/[^a-z0-9_-]/gi, '');
-  const cacheKey = `v7:${(subject||'').slice(0,20)}:${(grade||'').slice(0,10)}:${topic.slice(0,60)}:${styleCode}:${subKeyClean}`;
+  const cacheKey = `v8:${(subject||'').slice(0,20)}:${(grade||'').slice(0,10)}:${topic.slice(0,60)}:${styleCode}:${subKeyClean}`;
 
   try {
     const cached = await getCached(cacheKey);
