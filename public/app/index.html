@@ -1375,68 +1375,6 @@ async function retryAuthFetch(url, options, maxRetries=3) {
 }
 
 // ============================================================
-// GENERATION LOGGING — fire-and-forget metadata only.
-// MFIPPA-conscious: hashes topic, never logs content, no PII.
-// Failures are silent; logging never blocks user-facing flows.
-// See /api/log-generation.js for server-side scope + table schema.
-// ============================================================
-function _getClientId() {
-  try {
-    let id = localStorage.getItem('ta_cid');
-    if (!id) {
-      // RFC4122 v4 UUID via crypto.randomUUID where available, else fallback
-      id = (crypto && crypto.randomUUID) ? crypto.randomUUID()
-        : 'cid-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem('ta_cid', id);
-    }
-    return id;
-  } catch { return 'cid-anon'; }
-}
-
-async function _hashTopic(topic) {
-  try {
-    const t = String(topic || '').trim().toLowerCase();
-    if (!t) return null;
-    const buf = new TextEncoder().encode(t);
-    const hashBuf = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2,'0')).join('');
-  } catch { return null; }
-}
-
-// Call after every generation. fields:
-//   kind: 'lesson' | 'worksheet_extend' | 'slides' | 'image' (required)
-//   subject, grades (array), topic (raw — will be hashed before send)
-//   duration_ms, input_tokens, output_tokens, model, success (bool), error_code
-async function logGen(fields) {
-  try {
-    const topic_hash = fields.topic ? await _hashTopic(fields.topic) : null;
-    const topic_len = fields.topic ? String(fields.topic).length : null;
-    const body = {
-      kind: fields.kind,
-      subject: fields.subject || null,
-      grades: fields.grades || null,
-      topic_hash,
-      topic_len,
-      duration_ms: fields.duration_ms || null,
-      input_tokens: fields.input_tokens || null,
-      output_tokens: fields.output_tokens || null,
-      model: fields.model || null,
-      success: !!fields.success,
-      error_code: fields.error_code || null,
-      client_id: _getClientId(),
-    };
-    // Use fetch directly (no auth header — endpoint is public) and don't await
-    // the response. Logging must never delay the UI.
-    fetch('/api/log-generation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      keepalive: true,  // survives page nav/close
-    }).catch(() => {});
-  } catch { /* never throw from logging */ }
-}
-
-// ============================================================
 // STREAMING: /api/generate streaming helper.
 // Returns {ok, status, content:[{text}], error?} — same shape as a
 // parsed non-streaming response so callers' downstream parsing logic
@@ -1446,10 +1384,27 @@ async function logGen(fields) {
 // ============================================================
 async function callGenerateStreaming(bodyObj) {
   const body = { ...bodyObj, stream: true };
-  const res = await authFetch('/api/generate', {
-    method: 'POST',
-    body: JSON.stringify(body)
-  });
+  // BUILD V: auto-retry on 529 (Anthropic overloaded) with exponential backoff.
+  // Only the initial POST + status check are inside the retry loop — once the
+  // response is OK we're committed to consuming the stream, so retries past
+  // that point would be unsafe (partial output already delivered).
+  // Mid-stream errors are returned as-is so callers can show the friendly
+  // overload message (build U) rather than silently retry on torn output.
+  const MAX_RETRIES = 2;
+  let res;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    res = await authFetch('/api/generate', {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+    if (res?.status === 529 && attempt < MAX_RETRIES) {
+      const wait = [4000, 10000][attempt];
+      try { setProgress(null, `AI is busy — retrying in ${Math.round(wait/1000)}s...`); } catch(_) {}
+      await new Promise(r => setTimeout(r, wait));
+      continue;
+    }
+    break;
+  }
   if (!res || !res.ok) {
     let errData = {};
     try { errData = await res.json(); } catch(_) {}
@@ -4055,7 +4010,6 @@ async function addMoreQuestions(k) {
   const btn = document.querySelector('[data-morebtn="' + k + '"]');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Adding...'; }
   const { topic, grades, subj, gradeStr } = window._lessonMeta;
-  const _logT0 = Date.now();
   // Split-grade worksheets are named student_worksheet_A/B/C/D — pick the matching grade from the array
   const splitMatch = k.match(/student_worksheet_([A-F])$/);
   const gradeForBlock = (splitMatch && grades) ? (grades[['A','B','C','D','E','F'].indexOf(splitMatch[1])] || gradeStr) : gradeStr;
@@ -4172,10 +4126,8 @@ Return ONLY a valid JSON object with this exact shape, no markdown fences, no pr
       }
     } catch(_) {}
     showToast(genC[akKey] ? '✅ Added more questions + answers' : '✅ Added more questions');
-    logGen({ kind:'worksheet_extend', subject:subj, grades:[gradeForBlock], topic, model:'claude-sonnet-4-20250514', duration_ms:Date.now()-_logT0, success:true });
   } catch (e) {
     showToast('⚠️ Could not add questions: ' + e.message);
-    logGen({ kind:'worksheet_extend', subject:subj, grades:[gradeForBlock], topic, model:'claude-sonnet-4-20250514', duration_ms:Date.now()-_logT0, success:false, error_code:(e.message||'unknown').slice(0,64) });
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '➕ More Questions'; }
   }
@@ -4437,9 +4389,9 @@ h1{font-family:Georgia,'Times New Roman',serif;font-size:1.7rem;font-weight:600;
 h2.sec{font-family:Georgia,'Times New Roman',serif;font-size:1.1rem;font-weight:600;margin:16px 0 8px;padding:0;border:none;background:none;color:#000;}
 h3{font-size:.95rem;font-weight:600;margin:10px 0 4px;color:#000;break-after:avoid;page-break-after:avoid;}
 p{margin:4px 0;font-size:1rem;}
-.instr{font-size:1.1rem;font-weight:600;margin:10px 0 6px;color:#000;}
+.instr{font-size:1.1rem;font-weight:600;margin:10px 0 6px;color:#000;break-after:avoid;page-break-after:avoid;}
 .bul{margin:3px 0 3px 20px;font-size:1rem;}
-.gap{height:6px;}
+.gap{height:6px;break-before:avoid;page-break-before:avoid;}
 /* Single image */
 .imgblk{display:flex;flex-direction:column;align-items:center;margin:10px 0;page-break-inside:avoid;break-inside:avoid;}
 .imgblk img{width:180px;height:180px;object-fit:contain;}
@@ -4681,6 +4633,59 @@ function resolveSlideProfile(grades) {
 }
 
 // ============================================================
+// DECK STYLE SEED — locks visual aesthetic across all images in
+// a single slide deck for consistency (vs Chalkie which drifts
+// wildly across a presentation). Deterministic from subject +
+// topic so cache hits stay high. Returned object:
+//   { style: <verbose Flux prompt fragment>, code: <8-char hash> }
+// `code` is passed as subKey so per-deck cache slots don't
+// collide between decks with different style picks for the
+// same topic.
+// ============================================================
+function buildDeckStyleSeed(subject, topic) {
+  const s = (subject || '').toLowerCase();
+  const t = (topic || '').toLowerCase();
+
+  // Subject-anchored base palettes. Hand-tuned so each style
+  // produces visibly cohesive imagery when used across 5 calls.
+  let style;
+  if (s.includes('science')) {
+    // Living systems / nature → watercolour botanical
+    if (/animal|plant|ecosystem|habitat|cell|life|body|forest|ocean|garden|tree|leaf|flower|insect/.test(t)) {
+      style = 'soft watercolour botanical illustration, warm earthy palette, cream paper background, hand-painted texture, gentle natural lighting, storybook composition';
+    } else {
+      // Physical / earth / space → painterly diagram
+      style = 'soft watercolour scientific illustration, muted blue and ochre palette, cream paper background, labelled diagram aesthetic, hand-painted texture';
+    }
+  } else if (s.includes('math')) {
+    // Math always flat-vector, friendly + bright
+    style = 'flat geometric vector illustration, cheerful primary palette of teal yellow and coral, clean bold shapes, minimal shading, white background, friendly classroom poster style';
+  } else if (s.includes('social') || s.includes('history')) {
+    style = 'muted gouache historical illustration, warm sepia and ochre palette, textured paper background, storybook composition, painterly quality';
+  } else if (s.includes('language') || s.includes('english') || s.includes('french')) {
+    style = 'warm childrens book painting, soft pastel palette, cosy storybook illustration, hand-painted texture, gentle lighting';
+  } else if (s.includes('art') || s.includes('music') || s.includes('drama') || s.includes('dance')) {
+    style = 'expressive mixed-media illustration, vibrant saturated palette, textured brushwork, joyful composition';
+  } else if (s.includes('health') || s.includes('phys')) {
+    style = 'flat vector illustration, energetic palette of teal coral and yellow, simple bold figures, clean white background, friendly modern style';
+  } else {
+    // Default — generic warm childrens book
+    style = 'warm childrens book painting, soft pastel palette, cosy illustration, hand-painted texture';
+  }
+
+  // Cheap deterministic hash so the cache key knows which seed produced it.
+  // 32-bit FNV-1a, base36, 8 chars. Pure JS, no async.
+  let h = 2166136261;
+  const seedKey = s + '|' + t + '|' + style;
+  for (let i = 0; i < seedKey.length; i++) {
+    h ^= seedKey.charCodeAt(i);
+    h = (h * 16777619) >>> 0;
+  }
+  const code = h.toString(36).slice(0, 8);
+  return { style, code };
+}
+
+// ============================================================
 // SLIDES — generate data
 // ============================================================
 async function generateSlideData(callerBtn) {
@@ -4723,7 +4728,6 @@ async function generateSlideData(callerBtn) {
 
   const lpText = genC['lesson_plan']?.cur || '';
   if (callerBtn) { callerBtn.disabled=true; callerBtn.textContent='⏳ Building slides...'; }
-  const _logT0 = Date.now();
   try {
     const iepCount = students.filter(s=>s.iep&&s.iep.trim()).length;
     const isMath = (subject||'').toLowerCase().includes('math');
@@ -4949,7 +4953,12 @@ async function generateSlideData(callerBtn) {
     const detectedTheme = themeMatch ? themeMatch[1].trim() : null;
     const isScience = (subject||'').toLowerCase().includes('science');
 
-    window._slideData = {sd, topic, subject, gradeStr, detectedTheme};
+    // Build deck-wide style seed — locks all 5 image generations
+    // (mindson + 4 slides) to one cohesive aesthetic. Moat: visible
+    // consistency vs Chalkie's drift across decks.
+    const deckStyle = buildDeckStyleSeed(subject, topic);
+
+    window._slideData = {sd, topic, subject, gradeStr, detectedTheme, deckStyle};
     // Persist slide data to current lesson so it survives page reload
     _pendingSlideSave = true;
 
@@ -4964,7 +4973,7 @@ async function generateSlideData(callerBtn) {
         const mindsonPrompt = (sd.minds_on && sd.minds_on.hook) ? sd.minds_on.hook : topic;
         const r = await authFetch('/api/generate-image', {
           method: 'POST',
-          body: JSON.stringify({ type: 'ai', topic: mindsonPrompt, subject, grade: gradeStr, theme: detectedTheme })
+          body: JSON.stringify({ type: 'ai', topic: mindsonPrompt, subject, grade: gradeStr, theme: detectedTheme, style: deckStyle.style, subKey: deckStyle.code })
         });
         if (r.ok) {
           const d = await r.json();
@@ -4982,7 +4991,7 @@ async function generateSlideData(callerBtn) {
         try {
           const r = await authFetch('/api/generate-image', {
             method: 'POST',
-            body: JSON.stringify({ type: 'ai', topic: slidePrompt, subject, grade: gradeStr, theme: detectedTheme })
+            body: JSON.stringify({ type: 'ai', topic: slidePrompt, subject, grade: gradeStr, theme: detectedTheme, style: deckStyle.style, subKey: deckStyle.code })
           });
           if (r.ok) {
             const d = await r.json();
@@ -5049,7 +5058,6 @@ async function generateSlideData(callerBtn) {
 
     const gsBtn = document.getElementById('gSlidesBtn');
     if (gsBtn && _gToken) gsBtn.style.display='inline-flex';
-    logGen({ kind:'slides', subject, grades, topic, model:'claude-sonnet-4-20250514', duration_ms:Date.now()-_logT0, success:true });
     return true;
 
   } catch(e) {
@@ -5060,7 +5068,6 @@ async function generateSlideData(callerBtn) {
     }
     clearInterval(imgLoadTimer);
     if (callerBtn) { callerBtn.disabled=false; callerBtn.textContent='▶ Present'; }
-    logGen({ kind:'slides', subject, grades, topic, model:'claude-sonnet-4-20250514', duration_ms:Date.now()-_logT0, success:false, error_code:(e.message||'unknown').slice(0,64) });
     return false;
   }
 }
@@ -5071,7 +5078,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-13-U (Better overload error messaging: lesson + slide generation now show a clear "Anthropic AI at capacity" message that explains the issue is upstream and tells the teacher to wait 30-60s. Replaces cryptic "Error: Overloaded" alert. Auto-retry on 529 deferred to next session.)';
+const TA_BUILD = '2026-04-13-W (Four changes: (1) Removed build-S residue — logGen helper + 4 call sites + 2 _logT0 timestamps + _hashTopic/_getClientId. No more 404s on /api/log-generation. (2) Deck-wide image style seed — buildDeckStyleSeed() picks a subject-anchored aesthetic once per deck and locks all 5 image gens (mindson + 4 slides) to it. Subject palettes: science=watercolour botanical, math=flat geometric vector, social=gouache historical, etc. Cache key safely differentiated by 8-char FNV hash. Visible consistency moat vs Chalkie. (3) K worksheet PDF pagination: .gap now break-before:avoid and .instr break-after:avoid, so blank-line spacers can no longer break the chain between Teacher-says and the activity below. CSS-only fix, no parser surgery — chose this over state-machine wrap for zero regression risk. (4) Carries forward V auto-retry on 529. Plus: worksheet-6.html submitWorksheet now falls back to anonName=#unavailable if crypto.subtle is unavailable, so HTTP test contexts and any iPad Safari edge case do not block submission.)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
