@@ -407,9 +407,27 @@ async function submitWorksheet(){
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent='⏳ Submitting...';
   try{
+    // PRIVACY: Never transmit the raw student name. If matched to the teacher's
+    // roster, we submit their opaque student_id and blank the name field so the
+    // DB only holds an unreadable UUID. If no match (typo, missing roster), we
+    // hash the typed name with the worksheet_id as salt — this keeps the DB
+    // free of readable names while still letting the teacher see that two
+    // submissions came from the same typed identity (useful for finding the
+    // student in class).
+    let anonName;
+    if (matchedStudent?.id) {
+      anonName = '';  // student_id carries the identity; name is redundant
+    } else {
+      // Hash the typed name with worksheet_id as salt so the same typed name
+      // in different worksheets produces different hashes (prevents tracking).
+      const enc = new TextEncoder().encode(name.toLowerCase() + '|' + worksheetId);
+      const buf = await crypto.subtle.digest('SHA-256', enc);
+      const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0, 10);
+      anonName = '#' + hex;
+    }
     const res=await fetch('/api/worksheet',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({worksheet_id:worksheetId,share_token:shareToken,student_name:name,student_id:matchedStudent?.id||null,responses:collectResponses()})
+      body:JSON.stringify({worksheet_id:worksheetId,share_token:shareToken,student_name:anonName,student_id:matchedStudent?.id||null,responses:collectResponses()})
     });
     if(!res.ok)throw new Error('Submit failed');
     // Hide grade picker if visible (split-grade link) and clear global state
