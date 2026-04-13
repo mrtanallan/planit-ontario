@@ -90,8 +90,20 @@ export default async function handler(req, res) {
     if (!share_token || !isValidUUID(share_token)) {
       return res.status(404).json({ error: 'Worksheet not found' });
     }
-    if (!student_name || typeof student_name !== 'string') {
-      return res.status(400).json({ error: 'Student name required' });
+    // BUILD AC: Post-build-T, a roster-matched submission intentionally sends
+    // student_name='' because the UUID student_id carries the identity. The
+    // previous `!student_name` check treated '' as missing and returned 400,
+    // which made the client show "Something went wrong" on EVERY matched
+    // submission — build-T was silently broken until now. Fix: require EITHER
+    // student_name (for unmatched hash '#abc123...') OR student_id (for
+    // matched roster UUID), not both.
+    const hasName = typeof student_name === 'string' && student_name.length > 0;
+    const hasId = student_id && isValidUUID(student_id);
+    if (!hasName && !hasId) {
+      return res.status(400).json({ error: 'Student name or roster match required' });
+    }
+    if (student_name !== undefined && student_name !== null && typeof student_name !== 'string') {
+      return res.status(400).json({ error: 'Invalid student name type' });
     }
 
     // Verify worksheet exists AND token matches (single query)
@@ -107,7 +119,7 @@ export default async function handler(req, res) {
     }
 
     // Sanitize inputs
-    const safeName = student_name.trim().substring(0, 100);
+    const safeName = (typeof student_name === 'string' ? student_name : '').trim().substring(0, 100);
     const safeStudentId = (student_id && isValidUUID(student_id)) ? student_id : null;
     const safeResponses = responses && typeof responses === 'object' ? responses : {};
 
