@@ -420,10 +420,18 @@ async function submitWorksheet(){
     } else {
       // Hash the typed name with worksheet_id as salt so the same typed name
       // in different worksheets produces different hashes (prevents tracking).
-      const enc = new TextEncoder().encode(name.toLowerCase() + '|' + worksheetId);
-      const buf = await crypto.subtle.digest('SHA-256', enc);
-      const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0, 10);
-      anonName = '#' + hex;
+      // crypto.subtle requires a secure context (HTTPS or localhost). On HTTP
+      // it's undefined and would throw — fall back to a generic marker so
+      // students can still submit. Real names never reach the DB either way.
+      try {
+        if (!crypto?.subtle?.digest) throw new Error('crypto.subtle unavailable');
+        const enc = new TextEncoder().encode(name.toLowerCase() + '|' + worksheetId);
+        const buf = await crypto.subtle.digest('SHA-256', enc);
+        const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').slice(0, 10);
+        anonName = '#' + hex;
+      } catch(_) {
+        anonName = '#unavailable';
+      }
     }
     const res=await fetch('/api/worksheet',{
       method:'POST',headers:{'Content-Type':'application/json'},
