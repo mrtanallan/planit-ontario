@@ -3127,7 +3127,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
 
     // STREAMING: lesson generator uses streaming helper (revert: swap back to retryAuthFetch)
     const data = await callGenerateStreaming({
-      model:'claude-sonnet-4-20250514', max_tokens:maxTok, call_type:'lesson', topic, grades, messages:[{role:'user',content:prompt}],
+      model:'claude-sonnet-4-6', max_tokens:maxTok, call_type:'lesson', topic, grades, messages:[{role:'user',content:prompt}],
       meta:{type:'lesson', grade:(grades||[]).join('/')||null, subject:subj||null}
     });
     clearInterval(progInterval);
@@ -4137,7 +4137,7 @@ Return ONLY a valid JSON object with this exact shape, no markdown fences, no pr
       '{"questions": "<the 4 new worksheet questions as markdown, ready to append>", "answer_key": "<answers in the format Q' + startNum + ': [question] -> [ideal answer], one per line, for all 4 new questions>"}';
   try {
     const res = await authFetch('/api/generate', { method: 'POST', body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514', max_tokens: 900,
+      model: 'claude-sonnet-4-6', max_tokens: 900,
       messages: [{ role: 'user', content: prompt }],
       meta: { type: 'worksheet_regen', grade: gradeForBlock || null, subject: subj || null }
     })});
@@ -5011,7 +5011,7 @@ async function generateSlideData(callerBtn) {
 
     // STREAMING: slide structure uses streaming helper (max_tokens 6000 = highest 504 risk)
     const data = await callGenerateStreaming({
-      model:'claude-sonnet-4-20250514', max_tokens:6000, messages:[{role:'user',content:structurePrompt}],
+      model:'claude-sonnet-4-6', max_tokens:6000, messages:[{role:'user',content:structurePrompt}],
       meta:{type:'slides', grade:gradeStr||null, subject:subject||null}
     });
     if (!data||!data.ok) throw new Error('Slide structure generation failed ('+(data?.status||0)+')');
@@ -5164,7 +5164,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-13-Y (Quality fixes after real-world test on Patterns + Data and Graphs lessons. (1) RENDERING: "1. ### Title" no longer leaks as literal text — both renderKWS and downloadKPDF now strip the N. prefix before checking for heading markers. (2) PROMPT: K worksheet prompt no longer contradicts itself on numbering vs heading markers. addMoreQuestions extend prompt synced. (3) PROMPT: slides spec now enforces statistical-concept integrity — mode lessons require repeated bar values, mean lessons require clean averages, median lessons require odd value counts. Catches the "Finding the Mode" bar chart with no repeated values bug. (4) PROMPT: minds_on.prompt schema now requires the TPS prompt directly relate to the hook/topic — no more "share your favorite season" on a button-sorting slide. (5) IMAGE: Mindson hook is now cleaned (question words stripped, top noun phrase extracted) before being sent to Flux. Stops Flux from baking literal question text like "What you sey?" into images. (6) IMAGE (separate file generate-image-3.js): Flux prompt restructured — style descriptor now leads, topic phrased as the painted subject. Cache bumped v7→v8. Carries forward X 529 retry, W deck style seed, etc.)';
+const TA_BUILD = '2026-04-13-AB (MODEL UPGRADE — Sonnet 4.6 is now the default for ALL generation paths in index-14.html (10 call sites: lesson, slides structure, SVG agent loops, auto-mark, report cards, worksheet extends, etc.). Same price as 4.5 ($3/$15 per million) with stronger instruction-following — should reduce content-quality bugs like the mode chart value mismatch. Backend fallback chain updated to match: Sonnet 4.6 → Opus 4.6 → Sonnet 4.5 → Sonnet 4 → Haiku 4.5. All four chain entries now know to fall back to Opus first because Opus is the highest-quality safety valve and has independent capacity. Layered with X client retry: still up to ~12 attempts across 5 capacity pools before any teacher sees an error.)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
@@ -7052,7 +7052,7 @@ async function generateWithAgentLoop(cs, topic, subject, gradeStr) {
   const callGenerator = () => authFetch('/api/generate', {
     method: 'POST',
     body: JSON.stringify({
-      model:'claude-sonnet-4-20250514', max_tokens:1800, call_type:'svg',
+      model:'claude-sonnet-4-6', max_tokens:1800, call_type:'svg',
       system: GENERATOR_SYSTEM,
       messages:[{role:'user', content: fullPrompt}],
       meta:{type:'svg', grade:gradeStr||null, subject:null}
@@ -7069,7 +7069,7 @@ async function generateWithAgentLoop(cs, topic, subject, gradeStr) {
   const callCritic = (svg, issues_from_prev) => authFetch('/api/generate', {
     method: 'POST',
     body: JSON.stringify({
-      model:'claude-sonnet-4-20250514', max_tokens:600, call_type:'svg',
+      model:'claude-sonnet-4-6', max_tokens:600, call_type:'svg',
       system: CRITIC_SYSTEM,
       messages:[{role:'user', content: [
         'GRADE: '+gradeStr,
@@ -7118,7 +7118,7 @@ async function generateWithAgentLoop(cs, topic, subject, gradeStr) {
   const d2 = await authFetch('/api/generate', {
     method: 'POST',
     body: JSON.stringify({
-      model:'claude-sonnet-4-20250514', max_tokens:1800, call_type:'svg',
+      model:'claude-sonnet-4-6', max_tokens:1800, call_type:'svg',
       system: GENERATOR_SYSTEM,
       messages:[{role:'user', content: retryPrompt}],
       meta:{type:'svg_retry', grade:gradeStr||null, subject:null}
@@ -8396,7 +8396,7 @@ For score: ✓ (correct or essentially correct), ~ (partial credit — got some 
 Default toward L3 unless there is clear evidence the student is below or above the standard.`;
 
   try {
-    const res = await authFetch('/api/generate', {method:'POST',body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:900,messages:[{role:'user',content:prompt}],meta:{type:'auto_mark',grade:studentObj.grade||null,subject:null}})});
+    const res = await authFetch('/api/generate', {method:'POST',body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:900,messages:[{role:'user',content:prompt}],meta:{type:'auto_mark',grade:studentObj.grade||null,subject:null}})});
     if (!res.ok) throw new Error('Server error');
     const data = await res.json();
     if (data.error) throw new Error(data.error.message||'API error');
@@ -9381,7 +9381,7 @@ Requirements:
 - No bullet points — flowing paragraph only
 Return ONLY the comment text, nothing else.`;
   try {
-    const res = await authFetch('/api/generate', {method:'POST',body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:prompt}],meta:{type:'report_card',grade:s.grade||null,subject:subj||null}})});
+    const res = await authFetch('/api/generate', {method:'POST',body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,messages:[{role:'user',content:prompt}],meta:{type:'report_card',grade:s.grade||null,subject:subj||null}})});
     if (!res.ok) throw new Error('Server error');
     const data = await res.json();
     if (data.error) throw new Error(data.error.message||'API error');
@@ -9750,7 +9750,7 @@ Rules:
   try {
     // STREAMING: unit plan uses streaming helper
     const data = await callGenerateStreaming({
-      model: 'claude-sonnet-4-20250514', max_tokens: 1400, messages: [{ role: 'user', content: prompt }],
+      model: 'claude-sonnet-4-6', max_tokens: 1400, messages: [{ role: 'user', content: prompt }],
       meta:{type:'unit', grade:(grades||[]).join('/')||null, subject:subj||null}
     });
     setProgress(70, 'Parsing unit...');
@@ -10228,7 +10228,7 @@ Return ONLY the assessment content — no preamble or explanation.`;
   try {
     // STREAMING: unit assessment uses streaming helper
     const data = await callGenerateStreaming({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }],
       meta:{type:'unit_assessment_'+type, grade:gradesStr||null, subject:subj||null}
