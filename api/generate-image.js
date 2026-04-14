@@ -126,8 +126,19 @@ async function generateAIImage({ topic, subject, grade, theme, style, imageSize 
   return url;
 }
 
+const ALLOWED_ORIGINS = [
+  'https://www.teacherai.ca',
+  'https://teacherai.ca',
+];
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS: whitelist instead of wildcard. Prevents arbitrary websites from
+  // calling this endpoint and burning through Fal.ai credits.
+  const origin = req.headers.origin || '';
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
