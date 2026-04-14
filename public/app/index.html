@@ -2976,13 +2976,15 @@ Use ONLY these tag formats, and keep total activities to 3–5:
 
 (1) [IMAGE: simple object description] — generates ONE line-drawing. Use only when the activity truly needs a single focal image. Keep descriptions simple: "red apple", "smiling bear cub". Never use [IMAGE:] for sorting or matching tasks — those MUST use [CIRCLE PICTURE:] with 3-4 items.
 
+IMAGE PROMPT GUIDANCE — PREFER these words because we render them as perfect deterministic SVGs (no AI drawing, no failures): circle, square, triangle, rectangle, oval, diamond, star, heart, pentagon, hexagon, crescent, arrow, apple, banana, sun, moon, cloud, flower, tree, fish, ball, house, car, egg, cup. Also supported: colour+shape combos like "red circle", "blue square", "yellow triangle", "green star". If an activity can use one of these words, use them — the drawing will be instant and flawless. Only fall back to other nouns when the lesson genuinely needs them.
+
 (2) [DRAW: prompt] — large empty box. The prompt inside [DRAW:] is a short teacher-facing caption (e.g. "Draw your family"). Pair it with a Teacher says line.
 
 (3) [TRACE: target] — dotted tracing. ONLY use for: single letters (A, b, c), numbers 0-10, or short CVC words (cat, sun, bed). NEVER use for adjectives like "big" or "red" — those are not traceable.
 
-(4) [COUNT: item name x N] — renders N line-drawings of the same item for students to count. Example: [COUNT: red apple x 3]. Use N between 1 and 10. NEVER use raw emoji (🐶🍎) in COUNT — always use the "item name x N" syntax so we get consistent line-drawings.
+(4) [COUNT: item name x N] — renders N line-drawings of the same item for students to count. Example: [COUNT: red apple x 3]. Use N between 1 and 10. NEVER use raw emoji (🐶🍎) in COUNT — always use the "item name x N" syntax so we get consistent line-drawings. Same prompt guidance as IMAGE applies — prefer the supported words above for perfect consistent drawings.
 
-(5) [CIRCLE PICTURE: item1 | item2 | item3 | item4] — row of 3-4 different line-drawings, students circle the matching ones. Use this for ALL sorting and matching tasks.
+(5) [CIRCLE PICTURE: item1 | item2 | item3 | item4] — row of 3-4 different line-drawings, students circle the matching ones. Use this for ALL sorting and matching tasks. Same prompt guidance as IMAGE applies.
 
 NEVER use [TEXT BOX], [LARGE BOX], [WORD BANK], [CIRCLE ONE], or anything requiring students to read or type. Those are Grade 1-8 formats only.
 
@@ -4087,8 +4089,144 @@ function renderKWS(text) {
   return h;
 }
 
-// Fetch K worksheet images in parallel and swap placeholder spinners for real <img> tags.
-// Uses the enhanced generate-image endpoint with style=K_LINE_DRAWING_STYLE and imageSize=square_hd.
+// ═══════════════════════════════════════════════════════════════════
+// K HARDCODED SVG RENDERERS
+// ═══════════════════════════════════════════════════════════════════
+// Flux Schnell draws chicks for triangles, donuts for patterns, and
+// generally can't be trusted for simple geometric shapes. These hardcoded
+// renderers produce deterministic black-and-white line-drawing SVGs that
+// match the K_LINE_DRAWING_STYLE aesthetic. Free, instant, always correct.
+//
+// Coverage priority: basic shapes > colored shapes (for patterns) > common
+// K vocabulary nouns. If prompt doesn't match, fall through to Flux.
+//
+// Returns an SVG string (100% width/height, 200x200 viewBox) or null.
+// Called from loadKWorksheetImages BEFORE the Flux fetch.
+
+// Shape primitives — all return inner SVG content positioned in a 200x200 viewBox.
+// Stroke is black, fill is none (line drawing style). Use thick strokes so K kids
+// can clearly see them and colour inside the lines.
+const _K_SHAPE_PRIMS = {
+  circle:    '<circle cx="100" cy="100" r="72" fill="none" stroke="#000" stroke-width="5"/>',
+  square:    '<rect x="34" y="34" width="132" height="132" fill="none" stroke="#000" stroke-width="5"/>',
+  rectangle: '<rect x="22" y="58" width="156" height="84" fill="none" stroke="#000" stroke-width="5"/>',
+  triangle:  '<polygon points="100,28 172,170 28,170" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>',
+  oval:      '<ellipse cx="100" cy="100" rx="80" ry="56" fill="none" stroke="#000" stroke-width="5"/>',
+  diamond:   '<polygon points="100,28 172,100 100,172 28,100" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>',
+  star:      '<polygon points="100,24 119,80 178,80 131,115 149,172 100,138 51,172 69,115 22,80 81,80" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>',
+  heart:     '<path d="M100 170 C 40 130, 22 90, 40 60 C 55 38, 85 38, 100 62 C 115 38, 145 38, 160 60 C 178 90, 160 130, 100 170 Z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>',
+  pentagon:  '<polygon points="100,30 170,80 142,160 58,160 30,80" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>',
+  hexagon:   '<polygon points="60,34 140,34 180,100 140,166 60,166 20,100" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>',
+  crescent:  '<path d="M130 40 A 70 70 0 1 0 130 160 A 50 50 0 1 1 130 40 Z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>',
+  arrow:     '<polygon points="30,85 120,85 120,55 175,100 120,145 120,115 30,115" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>',
+};
+
+// Common K nouns → small icon SVGs. Deliberately simple; the point is "clearly
+// identifiable silhouette" not fine art. These cover the ~70% of common K
+// worksheet items: food, animals, weather, basic objects.
+const _K_OBJECT_PRIMS = {
+  apple: `<path d="M100 60 Q 70 55 60 85 Q 50 130 100 165 Q 150 130 140 85 Q 130 55 100 60 Z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M100 60 L 100 40" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+          <path d="M100 45 Q 115 35 130 42" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"/>`,
+  banana: `<path d="M55 70 Q 50 140 130 165 L 150 150 Q 80 140 80 75 Z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>`,
+  sun: `<circle cx="100" cy="100" r="40" fill="none" stroke="#000" stroke-width="5"/>
+        ${[0,45,90,135,180,225,270,315].map(a => {
+          const rad=a*Math.PI/180, x1=100+50*Math.cos(rad), y1=100+50*Math.sin(rad), x2=100+72*Math.cos(rad), y2=100+72*Math.sin(rad);
+          return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#000" stroke-width="5" stroke-linecap="round"/>`;
+        }).join('')}`,
+  moon: `<path d="M130 40 A 70 70 0 1 0 130 160 A 55 55 0 1 1 130 40 Z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>`,
+  cloud: `<path d="M50 120 Q 30 120 30 100 Q 30 80 55 80 Q 60 55 90 55 Q 115 55 125 75 Q 150 70 160 95 Q 175 95 175 115 Q 175 135 155 135 L 55 135 Q 45 135 50 120 Z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>`,
+  star: _K_SHAPE_PRIMS.star, // alias
+  heart: _K_SHAPE_PRIMS.heart, // alias
+  flower: `<circle cx="100" cy="100" r="18" fill="none" stroke="#000" stroke-width="4"/>
+           ${[0,72,144,216,288].map(a => {
+             const rad=a*Math.PI/180, cx=100+35*Math.cos(rad), cy=100+35*Math.sin(rad);
+             return `<ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="22" ry="14" transform="rotate(${a} ${cx.toFixed(1)} ${cy.toFixed(1)})" fill="none" stroke="#000" stroke-width="4"/>`;
+           }).join('')}
+           <line x1="100" y1="135" x2="100" y2="180" stroke="#000" stroke-width="4" stroke-linecap="round"/>`,
+  tree: `<path d="M70 90 Q 100 30 130 90 Q 155 80 140 115 Q 160 110 145 140 L 55 140 Q 40 110 60 115 Q 45 80 70 90 Z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+         <rect x="90" y="140" width="20" height="30" fill="none" stroke="#000" stroke-width="5"/>`,
+  fish: `<path d="M30 100 Q 70 60 130 70 Q 170 85 170 100 Q 170 115 130 130 Q 70 140 30 100 Z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+         <path d="M170 100 L 190 75 L 190 125 Z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+         <circle cx="55" cy="92" r="4" fill="#000"/>`,
+  ball: `<circle cx="100" cy="100" r="68" fill="none" stroke="#000" stroke-width="5"/>
+         <path d="M40 100 Q 100 70 160 100" fill="none" stroke="#000" stroke-width="4"/>
+         <path d="M40 100 Q 100 130 160 100" fill="none" stroke="#000" stroke-width="4"/>`,
+  house: `<polygon points="30,110 100,50 170,110" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+          <rect x="45" y="110" width="110" height="60" fill="none" stroke="#000" stroke-width="5"/>
+          <rect x="85" y="135" width="30" height="35" fill="none" stroke="#000" stroke-width="5"/>`,
+  car: `<rect x="30" y="105" width="140" height="40" rx="6" fill="none" stroke="#000" stroke-width="5"/>
+        <path d="M55 105 Q 70 75 100 75 L 135 75 Q 150 75 160 105" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+        <circle cx="65" cy="148" r="14" fill="none" stroke="#000" stroke-width="5"/>
+        <circle cx="135" cy="148" r="14" fill="none" stroke="#000" stroke-width="5"/>`,
+  egg: `<ellipse cx="100" cy="105" rx="48" ry="62" fill="none" stroke="#000" stroke-width="5"/>`,
+  cup: `<path d="M60 60 L 70 160 Q 70 170 80 170 L 120 170 Q 130 170 130 160 L 140 60 Z" fill="none" stroke="#000" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M140 80 Q 165 85 165 110 Q 165 135 140 140" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round"/>`,
+};
+
+// Colour name → fill. For "red circle" / "blue square" pattern activities
+// we override stroke with black and fill with the colour so K kids see
+// distinct colours for pattern recognition. Limited palette — matches
+// common K worksheet colours.
+const _K_COLOUR_FILLS = {
+  red:'#E8443C', blue:'#3B8AD9', yellow:'#F5C842', green:'#3FA663',
+  orange:'#E78D3A', purple:'#9257BA', pink:'#E88FB5', brown:'#8A5A3C',
+  black:'#222', white:'#FFF', grey:'#999', gray:'#999',
+};
+
+function _kHardcodedSVG(rawPrompt) {
+  if (!rawPrompt) return null;
+  const p = String(rawPrompt).toLowerCase().trim()
+    .replace(/[^a-z\s-]/g,' ').replace(/\s+/g,' ');
+  if (!p) return null;
+
+  // Try colour + shape: "red circle", "blue square", "yellow triangle"
+  const tokens = p.split(' ').filter(Boolean);
+  let colour = null, shape = null, object = null;
+  for (const t of tokens) {
+    if (!colour && _K_COLOUR_FILLS[t]) colour = t;
+    else if (!shape && _K_SHAPE_PRIMS[t]) shape = t;
+    else if (!object && _K_OBJECT_PRIMS[t]) object = t;
+  }
+
+  // Matching logic: prefer most specific combo.
+  // 1. colour + shape → filled coloured shape
+  // 2. shape alone → line-drawing shape
+  // 3. object alone → line-drawing object
+  // 4. no match → null (Flux fallback)
+  let inner = null;
+  if (colour && shape) {
+    // Coloured filled shape: replace fill="none" with the colour
+    inner = _K_SHAPE_PRIMS[shape].replace(/fill="none"/g, `fill="${_K_COLOUR_FILLS[colour]}"`);
+  } else if (shape) {
+    inner = _K_SHAPE_PRIMS[shape];
+  } else if (object) {
+    inner = _K_OBJECT_PRIMS[object];
+  } else {
+    // Last try: does the prompt contain a shape/object word as substring?
+    // Handles "a big red apple" or "one yellow star" where word-splitting
+    // missed a match. Check shapes first (more specific), then objects.
+    for (const [name, svg] of Object.entries(_K_SHAPE_PRIMS)) {
+      if (p.includes(name)) {
+        if (colour) { inner = svg.replace(/fill="none"/g, `fill="${_K_COLOUR_FILLS[colour]}"`); }
+        else        { inner = svg; }
+        break;
+      }
+    }
+    if (!inner) {
+      for (const [name, svg] of Object.entries(_K_OBJECT_PRIMS)) {
+        if (p.includes(name)) { inner = svg; break; }
+      }
+    }
+  }
+
+  if (!inner) return null;
+  return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block;">${inner}</svg>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// K IMAGE RESOLUTION
+// ═══════════════════════════════════════════════════════════════════
 async function loadKWorksheetImages(pending) {
   const style = "simple black and white line drawing, coloring book page, thick black outlines on white background, single centered object, no text, minimal detail, childlike";
   const subj = (window._lessonMeta && window._lessonMeta.subj) || 'Language / Literacy';
@@ -4098,6 +4236,19 @@ async function loadKWorksheetImages(pending) {
     // Session cache hit?
     if (window._kImageCache[key]) {
       swapKImage(key, window._kImageCache[key], prompt);
+      return;
+    }
+    // BUILD AI: try hardcoded SVG first. Covers basic shapes, colour+shape
+    // combos (for pattern activities), and common K vocabulary objects.
+    // Deterministic, free, instant — and Flux was drawing chicks for
+    // triangles anyway. Fall through to Flux only if no match.
+    const hardcodedSVG = _kHardcodedSVG(prompt);
+    if (hardcodedSVG) {
+      // Cache the SVG as a data URL so subsequent renders (and PDF) get
+      // the same thing without re-running the matcher.
+      const dataUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(hardcodedSVG);
+      window._kImageCache[key] = dataUrl;
+      swapKImage(key, dataUrl, prompt);
       return;
     }
     try {
@@ -5261,7 +5412,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-14-AH (RUBRIC LAYOUT FIX: Level 4 was wrapping to a second row because the category descriptor ("Demonstrates understanding of...") was being treated as a 5th grid child, pushing Level 4 into row 2. Fixed with lazy grid opening — descriptor renders OUTSIDE the 4-column grid as a full-width line above the level cards. Also changed grid-template-columns to minmax(0,1fr) so cells can shrink below their content width, preventing future overflow. Carries forward AG+ answer key regex fix, AG rubric prompt tightening + renderer defensive asterisk stripping, token budget raise, money display formatting, Mindson image no hook cleaning.)';
+const TA_BUILD = '2026-04-14-AJ (K HARDCODED SVG RENDERERS — Flux was consistently drawing chicks for triangles and donuts for shapes. Built a hardcoded SVG library of 12 basic shapes (circle, square, triangle, rectangle, oval, diamond, star, heart, pentagon, hexagon, crescent, arrow), 14 common K objects (apple, banana, sun, moon, cloud, flower, tree, fish, ball, house, car, egg, cup), and colour+shape combos (red circle, blue square, etc.) using 12 named colours. loadKWorksheetImages now checks hardcoded renderer FIRST, falls through to Flux only for unmatched prompts. Benefits: deterministic drawings, zero Flux cost for covered items, instant render (no network round trip), consistent style. K worksheet prompt updated to nudge AI toward supported words. Data URL caching means PDF path gets the same SVGs transparently. Skipped builds AH→AI letter to avoid visual confusion with the term "AI" — landed on AJ. Carries forward all AH fixes (rubric layout lazy grid).)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
