@@ -3349,6 +3349,17 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     buildShareCards(outputKeys);
     setProgress(100,'Done!');
     setTimeout(hideLoading, 400);
+    // AJ+: K lessons intentionally omit Level 1-4 rubrics because Ontario
+    // Kindergarten uses observational assessment. Rather than leave teachers
+    // wondering why no rubric appeared, show a one-time info toast pointing
+    // them to the "What to Look For" section in the lesson plan. Session-
+    // scoped flag so we don't nag every generation.
+    if (_isKOnlyLesson && !window._kAssessmentToastShown) {
+      setTimeout(() => {
+        showToast('📝 Kindergarten assessment is observational — see "What to Look For" in the lesson plan.', 6000);
+        window._kAssessmentToastShown = true;
+      }, 800);
+    }
 
     try {
       const localKey = 'teacherai_gen_count_'+currentUser.id;
@@ -4578,6 +4589,13 @@ async function downloadKPDF(k) {
   // Now build the print HTML with all image tags swapped for real <img src=>
   const lines = rawText.split('\n');
   let body = '';
+  // AJ+: activity-wrapper state machine. Wrap each h3-to-next-h3 group in
+  // <div class="activity"> with break-inside:avoid so the title + teachersays
+  // + content stays together across page breaks. Previously CSS alone was
+  // insufficient for 3-element chains (title → teachersays → content).
+  let inActivity = false;
+  const closeActivity = () => { if (inActivity) { body += '</div>'; inActivity = false; } };
+
   lines.forEach(line => {
     let trimmed = line.trim();
 
@@ -4589,9 +4607,15 @@ async function downloadKPDF(k) {
     trimmed = trimmed.replace(/^\d+\.\s+(#{1,3}\s)/, '$1');
     if (/^-{3,}$/.test(trimmed)) return;
 
-    if (trimmed.startsWith('### ')) { body += `<h3>${escHTML(trimmed.slice(4))}</h3>`; return; }
-    if (trimmed.startsWith('## ')) { body += `<h2 class="sec">${escHTML(trimmed.slice(3))}</h2>`; return; }
-    if (trimmed.startsWith('# ')) { body += `<h2 class="sec">${escHTML(trimmed.slice(2))}</h2>`; return; }
+    if (trimmed.startsWith('### ')) {
+      // New activity starts — close prior wrapper, open new one
+      closeActivity();
+      body += `<div class="activity"><h3>${escHTML(trimmed.slice(4))}</h3>`;
+      inActivity = true;
+      return;
+    }
+    if (trimmed.startsWith('## ')) { closeActivity(); body += `<h2 class="sec">${escHTML(trimmed.slice(3))}</h2>`; return; }
+    if (trimmed.startsWith('# ')) { closeActivity(); body += `<h2 class="sec">${escHTML(trimmed.slice(2))}</h2>`; return; }
 
     let mm;
 
@@ -4698,6 +4722,8 @@ async function downloadKPDF(k) {
     const clean = trimmed.replace(/\*\*(.+?)\*\*/g, '$1');
     body += `<p>${escHTML(clean)}</p>`;
   });
+  // Close the last activity wrapper if we ended mid-activity
+  closeActivity();
 
   const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escHTML(topic)} — Kindergarten Activity</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -4710,6 +4736,11 @@ h1{font-family:Georgia,'Times New Roman',serif;font-size:1.7rem;font-weight:600;
 .name-line .blank{flex:1;border-bottom:2px solid #000;height:1.3rem;display:inline-block;}
 h2.sec{font-family:Georgia,'Times New Roman',serif;font-size:1.1rem;font-weight:600;margin:16px 0 8px;padding:0;border:none;background:none;color:#000;}
 h3{font-size:.95rem;font-weight:600;margin:10px 0 4px;color:#000;break-after:avoid;page-break-after:avoid;}
+/* AJ+: activity wrapper. Each h3-led activity (title + teachersays + content
+   blocks) lives inside .activity with break-inside:avoid, so the whole unit
+   stays on one page. Supersedes the older CSS chain approach that only
+   prevented 2-element separation. */
+.activity{break-inside:avoid;page-break-inside:avoid;margin-bottom:4px;}
 p{margin:4px 0;font-size:1rem;}
 .instr{font-size:1.1rem;font-weight:600;margin:10px 0 6px;color:#000;break-after:avoid;page-break-after:avoid;}
 .bul{margin:3px 0 3px 20px;font-size:1rem;}
@@ -5412,7 +5443,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-14-AJ (K HARDCODED SVG RENDERERS — Flux was consistently drawing chicks for triangles and donuts for shapes. Built a hardcoded SVG library of 12 basic shapes (circle, square, triangle, rectangle, oval, diamond, star, heart, pentagon, hexagon, crescent, arrow), 14 common K objects (apple, banana, sun, moon, cloud, flower, tree, fish, ball, house, car, egg, cup), and colour+shape combos (red circle, blue square, etc.) using 12 named colours. loadKWorksheetImages now checks hardcoded renderer FIRST, falls through to Flux only for unmatched prompts. Benefits: deterministic drawings, zero Flux cost for covered items, instant render (no network round trip), consistent style. K worksheet prompt updated to nudge AI toward supported words. Data URL caching means PDF path gets the same SVGs transparently. Skipped builds AH→AI letter to avoid visual confusion with the term "AI" — landed on AJ. Carries forward all AH fixes (rubric layout lazy grid).)';
+const TA_BUILD = '2026-04-14-AJ+ (Three fixes on top of AJ. (1) K WORKSHEET PDF — activity-wrapper state machine: each h3-led activity (title + teachersays + content blocks) is now wrapped in <div class="activity"> with break-inside:avoid. Supersedes the CSS-only chain that could only prevent 2-element separation. Fixes the "Find shapes with corners" title appearing orphaned at page bottom with its content on the next page. (2) K ASSESSMENT AFFORDANCE: Kindergarten lessons intentionally omit Level 1-4 rubrics (Ontario K uses observational assessment), but teachers had no signal explaining the absence. Added a one-time session toast on K lesson completion pointing to the "What to Look For" section of the lesson plan. Session-scoped so it only shows once per session, not per generation. (3) SORT_DIAGRAM: changed from 3 columns to 2 columns per side, box width 60→95px, so common K vocabulary like "Rectangle" fits without wrapping to "Rectangl/e". Font bumped 11→12px. All AJ (K hardcoded SVG renderers) + AH (rubric layout) fixes carry forward.)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
@@ -5881,19 +5912,22 @@ const SVG_RENDERERS = {
     const rightItems = (p.right_items||[]).slice(0,6);
     const rule = p.rule||'';
 
-    const bw=210, bh=170, ox=20, oy=60, gap=30;
+    const bw=210, bh=180, ox=20, oy=60, gap=30;
 
+    // AJ+: 2 columns (was 3). With 3 columns, words like "Rectangle" wrapped
+    // as "Rectangl / e". 2 columns × 3 rows fits 6 items max (our slice cap)
+    // and gives each box enough width for common K vocabulary.
     const renderItems = (items, startX, startY) => items.map((item, i) => {
-      const col=i%3, row=Math.floor(i/3);
-      const x=startX+10+col*65, y=startY+10+row*52;
-      const boxW=60, boxH=40;
+      const col=i%2, row=Math.floor(i/2);
+      const boxW=95, boxH=42;
+      const x=startX+10+col*(boxW+5), y=startY+10+row*(boxH+8);
       return `<rect x="${x}" y="${y}" width="${boxW}" height="${boxH}" rx="8" fill="white" stroke="#D0D0D0" stroke-width="1.5"/>
         <foreignObject x="${x+2}" y="${y+2}" width="${boxW-4}" height="${boxH-4}">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="width:${boxW-4}px;height:${boxH-4}px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:${DT.FONT};font-size:11px;font-weight:600;color:${DT.PRIMARY};line-height:1.1;overflow:hidden;padding:2px;box-sizing:border-box;word-break:break-word;">${item}</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="width:${boxW-4}px;height:${boxH-4}px;display:flex;align-items:center;justify-content:center;text-align:center;font-family:${DT.FONT};font-size:12px;font-weight:600;color:${DT.PRIMARY};line-height:1.15;overflow:hidden;padding:2px;box-sizing:border-box;word-break:break-word;">${item}</div>
         </foreignObject>`;
     }).join('');
 
-    return `<svg viewBox="0 0 600 270" width="100%" height="100%">
+    return `<svg viewBox="0 0 600 280" width="100%" height="100%">
       ${rule?`<text x="250" y="22" text-anchor="middle" font-size="${DT.CAPTION}" font-weight="700" fill="#1D9E75" font-family="${DT.FONT}">Sort by: ${rule}</text>`:''}
       <rect x="${ox}" y="${oy}" width="${bw}" height="${bh}" rx="12" fill="#E8F5E9" stroke="#1D9E75" stroke-width="2.5"/>
       <rect x="${ox+gap+bw}" y="${oy}" width="${bw}" height="${bh}" rx="12" fill="#FFF3E0" stroke="#E07B39" stroke-width="2.5"/>
