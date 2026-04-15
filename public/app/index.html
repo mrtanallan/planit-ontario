@@ -3542,7 +3542,15 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
         const { error:insertErr2 } = await db.from('lessons').insert({ teacher_id:currentUser.id, topic, grades, subject:subj, content:parsed, expectations:lessonExpectations });
         if (insertErr2) showToast('⚠️ Lesson not saved — '+insertErr2.message, 6000);
         else { await renderLessonsList(); dismissWelcomeBanner(true); showToast('✅ Lesson saved to My Lessons'); }
-      } else { await renderLessonsList(); dismissWelcomeBanner(true); showToast('✅ Lesson saved to My Lessons'); }
+      } else {
+        // BUILD AL+: stash the new lesson ID on _lessonMeta so persistRegeneratedField
+        // can write back to THIS lesson by ID instead of guessing by topic+grades match
+        // (which fails when a teacher generates the same topic+grades twice).
+        if (window._lessonMeta && insertData && insertData[0] && insertData[0].id) {
+          window._lessonMeta.lessonId = insertData[0].id;
+        }
+        await renderLessonsList(); dismissWelcomeBanner(true); showToast('✅ Lesson saved to My Lessons');
+      }
     }
   } catch(e) {
     clearInterval(progInterval);
@@ -4572,18 +4580,10 @@ Plain text only — no JSON, no markdown fences, no preamble.`;
       block.innerText = text;
     }
     showToast('✅ Worksheet ready'+(gradeLabel?' for '+gradeLabel:''), 3000);
-    // Persist updated worksheet to the lesson row so it survives a reload.
-    try {
-      const _topic = topic;
-      const _grades = (window._lessonMeta?.grades || []).join(',');
-      const _match = savedLessons.find(l => l.topic === _topic && (l.grades||[]).join(',') === _grades);
-      if (_match && currentUser) {
-        const _updContent = { ...(_match.content || {}), [wsKey]: text };
-        db.from('lessons').update({ content: _updContent }).eq('id', _match.id).then(() => {
-          _match.content = _updContent;
-        }).catch(() => {});
-      }
-    } catch(_) {}
+    // BUILD AL+: persist via shared helper (uses lesson ID, not topic+grades).
+    // Was inline before — refactored so all regen paths use the same lookup
+    // logic and ID-collision protection.
+    persistRegeneratedField(wsKey, text);
     // Now chain the answer key regen so the key matches the new worksheet.
     if (akKey) regenAnswerKeyAsync(akKey, wsKey, gradeLabel, topic, subj);
   } catch (e) {
@@ -4743,13 +4743,34 @@ Use EXACTLY "## " and "### " markdown headers. No single asterisks, no bolded la
 // regenerated content back to the lessons.content JSONB column. Without this,
 // the regen runs every time the teacher opens the lesson — wasted tokens and
 // awkward UX. With this, the empty field is fixed permanently after one regen.
+//
+// Lookup order: lesson ID first (precise, set by fresh-generate after insert
+// and by loadLesson). Falls back to topic+grades match for legacy code paths
+// that didn't stash an ID — but ID match is strongly preferred because two
+// lessons can share the same topic+grades (teacher generates "Properties of
+// Matter Gr 5" twice for two different classes), and the fallback would
+// silently write to the first match (which might be the wrong lesson).
 async function persistRegeneratedField(fieldKey, newValue) {
   try {
     if (!currentUser || !window._lessonMeta) return;
-    const _topic = window._lessonMeta.topic;
-    const _grades = (window._lessonMeta.grades || []).join(',');
-    const _match = savedLessons.find(l => l.topic === _topic && (l.grades||[]).join(',') === _grades);
-    if (!_match) return;
+    let _match = null;
+    // Preferred: look up by lesson ID
+    if (window._lessonMeta.lessonId) {
+      _match = savedLessons.find(l => l.id === window._lessonMeta.lessonId);
+    }
+    // Legacy fallback: topic + grades match (less precise — can collide)
+    if (!_match) {
+      const _topic = window._lessonMeta.topic;
+      const _grades = (window._lessonMeta.grades || []).join(',');
+      _match = savedLessons.find(l => l.topic === _topic && (l.grades||[]).join(',') === _grades);
+      if (_match) {
+        console.warn('[persistRegeneratedField] using topic+grades fallback for', fieldKey, '— consider setting lessonId on _lessonMeta');
+      }
+    }
+    if (!_match) {
+      console.warn('[persistRegeneratedField] no matching lesson found for', fieldKey);
+      return;
+    }
     const _updContent = { ...(_match.content || {}), [fieldKey]: newValue };
     const { error } = await db.from('lessons').update({ content: _updContent }).eq('id', _match.id);
     if (!error) {
@@ -10309,7 +10330,11 @@ async function loadLesson(id) {
     topic: lesson.topic || '',
     grades: lesson.grades || [],
     subj: lesson.subject || '',
-    gradeStr: (lesson.grades || []).join(' / ')
+    gradeStr: (lesson.grades || []).join(' / '),
+    // BUILD AL+: lessonId enables persistRegeneratedField to write back to the
+    // exact lesson by ID, avoiding the topic+grades collision when a teacher
+    // has generated the same topic for the same grades more than once.
+    lessonId: lesson.id || null
   };
   window._slideData = (content._slideData) ? content._slideData : null;
   _pendingSlideSave = !content._slideData;
