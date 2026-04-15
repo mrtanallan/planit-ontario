@@ -40,7 +40,10 @@ strong { font-weight: 600; }
 .wswb { background: #E8EFF9; border: 1px solid #B0C8E8; border-radius: 8px; padding: 12px 16px; margin: 10px 0; }
 .wswbt { font-size: .6rem; letter-spacing: 1px; text-transform: uppercase; color: #2A5FA5; margin-bottom: 8px; font-weight: 600; }
 .wswbw { display: flex; flex-wrap: wrap; gap: 7px; }
-.wswbwd { background: white; border: 1px solid #2A5FA5; border-radius: 4px; padding: 2px 10px; font-size: .82rem; }
+.wswbwd { background: white; border: 1px solid #2A5FA5; border-radius: 4px; padding: 2px 10px; font-size: .82rem; cursor: pointer; transition: background 0.12s; user-select: none; }
+.wswbwd:hover { background: #DBEAFE; }
+.wsblank { display: inline-block; min-width: 90px; border: none; border-bottom: 1.5px solid #4A7C59; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 1rem; padding: 0 4px; outline: none; color: #16120E; }
+.wsblank:focus { border-bottom-color: #C47B2A; background: #FDF4E3; }
 .wsd { background: #FDF4E3; border: 1px dashed #C47B2A; border-radius: 8px; padding: 14px; margin: 10px 0; font-style: italic; text-align: center; color: #7A5020; }
 .submit-section { margin-top: 32px; padding-top: 20px; border-top: 1px solid #E0D8CC; }
 .submit-btn { width: 100%; padding: 14px; background: #4A7C59; color: white; border: none; border-radius: 8px; font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
@@ -398,6 +401,8 @@ function collectResponses(){
   const r={};
   document.querySelectorAll('.wsi[data-q]').forEach(el=>{r[el.dataset.q]=el.value;});
   document.querySelectorAll('.wst[data-q]').forEach(el=>{r[el.dataset.q]=el.value;});
+  // BUILD AL: fill-in-the-blank inline inputs from numbered questions with ___
+  document.querySelectorAll('.wsblank[data-q]').forEach(el=>{r[el.dataset.q]=el.value;});
   document.querySelectorAll('input[type="radio"]:checked').forEach(el=>{r[el.name]=el.value;});
   const cg={};
   document.querySelectorAll('input[type="checkbox"][data-q]').forEach(el=>{
@@ -406,6 +411,20 @@ function collectResponses(){
   });
   Object.assign(r,cg);
   return r;
+}
+
+// BUILD AL: word bank chips call this. Fills the last-focused .wsblank input,
+// or if none has been focused yet, the first empty blank on the page. Falls
+// through silently if there are no blanks (e.g. word bank without inline blanks).
+function fillLastBlank(word){
+  let target = window._lastBlank;
+  if (!target || !document.body.contains(target)) {
+    target = Array.from(document.querySelectorAll('.wsblank')).find(el => !el.value) || null;
+  }
+  if (!target) return;
+  target.value = word;
+  target.focus();
+  window._lastBlank = target;
 }
 
 async function submitWorksheet(){
@@ -475,11 +494,23 @@ function renderWS(text){
     if(/\[LARGE BOX\]/i.test(line)){const l=line.replace(/\[LARGE BOX\]/gi,'').replace(/^[-*\d.]+\s*/,'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\[[^\]]*\]/g,'').trim();qCount++;h+=`${l?`<div style="font-size:.9rem;margin-bottom:3px;">${l}</div>`:''}<textarea class="wst" data-q="q${qCount}" placeholder="Write your answer here..."></textarea>`;return;}
     if(line.includes('[CIRCLE ONE:')){const m=line.match(/\[CIRCLE ONE: (.+?)\]/);const pre=line.split('[CIRCLE ONE:')[0].replace(/^[-*\d.]+\s*/,'').trim();if(m){qCount++;const nm='q'+qCount;h+=`${pre?`<div style="font-size:.9rem;margin-bottom:6px;">${pre}</div>`:''}<div class="wsc">${m[1].split(' / ').map(o=>`<label class="wscho"><input type="radio" name="${nm}" value="${o.trim()}"> ${o.trim()}</label>`).join('')}</div>`;return;}}
     if(line.includes('[CHECK ALL THAT APPLY:')){const m=line.match(/\[CHECK ALL THAT APPLY: (.+?)\]/);const pre=line.split('[CHECK ALL THAT APPLY:')[0].replace(/^[-*\d.]+\s*/,'').trim();if(m){qCount++;h+=`${pre?`<div style="font-size:.9rem;margin-bottom:6px;">${pre}</div>`:''}<div class="wsc">${m[1].split(' / ').map((o,oi)=>`<label class="wscho"><input type="checkbox" data-q="q${qCount}" value="${o.trim()}"> ${o.trim()}</label>`).join('')}</div>`;return;}}
-    if(line.includes('[WORD BANK:')){const m=line.match(/\[WORD BANK: (.+?)\]/);if(m){h+=`<div class="wswb"><div class="wswbt">📚 Word Bank</div><div class="wswbw">${m[1].split(',').map(w=>`<span class="wswbwd">${w.trim()}</span>`).join('')}</div></div>`;return;}}
+    if(line.includes('[WORD BANK:')){const m=line.match(/\[WORD BANK: (.+?)\]/);if(m){h+=`<div class="wswb"><div class="wswbt">📚 Word Bank — tap a word to fill the blank</div><div class="wswbw">${m[1].split(',').map(w=>`<span class="wswbwd" onclick="fillLastBlank(this.textContent)">${w.trim()}</span>`).join('')}</div></div>`;return;}}
     if(line.includes('[DIAGRAM:')){const m=line.match(/\[DIAGRAM: (.+?)\]/);if(m){h+=`<div class="wsd">📊 ${m[1]}</div>`;return;}}
     if(line.match(/^\d+\.\s/)){const cont=line.replace(/^\d+\.\s*/,'');const num=line.match(/^(\d+)/)[1];
       if(cont.includes('[LARGE BOX]')){qCount++;h+=`<div style="margin:9px 0;"><div style="font-size:.9rem;margin-bottom:3px;"><strong>${num}.</strong> ${cont.replace('[LARGE BOX]','').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim()}</div><textarea class="wst" data-q="q${qCount}" placeholder="Write your answer here..."></textarea></div>`;return;}
       if(cont.includes('[TEXT BOX]')){qCount++;h+=`<div style="margin:7px 0;display:flex;align-items:flex-start;gap:7px;"><span style="font-weight:600;flex-shrink:0;">${num}.</span><div style="flex:1;"><div style="font-size:.9rem;margin-bottom:3px;">${cont.replace('[TEXT BOX]','').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').trim()}</div><input class="wsi" type="text" data-q="q${qCount}" placeholder="Your answer..."></div></div>`;return;}
+      // BUILD AL: numbered question containing ___ → fill-in-the-blank.
+      // Each ___ becomes an inline editable input. Word bank chips (rendered above
+      // or below) populate the most-recently-focused blank via fillLastBlank().
+      if(/_{3,}/.test(cont)){
+        let blankIdx=0;
+        const html=cont.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/_{3,}/g,()=>{
+          qCount++;blankIdx++;
+          return `<input class="wsblank" type="text" data-q="q${qCount}" onfocus="window._lastBlank=this">`;
+        });
+        h+=`<div style="margin:7px 0;font-size:.95rem;line-height:2;"><strong>${num}.</strong> ${html}</div>`;
+        return;
+      }
       h+=`<div style="margin:5px 0;"><strong>${num}.</strong> ${cont.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</div>`;return;}
     if(line.match(/^[-*] /)){h+=`<li style="margin-bottom:3px;">${line.slice(2).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</li>`;return;}
     if(line.trim()===''){h+='<div style="height:5px;"></div>';return;}
