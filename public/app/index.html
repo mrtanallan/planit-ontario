@@ -428,8 +428,8 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       🔒 <strong>Privacy tip:</strong> Use first names only or nicknames if you prefer. Paraphrase accommodations in your own words — don't paste text from IEP documents. <a href="/privacy.html#mfippa" target="_blank" style="color:var(--sage);">MFIPPA guidance →</a>
     </div>
     <div class="fg">
-      <div class="fi"><label>First Name <span style="color:var(--rust);">✱</span></label><input type="text" id="sF" placeholder="First" autocapitalize="words" oninput="this.value=this.value.replace(/^(.)/,c=>c.toUpperCase())" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('sL')?.focus();}"></div>
-      <div class="fi"><label>Last Name <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label><input type="text" id="sL" placeholder="Last" autocapitalize="words" oninput="this.value=this.value.replace(/^(.)/,c=>c.toUpperCase())"></div>
+      <div class="fi"><label>First Name <span style="color:var(--rust);">✱</span></label><input type="text" id="sF" placeholder="First" autocapitalize="words" autocomplete="one-time-code" autocorrect="off" spellcheck="false" name="student_first_name_no_autofill" oninput="this.value=this.value.replace(/^(.)/,c=>c.toUpperCase())" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('sL')?.focus();}"></div>
+      <div class="fi"><label>Last Name <span style="font-weight:400;color:var(--muted);font-size:.75rem;">(optional)</span></label><input type="text" id="sL" placeholder="Last" autocapitalize="words" autocomplete="one-time-code" autocorrect="off" spellcheck="false" name="student_last_name_no_autofill" oninput="this.value=this.value.replace(/^(.)/,c=>c.toUpperCase())"></div>
       <div class="fi"><label>Grade</label>
         <select id="sG"><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
       </div>
@@ -560,7 +560,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Student-ready worksheets</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Share a link or print a PDF. Auto-marks student submissions on any device.</div></div>
       </div>
     </div>
-    <button class="btn b-sage" onclick="document.getElementById('s1').style.display='block';document.getElementById('planWelcomeBanner').style.display='none';" style="font-size:.92rem;padding:10px 22px;">+ Generate Your First Lesson</button>
+    <button class="btn b-sage" onclick="document.getElementById('s1').style.display='block';document.getElementById('planWelcomeBanner').style.display='none';setTimeout(()=>document.getElementById('s1')?.scrollIntoView({behavior:'smooth',block:'start'}),50);" style="font-size:.92rem;padding:10px 22px;">+ Generate Your First Lesson</button>
   </div>
 
   <!-- ── Step 1: Generate. Hidden by default — maybeShowPlanWelcome() shows
@@ -10849,7 +10849,7 @@ async function renderUnitPlansList(sortOnly) {
           <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Unit assessments included</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Generate a culminating assessment aligned to your expectations.</div></div>
         </div>
       </div>
-      <button class="btn b-sage" onclick="document.getElementById('unitFormCard').style.display='block';document.getElementById('unitWelcomeEmpty').style.display='none';" style="font-size:.92rem;padding:10px 22px;">+ Create Your First Unit Plan</button>
+      <button class="btn b-sage" onclick="document.getElementById('unitFormCard').style.display='block';document.getElementById('unitWelcomeEmpty').style.display='none';setTimeout(()=>document.getElementById('unitFormCard')?.scrollIntoView({behavior:'smooth',block:'start'}),50);" style="font-size:.92rem;padding:10px 22px;">+ Create Your First Unit Plan</button>
     </div>`;
     return;
   }
