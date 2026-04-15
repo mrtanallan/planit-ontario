@@ -1916,7 +1916,21 @@ function autoFillGradesFromClass(gradesHint) {
   const classStudents = activeClassId ? students.filter(s => s.classId===activeClassId) : students;
   const gradeOrder = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
   const uniqueGrades = [...new Set(classStudents.map(s => s.grade))].filter(g => g).sort((a,b) => gradeOrder.indexOf(a)-gradeOrder.indexOf(b));
-  const gradesToFill = uniqueGrades.length > 0 ? uniqueGrades : (gradesHint||[]);
+  let gradesToFill = uniqueGrades.length > 0 ? uniqueGrades : (gradesHint||[]);
+  // BUILD AL: if no students yet and no hint, parse the class NAME for grade
+  // signals. A class called "Grade 3" or "Gr. 5/6 Math" carries enough info to
+  // pre-select pills even before the teacher adds students.
+  if (!gradesToFill.length && activeClassId) {
+    const cls = classes.find(c => c.id===activeClassId);
+    const name = cls?.name || '';
+    const parsed = [];
+    if (/kindergarten|\bK\b/i.test(name)) parsed.push('Kindergarten');
+    // Match "Gr 5", "Gr. 5", "Grade 5", "G5", or bare digits in split form like "4/5"
+    const numMatches = name.match(/\b([1-8])\b/g) || [];
+    numMatches.forEach(n => { const g='Grade '+n; if (!parsed.includes(g)) parsed.push(g); });
+    parsed.sort((a,b) => gradeOrder.indexOf(a)-gradeOrder.indexOf(b));
+    gradesToFill = parsed;
+  }
   if (!gradesToFill.length) return;
   const gradeIds = ['gA','gB','gC','gD','gE','gF'];
   gradeIds.forEach(id => { const el=document.getElementById(id); if(el)el.value=''; });
@@ -3225,18 +3239,32 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     // (observation-based assessment is embedded in the lesson plan instead).
     const _isKOnlyLesson = grades.length >= 1 && grades.every(g => g === 'Kindergarten');
     if (!_isKOnlyLesson) {
+      // Track which answer keys came back empty so we can fire a background
+      // regeneration after the main lesson UI is rendered. The teacher sees
+      // the worksheet immediately, then the answer key fills in a few seconds
+      // later — no broken-state placeholder, no full lesson regen needed.
+      const _missingAnswerKeys = [];
       answerKeyKeys.forEach(k => {
         const val = parsed[k];
         if (val && val.trim()) {
           genC[k] = {orig:val, cur:val};
         } else {
-          // Claude didn't return this answer key — surface the gap with a visible placeholder
-          // so teachers know to regenerate rather than wondering why the block is blank.
+          // BUILD AL: temporary placeholder — replaced by background regen below.
+          // Previously this was a hard-stop error message asking the teacher to
+          // regenerate the whole lesson, which burned a generation and tokens.
           const gradeLabel = isSplit ? (grades[answerKeyKeys.indexOf(k)] || '') : '';
-          const placeholder = `⚠️ Answer key was not generated${gradeLabel ? ' for '+gradeLabel : ''}. This can happen on very long lessons.\n\nClick **✏️ Edit** to write one manually, or click **🔄 Regenerate Lesson** at the top to try again.`;
+          const placeholder = `⏳ Generating answer key${gradeLabel ? ' for '+gradeLabel : ''}...`;
           genC[k] = {orig:placeholder, cur:placeholder};
+          // Pair this answer key with its source worksheet so the regen call
+          // has the actual questions to work from.
+          const wsKey = isSplit
+            ? wsOutputKeys[answerKeyKeys.indexOf(k)]
+            : 'student_worksheet';
+          _missingAnswerKeys.push({ akKey: k, wsKey, gradeLabel });
         }
       });
+      // Stash for the post-render regen pass (kicked off after renderAllBlocks)
+      window._pendingAnswerKeyRegens = _missingAnswerKeys;
     } else {
       // For K: remove assessment_rubric from genC since K uses observation notes in the lesson plan
       if (genC['assessment_rubric']) delete genC['assessment_rubric'];
@@ -3378,6 +3406,18 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     } catch(e) {}
 
     unlock(); gs(2);
+
+    // BUILD AL: kick off background regen for any answer keys that came back
+    // empty in the main lesson response. Teacher already sees worksheet +
+    // lesson plan; this fills in the answer key tab a few seconds later
+    // without requiring a full lesson regen.
+    if (window._pendingAnswerKeyRegens && window._pendingAnswerKeyRegens.length) {
+      const regens = window._pendingAnswerKeyRegens.slice();
+      window._pendingAnswerKeyRegens = [];
+      regens.forEach(({akKey, wsKey, gradeLabel}) => {
+        regenAnswerKeyAsync(akKey, wsKey, gradeLabel, topic, subj);
+      });
+    }
 
     if (currentUser) {
       const _unitPlanId = window._pendingUnitPlanId || null;
@@ -4351,6 +4391,71 @@ async function regenerateKImage(key, prompt, size) {
 // asks Claude for 4 new questions AND their answers, appends both, re-renders.
 // Chat 7 fix (Sibel feedback): "only shares one worksheet with a few questions"
 // Chat 8 fix: also appends to the matching answer key block so auto-mark still works.
+// BUILD AL: regenerate a single missing answer key as a follow-up call.
+// Called automatically when the main lesson response came back without the
+// answer key field populated (token cap on long lessons). Updates the
+// in-memory genC store + the rendered DOM block in place. Falls back to a
+// helpful manual-edit prompt if the regen also fails.
+async function regenAnswerKeyAsync(akKey, wsKey, gradeLabel, topic, subj) {
+  const wsText = genC[wsKey]?.cur || '';
+  if (!wsText.trim()) {
+    // No worksheet to source from — leave the placeholder, surface a clearer note.
+    const fallback = `⚠️ Answer key couldn't be generated automatically${gradeLabel ? ' for '+gradeLabel : ''}. Click ✏️ Edit to write one manually.`;
+    if (genC[akKey]) { genC[akKey].cur = fallback; genC[akKey].orig = fallback; }
+    const block = document.getElementById('cbb-'+akKey);
+    if (block) block.innerHTML = '<p style="color:var(--muted);">'+fallback+'</p>';
+    return;
+  }
+  const prompt = `You are an Ontario K-8 teacher writing the answer key for a worksheet you just created.
+
+WORKSHEET${gradeLabel?' (for '+gradeLabel+')':''} on "${topic}" (${subj}):
+---
+${wsText}
+---
+
+Write the answer key. Format each entry as:
+Q1: the question text -> the ideal answer
+Q2: ...
+(For open-ended/long-answer questions, give 2-3 key points expected at Level 3 instead of a single answer.)
+
+Rules:
+- One entry per question, in order
+- Plain text only — no JSON, no markdown fences, no preamble
+- Do NOT wrap any part in quote marks
+- Match the question numbering used in the worksheet`;
+
+  try {
+    const data = await callGenerateStreaming({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1800,
+      messages: [{ role: 'user', content: prompt }],
+      meta: { type: 'answer_key_regen', grade: gradeLabel || null, subject: subj || null }
+    });
+    if (!data || !data.ok) throw new Error('regen failed: '+(data?.status||'no status'));
+    const text = (data.content||[]).map(i=>i.text||'').join('').trim();
+    if (!text) throw new Error('empty response');
+    if (genC[akKey]) { genC[akKey].cur = text; genC[akKey].orig = text; }
+    // Re-render this block. The simplest path is to replace innerHTML with the
+    // formatted text via the existing renderAnswerKey path if exposed, otherwise
+    // a minimal markdown-ish render so the teacher sees clean output.
+    const block = document.getElementById('cbb-'+akKey);
+    if (block) {
+      if (typeof renderAnswerKey === 'function') {
+        block.innerHTML = renderAnswerKey(text);
+      } else {
+        block.innerText = text;
+      }
+    }
+    showToast('✅ Answer key ready'+(gradeLabel?' for '+gradeLabel:''), 3000);
+  } catch (e) {
+    console.warn('[regenAnswerKeyAsync]', akKey, e.message);
+    const fallback = `⚠️ Answer key couldn't be generated automatically${gradeLabel ? ' for '+gradeLabel : ''}. Click ✏️ Edit to write one manually, or 🔄 Regenerate Lesson at the top to retry.`;
+    if (genC[akKey]) { genC[akKey].cur = fallback; genC[akKey].orig = fallback; }
+    const block = document.getElementById('cbb-'+akKey);
+    if (block) block.innerHTML = '<p style="color:var(--muted);">'+fallback+'</p>';
+  }
+}
+
 async function addMoreQuestions(k) {
   if (!window._lessonMeta) { showToast('Generate a lesson first'); return; }
   if (!genC[k] || !genC[k].cur) { showToast('No worksheet to extend'); return; }
@@ -5404,6 +5509,7 @@ async function generateSlideData(callerBtn) {
       '- Match the slide concept to a real visual moment that illustrates it.',
       '- '+(profile.band==='K'||profile.band==='1-3' ? 'Use simple, friendly, picture-book scenes with one clear subject.' : profile.band==='4-6' ? 'Use realistic detailed scenes with clear context and 2-3 elements.' : 'Use sophisticated atmospheric scenes with depth and meaningful detail.'),
       '- Max 120 characters per image_prompt.',
+      '- NEVER request labeled diagrams, anatomical charts, scientific apparatus with names, maps with place labels, or any image that requires accurate text labels. The image generator cannot render text correctly and produces gibberish like "Bafory" or "Letdor" instead of "Liver" or "Lungs". For body systems, anatomy, geography, or any "labeled X" concept, use a generic illustrative scene instead — e.g. for "human body systems" use "a happy child running in a sunny park, watercolor", NOT "labeled human body diagram".',
       '',
       'RULES:',
       '- learning_goals: exactly 2-3',
@@ -5662,7 +5768,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-15-AL (Pre-launch polish, 7 fixes on top of AK. (1) WORKSHEET PDF: dedicated downloadWorksheetPDF detects question types ([CIRCLE ONE] / [TEXT BOX] / [PARAGRAPH] / [DRAW] / ___ blanks) and emits type-appropriate writing space. Adds Name/Date header. Worksheets are now actually printable for pencil/pen use. (2) RUBRIC PDF: dedicated downloadRubricPDF mirrors in-tool layout — per-category card with 4-across colour-coded Level boxes, landscape orientation. (3) AUTO-COPY STUDENT LINK: when "Link Ready" appears, link is auto-copied with toast confirmation. Try/catch fallback for Safari. (4) DOC CAMERA SUPPRESSION: lesson prompt instructs the model to avoid mentioning specific projection equipment. (5) FILL-IN-THE-BLANK INPUTS: numbered worksheet questions containing ___ now render inline editable inputs in both student worksheet (worksheet-7.html, also bumped) and teacher preview. Word bank chips are clickable and populate the last-focused blank via fillLastBlank(). Submission collector also picks up .wsblank values. Closes the bug where students couldn\'t answer fill-in-the-blank questions at all. (6) UNAMBIGUOUS MC RULE: worksheet prompt now requires exactly one correct answer per [CIRCLE ONE] question; explicit example warns against ambiguous distractors like "least value" with two equal-value options. (7) CASE-INSENSITIVE PER-Q FEEDBACK MATCHER: autoMarkStudent now normalizes question keys before mapping per_question feedback to submission rows. The LLM sometimes returned "Q1" / "Question 1" when the prompt requested "q1", which silently broke the inline ✓/~/✗ display. All AK + AJ+ / AJ / AH fixes carry forward.)';
+const TA_BUILD = '2026-04-15-AL (Pre-launch polish, 10 fixes on top of AK. (1) WORKSHEET PDF: dedicated downloadWorksheetPDF detects question types ([CIRCLE ONE] / [TEXT BOX] / [PARAGRAPH] / [DRAW] / ___ blanks) and emits type-appropriate writing space. Adds Name/Date header. Worksheets are now actually printable for pencil/pen use. (2) RUBRIC PDF: dedicated downloadRubricPDF mirrors in-tool layout — per-category card with 4-across colour-coded Level boxes, landscape orientation. (3) AUTO-COPY STUDENT LINK: when "Link Ready" appears, link is auto-copied with toast confirmation. Try/catch fallback for Safari. (4) DOC CAMERA SUPPRESSION: lesson prompt instructs the model to avoid mentioning specific projection equipment. (5) FILL-IN-THE-BLANK INPUTS: numbered worksheet questions containing ___ now render inline editable inputs in both student worksheet (worksheet-7.html bumped) and teacher preview. Word bank chips clickable, populate the last-focused blank via fillLastBlank(). Submission collector picks up .wsblank values. Closes the bug where students couldn\'t answer fill-in-the-blank questions at all. (6) UNAMBIGUOUS MC RULE: worksheet prompt now requires exactly one correct answer per [CIRCLE ONE]; explicit example warns against ambiguous distractors. (7) CASE-INSENSITIVE PER-Q FEEDBACK MATCHER: autoMarkStudent normalizes question keys before mapping per_question feedback to submission rows, fixing silently-broken inline ✓/~/✗ display when LLM returned "Q1" vs "q1". (8) CLASS-NAME GRADE PARSING: autoFillGradesFromClass + autoFillUnitGradesFromClass fall back to parsing the class name when the class has no students yet. (9) ANSWER KEY BACKGROUND REGEN: when the main lesson response comes back without an answer key (token cap on long lessons), instead of hard-erroring with "regenerate the whole lesson", we now fire a dedicated follow-up call with just the worksheet as input. Teacher sees worksheet/lesson immediately, answer key fills in a few seconds later via regenAnswerKeyAsync. Toast confirms when ready. Fallback message only shows if the regen itself fails. (10) NO LABELED DIAGRAMS IN SLIDES: image_prompt guidance now blacklists labeled anatomical/scientific/geographic diagrams since Flux cannot render text and produces gibberish ("Bafory", "Letdor"). Slides on body systems / anatomy / maps now use generic illustrative scenes. All AK + AJ+ / AJ / AH fixes carry forward.)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
@@ -10217,13 +10323,26 @@ function autoFillUnitGradesFromClass() {
   // Always start from a clean pill state so previous selections don't leak through
   document.querySelectorAll('#unitGradePillContainer .grade-pill-btn').forEach(b => b.classList.remove('selected'));
   const classStudents = activeClassId ? students.filter(s => s.classId === activeClassId) : [];
-  if (!classStudents.length) {
+  const gradeOrder = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
+  let uniqueGrades = [...new Set(classStudents.map(s => s.grade))].filter(Boolean)
+    .sort((a,b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b));
+  // BUILD AL: if class has no students yet, parse the class NAME for grade
+  // signals (e.g. "Grade 3" → ["Grade 3"], "Gr. 4/5 Math" → ["Grade 4","Grade 5"]).
+  // Lets teachers generate unit plans before they've added their roster.
+  if (!uniqueGrades.length && activeClassId) {
+    const cls = classes.find(c => c.id===activeClassId);
+    const name = cls?.name || '';
+    const parsed = [];
+    if (/kindergarten|\bK\b/i.test(name)) parsed.push('Kindergarten');
+    const numMatches = name.match(/\b([1-8])\b/g) || [];
+    numMatches.forEach(n => { const g='Grade '+n; if (!parsed.includes(g)) parsed.push(g); });
+    parsed.sort((a,b) => gradeOrder.indexOf(a)-gradeOrder.indexOf(b));
+    uniqueGrades = parsed;
+  }
+  if (!uniqueGrades.length) {
     updateKOnlySubjectOptions();
     return;
   }
-  const gradeOrder = ['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8'];
-  const uniqueGrades = [...new Set(classStudents.map(s => s.grade))].filter(Boolean)
-    .sort((a,b) => gradeOrder.indexOf(a) - gradeOrder.indexOf(b));
   document.querySelectorAll('#unitGradePillContainer .grade-pill-btn').forEach(b => {
     b.classList.toggle('selected', uniqueGrades.includes(b.dataset.grade));
   });
