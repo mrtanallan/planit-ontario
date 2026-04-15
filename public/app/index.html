@@ -3246,6 +3246,10 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     genC = {};
     window._slideData = null; // clear cached slides — new lesson generated
     window._lessonMeta = {topic, grades, subj, gradeStr:grades.join(' / ')}; // for worksheet regen (Chat 7 fix)
+    // BUILD AL+: detect worksheet outputs that came back empty/missing.
+    // Worksheet is the highest-stakes artifact — if it's missing the lesson
+    // is unusable. Queue background regen using the lesson_plan as source.
+    const _missingWorksheets = [];
     outputKeys.forEach(k => {
       const v = parsed[k] || '';
       // BUILD AL+: assessment_rubric and reading_resource sometimes come back
@@ -3253,12 +3257,21 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       // an actionable placeholder rather than rendering a blank block.
       if (!v.trim() && (k === 'assessment_rubric' || k === 'reading_resource')) {
         const labelMap = {assessment_rubric:'rubric', reading_resource:'reading resource'};
-        const placeholder = `⚠️ ${labelMap[k]} was not generated. This can happen on very long lessons.\n\nClick **🔄 Regenerate Lesson** at the top to try again, or **✏️ Edit** to write one manually.`;
+        const placeholder = `⚠️ The ${labelMap[k]} was not generated. This can happen on very long lessons.\n\nClick **✏️ Edit** to write one manually, or go back to the planning page and generate the lesson again.`;
         genC[k] = {orig:placeholder, cur:placeholder};
+      } else if (!v.trim() && (k === 'student_worksheet' || k.startsWith('student_worksheet_'))) {
+        // BUILD AL+: missing worksheet — show a loading placeholder, queue regen.
+        const gradeLabel = k.startsWith('student_worksheet_')
+          ? (grades[wsOutputKeys.indexOf(k)] || '')
+          : '';
+        const placeholder = `⏳ Building worksheet${gradeLabel ? ' for '+gradeLabel : ''}...`;
+        genC[k] = {orig:placeholder, cur:placeholder};
+        _missingWorksheets.push({ wsKey: k, gradeLabel });
       } else {
         genC[k] = {orig:v, cur:v};
       }
     });
+    window._pendingWorksheetRegens = _missingWorksheets;
     // Always create answer key entries (even if empty) so the pill + content block stay in sync.
     // Previously `if (parsed[k])` silently dropped missing keys, producing a pill with no matching content.
     // EXCEPTION: For K-only lessons, skip entirely — K doesn't use traditional answer keys
@@ -3433,6 +3446,25 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
 
     unlock(); gs(2);
 
+    // BUILD AL+: kick off background regen for any worksheets that came back
+    // empty in the main lesson response. Worksheet is critical — if missing,
+    // the lesson is unusable. Pass topic/subj/grades + lesson_plan as source.
+    const _wsRegenKeys = new Set();
+    if (window._pendingWorksheetRegens && window._pendingWorksheetRegens.length) {
+      const wsRegens = window._pendingWorksheetRegens.slice();
+      window._pendingWorksheetRegens = [];
+      const lessonPlanText = genC['lesson_plan']?.cur || '';
+      wsRegens.forEach(({wsKey, gradeLabel}) => {
+        _wsRegenKeys.add(wsKey);
+        // After worksheet returns, the chained answer-key regen runs inside
+        // regenWorksheetAsync (since the new worksheet is the source of truth).
+        const matchingAkKey = wsKey === 'student_worksheet'
+          ? 'answer_key'
+          : wsKey.replace('student_worksheet_', 'answer_key_');
+        regenWorksheetAsync(wsKey, matchingAkKey, gradeLabel, topic, subj, lessonPlanText);
+      });
+    }
+
     // BUILD AL: kick off background regen for any answer keys that came back
     // empty in the main lesson response. Teacher already sees worksheet +
     // lesson plan; this fills in the answer key tab a few seconds later
@@ -3441,7 +3473,9 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       const regens = window._pendingAnswerKeyRegens.slice();
       window._pendingAnswerKeyRegens = [];
       regens.forEach(({akKey, wsKey, gradeLabel}) => {
-        regenAnswerKeyAsync(akKey, wsKey, gradeLabel, topic, subj);
+        // Skip if worksheet itself is being regenerated — the chained call in
+        // regenWorksheetAsync will handle the matching answer key.
+        if (!_wsRegenKeys.has(wsKey)) regenAnswerKeyAsync(akKey, wsKey, gradeLabel, topic, subj);
       });
     }
 
@@ -4422,6 +4456,88 @@ async function regenerateKImage(key, prompt, size) {
 // answer key field populated (token cap on long lessons). Updates the
 // in-memory genC store + the rendered DOM block in place. Falls back to a
 // helpful manual-edit prompt if the regen also fails.
+// BUILD AL+: regenWorksheetAsync — when the main lesson response comes back
+// without a worksheet (token cap on long science lessons with reading +
+// rubric eating headroom), instead of leaving the teacher with an unusable
+// lesson, we fire a dedicated follow-up call that generates ONLY the
+// worksheet using the lesson_plan as input. After the worksheet lands, we
+// chain regenAnswerKeyAsync so the answer key matches.
+async function regenWorksheetAsync(wsKey, akKey, gradeLabel, topic, subj, lessonPlanText) {
+  const isMath = subj === 'Mathematics';
+  const formatRules = isMath
+    ? `Math worksheet FORMAT — Chromebook only, no handwritten work:
+(1) Multiple choice: question text [CIRCLE ONE: A) opt / B) opt / C) opt] — all on ONE line
+(2) Short numeric: question [TEXT BOX]
+(3) Short explanation: question [LARGE BOX]
+NEVER ask for: long division work, hand-drawn graphs, show-your-work boxes.
+NEVER use markdown tables.
+NUMBER every question Q1, Q2, Q3... sequentially.`
+    : `Worksheet FORMAT — Chromebook only:
+(1) Multiple choice: question [CIRCLE ONE: A) opt / B) opt / C) opt] — ONE line, exactly one correct
+(2) Short answer: question [TEXT BOX]
+(3) Long answer: question [LARGE BOX]
+(4) Word bank: [WORD BANK: word1, word2, word3]
+NEVER ask students to draw, sketch, or illustrate.
+NEVER use markdown tables.
+NUMBER every question Q1, Q2, Q3... sequentially across the whole worksheet.`;
+
+  const prompt = `You are an Ontario K-8 teacher writing a student worksheet for a lesson you just planned.
+
+LESSON PLAN${gradeLabel?' (for '+gradeLabel+')':''} on "${topic}" (${subj}):
+---
+${lessonPlanText.slice(0, 4000)}
+---
+
+Write the student worksheet that aligns with the Independent Work section of this lesson.
+
+${formatRules}
+
+Use emoji headers (📖, ✏️, 💡, etc.). 4–6 varied activities. Start directly with the worksheet title (# ${topic}${gradeLabel?' — '+gradeLabel:''}).
+Plain text only — no JSON, no markdown fences, no preamble.`;
+
+  try {
+    const data = await callGenerateStreaming({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 3000,
+      messages: [{ role: 'user', content: prompt }],
+      meta: { type: 'worksheet_regen', grade: gradeLabel || null, subject: subj || null }
+    });
+    if (!data || !data.ok) throw new Error('regen failed: '+(data?.status||'no status'));
+    const text = (data.content||[]).map(i=>i.text||'').join('').trim();
+    if (!text) throw new Error('empty response');
+    if (genC[wsKey]) { genC[wsKey].cur = text; genC[wsKey].orig = text; }
+    // Re-render the worksheet block. renderWSAuto picks the right path
+    // (K hardcoded vs standard renderWS).
+    const block = document.getElementById('cbb-'+wsKey);
+    if (block && typeof renderWSAuto === 'function') {
+      block.innerHTML = renderWSAuto(text);
+    } else if (block) {
+      block.innerText = text;
+    }
+    showToast('✅ Worksheet ready'+(gradeLabel?' for '+gradeLabel:''), 3000);
+    // Persist updated worksheet to the lesson row so it survives a reload.
+    try {
+      const _topic = topic;
+      const _grades = (window._lessonMeta?.grades || []).join(',');
+      const _match = savedLessons.find(l => l.topic === _topic && (l.grades||[]).join(',') === _grades);
+      if (_match && currentUser) {
+        const _updContent = { ...(_match.content || {}), [wsKey]: text };
+        db.from('lessons').update({ content: _updContent }).eq('id', _match.id).then(() => {
+          _match.content = _updContent;
+        }).catch(() => {});
+      }
+    } catch(_) {}
+    // Now chain the answer key regen so the key matches the new worksheet.
+    if (akKey) regenAnswerKeyAsync(akKey, wsKey, gradeLabel, topic, subj);
+  } catch (e) {
+    console.warn('[regenWorksheetAsync]', wsKey, e.message);
+    const fallback = `⚠️ Worksheet couldn't be generated automatically${gradeLabel ? ' for '+gradeLabel : ''}. Click ✏️ Edit to write one manually, or go back to the planning page (← Back to Plan) and generate the lesson again.`;
+    if (genC[wsKey]) { genC[wsKey].cur = fallback; genC[wsKey].orig = fallback; }
+    const block = document.getElementById('cbb-'+wsKey);
+    if (block) block.innerHTML = '<p style="color:var(--muted);padding:12px;">'+fallback+'</p>';
+  }
+}
+
 async function regenAnswerKeyAsync(akKey, wsKey, gradeLabel, topic, subj) {
   const wsText = genC[wsKey]?.cur || '';
   if (!wsText.trim()) {
@@ -4475,7 +4591,7 @@ Rules:
     showToast('✅ Answer key ready'+(gradeLabel?' for '+gradeLabel:''), 3000);
   } catch (e) {
     console.warn('[regenAnswerKeyAsync]', akKey, e.message);
-    const fallback = `⚠️ Answer key couldn't be generated automatically${gradeLabel ? ' for '+gradeLabel : ''}. Click ✏️ Edit to write one manually, or 🔄 Regenerate Lesson at the top to retry.`;
+    const fallback = `⚠️ Answer key couldn't be generated automatically${gradeLabel ? ' for '+gradeLabel : ''}. Click ✏️ Edit to write one manually, or go back to the planning page (← Back to Plan) and generate the lesson again.`;
     if (genC[akKey]) { genC[akKey].cur = fallback; genC[akKey].orig = fallback; }
     const block = document.getElementById('cbb-'+akKey);
     if (block) block.innerHTML = '<p style="color:var(--muted);">'+fallback+'</p>';
@@ -5959,7 +6075,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-15-AL+ (Post-deploy hotfixes for issues found during initial AL testing. (1) WORKSHEET PDF REWRITE: original AL renderer assumed each tag on its own line. Real LLM output puts everything inline (e.g. "Q1.** stem text? [CIRCLE ONE: A) x / B) y / C) z]"). Rewrote downloadWorksheetPDF with renderQuestion() that detects [CIRCLE ONE], [CHECK ALL], [WORD BANK], [TEXT BOX], [LARGE BOX], [DRAW] anywhere on the line, strips tags from visible stem, and renders the right writing space after. Also: skip duplicate Name/Date headers (we add our own at top), strip stray Q-prefix and unbalanced ** asterisks. (2) WORD BANK in PDF gets its own styled chip strip. (3) WORKSHEET-7 STEM CLEANUP: normalizeStem() helper strips "Q1.", "Q1.**", "Q 1)" prefixes and dangling asterisks before rendering. Fixes "Q1.**" leaking into student-facing question text. Also bumped worksheet-7. (4) TOKEN BUDGET: single-grade cap 4800→6400, split 6000→7600, with +800 bonus when reading_resource is included. Science lessons with 10+ questions were tripping the cap and silently truncating BOTH rubric and answer_key. (5) RUBRIC + READING_RESOURCE EMPTY-STATE: when these come back empty (token-cap victims), now show an actionable placeholder pointing to Regenerate, instead of a blank block. (6) NO MARKDOWN TABLES IN WORKSHEETS: prompt now bans tables for both math and non-math worksheets. The renderer doesn\'t support them, so they leaked as raw pipe characters with empty text boxes between rows. Sort/classify items must be expressed as separate numbered questions. (7) CONSISTENT QUESTION NUMBERING: prompt now requires every question to be labelled Q1, Q2, Q3... sequentially across the whole worksheet (not per section), matching the answer key exactly. Closes the bug where Part A had no numbers, Part B had no numbers, but Part C started at "9.", making it impossible for teachers to reference questions consistently. (8) STRAND ROUTING FIX: "Forces Acting on Structures" (Gr 5 Strand D in 2022 Ontario Science curriculum) was incorrectly routing to Strand C (Matter and Energy) because the keyword "force" was checked before "structure" in the strand classifier. Reordered: structure/mechanism/pulley/lever/bridge/load/tension/compression/shear/torsion/truss/stable/design context now wins over generic "force" keyword. Big credibility fix — wrong curriculum codes destroy trust instantly. (9) UNIT PLAN PDF: new downloadUnitPlanPDF function + 📄 PDF button on each unit card. Renders unit topic, big idea, lesson sequence with focus + colour-coded type badges. Designed for TPA evidence, principal walkthroughs, board observations. Footer notes that detailed lesson plans (with expectations, differentiation, assessment) are generated per lesson and can be printed individually. All AL + AK fixes carry forward.)';
+const TA_BUILD = '2026-04-15-AL+ (Post-deploy hotfixes for issues found during initial AL testing. (1) WORKSHEET PDF REWRITE: original AL renderer assumed each tag on its own line. Real LLM output puts everything inline. Rewrote downloadWorksheetPDF with renderQuestion() that detects [CIRCLE ONE], [CHECK ALL], [WORD BANK], [TEXT BOX], [LARGE BOX], [DRAW] anywhere on the line, strips tags from visible stem, and renders the right writing space after. Skips duplicate Name/Date headers, strips stray Q-prefix and unbalanced ** asterisks. (2) WORD BANK in PDF gets its own styled chip strip. (3) WORKSHEET-7 STEM CLEANUP: normalizeStem() helper strips "Q1.", "Q1.**", "Q 1)" prefixes and dangling asterisks. (4) TOKEN BUDGET: single-grade cap 4800→6400, split 6000→7600, with +800 bonus when reading_resource is included. (5) RUBRIC + READING_RESOURCE EMPTY-STATE: actionable placeholder when these come back empty. (6) NO MARKDOWN TABLES IN WORKSHEETS: prompt now bans tables for both math and non-math worksheets. (7) CONSISTENT QUESTION NUMBERING: prompt requires every question labelled Q1, Q2, Q3... sequentially. (8) STRAND ROUTING FIX: structure/mechanism/pulley/lever/bridge/load/tension/compression/shear/torsion/truss/stable/design now wins over generic "force" keyword for science topic classification. Closes the bug where Forces and Structures Gr 5 routed to Strand C (Matter and Energy) instead of Strand D (Structures and Mechanisms). (9) UNIT PLAN PDF: new downloadUnitPlanPDF function + 📄 PDF button on each unit card for TPA evidence and principal walkthroughs. (10) WORKSHEET AUTO-REGEN: when main lesson response comes back without a worksheet (token cap on long science lessons with reading + rubric eating headroom), instead of leaving teacher with unusable lesson, fires dedicated regenWorksheetAsync follow-up call using lesson_plan as source. After worksheet lands, chains regenAnswerKeyAsync so key matches new worksheet. Crosscoordinates with answer-key regen so we don\'t double-fire. Persists regenerated worksheet back to the lessons row. (11) FIX MISLEADING BUTTON COPY: replaced all "🔄 Regenerate Lesson" placeholder text with accurate "go back to planning page (← Back to Plan) and generate the lesson again" — the regenerate-lesson button never existed. All AL + AK fixes carry forward.)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
@@ -9989,6 +10105,16 @@ async function loadLesson(id) {
   genC['_expectations'] = lesson.expectations || [];
   curSess = { id:null, date:new Date().toLocaleDateString('en-CA'), subject:lesson.subject||'Language / Literacy', strand:'General', grades:lesson.grades||[], task:lesson.topic||'', marks:{} };
   window._curSessGrades = lesson.grades || [];
+  // BUILD AL+: also restore _lessonMeta so post-load actions like "More Questions"
+  // and the worksheet/answer-key regen paths know what topic/grade/subject to use.
+  // Without this, addMoreQuestions() and regenWorksheetAsync() trip the "Generate
+  // a lesson first" guard even though the teacher has clearly opened a lesson.
+  window._lessonMeta = {
+    topic: lesson.topic || '',
+    grades: lesson.grades || [],
+    subj: lesson.subject || '',
+    gradeStr: (lesson.grades || []).join(' / ')
+  };
   window._slideData = (content._slideData) ? content._slideData : null;
   _pendingSlideSave = !content._slideData;
   // If cached slides exist, flip the Build Slides button label to Present
