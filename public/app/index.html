@@ -4445,6 +4445,11 @@ async function loadKWorksheetImages(pending) {
       return;
     }
     try {
+      // BUILD AL+ P1 #6: 30s timeout. Without it, a hung Fal.ai call leaves
+      // the K worksheet placeholder spinning forever. swapKImageFailed shows
+      // a clean text fallback instead.
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 30000);
       const r = await authFetch('/api/generate-image', {
         method: 'POST',
         body: JSON.stringify({
@@ -4455,8 +4460,10 @@ async function loadKWorksheetImages(pending) {
           style: style,
           imageSize: size,
           subKey: key
-        })
+        }),
+        signal: ctrl.signal
       });
+      clearTimeout(timer);
       if (r.ok) {
         const d = await r.json();
         if (d.url) {
@@ -4466,7 +4473,11 @@ async function loadKWorksheetImages(pending) {
         }
       }
     } catch(e) {
-      console.warn('[K-IMG] failed:', prompt, e.message);
+      if (e.name === 'AbortError') {
+        console.warn('[K-IMG] timed out after 30s:', prompt);
+      } else {
+        console.warn('[K-IMG] failed:', prompt, e.message);
+      }
     }
     // On failure: leave placeholder but show text instead of spinner
     swapKImageFailed(key, prompt);
@@ -4739,39 +4750,58 @@ Use EXACTLY "## " and "### " markdown headers. No single asterisks, no bolded la
   }
 }
 
+// BUILD AL+: shared helper to find the lesson currently being edited in the
+// in-tool view. Prefers _lessonMeta.lessonId (set by fresh-generate after
+// insert and by loadLesson). Falls back to topic+grades match for legacy
+// safety, with a console warning so we can detect any code path that
+// doesn't set the ID.
+function findCurrentLesson() {
+  if (!window._lessonMeta) return null;
+  // Preferred: lookup by ID
+  if (window._lessonMeta.lessonId) {
+    const byId = savedLessons.find(l => l.id === window._lessonMeta.lessonId);
+    if (byId) return byId;
+  }
+  // Legacy fallback: topic + grades match
+  const _topic = window._lessonMeta.topic || '';
+  const _grades = (window._lessonMeta.grades || []).join(',');
+  const byTopicGrades = savedLessons.find(l => l.topic === _topic && (l.grades||[]).join(',') === _grades);
+  if (byTopicGrades) {
+    console.warn('[findCurrentLesson] using topic+grades fallback (lessonId missing on _lessonMeta)');
+    // BUILD AL+ P0 #2: backfill the lessonId so subsequent persist calls in
+    // this session take the fast path. Helps lessons created before lessonId
+    // was added to the auth metadata flow.
+    window._lessonMeta.lessonId = byTopicGrades.id;
+  }
+  return byTopicGrades || null;
+}
+
 // BUILD AL+: shared helper used by all regen functions to write the freshly
 // regenerated content back to the lessons.content JSONB column. Without this,
 // the regen runs every time the teacher opens the lesson — wasted tokens and
 // awkward UX. With this, the empty field is fixed permanently after one regen.
 //
-// Lookup order: lesson ID first (precise, set by fresh-generate after insert
-// and by loadLesson). Falls back to topic+grades match for legacy code paths
-// that didn't stash an ID — but ID match is strongly preferred because two
-// lessons can share the same topic+grades (teacher generates "Properties of
-// Matter Gr 5" twice for two different classes), and the fallback would
-// silently write to the first match (which might be the wrong lesson).
+// Accepts either a single field (fieldKey + newValue) or an object of multiple
+// fields (fieldKey={...} + newValue=undefined). Multi-field form is used by
+// addMoreQuestions which writes worksheet + answer key together.
 async function persistRegeneratedField(fieldKey, newValue) {
   try {
-    if (!currentUser || !window._lessonMeta) return;
-    let _match = null;
-    // Preferred: look up by lesson ID
-    if (window._lessonMeta.lessonId) {
-      _match = savedLessons.find(l => l.id === window._lessonMeta.lessonId);
-    }
-    // Legacy fallback: topic + grades match (less precise — can collide)
-    if (!_match) {
-      const _topic = window._lessonMeta.topic;
-      const _grades = (window._lessonMeta.grades || []).join(',');
-      _match = savedLessons.find(l => l.topic === _topic && (l.grades||[]).join(',') === _grades);
-      if (_match) {
-        console.warn('[persistRegeneratedField] using topic+grades fallback for', fieldKey, '— consider setting lessonId on _lessonMeta');
-      }
-    }
+    if (!currentUser) return;
+    const _match = findCurrentLesson();
     if (!_match) {
       console.warn('[persistRegeneratedField] no matching lesson found for', fieldKey);
       return;
     }
-    const _updContent = { ...(_match.content || {}), [fieldKey]: newValue };
+    let _updates;
+    if (typeof fieldKey === 'string') {
+      _updates = { [fieldKey]: newValue };
+    } else if (fieldKey && typeof fieldKey === 'object') {
+      _updates = fieldKey; // multi-field update
+    } else {
+      console.warn('[persistRegeneratedField] invalid fieldKey:', fieldKey);
+      return;
+    }
+    const _updContent = { ...(_match.content || {}), ..._updates };
     const { error } = await db.from('lessons').update({ content: _updContent }).eq('id', _match.id);
     if (!error) {
       _match.content = _updContent;
@@ -4891,20 +4921,12 @@ Return ONLY a valid JSON object with this exact shape, no markdown fences, no pr
       const akBody = document.getElementById('cbb-' + akKey);
       if (akBody) akBody.innerHTML = renderAnswerKey(genC[akKey].cur);
     }
-    // Persist to the lesson row so extras survive page reload
-    try {
-      const _topic = curSess?.task || '';
-      const _grades = (curSess?.grades || []).join(',');
-      const _match = savedLessons.find(l => l.topic === _topic && (l.grades||[]).join(',') === _grades);
-      if (_match && currentUser) {
-        const _updContent = { ...(_match.content || {}) };
-        _updContent[k] = genC[k].cur;
-        if (newAK && genC[akKey]) _updContent[akKey] = genC[akKey].cur;
-        db.from('lessons').update({ content: _updContent }).eq('id', _match.id).then(() => {
-          _match.content = _updContent;
-        }).catch(err => console.warn('Extra Qs save failed:', err.message));
-      }
-    } catch(_) {}
+    // BUILD AL+ P0 #1: persist via shared helper (uses lesson ID, not
+    // topic+grades match). Was inline before — refactored so all persistence
+    // paths use the same lookup logic and ID-collision protection.
+    const _updates = { [k]: genC[k].cur };
+    if (newAK && genC[akKey]) _updates[akKey] = genC[akKey].cur;
+    persistRegeneratedField(_updates);
     showToast(genC[akKey] ? '✅ Added more questions + answers' : '✅ Added more questions');
   } catch (e) {
     showToast('⚠️ Could not add questions: ' + e.message);
@@ -6139,51 +6161,60 @@ async function generateSlideData(callerBtn) {
     _pendingSlideSave = true;
 
     // ── STEP 1b: Fetch contextual image in parallel (non-blocking) ──
-    // AI image for Minds On slide (all subjects)
-    // Wikimedia image for science content slides
+    // AI image for Minds On slide + per-slide AI images.
     const imagePromises = [];
 
-    const fetchMindsonImage = async () => {
+    // BUILD AL+ P1 #6: timeout-wrapped fetch for image generation. If Fal.ai
+    // hangs (network issue, server-side socket hang, slow generation), the
+    // image gracefully degrades to "no image" instead of leaving the slide
+    // deck in a permanent "Drawing visual..." state. 30s is generous —
+    // Flux Schnell typically responds in 3-8s.
+    const _fetchImgWithTimeout = async (body, label) => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 30000);
       try {
-        // AG: Simplified from AD's hook-cleaning approach. Hook text like
-        // "Hold up a toonie..." was still bleeding instructional words into
-        // the Flux prompt which baked "HOLD UP ROINE" onto the image.
-        // The hook is already displayed to the teacher on the slide — the
-        // image doesn't need to mirror it. Use topic + subject only for
-        // a clean, predictable visual. If there's a detected theme, append.
-        const themeBit = detectedTheme ? ' (' + detectedTheme + ' theme)' : '';
-        const visualSubject = topic + themeBit;
-        const r = await authFetch('/api/generate-image', {
-          method: 'POST',
-          body: JSON.stringify({ type: 'ai', topic: visualSubject, subject, grade: gradeStr, theme: detectedTheme, style: deckStyle.style, subKey: deckStyle.code })
-        });
-        if (r.ok) {
-          const d = await r.json();
-          if (d.url) { window._slideData.mindsonImg = d.url; console.log('[IMG] mindsonImg set'); }
+        const r = await authFetch('/api/generate-image', { method: 'POST', body: JSON.stringify(body), signal: ctrl.signal });
+        clearTimeout(timer);
+        if (!r.ok) return null;
+        const d = await r.json();
+        return d?.url || null;
+      } catch (e) {
+        clearTimeout(timer);
+        if (e.name === 'AbortError') {
+          console.warn('[IMG] '+label+' timed out after 30s — falling back to no image');
+        } else {
+          console.warn('[IMG] '+label+' failed:', e.message);
         }
-      } catch(e) { console.warn('[IMG] mindsonImg failed:', e.message); }
+        return null;
+      }
     };
 
-    // Per-slide AI images — one per content slide using slide title as prompt
-    const fetchSlideImages = async () => {
+    // Mindson hero image — same timeout protection
+    const fetchMindsonImageWrapped = async () => {
+      const themeBit = detectedTheme ? ' (' + detectedTheme + ' theme)' : '';
+      const visualSubject = topic + themeBit;
+      const url = await _fetchImgWithTimeout(
+        { type: 'ai', topic: visualSubject, subject, grade: gradeStr, theme: detectedTheme, style: deckStyle.style, subKey: deckStyle.code },
+        'mindsonImg'
+      );
+      if (url) { window._slideData.mindsonImg = url; console.log('[IMG] mindsonImg set'); }
+    };
+
+    // Per-slide AI images — one per content slide, also timeout-protected
+    const fetchSlideImagesWrapped = async () => {
       const slides = (sd.content_slides||[]).slice(0, profile.slideCount);
       if (!slides.length) return;
       const promises = slides.map(async (cs, i) => {
         const slidePrompt = ((cs.image_prompt || cs.key_point || cs.title || topic) + '').slice(0, 120);
-        try {
-          const r = await authFetch('/api/generate-image', {
-            method: 'POST',
-            body: JSON.stringify({ type: 'ai', topic: slidePrompt, subject, grade: gradeStr, theme: detectedTheme, style: deckStyle.style, subKey: deckStyle.code })
-          });
-          if (r.ok) {
-            const d = await r.json();
-            if (d.url) {
-              window._slideData.slideImgs = window._slideData.slideImgs || [];
-              window._slideData.slideImgs[i] = d.url;
-              console.log('[IMG] slide', i, 'image set');
-            }
-          }
-        } catch(e) { console.warn('[IMG] slide', i, 'image failed:', e.message); }
+        const url = await _fetchImgWithTimeout(
+          { type: 'ai', topic: slidePrompt, subject, grade: gradeStr, theme: detectedTheme, style: deckStyle.style, subKey: deckStyle.code },
+          'slide '+i
+        );
+        if (url) {
+          window._slideData.slideImgs = window._slideData.slideImgs || [];
+          window._slideData.slideImgs[i] = url;
+          console.log('[IMG] slide', i, 'image set');
+        }
       });
       await Promise.all(promises);
     };
@@ -6192,7 +6223,7 @@ async function generateSlideData(callerBtn) {
     const fetchWikiImage = async () => { return; };
 
     // Fire both requests in parallel — don't await, they complete async
-    const imageFetchPromise = Promise.all([fetchMindsonImage(), fetchWikiImage(), fetchSlideImages()]);
+    const imageFetchPromise = Promise.all([fetchMindsonImageWrapped(), fetchWikiImage(), fetchSlideImagesWrapped()]);
 
     // ── STEP 2: Generate hardcoded visuals synchronously (instant for 90%+ of slides) ──
     if (callerBtn) callerBtn.textContent='⏳ Drawing visuals...';
@@ -6224,14 +6255,10 @@ async function generateSlideData(callerBtn) {
       // This prevents stale SVG from old renderer versions being served forever.
       const sdToSave = { ...sd, content_slides: (sd.content_slides||[]).map(cs => { const {svg_html, ...rest} = cs; return rest; }) };
       const _slideToSave = { sd: sdToSave, topic, subject, gradeStr, detectedTheme, wikiImg: wikiImg||null, mindsonImg: mindsonImg||null, wikiTitle: wikiTitle||null, wikiLicense: wikiLicense||null, slideImgs: slideImgs||[] };
-      // Find the most recent lesson with this topic
-      const _matchLesson = savedLessons.find(l => l.topic === topic && (l.grades||[]).join(',') === (curSess.grades||[]).join(','));
-      if (_matchLesson) {
-        const _updContent = { ...(_matchLesson.content||{}), _slideData: _slideToSave };
-        db.from('lessons').update({ content: _updContent }).eq('id', _matchLesson.id).then(() => {
-          _matchLesson.content = _updContent;
-        }).catch(e => console.warn('Slide save failed:', e.message));
-      }
+      // BUILD AL+ P0 #1: persist via shared helper. Was inline topic+grades
+      // match — now uses lesson ID via findCurrentLesson() to avoid writing
+      // slides to the wrong lesson when a teacher has duplicate topic+grades.
+      persistRegeneratedField('_slideData', _slideToSave);
     }
 
     // ── STEP 4: Fire agent loop for any slides that didn't get a hardcoded visual ─
@@ -9536,8 +9563,61 @@ Default toward L3 unless there is clear evidence the student is below or above t
     if (data.error) throw new Error(data.error.message||'API error');
     const raw = data.content.map(i=>i.text||'').join('');
     let result;
-    try { result = JSON.parse(raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim()); }
-    catch(e) { const s=raw.indexOf('{'),e2=raw.lastIndexOf('}'); result=JSON.parse(raw.slice(s,e2+1)); }
+    // BUILD AL+: 3-tier JSON parser. LLMs occasionally emit JSON with subtle
+    // bugs (unescaped quotes inside feedback strings, trailing commas, raw
+    // newlines, smart quotes). Previously, any parse failure surfaced
+    // "Auto-mark failed" to the teacher. Now we try harder before giving up.
+    //
+    // Tier 1: clean parse after stripping fences.
+    // Tier 2: repair common glitches, then parse.
+    // Tier 3: regex-extract critical fields (level + obs note) so teacher
+    //         still gets a useful suggestion even from broken JSON.
+    const _stripped = raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
+    try {
+      result = JSON.parse(_stripped);
+    } catch(_e1) {
+      // Tier 2: try just the {...} slice
+      let _sliced = '';
+      try {
+        const s = _stripped.indexOf('{'), e = _stripped.lastIndexOf('}');
+        if (s !== -1 && e !== -1) _sliced = _stripped.slice(s, e+1);
+        result = JSON.parse(_sliced);
+      } catch(_e2) {
+        // Tier 2b: repair common LLM glitches in the sliced JSON
+        try {
+          let _repaired = _sliced || _stripped;
+          // Replace smart quotes inside strings with straight quotes
+          _repaired = _repaired.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
+          // Strip trailing commas before } or ]
+          _repaired = _repaired.replace(/,(\s*[}\]])/g, '$1');
+          // Escape literal newlines inside string values (between two unescaped quotes on the same field)
+          // Simpler heuristic: replace any literal \n inside the JSON with \\n
+          // (only safe because our schema has no multi-line string keys)
+          _repaired = _repaired.replace(/[\r\n]+/g, ' ');
+          result = JSON.parse(_repaired);
+          console.warn('[autoMark] tier-2 repair succeeded for', sid);
+        } catch(_e3) {
+          // Tier 3: regex-extract just the must-have fields so teacher still
+          // gets a useful suggestion. Misses per_question feedback but level
+          // and observation are the most valuable parts anyway.
+          console.warn('[autoMark] tier-3 regex fallback for', sid, '— raw length:', raw.length);
+          const _lvlMatch = raw.match(/"suggested_level"\s*:\s*"([^"]+)"/);
+          const _lblMatch = raw.match(/"level_label"\s*:\s*"([^"]+)"/);
+          const _obsMatch = raw.match(/"observation_note"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+          if (_lvlMatch) {
+            result = {
+              suggested_level: _lvlMatch[1],
+              level_label: _lblMatch ? _lblMatch[1] : _lvlMatch[1],
+              per_question: [],
+              observation_note: _obsMatch ? _obsMatch[1].replace(/\\n/g,'\n').replace(/\\"/g,'"') : ''
+            };
+          } else {
+            // Truly unrecoverable — surface the original error
+            throw _e3;
+          }
+        }
+      }
+    }
 
     const level = result.suggested_level||'L3';
     const label = result.level_label||level;
