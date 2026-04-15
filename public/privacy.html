@@ -77,12 +77,12 @@ footer a { color: var(--sage); text-decoration: none; }
   <div class="hero">
     <div class="eyebrow">Legal</div>
     <h1>Privacy <em>Policy</em></h1>
-    <div class="updated">Last updated: April 14, 2026</div>
+    <div class="updated">Last updated: April 15, 2026</div>
   </div>
 
   <div class="callout callout-sage">
     <span class="callout-icon">🍁</span>
-    <div><strong>Plain-language summary:</strong> TeacherAI is built for Ontario teachers. Student names never leave Canada and are never sent to AI. Assessment data stays on Canadian servers. TeacherAI drafts content; you decide what reaches students and parents. You own your data and can request deletion at any time.</div>
+    <div><strong>Plain-language summary:</strong> TeacherAI is built for Ontario teachers and aligned with PIPEDA (federal) and MFIPPA (Ontario school board) privacy expectations. Student names never leave Canada and are never sent to AI. Assessment data stays on Canadian AWS servers in Montreal. TeacherAI drafts content; you decide what reaches students and parents. You own your data and can request deletion at any time.</div>
   </div>
 
   <div class="toc">
@@ -154,20 +154,24 @@ footer a { color: var(--sage); text-decoration: none; }
 
   <section id="storage">
     <h2>5. Data storage & residency</h2>
-    <p>All data is stored in Canada. We use Supabase with the <strong>Canada Central (ca-central-1)</strong> region, hosted on AWS infrastructure in Montreal, Quebec.</p>
-    <p>This means your data — including student names, assessment records, and lesson content — never leaves Canada at rest. Canadian data residency helps support compliance with PIPEDA and MFIPPA requirements for Ontario educators.</p>
-    <p>Data in transit is encrypted via HTTPS/TLS. Data at rest is encrypted by Supabase's storage layer.</p>
+    <p>All TeacherAI data is stored in Canada on <strong>AWS infrastructure in Montreal, Quebec</strong> (ca-central-1 region), accessed through Supabase, our database and authentication provider.</p>
+    <p>This means your data — including student names, assessment records, lesson content, and worksheet submissions — never leaves Canada at rest. Canadian data residency supports compliance with PIPEDA (Personal Information Protection and Electronic Documents Act, federal) and MFIPPA (Municipal Freedom of Information and Protection of Privacy Act, Ontario) requirements for Ontario educators.</p>
+    <p>Data in transit is encrypted via HTTPS/TLS. Data at rest is encrypted by Supabase's storage layer. Database access is restricted by row-level security policies that scope every record to the teacher who created it.</p>
+    <p><strong>Security incident reporting:</strong> If we discover a privacy breach affecting your data, we will notify affected users within 72 hours of discovery and report to the Privacy Commissioner of Canada when required under PIPEDA's Mandatory Breach of Security Safeguards regulations.</p>
   </section>
 
   <section id="sharing">
     <h2>6. Who we share data with</h2>
     <table>
-      <tr><th>Third party</th><th>What they receive</th><th>Why</th></tr>
-      <tr><td><strong>Anthropic (Claude API)</strong></td><td>Anonymized lesson content — no student names, no assessment data</td><td>AI generation</td></tr>
-      <tr><td><strong>Supabase</strong></td><td>All stored data (encrypted, Canada region)</td><td>Database & authentication</td></tr>
-      <tr><td><strong>Vercel</strong></td><td>Serverless function requests (no persistent storage)</td><td>Hosting & API proxy</td></tr>
+      <tr><th>Third party</th><th>What they receive</th><th>Where</th><th>Why</th></tr>
+      <tr><td><strong>Anthropic (Claude API)</strong></td><td>Anonymized lesson content — no student names, no assessment data, no submissions</td><td>United States</td><td>AI generation of lesson plans, worksheets, rubrics, and report comments</td></tr>
+      <tr><td><strong>Fal.ai (Flux image API)</strong></td><td>Short topic-only image prompts (e.g. "Canadian coins"). No student data, no lesson content beyond the topic.</td><td>United States</td><td>AI image generation for slides and Kindergarten worksheets</td></tr>
+      <tr><td><strong>Supabase</strong></td><td>All stored data (encrypted at rest)</td><td>Canada (Montreal, ca-central-1)</td><td>Database, authentication, and storage</td></tr>
+      <tr><td><strong>Vercel</strong></td><td>Serverless function requests in transit (no persistent storage)</td><td>Edge network</td><td>Web hosting and API proxying</td></tr>
+      <tr><td><strong>Cloudflare</strong></td><td>DNS lookups and inbound email routing for @teacherai.ca</td><td>Global edge network</td><td>DNS resolution and email forwarding</td></tr>
     </table>
     <p>We do not sell, rent, or share your data with advertisers, data brokers, or any other third parties. We do not use your data for marketing.</p>
+    <p>Where third parties process data outside Canada (Anthropic, Fal.ai), we limit what is sent to anonymized content only and rely on contractual data-handling commitments from those providers. Student names, marks, and worksheet submissions never leave Canada.</p>
   </section>
 
   <section id="retention">
@@ -180,19 +184,21 @@ footer a { color: var(--sage); text-decoration: none; }
       <li><strong>Student roster:</strong> Retained until you remove students or your account</li>
     </ul>
     <p>You can delete individual students, lessons, and assessment sessions directly from the app. You can also request full account deletion from the in-app account menu, which removes all associated data within 30 days.</p>
-    <p><em>Coming soon:</em> Automatic data expiry for worksheet submissions older than one school year.</p>
+    <p>Worksheet submissions older than one school year may be automatically purged at the start of the next school year. We recommend exporting any submissions you wish to retain long-term.</p>
   </section>
 
   <section id="rights">
     <h2>8. Your rights</h2>
-    <p>Under PIPEDA and applicable Ontario privacy law, you have the right to:</p>
+    <p>Under PIPEDA (the federal Personal Information Protection and Electronic Documents Act) and applicable Ontario privacy law, you have the right to:</p>
     <ul>
       <li><strong>Access:</strong> Request a copy of all data we hold about you</li>
       <li><strong>Correction:</strong> Request correction of inaccurate information</li>
       <li><strong>Deletion:</strong> Request deletion of your account and all associated data</li>
       <li><strong>Portability:</strong> Export your data (CSV export available in the Grade Tracker)</li>
+      <li><strong>Withdraw consent:</strong> Stop using TeacherAI at any time and request deletion</li>
+      <li><strong>Complain:</strong> File a complaint with the <a href="https://www.priv.gc.ca" style="color:var(--sage);">Office of the Privacy Commissioner of Canada</a> if you believe we've mishandled your data</li>
     </ul>
-    <p>To exercise any of these rights, contact us at the email address below. We will respond within 30 days.</p>
+    <p>To exercise any of these rights, contact us at the email address below. We will acknowledge your request within 5 business days and respond fully within 30 days.</p>
   </section>
 
   <section id="mfippa">
