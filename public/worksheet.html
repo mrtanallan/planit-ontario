@@ -487,6 +487,15 @@ async function submitWorksheet(){
 
 function renderWS(text){
   if(!text)return'';wsN=0;let h='';let qCount=0;
+  // BUILD AL+: decode HTML entities (LLM sometimes emits literal &nbsp;, &amp;, etc.
+  // in the worksheet field) so they render as actual characters, not raw markup.
+  // Also strip stray ** from lines that aren't questions (Name/Date headers, etc.)
+  // so we don't show "Date:**" to students.
+  try {
+    const _decode = document.createElement('textarea');
+    _decode.innerHTML = text;
+    text = _decode.value;
+  } catch(_) {}
   text.split('\n').forEach(line=>{
     if(line.startsWith('## ')){h+=`<h2>${line.slice(3)}</h2>`;return;}
     if(line.startsWith('### ')){h+=`<h3>${line.slice(4)}</h3>`;return;}
@@ -521,7 +530,9 @@ function renderWS(text){
       h+=`<div style="margin:5px 0;"><strong>${num}.</strong> ${cont.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</div>`;return;}
     if(line.match(/^[-*] /)){h+=`<li style="margin-bottom:3px;">${line.slice(2).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</li>`;return;}
     if(line.trim()===''){h+='<div style="height:5px;"></div>';return;}
-    h+=`<p>${line.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')}</p>`;
+    // BUILD AL+: replace balanced **bold**, then strip any dangling ** that
+    // survived (common in Name/Date headers like "Name: ___ Date:**").
+    h+=`<p>${line.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*+/g,'')}</p>`;
   });
   return h;
 }
