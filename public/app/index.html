@@ -555,7 +555,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
         <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">📝</div>
-        <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Student-ready worksheets</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Share a link or print a PDF. Auto-marks Chromebook submissions.</div></div>
+        <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Student-ready worksheets</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Share a link or print a PDF. Auto-marks student submissions on any device.</div></div>
       </div>
     </div>
   </div>
@@ -848,9 +848,9 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <select id="unit-duration">
           <option value="2 lessons">2 lessons</option>
           <option value="3 lessons">3 lessons</option>
-          <option value="4 lessons">4 lessons</option>
+          <option value="4 lessons" selected>4 lessons</option>
           <option value="5 lessons">5 lessons</option>
-          <option value="6 lessons" selected>6 lessons</option>
+          <option value="6 lessons">6 lessons</option>
           <option value="7 lessons">7 lessons</option>
           <option value="8 lessons">8 lessons</option>
           <option value="9 lessons">9 lessons</option>
@@ -10803,7 +10803,12 @@ async function renderUnitPlansList(sortOnly) {
   }
   if (!savedUnitPlans.length) {
     if (sorterWrap) sorterWrap.style.display = 'none';
-    el.innerHTML = `<div style="text-align:center;padding:32px 20px;max-width:520px;margin:0 auto;">
+    // BUILD AL+: hide form when no units exist — empty state acts as the welcome.
+    // CTA button reveals the form. Once a unit is generated, the form re-appears
+    // automatically because savedUnitPlans.length goes > 0 and this branch isn't hit.
+    const formCard = document.getElementById('unitFormCard');
+    if (formCard) formCard.style.display = 'none';
+    el.innerHTML = `<div id="unitWelcomeEmpty" style="text-align:center;padding:32px 20px;max-width:520px;margin:0 auto;">
       <div style="font-size:2.4rem;margin-bottom:10px;">📋</div>
       <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.35rem;margin-bottom:6px;color:var(--ink);">Plan whole units in one sitting</div>
       <div style="color:var(--muted);font-size:.86rem;margin-bottom:22px;line-height:1.5;">Type a unit topic and get a multi-lesson scope and sequence in under 30 seconds. Each lesson can be expanded into a full plan with one click when you're ready to teach it.</div>
@@ -10821,11 +10826,15 @@ async function renderUnitPlansList(sortOnly) {
           <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Unit assessments included</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Generate a culminating assessment aligned to your expectations.</div></div>
         </div>
       </div>
-      <div style="color:var(--muted);font-size:.78rem;">Use the form above to generate your first unit plan ↑</div>
+      <button class="btn b-sage" onclick="document.getElementById('unitFormCard').style.display='block';document.getElementById('unitWelcomeEmpty').style.display='none';setTimeout(()=>document.getElementById('unit-topic')?.focus(),100);" style="font-size:.92rem;padding:10px 22px;">+ Create Your First Unit Plan</button>
     </div>`;
     return;
   }
   if (sorterWrap) sorterWrap.style.display = 'flex';
+  // BUILD AL+: ensure form is visible once at least one unit exists.
+  // Counterpart to the hide above when savedUnitPlans is empty.
+  const formCard = document.getElementById('unitFormCard');
+  if (formCard) formCard.style.display = '';
   const sortBy = document.getElementById('unitSortBy')?.value || 'newest';
   const gradeRank = g => { const m = String(g||'').match(/\d+/); return m ? parseInt(m[0],10) : 99; };
   const sorted = [...savedUnitPlans].sort((a,b) => {
