@@ -539,6 +539,27 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
     <div class="ws locked" id="ws4" onclick="gs(4)"><div class="wn">3</div>📊 Assess</div>
   </div>
 
+  <!-- ── First-time welcome banner: shown when teacher has 0 saved lessons. Toggled by maybeShowPlanWelcome() ── -->
+  <div id="planWelcomeBanner" style="display:none;text-align:center;padding:24px 20px 28px;max-width:560px;margin:0 auto 20px;background:var(--paper);border:1px solid var(--border);border-radius:12px;">
+    <div style="font-size:2.4rem;margin-bottom:10px;">✨</div>
+    <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin-bottom:6px;color:var(--ink);">Plan your first lesson</div>
+    <div style="color:var(--muted);font-size:.88rem;margin-bottom:20px;line-height:1.5;">Pick a topic, grade, and subject below. TeacherAI drafts the lesson, worksheet, rubric, and answer key in Ontario curriculum language.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;text-align:left;">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
+        <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">🎯</div>
+        <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Curriculum-aligned</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Pulls real Ontario expectations and matches them to your topic automatically.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
+        <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">🧩</div>
+        <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Split-grade ready</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Add up to 6 grades for one lesson. Differentiated content per grade.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
+        <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">📝</div>
+        <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Student-ready worksheets</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Share a link or print a PDF. Auto-marks Chromebook submissions.</div></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Step 1: Generate ── -->
   <div id="s1">
     <div class="card">
@@ -1656,7 +1677,7 @@ function showApp() {
     r.addEventListener('change', function() {
       if (!this.checked) return;
       localStorage.setItem('teacherai_tab', this.id);
-      if (this.id==='tr-plan')    { renderClassSelector(); updateWelcomeBanner(); resetWorkflow(); }
+      if (this.id==='tr-plan')    { renderClassSelector(); updateWelcomeBanner(); resetWorkflow(); maybeShowPlanWelcome(); }
       if (this.id==='tr-assess')  { loadUserData().then(() => { renderTracker(); renderAssessClassTabs(); loadUnitTestResults(); const v=localStorage.getItem('teacherai_tracker_view')||'grade'; switchTrackerView(v); }); }
       if (this.id==='tr-rc')      { populateRCFilters().then(() => loadSavedRCPage()); }
       if (this.id==='tr-account') { loadAccountPage(); }
@@ -1675,11 +1696,24 @@ function showApp() {
   renderTracker();
   renderLessonsList().then(() => {
     switchTrackerView(localStorage.getItem('teacherai_tracker_view') || 'grade');
+    maybeShowPlanWelcome(); // banner depends on savedLessons being loaded
   });
   updateWelcomeBanner();
   if (savedTab === 'tr-units') renderUnitPlansList();
   if (savedTab === 'tr-lessons') renderLessonsList();
   if (savedTab === 'tr-assess') { loadUnitTestResults(); }
+}
+
+// BUILD AL+: first-time welcome banner on the Plan page.
+// Visible only when the teacher has 0 saved lessons. Disappears automatically
+// after the first lesson is generated, since the Plan tab is visited daily
+// and a permanent banner would be noise. Units page already has its own
+// empty state in the list area below the form, so no banner needed there.
+function maybeShowPlanWelcome() {
+  const banner = document.getElementById('planWelcomeBanner');
+  if (!banner) return;
+  const empty = !Array.isArray(savedLessons) || savedLessons.length === 0;
+  banner.style.display = empty ? 'block' : 'none';
 }
 
 // ============================================================
@@ -9994,6 +10028,8 @@ async function renderLessonsList() {
   const { data } = await db.from('lessons').select('*').eq('teacher_id',currentUser.id).order('created_at',{ascending:false}).limit(50);
   savedLessons = data || [];
   _renderLessonsUI();
+  // BUILD AL+: refresh the plan welcome banner — it shows only when 0 lessons saved.
+  if (typeof maybeShowPlanWelcome === 'function') maybeShowPlanWelcome();
 }
 
 function _renderLessonsUI() {
