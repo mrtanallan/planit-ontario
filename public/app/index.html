@@ -475,7 +475,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <div class="fi" style="margin-bottom:12px;"><label>Full Name</label><input type="text" id="signupName" placeholder="Your name"></div>
       <div class="fi" style="margin-bottom:12px;"><label>Email</label><input type="email" id="signupEmail" placeholder="your@email.com"></div>
       <div class="fi" style="margin-bottom:14px;"><label>Password</label><input type="password" id="signupPass" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')signUp()"></div>
-      <div class="fi" style="margin-bottom:20px;"><label style="display:flex;align-items:center;justify-content:space-between;">Beta code <span style="font-weight:400;color:var(--muted);font-size:.72rem;">optional</span></label><input type="text" id="signupCode" placeholder="Have one? Paste it here" autocapitalize="off" spellcheck="false"></div>
+      <div class="fi" style="margin-bottom:20px;"></div>
       <button class="btn b-sage b-full" onclick="signUp()" style="font-size:.95rem;padding:12px;">Create Account →</button>
     </div>
     <div style="margin-top:20px;">
@@ -1548,9 +1548,6 @@ async function signUp() {
   const { error } = await db.auth.signUp({email, password:pass, options:{data:{full_name:name}}});
   hideLoading();
   if (error) { showAuthErr(error.message); return; }
-  // If a beta code was entered, stash it for redemption right after the user signs in
-  const code = document.getElementById('signupCode')?.value?.trim();
-  if (code) try { localStorage.setItem('teacherai_pending_code', code); } catch(_){}
   showAuthMsg('Account created! Check your email to confirm, then sign in.');
 }
 
@@ -1974,6 +1971,9 @@ function dismissWelcomeBanner(permanent) {
 // PLAN / STRIPE UI
 // ============================================================
 async function _autoRedeemPendingCode() {
+  // Legacy path: if any user signed up with the old beta-code field BEFORE
+  // we removed it, their code is still in localStorage. Honor it here so
+  // they don't get stuck. New signups go through profile → Redeem Code.
   try {
     const code = localStorage.getItem('teacherai_pending_code');
     if (!code) return;
