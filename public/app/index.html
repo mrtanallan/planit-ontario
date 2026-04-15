@@ -2895,7 +2895,7 @@ Use ONLY these question formats:
 NEVER use: long division with shown work, drawing number lines, drawing shapes, graphing by hand, show-your-work boxes for multi-step work.
 Use 4–6 questions. Start directly with the title and first question.`
     : `Worksheet FORMAT RULES — Chromebook/laptop only:
-(1) Multiple choice: question text [CIRCLE ONE: A) option / B) option / C) option] ALL ON SAME LINE. CRITICAL: options are split on ' / ' (space-slash-space), so NEVER use plain / inside an option text. Write fractions as words e.g. '2 out of 6' or use the fraction symbol ½ ¼ ¾ — never '2/6' inside an option.
+(1) Multiple choice: question text [CIRCLE ONE: A) option / B) option / C) option] ALL ON SAME LINE. CRITICAL: options are split on ' / ' (space-slash-space), so NEVER use plain / inside an option text. Write fractions as words e.g. '2 out of 6' or use the fraction symbol ½ ¼ ¾ — never '2/6' inside an option. EXACTLY ONE option must be correct — verify each distractor is unambiguously wrong (e.g. don't ask "least value" with two equally-low options like "3 dimes ($0.30)" and "6 nickels ($0.30)").
 (2) Short answer: question text [TEXT BOX]
 (3) Long answer: question text [LARGE BOX]
 (4) Word bank: [WORD BANK: word1, word2, word3]
@@ -3898,6 +3898,14 @@ function renderWS(text) {
       const cont=line.replace(/^\d+\.\s*/,''); const num=line.match(/^(\d+)/)[1];
       if(cont.includes('[LARGE BOX]')){wsN++;h+=`<div style="margin:7px 0;"><div style="font-size:.86rem;margin-bottom:2px;"><strong>${escHTML(num)}.</strong> ${md(cont.replace('[LARGE BOX]','').trim())}</div><textarea class="wst" placeholder="Write your answer here..."></textarea></div>`;return;}
       if(cont.includes('[TEXT BOX]')){wsN++;h+=`<div style="margin:5px 0;display:flex;align-items:flex-start;gap:6px;"><span style="font-weight:600;flex-shrink:0;">${escHTML(num)}.</span><div style="flex:1;"><div style="font-size:.86rem;margin-bottom:2px;">${md(cont.replace('[TEXT BOX]','').trim())}</div><input class="wsi" type="text" placeholder="Your answer..."></div></div>`;return;}
+      // BUILD AL: render ___ blanks as visible inline inputs so the teacher's
+      // preview matches the student view (where chips are clickable). Teacher
+      // preview inputs are non-functional but visually aligned.
+      if(/_{3,}/.test(cont)){
+        const html=md(cont).replace(/_{3,}/g,'<input class="wsblank" type="text" style="display:inline-block;min-width:90px;border:none;border-bottom:1.5px solid #4A7C59;background:transparent;font-size:1rem;padding:0 4px;outline:none;">');
+        h+=`<div style="margin:5px 0;font-size:.95rem;line-height:2;"><strong>${escHTML(num)}.</strong> ${html}</div>`;
+        return;
+      }
       h+=`<div style="margin:4px 0;"><strong>${escHTML(num)}.</strong> ${md(cont)}</div>`; return;
     }
     if (line.match(/^[-*] /)) { h+=`<li style="margin-bottom:2px;">${md(line.slice(2))}</li>`; return; }
@@ -5654,7 +5662,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-15-AL (Pre-launch polish on top of AK. (1) WORKSHEET PDF: dedicated downloadWorksheetPDF renderer detects question types ([CIRCLE ONE] / [TEXT BOX] / [PARAGRAPH] / [DRAW] / ___ blanks) and emits type-appropriate writing space — ruled lines, dashed draw boxes, inline blanks. Adds Name/Date header. Worksheets are now actually printable for pencil/pen use. (2) RUBRIC PDF: dedicated downloadRubricPDF renderer mirrors in-tool layout — per-category card with 4-across coloured Level boxes side by side. Forces landscape orientation via @page so the grid has room. (3) AUTO-COPY STUDENT LINK: when "Link Ready" appears, the link is auto-copied to clipboard with a toast confirmation. Try/catch fallback because Safari blocks programmatic clipboard writes outside user gestures — the manual Copy button still works. (4) DOCUMENT CAMERA SUPPRESSION: lesson prompt now instructs the model to avoid mentioning specific projection equipment; use "show students" or "display" instead. All AK + AJ+ / AJ / AH fixes carry forward.)';
+const TA_BUILD = '2026-04-15-AL (Pre-launch polish, 7 fixes on top of AK. (1) WORKSHEET PDF: dedicated downloadWorksheetPDF detects question types ([CIRCLE ONE] / [TEXT BOX] / [PARAGRAPH] / [DRAW] / ___ blanks) and emits type-appropriate writing space. Adds Name/Date header. Worksheets are now actually printable for pencil/pen use. (2) RUBRIC PDF: dedicated downloadRubricPDF mirrors in-tool layout — per-category card with 4-across colour-coded Level boxes, landscape orientation. (3) AUTO-COPY STUDENT LINK: when "Link Ready" appears, link is auto-copied with toast confirmation. Try/catch fallback for Safari. (4) DOC CAMERA SUPPRESSION: lesson prompt instructs the model to avoid mentioning specific projection equipment. (5) FILL-IN-THE-BLANK INPUTS: numbered worksheet questions containing ___ now render inline editable inputs in both student worksheet (worksheet-7.html, also bumped) and teacher preview. Word bank chips are clickable and populate the last-focused blank via fillLastBlank(). Submission collector also picks up .wsblank values. Closes the bug where students couldn\'t answer fill-in-the-blank questions at all. (6) UNAMBIGUOUS MC RULE: worksheet prompt now requires exactly one correct answer per [CIRCLE ONE] question; explicit example warns against ambiguous distractors like "least value" with two equal-value options. (7) CASE-INSENSITIVE PER-Q FEEDBACK MATCHER: autoMarkStudent now normalizes question keys before mapping per_question feedback to submission rows. The LLM sometimes returned "Q1" / "Question 1" when the prompt requested "q1", which silently broke the inline ✓/~/✗ display. All AK + AJ+ / AJ / AH fixes carry forward.)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
@@ -8976,10 +8984,15 @@ Default toward L3 unless there is clear evidence the student is below or above t
     if (subContent && perQ.length) {
       const scoreCols={'✓':'#166534','~':'#854D0E','✗':'#991B1B'};
       const scoreBgs={'✓':'#DCFCE7','~':'#FEF9C3','✗':'#FEE2E2'};
-      const feedbackMap={};
-      perQ.forEach(q => { feedbackMap[q.question]=q; });
+      // BUILD AL: build feedback map with case-insensitive keys.
+      // The prompt requests "q1", "q2"... but LLMs sometimes return "Q1", "Q2"
+      // or "Question 1", which silently broke the data-qkey matcher and made
+      // per-question feedback invisible. Now we normalize both sides.
+      const normKey = k => String(k||'').toLowerCase().replace(/\s+/g,'').replace(/^question/,'q');
+      const feedbackMap = {};
+      perQ.forEach(q => { feedbackMap[normKey(q.question)] = q; });
       subContent.querySelectorAll('[data-qkey]').forEach(row => {
-        const fb = feedbackMap[row.dataset.qkey];
+        const fb = feedbackMap[normKey(row.dataset.qkey)];
         const existing = row.querySelector('.am-fb');
         if (existing) existing.remove();
         if (fb) {
