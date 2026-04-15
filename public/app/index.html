@@ -3154,9 +3154,14 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     // (plan+reading+worksheet+rubric+answer_key) were hitting the cap and
     // truncating the tail field (answer_key, alphabetically last). Science
     // rubrics especially verbose → answer_key silently missing.
-    const maxTok = grades.length >= 4 ? Math.min(8000, 2400 + outputCount * 900)
-      : isSplit ? Math.min(6000, 2000 + outputCount * 800)
-      : Math.min(4800, 1600 + outputCount * 700);
+    // BUILD AL+: bumped single-grade cap 4800→6400, split 6000→7600, with
+    // an extra +800 when reading_resource is included (Science lessons trip
+    // the limit because the reading passage eats 800-1000 tokens of headroom).
+    const _hasReading = outputs.includes('reading_resource');
+    const _readingBonus = _hasReading ? 800 : 0;
+    const maxTok = grades.length >= 4 ? Math.min(8000, 2400 + outputCount * 900 + _readingBonus)
+      : isSplit ? Math.min(7600, 2000 + outputCount * 800 + _readingBonus)
+      : Math.min(6400, 1600 + outputCount * 700 + _readingBonus);
     setProgress(15,'Reading curriculum expectations...');
     let progVal = 15;
     progInterval = setInterval(() => {
@@ -3232,7 +3237,19 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     genC = {};
     window._slideData = null; // clear cached slides — new lesson generated
     window._lessonMeta = {topic, grades, subj, gradeStr:grades.join(' / ')}; // for worksheet regen (Chat 7 fix)
-    outputKeys.forEach(k => { genC[k] = {orig:parsed[k]||'', cur:parsed[k]||''}; });
+    outputKeys.forEach(k => {
+      const v = parsed[k] || '';
+      // BUILD AL+: assessment_rubric and reading_resource sometimes come back
+      // empty alongside answer_key when the lesson hits the token cap. Surface
+      // an actionable placeholder rather than rendering a blank block.
+      if (!v.trim() && (k === 'assessment_rubric' || k === 'reading_resource')) {
+        const labelMap = {assessment_rubric:'rubric', reading_resource:'reading resource'};
+        const placeholder = `⚠️ ${labelMap[k]} was not generated. This can happen on very long lessons.\n\nClick **🔄 Regenerate Lesson** at the top to try again, or **✏️ Edit** to write one manually.`;
+        genC[k] = {orig:placeholder, cur:placeholder};
+      } else {
+        genC[k] = {orig:v, cur:v};
+      }
+    });
     // Always create answer key entries (even if empty) so the pill + content block stay in sync.
     // Previously `if (parsed[k])` silently dropped missing keys, producing a pill with no matching content.
     // EXCEPTION: For K-only lessons, skip entirely — K doesn't use traditional answer keys
@@ -4678,6 +4695,7 @@ function downloadWorksheetPDF(rawText, topic, label) {
   const lines = rawText.split('\n');
   let body = '';
   let pendingSpaceLines = 0;
+  let titleSeen = false;
 
   const flushSpace = () => {
     if (pendingSpaceLines > 0) {
@@ -4686,46 +4704,112 @@ function downloadWorksheetPDF(rawText, topic, label) {
     }
   };
 
+  // Render a single inline question line. Detects tags ([CIRCLE ONE:...],
+  // [TEXT BOX], [LARGE BOX], [WORD BANK:...]) anywhere on the line, strips
+  // them from the visible stem, and emits the right writing space after.
+  const renderQuestion = (line) => {
+    flushSpace();
+    let stem = line;
+    let trailing = ''; // choices / word bank / answer space — emitted after the stem
+
+    // [CIRCLE ONE: A) x / B) y / C) z]
+    const circleM = stem.match(/\[CIRCLE ONE:\s*([^\]]+)\]/i);
+    if (circleM) {
+      const choices = circleM[1].split(/\s*\/\s*/).map(c => c.trim()).filter(Boolean);
+      trailing += `<div class="choices">${choices.map(c => `<span class="choice">◯ ${escHTML(c)}</span>`).join('')}</div>`;
+      stem = stem.replace(circleM[0], '').trim();
+    }
+    // [CHECK ALL THAT APPLY: ...]
+    const checkM = stem.match(/\[CHECK ALL THAT APPLY:\s*([^\]]+)\]/i);
+    if (checkM) {
+      const choices = checkM[1].split(/\s*\/\s*/).map(c => c.trim()).filter(Boolean);
+      trailing += `<div class="choices">${choices.map(c => `<span class="choice">☐ ${escHTML(c)}</span>`).join('')}</div>`;
+      stem = stem.replace(checkM[0], '').trim();
+    }
+    // [WORD BANK: a, b, c]
+    const wbM = stem.match(/\[WORD BANK:\s*([^\]]+)\]/i);
+    if (wbM) {
+      const words = wbM[1].split(',').map(w => w.trim()).filter(Boolean);
+      trailing += `<div class="word-bank"><strong>Word Bank:</strong> ${words.map(w => `<span class="wb-word">${escHTML(w)}</span>`).join(' ')}</div>`;
+      stem = stem.replace(wbM[0], '').trim();
+    }
+    // [TEXT BOX] / [SHORT ANSWER] → 4 lines
+    if (/\[(TEXT BOX|SHORT ANSWER)\]/i.test(stem)) {
+      pendingSpaceLines = 4;
+      stem = stem.replace(/\[(TEXT BOX|SHORT ANSWER)\]/gi, '').trim();
+    }
+    // [LARGE BOX] / [PARAGRAPH] / [LONG ANSWER] → 8 lines
+    if (/\[(LARGE BOX|PARAGRAPH|LONG ANSWER|EXTENDED RESPONSE)\]/i.test(stem)) {
+      pendingSpaceLines = 8;
+      stem = stem.replace(/\[(LARGE BOX|PARAGRAPH|LONG ANSWER|EXTENDED RESPONSE)\]/gi, '').trim();
+    }
+    // [DRAW] / [DIAGRAM] → empty box
+    if (/\[(DRAW(ING)?|DIAGRAM)\]/i.test(stem)) {
+      trailing += '<div class="draw-box"></div>';
+      stem = stem.replace(/\[(DRAW(ING)?|DIAGRAM)\]/gi, '').trim();
+    }
+    // Swallow any other [ALL CAPS] tag silently
+    stem = stem.replace(/\[[A-Z][A-Z\s\d:,/()×x-]*\]/g, '').trim();
+
+    // If no explicit type tag was found but the stem contains ___ or ends with
+    // a question mark, default to a few ruled lines so students can write.
+    if (pendingSpaceLines === 0 && !circleM && !checkM && !trailing.includes('draw-box')) {
+      if (/_{3,}/.test(stem) || /\?\s*$/.test(stem)) pendingSpaceLines = 3;
+    }
+
+    // Render the stem (with bold + inline blanks) then the trailing widgets
+    const stemHtml = escHTML(stem)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*+(?=\s|$)/g, '') // strip stray trailing asterisks (e.g. "Q1.**")
+      .replace(/_{3,}/g, '<span class="blank"></span>');
+    if (stemHtml) body += `<div class="qstem">${stemHtml}</div>`;
+    if (trailing) body += trailing;
+  };
+
+  // Detect lines that are clearly the worksheet's own Name/Date/Class header,
+  // so we don't print it twice (we add our own header at the top).
+  const isOwnNameDateHeader = (line) => /^\*?\*?Name\s*:.*Date\s*:/i.test(line);
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) { flushSpace(); body += '<div class="gap"></div>'; continue; }
 
-    if (/^#\s/.test(line))   { flushSpace(); body += `<h1>${escHTML(line.replace(/^#\s+/, ''))}</h1>`; continue; }
-    if (/^##\s/.test(line))  { flushSpace(); body += `<h2>${escHTML(line.replace(/^##\s+/, ''))}</h2>`; continue; }
-    if (/^###\s/.test(line)) { flushSpace(); body += `<h3>${escHTML(line.replace(/^###\s+/, ''))}</h3>`; continue; }
+    // Skip the worksheet's own title (h1) — we render our own at top
+    if (/^#\s/.test(line) && !titleSeen) { titleSeen = true; continue; }
+    // Skip the worksheet's own Name/Date/Class line — duplicate of our header
+    if (isOwnNameDateHeader(line)) continue;
     if (/^---+$/.test(line)) { flushSpace(); body += '<hr>'; continue; }
 
-    // Question header (e.g. "Question 1", "**Question 1**", "1.")
-    const qMatch = line.match(/^\*?\*?question\s+(\d+)\*?\*?$/i)
-                || line.match(/^\*?\*?(\d+)[\.\):]\*?\*?\s*$/);
-    if (qMatch) {
+    // Subsequent ## / ### headings (Part 1, Part 2, etc.)
+    if (/^##\s/.test(line))  { flushSpace(); body += `<h2>${escHTML(line.replace(/^##\s+/, ''))}</h2>`; continue; }
+    if (/^###\s/.test(line)) { flushSpace(); body += `<h3>${escHTML(line.replace(/^###\s+/, ''))}</h3>`; continue; }
+
+    // Question line: starts with "Q1." / "1." / "**Q1**" / "Question 1" — possibly
+    // followed by stem text and inline tags on the same line.
+    const qStart = line.match(/^\*?\*?(?:Q|Question\s+)?(\d+)[.\):]?\*?\*?\s*(.*)$/i);
+    if (qStart && qStart[1]) {
       flushSpace();
-      body += `<div class="qhead">Question ${qMatch[1]}</div>`;
-      pendingSpaceLines = 3;
+      body += `<div class="qhead">Question ${qStart[1]}</div>`;
+      // Render whatever follows the question number (stem + tags) inline
+      if (qStart[2] && qStart[2].trim()) {
+        renderQuestion(qStart[2]);
+      } else {
+        // Bare "Question N" on its own line — set a default writing space
+        pendingSpaceLines = 3;
+      }
       continue;
     }
 
-    // Type tags
-    const circleMatch = line.match(/^\[CIRCLE ONE:\s*(.+?)\]$/i);
-    if (circleMatch) {
-      const choices = circleMatch[1].split(/\s*\/\s*/).map(c => c.trim()).filter(Boolean);
-      body += `<div class="choices">${choices.map(c => `<span class="choice">◯ ${escHTML(c)}</span>`).join('')}</div>`;
-      pendingSpaceLines = 0;
+    // Standalone tag line (no question number) — still render as widget
+    if (/\[(CIRCLE ONE:|CHECK ALL|WORD BANK:|TEXT BOX|LARGE BOX|PARAGRAPH|LONG ANSWER|DRAW|DIAGRAM)/i.test(line)) {
+      renderQuestion(line);
       continue;
     }
-    if (/^\[(TEXT BOX|SHORT ANSWER)\]$/i.test(line)) { pendingSpaceLines = 4; continue; }
-    if (/^\[(PARAGRAPH|LONG ANSWER|EXTENDED RESPONSE)\]$/i.test(line)) { pendingSpaceLines = 8; continue; }
-    if (/^\[DRAW(ING)?\]?$/i.test(line) || /^\[DIAGRAM\]$/i.test(line)) {
-      body += '<div class="draw-box"></div>';
-      pendingSpaceLines = 0;
-      continue;
-    }
-    // Swallow any other [ALL CAPS BRACKET TAG] silently
-    if (/^\[[A-Z][A-Z\s\d:,/()×x-]+\]$/.test(line)) continue;
 
-    // Question content / instructions
+    // Plain prose — instructions, intro paragraphs
     const html = escHTML(line)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*+(?=\s|$)/g, '')
       .replace(/_{3,}/g, '<span class="blank"></span>');
     body += `<p>${html}</p>`;
   }
@@ -4739,7 +4823,10 @@ body{font-family:'DM Sans',sans-serif;background:white;color:#16120E;padding:32p
 h1{font-family:Georgia,serif;font-size:1.5rem;font-weight:600;border-bottom:3px solid #4A7C59;padding-bottom:10px;margin:0 0 16px;}
 h2{font-family:Georgia,serif;font-size:1rem;font-weight:600;background:#EAF0EA;border-left:4px solid #4A7C59;padding:7px 12px;margin:14px 0 8px;border-radius:0 5px 5px 0;}
 h3{font-size:.78rem;font-weight:700;color:#4A7C59;text-transform:uppercase;letter-spacing:.8px;margin:12px 0 4px;}
-.qhead{font-family:Georgia,serif;font-size:1rem;font-weight:600;margin:18px 0 6px;}
+.qhead{font-family:Georgia,serif;font-size:1rem;font-weight:600;margin:18px 0 4px;}
+.qstem{font-size:.95rem;margin:0 0 6px;line-height:1.55;}
+.word-bank{background:#EAF0EA;border:1px solid #A8C4AB;border-radius:6px;padding:9px 12px;margin:6px 0 10px;font-size:.88rem;}
+.wb-word{display:inline-block;background:white;border:1px solid #4A7C59;border-radius:4px;padding:2px 9px;margin:2px 4px 2px 0;font-size:.85rem;}
 p{margin:4px 0;}
 strong{font-weight:600;}
 hr{border:none;border-top:1px solid #E0D8CC;margin:14px 0;}
@@ -5768,7 +5855,7 @@ async function generateSlideData(callerBtn) {
 // ── BUILD VERSION ──────────────────────────────────────────────────────────
 // Bump this string every time you deploy. If you don't see it in console,
 // Cloudflare is still serving a cached version — purge cache and hard refresh.
-const TA_BUILD = '2026-04-15-AL (Pre-launch polish, 10 fixes on top of AK. (1) WORKSHEET PDF: dedicated downloadWorksheetPDF detects question types ([CIRCLE ONE] / [TEXT BOX] / [PARAGRAPH] / [DRAW] / ___ blanks) and emits type-appropriate writing space. Adds Name/Date header. Worksheets are now actually printable for pencil/pen use. (2) RUBRIC PDF: dedicated downloadRubricPDF mirrors in-tool layout — per-category card with 4-across colour-coded Level boxes, landscape orientation. (3) AUTO-COPY STUDENT LINK: when "Link Ready" appears, link is auto-copied with toast confirmation. Try/catch fallback for Safari. (4) DOC CAMERA SUPPRESSION: lesson prompt instructs the model to avoid mentioning specific projection equipment. (5) FILL-IN-THE-BLANK INPUTS: numbered worksheet questions containing ___ now render inline editable inputs in both student worksheet (worksheet-7.html bumped) and teacher preview. Word bank chips clickable, populate the last-focused blank via fillLastBlank(). Submission collector picks up .wsblank values. Closes the bug where students couldn\'t answer fill-in-the-blank questions at all. (6) UNAMBIGUOUS MC RULE: worksheet prompt now requires exactly one correct answer per [CIRCLE ONE]; explicit example warns against ambiguous distractors. (7) CASE-INSENSITIVE PER-Q FEEDBACK MATCHER: autoMarkStudent normalizes question keys before mapping per_question feedback to submission rows, fixing silently-broken inline ✓/~/✗ display when LLM returned "Q1" vs "q1". (8) CLASS-NAME GRADE PARSING: autoFillGradesFromClass + autoFillUnitGradesFromClass fall back to parsing the class name when the class has no students yet. (9) ANSWER KEY BACKGROUND REGEN: when the main lesson response comes back without an answer key (token cap on long lessons), instead of hard-erroring with "regenerate the whole lesson", we now fire a dedicated follow-up call with just the worksheet as input. Teacher sees worksheet/lesson immediately, answer key fills in a few seconds later via regenAnswerKeyAsync. Toast confirms when ready. Fallback message only shows if the regen itself fails. (10) NO LABELED DIAGRAMS IN SLIDES: image_prompt guidance now blacklists labeled anatomical/scientific/geographic diagrams since Flux cannot render text and produces gibberish ("Bafory", "Letdor"). Slides on body systems / anatomy / maps now use generic illustrative scenes. All AK + AJ+ / AJ / AH fixes carry forward.)';
+const TA_BUILD = '2026-04-15-AL+ (Post-deploy hotfixes for issues found during initial AL testing. (1) WORKSHEET PDF REWRITE: original AL renderer assumed each tag on its own line. Real LLM output puts everything inline (e.g. "Q1.** stem text? [CIRCLE ONE: A) x / B) y / C) z]"). Rewrote downloadWorksheetPDF with renderQuestion() that detects [CIRCLE ONE], [CHECK ALL], [WORD BANK], [TEXT BOX], [LARGE BOX], [DRAW] anywhere on the line, strips tags from visible stem, and renders the right writing space after. Also: skip duplicate Name/Date headers (we add our own at top), strip stray Q-prefix and unbalanced ** asterisks. (2) WORD BANK in PDF gets its own styled chip strip. (3) WORKSHEET-7 STEM CLEANUP: normalizeStem() helper strips "Q1.", "Q1.**", "Q 1)" prefixes and dangling asterisks before rendering. Fixes "Q1.**" leaking into student-facing question text. Also bumped worksheet-7. (4) TOKEN BUDGET: single-grade cap 4800→6400, split 6000→7600, with +800 bonus when reading_resource is included. Science lessons with 10+ questions were tripping the cap and silently truncating BOTH rubric and answer_key. (5) RUBRIC + READING_RESOURCE EMPTY-STATE: when these come back empty (token-cap victims), now show an actionable placeholder pointing to Regenerate, instead of a blank block. All AL + AK fixes carry forward.)';
 console.log('%c[TeacherAI] build ' + TA_BUILD + ' loaded', 'color:#1D9E75;font-weight:bold;font-size:13px');
 
 // ── SLIDE DESIGN TOKENS ─────────────────────────────────────────────────────
