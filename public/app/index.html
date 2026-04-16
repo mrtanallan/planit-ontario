@@ -424,8 +424,16 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <h3>➕ Add Student</h3>
       <button onclick="closeAddStudentModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);">✕</button>
     </div>
-    <div style="background:var(--sage-l);border:1px solid #A8C4AB;border-radius:8px;padding:10px 13px;margin-bottom:14px;font-size:.76rem;line-height:1.5;color:#1C3A2B;">
-      🔒 <strong>Privacy tip:</strong> Use first names only or nicknames if you prefer. Paraphrase accommodations in your own words — don't paste text from IEP documents. <a href="/privacy.html#mfippa" target="_blank" style="color:var(--sage);">MFIPPA guidance →</a>
+    <div style="background:var(--sage-l);border:1px solid #A8C4AB;border-radius:8px;padding:8px 13px;margin-bottom:14px;font-size:.76rem;line-height:1.5;color:#1C3A2B;">
+      <div onclick="const d=this.nextElementSibling;d.style.display=d.style.display==='none'?'block':'none';this.querySelector('.pvt-arrow').textContent=d.style.display==='none'?'▸':'▾'" style="cursor:pointer;display:flex;align-items:center;gap:6px;">
+        <span>🔒</span>
+        <strong>Privacy tip:</strong>
+        <span style="color:var(--muted);font-weight:400;">First names only, paraphrase accommodations.</span>
+        <span class="pvt-arrow" style="margin-left:auto;font-size:.65rem;color:var(--muted);">▸</span>
+      </div>
+      <div style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid #A8C4AB;">
+        Use first names only or nicknames if you prefer. Paraphrase accommodations in your own words — don't paste text from IEP documents. <a href="/privacy.html#mfippa" target="_blank" style="color:var(--sage);">MFIPPA guidance →</a>
+      </div>
     </div>
     <div class="fg">
       <div class="fi"><label>First Name <span style="color:var(--rust);">✱</span></label><input type="text" id="sF" placeholder="First" autocapitalize="words" autocomplete="one-time-code" autocorrect="off" spellcheck="false" name="student_first_name_no_autofill" oninput="this.value=this.value.replace(/^(.)/,c=>c.toUpperCase())" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('sL')?.focus();}"></div>
