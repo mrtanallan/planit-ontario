@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TeacherAI — Ontario's AI Teaching Platform</title>
-<meta name="description" content="TeacherAI plans your lessons, builds your worksheets, marks your assessments, and writes your report card comments. For Ontario K–8 teachers. Get your weekends back.">
+<meta name="description" content="TeacherAI drafts your lessons, worksheets, assessments, and report card comments so you start from a strong draft, not a blank page. Built for Ontario K–8 teachers, split grades included. Your professional judgement stays at the center.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;1,9..144,400&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -164,6 +164,34 @@
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Social proof bar ── */
+  .proof-bar {
+    background: var(--cream);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+  }
+  .proof-bar-inner {
+    max-width: 1100px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 1rem 2.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .92rem; color: var(--ink);
+    text-align: center;
+  }
+  .proof-bar-item {
+    display: inline-flex; align-items: center; gap: .55rem;
+    color: var(--muted);
+  }
+  .proof-bar-item strong { color: var(--ink); font-weight: 600; }
+  .proof-bar-dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--sage); flex-shrink: 0;
+  }
+  @media (max-width: 700px) {
+    .proof-bar-inner { font-size: .82rem; gap: .75rem 1.5rem; }
   }
 
   /* ── Feature strip ── */
@@ -554,7 +582,7 @@
 <nav>
   <a href="/" class="nav-logo">Teacher<span>AI</span></a>
   <div class="nav-links">
-    <a href="#how">How it works</a>
+    <a href="#pain">Why TeacherAI</a>
     <a href="#features">Features</a>
     <a href="#faq">FAQ</a>
     <a href="/privacy.html">Privacy</a>
@@ -575,7 +603,7 @@
     </div>
     <h1>You didn't become a teacher<br>to spend Sunday night <em>planning.</em></h1>
     <p class="hero-sub">
-      TeacherAI drafts your lessons, worksheets, assessments, and report card comments in seconds, so you start from a strong draft instead of a blank page. Your professional judgement stays at the center of every decision. Built for real Ontario classrooms, including split grades.
+      TeacherAI drafts your lessons, worksheets, assessments, and report card comments in under a minute. Your professional judgement stays at the center. Sunday nights become yours again. Built for real Ontario classrooms, splits included.
     </p>
     <div class="hero-actions">
       <a href="/app" class="btn-primary">✨ Try TeacherAI free</a>
@@ -583,6 +611,15 @@
     </div>
   </div>
 </section>
+
+<!-- ── Social proof bar ── -->
+<div class="proof-bar">
+  <div class="proof-bar-inner">
+    <span class="proof-bar-item"><span class="proof-bar-dot"></span><strong>In active beta</strong> with Ontario K–8 teachers</span>
+    <span class="proof-bar-item">🇨🇦 Built in Ontario, hosted in Canada</span>
+    <span class="proof-bar-item">👋 Made by a classroom teacher</span>
+  </div>
+</div>
 
 <!-- ── Feature Strip ── -->
 <div class="strip">
@@ -599,13 +636,6 @@
       <div class="strip-text">
         <div class="strip-title">Suggested marks with feedback</div>
         <div class="strip-sub">AI suggests a level and observation note. You review, adjust, and decide what goes in your gradebook.</div>
-      </div>
-    </div>
-    <div class="strip-item">
-      <div class="strip-icon">📋</div>
-      <div class="strip-text">
-        <div class="strip-title">Real Ontario expectations</div>
-        <div class="strip-sub">Pulled from the current Ontario curriculum, tagged per lesson.</div>
       </div>
     </div>
     <div class="strip-item">
@@ -724,6 +754,15 @@
         </summary>
         <div class="faq-a">
           <p>Yes. TeacherAI runs on Supabase Canada Central — your data stays in Canada. Student names are never sent to the AI; only anonymized accommodation notes (e.g. "ELL Level 2") are used for personalization. Designed with Ontario's MFIPPA in mind from day one.</p>
+        </div>
+      </details>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">Is using AI for lesson planning actually okay?</span>
+          <span class="faq-icon">+</span>
+        </summary>
+        <div class="faq-a">
+          <p>Your professional judgement is what makes a lesson work. TeacherAI doesn't replace it; it gives you a starting draft instead of a blank page. Every lesson, assessment, and comment is yours to review, edit, or rewrite before it reaches a student or parent. The AI drafts. You decide. That's how we think a responsible AI tool for teachers should work, and it's how Ontario teaching unions talk about responsible AI use too.</p>
         </div>
       </details>
       <details class="faq-item">
