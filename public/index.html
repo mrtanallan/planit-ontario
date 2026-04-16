@@ -351,73 +351,6 @@
   }
   .step-body { font-size: .88rem; color: var(--muted); line-height: 1.65; }
 
-  /* ── Features grid ── */
-  .features {
-    background: white; border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    padding: 6rem 2rem;
-  }
-  .features-inner { max-width: 1100px; margin: 0 auto; }
-
-  .feat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-  }
-
-  .feat {
-    display: flex; gap: 1.2rem; align-items: flex-start;
-    padding: 1.4rem; border-radius: 12px;
-    transition: background .15s;
-  }
-  .feat:hover { background: var(--cream); }
-  .feat-icon {
-    width: 44px; height: 44px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; flex-shrink: 0;
-  }
-  .feat-text h3 { font-size: .92rem; font-weight: 700; margin-bottom: .35rem; }
-  .feat-text p { font-size: .84rem; color: var(--muted); line-height: 1.6; }
-
-  /* ── Differentiator section ── */
-  .diff {
-    padding: 6rem 2rem;
-    max-width: 1100px; margin: 0 auto;
-  }
-
-  .diff-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;
-    align-items: center;
-  }
-
-  .diff-card {
-    background: var(--sage-d); border-radius: 20px;
-    padding: 2.5rem; color: white;
-  }
-  .diff-card-label {
-    font-family: 'DM Mono', monospace; font-size: .62rem;
-    letter-spacing: 2px; text-transform: uppercase;
-    color: rgba(255,255,255,.5); margin-bottom: 1.4rem;
-  }
-  .diff-item {
-    display: flex; gap: 1rem; margin-bottom: 1.4rem;
-    align-items: flex-start;
-  }
-  .diff-item:last-child { margin-bottom: 0; }
-  .diff-check {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: #52B788; color: white;
-    display: flex; align-items: center; justify-content: center;
-    font-size: .7rem; flex-shrink: 0; margin-top: 2px;
-  }
-  .diff-item-text h4 { font-size: .92rem; font-weight: 600; margin-bottom: .25rem; }
-  .diff-item-text p { font-size: .82rem; color: rgba(255,255,255,.6); line-height: 1.55; }
-
-  .diff-right {}
-  .diff-right .section-label { margin-bottom: .8rem; }
-  .diff-right .section-title { margin-bottom: 1rem; }
-  .diff-right .section-sub { margin-bottom: 2rem; }
-
   /* ── Social proof ── */
   .proof {
     background: var(--cream);
@@ -569,7 +502,6 @@
 
   /* ── Responsive ── */
   @media (max-width: 768px) {
-    .diff-grid { grid-template-columns: 1fr; }
     .nav-links { display: none; }
     .strip { gap: 1.2rem; }
     footer { grid-template-columns: 1fr; text-align: center; } .foot-logo { justify-self: center; } .foot-links { justify-self: center; } .foot-right { justify-self: center; text-align: center; }
@@ -582,8 +514,7 @@
 <nav>
   <a href="/" class="nav-logo">Teacher<span>AI</span></a>
   <div class="nav-links">
-    <a href="#pain">Why TeacherAI</a>
-    <a href="#features">Features</a>
+    <a href="#pain">What it does</a>
     <a href="#faq">FAQ</a>
     <a href="/privacy.html">Privacy</a>
   </div>
@@ -684,62 +615,6 @@
     </div>
   </div>
 </section>
-
-<!-- ── How it works ── -->
-
-<!-- ── Features ── -->
-<section class="features" id="features">
-  <div class="features-inner">
-    <div class="section-label">Everything you need</div>
-    <h2 class="section-title" style="margin-bottom:3rem">Everything you actually need. <em>In one place.</em></h2>
-    <div class="feat-grid">
-      <div class="feat">
-        <div class="feat-icon" style="background:#EAF2EC">📅</div>
-        <div class="feat-text">
-          <h3>Ontario Curriculum Lesson Plans</h3>
-          <p>Structured lesson plans with Minds On, Direct Instruction, Guided Practice, and Consolidation, mapped to real Ontario expectations.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-icon" style="background:#FDF4E3">📝</div>
-        <div class="feat-text">
-          <h3>Differentiated Worksheets</h3>
-          <p>Separate worksheets per grade for split classes. Students fill them in on any device through a shareable link.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-icon" style="background:#EAF2EC">🤖</div>
-        <div class="feat-text">
-          <h3>Suggested marks</h3>
-          <p>AI suggests a level (1–4) with an observation note for every submission. You review, adjust, and decide what to record.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-icon" style="background:#E8EFF9">📊</div>
-        <div class="feat-text">
-          <h3>Grade Tracker</h3>
-          <p>See every student's level across every assessment task. Export to CSV for board reporting. Tracks against Ontario expectations.</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-icon" style="background:#FDF4E3">▶</div>
-        <div class="feat-text">
-          <h3>Presentation Slides</h3>
-          <p>Beautiful full-colour classroom slides generated from your lesson. Present directly in your browser or download as PowerPoint (which Google Slides can import).</p>
-        </div>
-      </div>
-      <div class="feat">
-        <div class="feat-icon" style="background:#EAF2EC">📋</div>
-        <div class="feat-text">
-          <h3>Report Card Comments</h3>
-          <p>Ontario-style comments for every student, sorted A–Z to match your class list. Set your board's character limit and paste straight into your report card system.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ── Differentiator ── -->
 
 <!-- ── FAQ ── -->
 <section class="faq" id="faq">
