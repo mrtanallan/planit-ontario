@@ -192,17 +192,13 @@
   }
   .demo-trigger-title {
     font-family: 'Fraunces', serif;
-    font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+    font-size: clamp(1.4rem, 2.8vw, 1.9rem);
     font-weight: 700; line-height: 1.2;
     letter-spacing: -.02em; color: var(--ink);
-    margin-bottom: .8rem;
+    margin-bottom: 1.6rem;
   }
   .demo-trigger-title em {
     font-style: italic; color: var(--sage); font-weight: 300;
-  }
-  .demo-trigger-sub {
-    font-size: 1rem; color: var(--muted);
-    line-height: 1.6; margin-bottom: 2rem;
   }
   .demo-trigger-btn {
     position: relative;
@@ -255,7 +251,6 @@
   }
   @media (max-width: 700px) {
     .demo-trigger { padding: 3rem 1.25rem 2.5rem; }
-    .demo-trigger-sub { font-size: .92rem; }
   }
 
   /* When the demo reveals itself after trigger */
@@ -538,6 +533,18 @@
     color: var(--ink);
   }
   .demo-q:last-child { border-bottom: none; }
+
+  .demo-ws-more {
+    margin-top: 1.2rem;
+    padding: .8rem 1rem;
+    background: #FBF8F3;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    font-size: .82rem;
+    color: var(--muted);
+    text-align: center;
+    font-style: italic;
+  }
   .demo-q-num {
     font-weight: 700; color: var(--sage-d);
     margin-right: .4rem;
@@ -1031,7 +1038,6 @@
   <div class="demo-trigger-inner">
     <div class="demo-trigger-label">Don't take our word for it</div>
     <h2 class="demo-trigger-title">Click generate. See what TeacherAI <em>actually makes.</em></h2>
-    <p class="demo-trigger-sub">Here's the exact lesson TeacherAI would draft for a Grade 5 Science class studying Forces on Structures.</p>
     <button id="demoGenerateBtn" class="demo-trigger-btn" type="button">
       <span class="demo-trigger-btn-label">
         <span class="demo-trigger-btn-icon">✨</span>
@@ -1047,7 +1053,7 @@
   <div class="demo-section-inner">
     <div class="demo-section-header">
       <div class="demo-topic-chip">Grade 5 · Science · Forces on Structures</div>
-      <p class="demo-section-sub"><em style="font-style:italic;color:var(--muted);">Shown here as a sample — the real app generates the full worksheet, full slide deck, and full answer key.</em></p>
+      <p class="demo-section-sub"><em style="font-style:italic;color:var(--muted);">Sample preview. In the real app, you get every question, every slide, and every answer — all fully editable.</em></p>
     </div>
 
     <div class="demo-tabs-wrap demo-locked">
@@ -1180,16 +1186,15 @@
         <div class="demo-ws-section-label">🏗️ Part 2 · Name That Force</div>
         <div class="demo-q"><span class="demo-q-num">Q4.</span>Snow accumulates on a flat roof and pushes down on it. Is this an internal or external force? <br><em>A) Internal &nbsp;&nbsp; B) External</em></div>
         <div class="demo-q"><span class="demo-q-num">Q5.</span>The concrete pillar of a bridge is being squeezed together by the weight of the bridge deck above it. Name this internal force.</div>
+        <div class="demo-q"><span class="demo-q-num">Q6.</span>The steel cables of a suspension bridge are being pulled and stretched by the weight of the road deck hanging below them. Name this internal force.</div>
         <div class="demo-q"><span class="demo-q-num">Q7.</span>A strong windstorm pushes sideways against a tall building. Is this an internal or external force? <br><em>A) Internal &nbsp;&nbsp; B) External</em></div>
+        <div class="demo-q"><span class="demo-q-num">Q8.</span>A car's drive shaft is being twisted by the engine as it sends power to the wheels. Name this internal force.</div>
+        <div class="demo-q"><span class="demo-q-num">Q9.</span>Scissors cutting through cardboard create forces that push in opposite directions on different parts of the cardboard. Name this internal force.</div>
 
         <div class="demo-ws-section-label">🔍 Part 3 · Cause and Effect</div>
         <div class="demo-q"><span class="demo-q-num">Q10.</span>A person stands on a wooden floor beam. Explain what external force is acting on the beam AND what internal force develops inside the beam as a result.</div>
 
-        <div class="demo-ws-section-label">🌍 Part 4 · Real-World Thinking</div>
-        <div class="demo-q"><span class="demo-q-num">Q13.</span>Engineers add steel rods inside concrete to make reinforced concrete. Using the words <em>compression</em> and <em>tension</em>, explain why using both materials together makes a stronger structure than using only one.</div>
-
-        <div class="demo-ws-section-label">✅ Exit Ticket</div>
-        <div class="demo-q"><span class="demo-q-num">Q14.</span>Name one external force and one internal force acting on a school building. Explain how the internal force is caused by the external force.</div>
+        <div class="demo-ws-more">+ 4 more questions including sorting, real-world application, and an exit ticket.</div>
       </div>
 
       <!-- ANSWER KEY -->
@@ -1203,17 +1208,18 @@
         <div class="demo-q"><span class="demo-q-num">Q1.</span>Forces from outside a structure are called <span class="demo-q-answer">external</span> forces.</div>
         <div class="demo-q"><span class="demo-q-num">Q2.</span>Forces that develop inside materials in response are called <span class="demo-q-answer">internal</span> forces.</div>
         <div class="demo-q"><span class="demo-q-num">Q3.</span>The constant external downward force is <span class="demo-q-answer">gravity</span>.</div>
-        <div class="demo-q"><span class="demo-q-num">Q4.</span>Snow pushing down on a roof is <span class="demo-q-answer">B) External</span></div>
+        <div class="demo-q"><span class="demo-q-num">Q4.</span>Snow pushing down on a roof: <span class="demo-q-answer">B) External</span></div>
         <div class="demo-q"><span class="demo-q-num">Q5.</span>Concrete pillar being squeezed: <span class="demo-q-answer">compression</span></div>
-        <div class="demo-q"><span class="demo-q-num">Q7.</span>Windstorm against a tall building is <span class="demo-q-answer">B) External</span></div>
+        <div class="demo-q"><span class="demo-q-num">Q6.</span>Steel cables being pulled and stretched: <span class="demo-q-answer">tension</span></div>
+        <div class="demo-q"><span class="demo-q-num">Q7.</span>Windstorm against a tall building: <span class="demo-q-answer">B) External</span></div>
+        <div class="demo-q"><span class="demo-q-num">Q8.</span>Car drive shaft being twisted: <span class="demo-q-answer">torsion</span></div>
+        <div class="demo-q"><span class="demo-q-num">Q9.</span>Scissors cutting through cardboard: <span class="demo-q-answer">shear</span></div>
         <div class="demo-q">
           <span class="demo-q-num">Q10.</span>Person on a wooden floor beam:
           <div class="demo-q-rationale"><strong>Key points:</strong> (1) External force is the person's weight due to gravity pushing down on the beam. (2) Compression develops in the top of the beam as it's squeezed together. (3) Tension develops along the bottom as the beam bends and stretches under the load.</div>
         </div>
-        <div class="demo-q">
-          <span class="demo-q-num">Q13.</span>Why reinforced concrete is stronger:
-          <div class="demo-q-rationale"><strong>Key points:</strong> (1) Concrete is strong in compression but weak in tension, so it can crack when pulled. (2) Steel is strong in tension, covering concrete's weakness. (3) Together they resist both forces, making the structure much stronger than either alone.</div>
-        </div>
+
+        <div class="demo-ws-more">+ answers for 4 more questions including sorting, real-world application, and an exit ticket.</div>
       </div>
 
       <!-- RUBRIC -->
