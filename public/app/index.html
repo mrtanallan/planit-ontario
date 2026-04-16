@@ -460,7 +460,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 <div id="authScreen">
   <div class="auth-box">
     <div class="auth-logo">Teacher<span>AI</span></div>
-    <div class="auth-tagline">Lesson plans, auto-marking &amp; report card comments — built for Ontario K–8 teachers.</div>
+    <div class="auth-tagline">Your first lesson is a minute away.</div>
     <div class="auth-tabs">
       <div class="auth-tab on" onclick="switchAuth('login',this)">Sign In</div>
       <div class="auth-tab" onclick="switchAuth('signup',this)">Create Account</div>
@@ -568,7 +568,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Student-ready worksheets</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Share a link or print a PDF. Auto-marks student submissions on any device.</div></div>
       </div>
     </div>
-    <button class="btn b-sage" onclick="document.getElementById('s1').style.display='block';document.getElementById('planWelcomeBanner').style.display='none';setTimeout(()=>document.getElementById('s1')?.scrollIntoView({behavior:'smooth',block:'start'}),50);" style="font-size:.92rem;padding:10px 22px;">+ Generate Your First Lesson</button>
+    <button class="btn b-sage" onclick="document.getElementById('s1').style.display='block';document.getElementById('planWelcomeBanner').style.display='none';setTimeout(()=>document.getElementById('s1')?.scrollIntoView({behavior:'smooth',block:'start'}),50);" style="font-size:.92rem;padding:10px 22px;">+ Draft Your First Lesson</button>
   </div>
 
   <!-- ── Step 1: Generate. Hidden by default — maybeShowPlanWelcome() shows
@@ -9883,7 +9883,7 @@ async function autoMarkUnitTest(wsId) {
   if (!subs || !subs.length) { showToast('No submissions to mark.'); return; }
   const d = window._unitTestData?.[wsId] || {};
   if (!d.akText) { alert('No answer key found for this test.'); return; }
-  showToast('Auto-marking ' + subs.length + ' submissions...', 4000);
+  showToast('Suggesting marks for ' + subs.length + ' submissions...', 4000);
   const totalQ = extractWSQuestions(d.wsText);
   const totalQuestions = Object.keys(totalQ).length;
   for (const sub of subs) {
@@ -10293,7 +10293,7 @@ function _renderLessonsUI() {
           <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Print or share anytime</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">PDF, PowerPoint, or a shareable student link — all saved with the lesson.</div></div>
         </div>
       </div>
-      <label for="tr-plan" class="btn b-sage" style="font-size:.92rem;padding:10px 22px;cursor:pointer;display:inline-block;">✨ Generate Your First Lesson →</label>
+      <label for="tr-plan" class="btn b-sage" style="font-size:.92rem;padding:10px 22px;cursor:pointer;display:inline-block;">✨ Draft Your First Lesson →</label>
     </div>`;
     return;
   }
