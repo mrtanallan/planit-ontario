@@ -75,6 +75,16 @@
   .hero-deco {
     position: absolute; border-radius: 50%; z-index: 0;
     animation: drift 8s ease-in-out infinite alternate;
+    will-change: transform;
+    pointer-events: none;
+  }
+  /* Pause animations when hero is offscreen (performance) */
+  .hero.hero-paused .hero-deco,
+  .hero.hero-paused .badge-dot { animation-play-state: paused; }
+  /* Respect reduced-motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-deco, .badge-dot { animation: none; }
+    * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   }
   .hero-deco-1 { width: 320px; height: 320px; background: #B7E4C7; opacity: .18; top: 5%; right: -6%; }
   .hero-deco-2 { width: 200px; height: 200px; background: var(--amber); opacity: .1; bottom: 15%; left: -4%; animation-delay: -3s; }
@@ -1159,7 +1169,7 @@
     <div class="pain-grid">
       <div class="pain-card">
         <div class="pain-emoji">✏️</div>
-        <h3>A week's worth of lessons, aligned to Ontario expectations.</h3>
+        <h3>A full lesson, aligned to Ontario expectations.</h3>
         <p class="pain-relief"><strong>→</strong> Type your topic. TeacherAI builds the lesson, worksheet, rubric, and slides in under 60 seconds. Or map out a full unit in one shot. You review, edit, and teach.</p>
       </div>
       <div class="pain-card">
@@ -1307,8 +1317,16 @@
     });
   });
 
-  // If someone lands on #demo from the hero link, smooth-scroll handles it via CSS.
-  // No extra JS needed.
+  // Pause hero animations when scrolled out of view (scroll perf)
+  const hero = document.querySelector('.hero');
+  if (hero && 'IntersectionObserver' in window) {
+    const heroObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        hero.classList.toggle('hero-paused', !entry.isIntersecting);
+      });
+    }, { threshold: 0 });
+    heroObserver.observe(hero);
+  }
 })();
 </script>
 </body>
