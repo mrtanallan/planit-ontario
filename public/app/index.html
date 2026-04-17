@@ -3500,7 +3500,26 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       loadUsageMeter();
     } catch(e) {}
 
+    // Intermittent post-generation UI bug: sometimes the Plan form (s1) would
+    // remain visible after a successful generation even though step 2 advanced.
+    // Defensive triple-fire: direct DOM hide + gs(2) + raf retry + explicit scroll.
     unlock(); gs(2);
+    const _s1el = document.getElementById('s1');
+    if (_s1el) _s1el.style.display = 'none';
+    const _s2el = document.getElementById('s2');
+    if (_s2el) _s2el.style.display = 'block';
+    requestAnimationFrame(() => {
+      // Second-pass verify: if s1 is somehow still visible, force it.
+      const s1Now = document.getElementById('s1');
+      if (s1Now && s1Now.style.display !== 'none') s1Now.style.display = 'none';
+      const s2Now = document.getElementById('s2');
+      if (s2Now && s2Now.style.display !== 'block') s2Now.style.display = 'block';
+      // Scroll to the first output block so the teacher lands on the lesson.
+      const firstBlock = document.querySelector('#s2 .gen-output, #s2 [id^="cb-"], #s2 > div');
+      if (firstBlock && typeof firstBlock.scrollIntoView === 'function') {
+        setTimeout(() => firstBlock.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+      }
+    });
 
     // BUILD AL+: kick off background regen for any worksheets that came back
     // empty in the main lesson response. Worksheet is critical — if missing,
@@ -9578,11 +9597,14 @@ Default toward L3 unless there is clear evidence the student is below or above t
     //
     // Tier 1: clean parse after stripping fences.
     // Tier 2: repair common glitches, then parse.
-    // Tier 3: regex-extract critical fields (level + obs note) so teacher
-    //         still gets a useful suggestion even from broken JSON.
+    // Tier 3: regex-extract critical fields (level + obs note + per-question
+    //         feedback where possible) so teacher still gets a useful result.
     const _stripped = raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
+    let _tier = 0;
+    let _tierDegraded = false; // true when Tier 3 fired and per_question may be incomplete
     try {
       result = JSON.parse(_stripped);
+      _tier = 1;
     } catch(_e1) {
       // Tier 2: try just the {...} slice
       let _sliced = '';
@@ -9590,6 +9612,7 @@ Default toward L3 unless there is clear evidence the student is below or above t
         const s = _stripped.indexOf('{'), e = _stripped.lastIndexOf('}');
         if (s !== -1 && e !== -1) _sliced = _stripped.slice(s, e+1);
         result = JSON.parse(_sliced);
+        _tier = 2;
       } catch(_e2) {
         // Tier 2b: repair common LLM glitches in the sliced JSON
         try {
@@ -9598,34 +9621,73 @@ Default toward L3 unless there is clear evidence the student is below or above t
           _repaired = _repaired.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
           // Strip trailing commas before } or ]
           _repaired = _repaired.replace(/,(\s*[}\]])/g, '$1');
-          // Escape literal newlines inside string values (between two unescaped quotes on the same field)
-          // Simpler heuristic: replace any literal \n inside the JSON with \\n
-          // (only safe because our schema has no multi-line string keys)
+          // Escape literal newlines inside string values
           _repaired = _repaired.replace(/[\r\n]+/g, ' ');
           result = JSON.parse(_repaired);
-          console.warn('[autoMark] tier-2 repair succeeded for', sid);
+          _tier = 2.5;
+          console.warn('[autoMark] tier-2b repair succeeded for', sid);
         } catch(_e3) {
-          // Tier 3: regex-extract just the must-have fields so teacher still
-          // gets a useful suggestion. Misses per_question feedback but level
-          // and observation are the most valuable parts anyway.
-          console.warn('[autoMark] tier-3 regex fallback for', sid, '— raw length:', raw.length);
-          const _lvlMatch = raw.match(/"suggested_level"\s*:\s*"([^"]+)"/);
-          const _lblMatch = raw.match(/"level_label"\s*:\s*"([^"]+)"/);
-          const _obsMatch = raw.match(/"observation_note"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-          if (_lvlMatch) {
-            result = {
-              suggested_level: _lvlMatch[1],
-              level_label: _lblMatch ? _lblMatch[1] : _lvlMatch[1],
-              per_question: [],
-              observation_note: _obsMatch ? _obsMatch[1].replace(/\\n/g,'\n').replace(/\\"/g,'"') : ''
-            };
-          } else {
-            // Truly unrecoverable — surface the original error
-            throw _e3;
+          // Tier 2c: attempt to escape unescaped inner quotes. The most common
+          // LLM bug is `"feedback":"The student said "yes" and..."`. Find each
+          // string value and escape any unescaped " inside it. Heuristic but
+          // handles the dominant failure mode.
+          try {
+            let _repaired2 = (_sliced || _stripped)
+              .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"')
+              .replace(/,(\s*[}\]])/g, '$1')
+              .replace(/[\r\n]+/g, ' ');
+            // Escape stray " inside string values. Match "key":"...." patterns
+            // where the value section contains an unescaped " that is not the
+            // closing quote. We rewrite: after an opening "value, until next
+            // comma-or-brace, escape any " not followed by , or } or ].
+            _repaired2 = _repaired2.replace(/:\s*"((?:[^"\\]|\\.)*)"(?=\s*[,}\]])/g, (match, inner) => {
+              const fixed = inner.replace(/(?<!\\)"/g, '\\"');
+              return ': "' + fixed + '"';
+            });
+            result = JSON.parse(_repaired2);
+            _tier = 2.8;
+            console.warn('[autoMark] tier-2c quote-escape repair succeeded for', sid);
+          } catch(_e4) {
+            // Tier 3: regex-extract fields. Try per-question entries too so the
+            // teacher still gets annotations where parseable.
+            _tier = 3;
+            _tierDegraded = true;
+            console.warn('[autoMark] tier-3 regex fallback for', sid, '— raw length:', raw.length);
+            const _lvlMatch = raw.match(/"suggested_level"\s*:\s*"([^"]+)"/);
+            const _lblMatch = raw.match(/"level_label"\s*:\s*"([^"]+)"/);
+            const _obsMatch = raw.match(/"observation_note"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+            // Try to pull individual per_question entries. Each looks like:
+            // { "question": "q1", "score": "✓", "feedback": "..." }
+            // Greedy-safe regex per-object, then parse each independently.
+            const _pqEntries = [];
+            const _pqRegex = /\{\s*"question"\s*:\s*"([^"]+)"\s*,\s*"score"\s*:\s*"([^"]+)"(?:\s*,\s*"feedback"\s*:\s*"((?:[^"\\]|\\.)*)")?\s*\}/g;
+            let _pqM;
+            while ((_pqM = _pqRegex.exec(raw)) !== null) {
+              _pqEntries.push({
+                question: _pqM[1],
+                score: _pqM[2],
+                feedback: _pqM[3] ? _pqM[3].replace(/\\n/g,'\n').replace(/\\"/g,'"') : ''
+              });
+            }
+            if (_lvlMatch) {
+              result = {
+                suggested_level: _lvlMatch[1],
+                level_label: _lblMatch ? _lblMatch[1] : _lvlMatch[1],
+                per_question: _pqEntries,
+                observation_note: _obsMatch ? _obsMatch[1].replace(/\\n/g,'\n').replace(/\\"/g,'"') : ''
+              };
+              if (_pqEntries.length) {
+                console.warn('[autoMark] tier-3 recovered', _pqEntries.length, 'per-question entries');
+              }
+            } else {
+              // Truly unrecoverable — surface the original error
+              throw _e4;
+            }
           }
         }
       }
     }
+    console.log('[autoMark] parsed via tier', _tier, 'for', sid);
 
     const level = result.suggested_level||'L3';
     const label = result.level_label||level;
@@ -9642,11 +9704,15 @@ Default toward L3 unless there is clear evidence the student is below or above t
     const bg  = lvlBgs[base]||'var(--cream)';
 
     resultDiv.style.display='block';
+    const _partialWarning = _tierDegraded && perQ.length === 0
+      ? `<span style="font-size:.68rem;color:var(--amber);background:var(--amber-l);padding:2px 7px;border-radius:4px;border:1px solid var(--amber);font-family:DM Mono,monospace;letter-spacing:.5px;">⚠ per-question feedback unavailable — review manually</span>`
+      : '';
     resultDiv.innerHTML = `<div style="background:${bg};border:1.5px dashed ${col};border-radius:8px;padding:11px 13px;margin-bottom:8px;font-size:.82rem;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;">
         <span style="font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:${col};">🤖 AI Suggestion</span>
         <span style="font-family:DM Mono,monospace;font-size:.8rem;font-weight:600;color:${col};background:white;padding:2px 9px;border-radius:6px;border:1.5px solid ${col};">${label}</span>
         <span style="font-size:.72rem;color:var(--muted);">Review &amp; adjust below</span>
+        ${_partialWarning}
       </div>
       ${obsNote?`<div style="background:white;border-radius:6px;padding:9px 11px;margin-bottom:9px;border:1px solid ${col}40;">
         <div style="font-family:DM Mono,monospace;font-size:.55rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;">📋 Observation Note</div>
