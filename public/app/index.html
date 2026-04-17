@@ -4843,6 +4843,20 @@ async function persistRegeneratedField(fieldKey, newValue) {
 async function addMoreQuestions(k) {
   if (!window._lessonMeta) { showToast('Generate a lesson first'); return; }
   if (!genC[k] || !genC[k].cur) { showToast('No worksheet to extend'); return; }
+  // FIX A: If the teacher is mid-edit (contenteditable open), flush their
+  // current DOM edits back to genC[k].cur before we read it. Without this,
+  // deleted questions "come back" because we'd append to the stale cur value.
+  // Same for the matching answer key.
+  const _wsEl = document.getElementById('cbb-' + k);
+  if (_wsEl && _wsEl.contentEditable === 'true') {
+    genC[k].cur = _wsEl.innerText;
+  }
+  const _akKeyPre = k.replace('student_worksheet', 'answer_key');
+  const _akEl = document.getElementById('cbb-' + _akKeyPre);
+  if (_akEl && _akEl.contentEditable === 'true' && genC[_akKeyPre]) {
+    genC[_akKeyPre].cur = _akEl.innerText;
+  }
+
   const btn = document.querySelector('[data-morebtn="' + k + '"]');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Adding...'; }
   const { topic, grades, subj, gradeStr } = window._lessonMeta;
@@ -4919,14 +4933,54 @@ Return ONLY a valid JSON object with this exact shape, no markdown fences, no pr
     let raw = (data.content || []).map(b => b.text || '').join('').trim();
     // Strip any accidental fences before JSON.parse
     raw = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+    // FIX B: 4-tier parser matching the auto-mark parser. LLMs frequently emit
+    // JSON with unescaped quotes in feedback strings, trailing commas, or
+    // smart quotes. Previously a parse failure surfaced a generic error to
+    // the teacher and they'd click again (sometimes leading to duplicates).
     let parsed;
-    try { parsed = JSON.parse(raw); }
-    catch (_) {
-      // Fallback: try to pull JSON out of mixed content
-      const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
-      if (s !== -1 && e !== -1) parsed = JSON.parse(raw.slice(s, e + 1));
-      else throw new Error('Invalid response format');
+    let _parseTier = 0;
+    try {
+      parsed = JSON.parse(raw);
+      _parseTier = 1;
+    } catch (_e1) {
+      // Tier 2: slice {...} out of mixed content
+      let _sliced = '';
+      try {
+        const s = raw.indexOf('{'), e = raw.lastIndexOf('}');
+        if (s !== -1 && e !== -1) _sliced = raw.slice(s, e + 1);
+        parsed = JSON.parse(_sliced);
+        _parseTier = 2;
+      } catch (_e2) {
+        // Tier 2b: repair smart quotes + trailing commas + newlines inside strings
+        try {
+          let _repaired = (_sliced || raw)
+            .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"')
+            .replace(/,(\s*[}\]])/g, '$1')
+            .replace(/[\r\n]+/g, '\\n');
+          parsed = JSON.parse(_repaired);
+          _parseTier = 2.5;
+          console.warn('[addMoreQuestions] tier-2b repair succeeded');
+        } catch (_e3) {
+          // Tier 2c: escape unescaped inner quotes in string values
+          try {
+            let _r = (_sliced || raw)
+              .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"')
+              .replace(/,(\s*[}\]])/g, '$1')
+              .replace(/[\r\n]+/g, '\\n');
+            _r = _r.replace(/:\s*"((?:[^"\\]|\\.)*)"(?=\s*[,}\]])/g, (m, inner) => {
+              const fixed = inner.replace(/(?<!\\)"/g, '\\"');
+              return ': "' + fixed + '"';
+            });
+            parsed = JSON.parse(_r);
+            _parseTier = 2.8;
+            console.warn('[addMoreQuestions] tier-2c quote-escape repair succeeded');
+          } catch (_e4) {
+            throw new Error('Invalid response format');
+          }
+        }
+      }
     }
+    console.log('[addMoreQuestions] parsed via tier', _parseTier);
     const newQsRaw = (parsed.questions || '').trim();
     const newAK = (parsed.answer_key || '').trim();
     if (!newQsRaw) throw new Error('Empty questions');
@@ -4938,7 +4992,11 @@ Return ONLY a valid JSON object with this exact shape, no markdown fences, no pr
     // Append worksheet content
     genC[k].cur = genC[k].cur.trimEnd() + '\n\n' + newQs;
     const body = document.getElementById('cbb-' + k);
-    if (body) body.innerHTML = renderWSAuto(genC[k].cur);
+    if (body) {
+      // Exit edit mode if active, then re-render with the updated content
+      if (body.contentEditable === 'true') body.contentEditable = 'false';
+      body.innerHTML = renderWSAuto(genC[k].cur);
+    }
     // Append answer key content (if the answer key block exists)
     if (newAK && genC[akKey]) {
       // Renumber answer key entries (Q1 → Q{startNum}, Q2 → Q{startNum+1}, etc)
@@ -4946,7 +5004,10 @@ Return ONLY a valid JSON object with this exact shape, no markdown fences, no pr
       const renumberedAK = newAK.replace(/^(\s*)Q\d+(\s*:)/gm, (_, pre, post) => pre + 'Q' + (_akCounter++) + post);
       genC[akKey].cur = genC[akKey].cur.trimEnd() + '\n' + renumberedAK;
       const akBody = document.getElementById('cbb-' + akKey);
-      if (akBody) akBody.innerHTML = renderAnswerKey(genC[akKey].cur);
+      if (akBody) {
+        if (akBody.contentEditable === 'true') akBody.contentEditable = 'false';
+        akBody.innerHTML = renderAnswerKey(genC[akKey].cur);
+      }
     }
     // BUILD AL+ P0 #1: persist via shared helper (uses lesson ID, not
     // topic+grades match). Was inline before — refactored so all persistence
