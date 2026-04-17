@@ -213,6 +213,13 @@
     transition: opacity .2s;
   }
   .demo-trigger-btn-icon { font-size: 1.15rem; }
+  .demo-trigger-btn-arrow {
+    display: inline-block; margin-left: .15rem;
+    transition: transform .2s;
+  }
+  .demo-trigger-btn-cta:hover .demo-trigger-btn-arrow {
+    transform: translateX(3px);
+  }
   .demo-trigger-btn-spinner {
     position: absolute; inset: 0;
     display: none; align-items: center; justify-content: center;
@@ -303,6 +310,9 @@
     overflow: hidden;
     box-shadow: 0 4px 24px rgba(22,18,14,.06);
   }
+  .demo-tabs-outer {
+    position: relative;
+  }
   .demo-tabs {
     display: flex;
     border-bottom: 1px solid var(--border);
@@ -312,6 +322,20 @@
   }
   .demo-tabs::-webkit-scrollbar { height: 4px; }
   .demo-tabs::-webkit-scrollbar-thumb { background: var(--border); }
+
+  /* Mobile-only fade hint: shows content continues to the right */
+  .demo-tabs-fade {
+    display: none;
+    position: absolute;
+    top: 0; right: 0;
+    width: 48px; height: 100%;
+    background: linear-gradient(to right, rgba(251,248,243,0) 0%, rgba(251,248,243,1) 100%);
+    pointer-events: none;
+    z-index: 2;
+  }
+  @media (max-width: 760px) {
+    .demo-tabs-fade { display: block; }
+  }
 
   .demo-tab {
     flex: 1 0 auto;
@@ -397,8 +421,23 @@
     font-size: .88rem; color: var(--sage-d);
     line-height: 1.55;
     margin-bottom: 1.8rem;
+    display: flex; align-items: flex-start; gap: 1rem;
   }
+  .demo-panel-caption > .demo-panel-caption-text { flex: 1; min-width: 0; }
   .demo-panel-caption strong { color: var(--sage-d); font-weight: 700; }
+  .demo-panel-counter {
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+    font-size: .7rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--sage);
+    background: white;
+    padding: .3rem .6rem;
+    border-radius: 12px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
 
   /* Expectations list */
   .demo-exp-list {
@@ -448,7 +487,7 @@
     border: 1px solid var(--border);
   }
   .demo-lesson-meta {
-    display: inline-flex; align-items: center; gap: .35rem;
+    display: inline;
     color: var(--muted);
   }
   .demo-lesson-meta strong { color: var(--ink); font-weight: 600; }
@@ -983,14 +1022,17 @@
   <div class="demo-section-inner">
 
     <div class="demo-tabs-wrap demo-locked">
-      <div class="demo-tabs" role="tablist">
-        <button class="demo-tab active" data-tab="exp" role="tab"><span class="demo-tab-icon">📋</span>Expectations</button>
-        <button class="demo-tab" data-tab="plan" role="tab"><span class="demo-tab-icon">📅</span>Lesson Plan</button>
-        <button class="demo-tab" data-tab="ws" role="tab"><span class="demo-tab-icon">📝</span>Worksheet</button>
-        <button class="demo-tab" data-tab="key" role="tab"><span class="demo-tab-icon">🔑</span>Answer Key</button>
-        <button class="demo-tab" data-tab="rub" role="tab"><span class="demo-tab-icon">📊</span>Rubric</button>
-        <button class="demo-tab" data-tab="slides" role="tab"><span class="demo-tab-icon">▶</span>Slides</button>
-        <button class="demo-tab" data-tab="mark" role="tab"><span class="demo-tab-icon">🤖</span>Suggested Marks</button>
+      <div class="demo-tabs-outer">
+        <div class="demo-tabs" role="tablist">
+          <button class="demo-tab active" data-tab="exp" role="tab"><span class="demo-tab-icon">📋</span>Expectations</button>
+          <button class="demo-tab" data-tab="plan" role="tab"><span class="demo-tab-icon">📅</span>Lesson Plan</button>
+          <button class="demo-tab" data-tab="ws" role="tab"><span class="demo-tab-icon">📝</span>Worksheet</button>
+          <button class="demo-tab" data-tab="key" role="tab"><span class="demo-tab-icon">🔑</span>Answer Key</button>
+          <button class="demo-tab" data-tab="rub" role="tab"><span class="demo-tab-icon">📊</span>Rubric</button>
+          <button class="demo-tab" data-tab="slides" role="tab"><span class="demo-tab-icon">▶</span>Slides</button>
+          <button class="demo-tab" data-tab="mark" role="tab"><span class="demo-tab-icon">🤖</span>Suggested Marks</button>
+        </div>
+        <div class="demo-tabs-fade" aria-hidden="true"></div>
       </div>
 
       <!-- Locked placeholder (shown until generate is clicked) -->
@@ -1003,7 +1045,8 @@
       <!-- EXPECTATIONS -->
       <div class="demo-panel active" data-panel="exp">
         <div class="demo-panel-caption">
-          <strong>Real Ontario expectation codes.</strong> Every lesson is tagged with the specific expectations it covers, pulled from the 2022 Science and Technology curriculum.
+          <div class="demo-panel-caption-text"><strong>Real Ontario expectation codes.</strong> Every lesson is tagged with the specific expectations it covers, pulled from the 2022 Science and Technology curriculum.</div>
+          <div class="demo-panel-counter">1 of 7</div>
         </div>
         <div class="demo-exp-list">
           <div class="demo-exp-item">
@@ -1033,7 +1076,8 @@
       <!-- LESSON PLAN -->
       <div class="demo-panel" data-panel="plan">
         <div class="demo-panel-caption">
-          <strong>Every lesson follows Ontario's 4-part structure.</strong> Minds On, Direct Instruction, Guided Practice, Consolidation. With timings, teacher moves, IEP and ELL supports, and look-fors built in.
+          <div class="demo-panel-caption-text"><strong>Every lesson follows Ontario's 4-part structure.</strong> Minds On, Direct Instruction, Guided Practice, Consolidation. With timings, teacher moves, IEP and ELL supports, and look-fors built in.</div>
+          <div class="demo-panel-counter">2 of 7</div>
         </div>
         <div class="demo-lesson-header">
           <span class="demo-lesson-meta"><strong>Topic:</strong>&nbsp;Forces Acting on Structures</span>
@@ -1095,7 +1139,8 @@
       <!-- WORKSHEET -->
       <div class="demo-panel" data-panel="ws">
         <div class="demo-panel-caption">
-          <strong>A real student-facing worksheet.</strong> 14 questions across 4 sections. Fill-in-the-blank, multiple choice, sorting, and short-answer. Students submit on any device through a shareable link.
+          <div class="demo-panel-caption-text"><strong>A real student-facing worksheet.</strong> 14 questions across 4 sections. Fill-in-the-blank, multiple choice, sorting, and short-answer. Students submit on any device through a shareable link.</div>
+          <div class="demo-panel-counter">3 of 7</div>
         </div>
         <div class="demo-ws-header">Forces Acting on Structures — Grade 5</div>
         <div class="demo-ws-subhead">Student Worksheet</div>
@@ -1126,7 +1171,8 @@
       <!-- ANSWER KEY -->
       <div class="demo-panel" data-panel="key">
         <div class="demo-panel-caption">
-          <strong>Teacher answer key with model responses.</strong> Short-answer questions include the key points students should cover, not just a single "correct" answer. Lets you mark consistently and quickly.
+          <div class="demo-panel-caption-text"><strong>Teacher answer key with model responses.</strong> Short-answer questions include the key points students should cover, not just a single "correct" answer. Lets you mark consistently and quickly.</div>
+          <div class="demo-panel-counter">4 of 7</div>
         </div>
         <div class="demo-ws-header">Answer Key — Teacher Reference</div>
         <div class="demo-ws-subhead">Grade 5 Science · Forces on Structures</div>
@@ -1151,7 +1197,8 @@
       <!-- RUBRIC -->
       <div class="demo-panel" data-panel="rub">
         <div class="demo-panel-caption">
-          <strong>Ontario Achievement Chart, 4 levels.</strong> Science-specific categories: Knowledge &amp; Understanding, Thinking &amp; Investigation, Communication, Application. Defensible to admin, ready to use for assessment.
+          <div class="demo-panel-caption-text"><strong>Ontario Achievement Chart, 4 levels.</strong> Science-specific categories: Knowledge &amp; Understanding, Thinking &amp; Investigation, Communication, Application. Defensible to admin, ready to use for assessment.</div>
+          <div class="demo-panel-counter">5 of 7</div>
         </div>
         <table class="demo-rubric">
           <thead>
@@ -1193,7 +1240,8 @@
       <!-- SLIDES -->
       <div class="demo-panel" data-panel="slides">
         <div class="demo-panel-caption">
-          <strong>Ready-to-present classroom slides.</strong> Auto-generated from your lesson plan. Full colour, structured for the 4-part lesson flow. Present in browser or export to PowerPoint or Google Slides.
+          <div class="demo-panel-caption-text"><strong>Ready-to-present classroom slides.</strong> Auto-generated from your lesson plan. Full colour, structured for the 4-part lesson flow. Present in browser or export to PowerPoint or Google Slides.</div>
+          <div class="demo-panel-counter">6 of 7</div>
         </div>
         <div class="demo-slides-grid">
           <div class="demo-slide-card"><span class="demo-slide-num">Slide 1</span><span class="demo-slide-title">Forces Acting on Structures</span></div>
@@ -1213,7 +1261,8 @@
       <!-- AUTO-MARK -->
       <div class="demo-panel" data-panel="mark">
         <div class="demo-panel-caption">
-          <strong>AI suggests. You decide.</strong> Students submit their worksheet. AI drafts a level suggestion with per-question feedback and an observation note. The suggestion is a starting point — you adjust the level and save what actually goes in your gradebook.
+          <div class="demo-panel-caption-text"><strong>AI suggests. You decide.</strong> Students submit their worksheet. AI drafts a level suggestion with per-question feedback and an observation note. The suggestion is a starting point — you adjust the level and save what actually goes in your gradebook.</div>
+          <div class="demo-panel-counter">7 of 7</div>
         </div>
         <div class="demo-automark-wrap">
           <img class="demo-automark-img" src="/automark-demo.png" alt="TeacherAI auto-mark interface showing a student submission with AI Suggestion of Level 2+, a detailed observation note, per-question feedback with correct and incorrect answers marked, and manual level selector buttons from 1- through 4+.">
@@ -1396,7 +1445,9 @@
     });
   });
 
-  // Demo trigger button: unlock tabs, scroll into view, brief reveal
+  // Demo trigger button:
+  //  - First click: unlock tabs, scroll into view, brief reveal. Then transform button into a /app CTA.
+  //  - After first click: button becomes a direct link to /app (via window.location).
   const genBtn = document.getElementById('demoGenerateBtn');
   const tabsWrap = document.querySelector('.demo-tabs-wrap');
   const demoSection = document.getElementById('demo');
@@ -1404,8 +1455,8 @@
     let triggered = false;
     genBtn.addEventListener('click', function() {
       if (triggered) {
-        // Subsequent clicks: just scroll back to the demo
-        demoSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Subsequent clicks: navigate to the app
+        window.location.href = '/app';
         return;
       }
       triggered = true;
@@ -1420,13 +1471,14 @@
         void tabsWrap.offsetWidth;
         tabsWrap.classList.add('demo-revealed');
 
-        // Reset button after a moment
+        // Transform button into a /app CTA after the reveal
         setTimeout(() => {
           genBtn.classList.remove('loading');
           genBtn.disabled = false;
+          genBtn.classList.add('demo-trigger-btn-cta');
           const labelSpan = genBtn.querySelector('.demo-trigger-btn-label');
           if (labelSpan) {
-            labelSpan.innerHTML = '<span class="demo-trigger-btn-icon">↓</span>See it again';
+            labelSpan.innerHTML = '<span class="demo-trigger-btn-icon">✨</span>Try it yourself <span class="demo-trigger-btn-arrow">→</span>';
           }
         }, 900);
       }, 850);
