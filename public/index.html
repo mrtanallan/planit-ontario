@@ -79,11 +79,10 @@
     pointer-events: none;
   }
   /* Pause animations when hero is offscreen (performance) */
-  .hero.hero-paused .hero-deco,
-  .hero.hero-paused .badge-dot { animation-play-state: paused; }
+  .hero.hero-paused .hero-deco { animation-play-state: paused; }
   /* Respect reduced-motion preference */
   @media (prefers-reduced-motion: reduce) {
-    .hero-deco, .badge-dot { animation: none; }
+    .hero-deco { animation: none; }
     * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
   }
   .hero-deco-1 { width: 320px; height: 320px; background: #B7E4C7; opacity: .18; top: 5%; right: -6%; }
@@ -98,7 +97,7 @@
   .hero-inner { position: relative; z-index: 1; max-width: 760px; }
 
   .hero-badge {
-    display: inline-flex; align-items: center; gap: .5rem;
+    display: inline-flex; align-items: center;
     background: white; border: 1.5px solid var(--border);
     border-radius: 22px; padding: .5rem 1.25rem;
     font-family: 'DM Mono', monospace; font-size: .88rem;
@@ -108,15 +107,6 @@
     animation: fadeUp .6s ease both;
   }
   @media (max-width: 700px) { .hero-badge { font-size: .72rem; padding: .4rem 1rem; } }
-  .badge-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: var(--sage);
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: .5; transform: scale(.8); }
-  }
 
   h1 {
     font-family: 'Fraunces', serif;
@@ -1041,12 +1031,11 @@
   <div class="hero-deco hero-deco-3"></div>
   <div class="hero-inner">
     <div class="hero-badge">
-      <div class="badge-dot"></div>
-      Built for Ontario K–8 teachers
+      We draft. You teach.
     </div>
     <h1>You didn't become a teacher<br>to spend Sunday night <em>planning.</em></h1>
     <p class="hero-sub">
-      TeacherAI drafts your lessons, worksheets, assessments, and report card comments in under a minute. Your professional judgement stays at the center. Sunday nights become yours again. Built for real Ontario classrooms, splits included.
+      TeacherAI drafts your lessons, worksheets, assessments, and report card comments in seconds. Your professional judgement stays at the center. Sunday nights become yours again. Built for real Ontario classrooms, splits included.
     </p>
     <div class="hero-actions">
       <a href="/app" class="btn-primary">✨ Try TeacherAI free</a>
@@ -1447,8 +1436,8 @@
   <div class="cta-deco cta-deco-1"></div>
   <div class="cta-deco cta-deco-2"></div>
   <div class="cta-inner">
-    <h2>Get your weekends <em>back.</em></h2>
-    <p>Type a topic. Get a full lesson, worksheets, rubric, and slides, ready for Monday morning.</p>
+    <h2>Your week, handled by <em>Sunday afternoon.</em></h2>
+    <p>Draft lessons in seconds. Mark in minutes. Write report card comments that reflect the term — all without losing your evenings.</p>
     <a href="/app" class="btn-white">✨ Start for free</a>
     <p class="cta-note">CANADIAN SERVERS · ONTARIO CURRICULUM · MFIPPA-AWARE</p>
   </div>
