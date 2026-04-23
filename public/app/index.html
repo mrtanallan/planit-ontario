@@ -516,11 +516,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 <nav>
   <div class="logo"><span class="logo-full">Teacher</span><span>AI</span></div>
   <div class="nav-tabs">
-    <label class="tab" for="tr-roster"><span class="tab-full">👥 Class Roster</span><span class="tab-short">👥</span></label>
+    <label class="tab" for="tr-roster"><span class="tab-full">👥 My Class</span><span class="tab-short">👥</span></label>
     <label class="tab" for="tr-units"><span class="tab-full">📋 Units</span><span class="tab-short">📋</span></label>
     <label class="tab" for="tr-plan"><span class="tab-full">✨ Plan</span><span class="tab-short">✨</span></label>
     <label class="tab" for="tr-lessons"><span class="tab-full">📚 My Lessons</span><span class="tab-short">📚</span></label>
-    <label class="tab" for="tr-assess"><span class="tab-full">📊 Trackers</span><span class="tab-short">📊</span></label>
+    <label class="tab" for="tr-assess"><span class="tab-full">📊 Progress</span><span class="tab-short">📊</span></label>
     <label class="tab" for="tr-rc"><span class="tab-full">📝 Report Cards</span><span class="tab-short">📝</span></label>
   </div>
   <div class="nav-user">
@@ -656,7 +656,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
       <!-- Row 4: What to generate -->
       <div style="margin-bottom:16px;">
-        <div class="ct" style="margin-bottom:9px;">✅ What to Generate</div>
+        <div class="ct" style="margin-bottom:9px;">✅ What should we draft?</div>
         <div class="chips">
           <label class="chip"><input type="checkbox" id="ck-lp" checked> 🗓 Lesson Plan</label>
           <label class="chip"><input type="checkbox" id="ck-ws" checked> 📝 Student Worksheet</label>
@@ -707,7 +707,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       </div>
 
       <div style="height:8px;"></div>
-      <button class="btn b-full" id="genBtn" onclick="generate()" style="background:linear-gradient(135deg,#4A7C59,#2A5FA5);color:white;border:none;font-size:1.05rem;font-weight:600;padding:14px;letter-spacing:.01em;border-radius:var(--r);cursor:pointer;transition:opacity .15s;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">✨ Generate Lesson</button>
+      <button class="btn b-full" id="genBtn" onclick="generate()" style="background:linear-gradient(135deg,#4A7C59,#2A5FA5);color:white;border:none;font-size:1.05rem;font-weight:600;padding:14px;letter-spacing:.01em;border-radius:var(--r);cursor:pointer;transition:opacity .15s;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">✨ Draft My Lesson</button>
       <div id="usageMeter" style="display:none;text-align:center;margin-top:8px;">
         <span style="font-size:.72rem;color:var(--muted);">📊 <span id="usageCount">—</span> &nbsp;·&nbsp; <span id="usageNote" style="color:var(--sage);"></span></span>
       </div>
@@ -754,7 +754,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         </div>
       </div>
     </div>
-    <div id="assGrid"><div style="color:var(--muted);font-size:.83rem;font-style:italic;padding:14px;">Add students in Class Roster first.</div></div>
+    <div id="assGrid"><div style="color:var(--muted);font-size:.83rem;font-style:italic;padding:14px;">Add students to your class first.</div></div>
     <div class="brow" style="margin-top:14px;">
       <button class="btn b-sage" onclick="saveAss()">💾 Save Assessment</button>
       <button class="btn b-out" onclick="gs(2)">← Back to Review</button>
@@ -2874,8 +2874,8 @@ async function generate() {
           : 'EXPECTATIONS: Return 2-4 Ontario 2023 Language expectations most relevant to this topic and grade.');
 
   const btn = document.getElementById('genBtn');
-  btn.disabled=true; btn.textContent='⏳ Generating...';
-  showLoading('Generating lesson...', true);
+  btn.disabled=true; btn.textContent='⏳ Drafting your lesson...';
+  showLoading('Drafting your lesson...', true);
   setProgress(5,'Reading curriculum expectations...');
 
   curSess = {id:null, date:new Date().toLocaleDateString('en-CA'), subject:subj, strand:strands[0]||'General', grades, task:topic, marks:{}};
@@ -3603,7 +3603,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
   }
   clearInterval(progInterval);
   hideLoading();
-  btn.disabled=false; btn.textContent='✨ Generate Lesson';
+  btn.disabled=false; btn.textContent='✨ Draft My Lesson';
 }
 
 // ============================================================
