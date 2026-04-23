@@ -4698,8 +4698,9 @@ Use emoji headers (📖, ✏️, 💡, etc.). 4–6 varied activities. Start dir
 Plain text only — no JSON, no markdown fences, no preamble.`;
 
   try {
+    // Cost optimization Apr 2026: worksheet regen uses Haiku 4.5. Teacher-reviewed output.
     const data = await callGenerateStreaming({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5',
       max_tokens: 3000,
       messages: [{ role: 'user', content: prompt }],
       meta: { type: 'worksheet_regen', grade: gradeLabel || null, subject: subj || null }
@@ -4761,8 +4762,12 @@ Rules:
 - Match the question numbering used in the worksheet`;
 
   try {
+    // Cost optimization Apr 2026: answer key regen uses Haiku 4.5.
+    // Rationale: teacher already clicked "regenerate" — they're reviewing output.
+    // Haiku's structured-JSON output for answer keys benchmarks well.
+    // Revert path: change model back to 'claude-sonnet-4-6'.
     const data = await callGenerateStreaming({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5',
       max_tokens: 1800,
       messages: [{ role: 'user', content: prompt }],
       meta: { type: 'answer_key_regen', grade: gradeLabel || null, subject: subj || null }
@@ -4846,8 +4851,9 @@ Required structure:
 Use EXACTLY "## " and "### " markdown headers. No single asterisks, no bolded labels outside the category/level headers. Plain text only — no JSON, no markdown fences.`;
 
   try {
+    // Cost optimization Apr 2026: rubric regen uses Haiku 4.5. Teacher-reviewed output.
     const data = await callGenerateStreaming({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5',
       max_tokens: 2400,
       messages: [{ role: 'user', content: prompt }],
       meta: { type: 'rubric_regen', grade: gradeLabel || null, subject: subj || null }
@@ -5021,14 +5027,16 @@ Return ONLY a valid JSON object with this exact shape, no markdown fences, no pr
       'Return ONLY a valid JSON object with this exact shape, no markdown fences, no preamble:\n' +
       '{"questions": "<the 4 new worksheet questions as markdown, ready to append>", "answer_key": "<answers in the format Q' + startNum + ': [question] -> [ideal answer], one per line, for all 4 new questions>"}';
   try {
+    // Cost optimization Apr 2026: "More Questions" uses Haiku 4.5.
+    // User-initiated regen, reviewed before use.
     const res = await authFetch('/api/generate', { method: 'POST', body: JSON.stringify({
-      model: 'claude-sonnet-4-6', max_tokens: 900,
+      model: 'claude-haiku-4-5', max_tokens: 900,
       messages: [{ role: 'user', content: prompt }],
       meta: { type: 'worksheet_regen', grade: gradeForBlock || null, subject: subj || null }
     })});
     if (!res.ok) throw new Error('Server error (' + res.status + ')');
     const data = await res.json();
-    logNonStreamingUsage(data, { model:'claude-sonnet-4-6', meta:{ type:'worksheet_regen', grade:gradeForBlock||null, subject:subj||null }});
+    logNonStreamingUsage(data, { model:'claude-haiku-4-5', meta:{ type:'worksheet_regen', grade:gradeForBlock||null, subject:subj||null }});
     if (data.error) throw new Error(data.error.message || 'API error');
     let raw = (data.content || []).map(b => b.text || '').join('').trim();
     // Strip any accidental fences before JSON.parse
@@ -8472,7 +8480,7 @@ async function generateWithAgentLoop(cs, topic, subject, gradeStr) {
   const callCritic = (svg, issues_from_prev) => authFetch('/api/generate', {
     method: 'POST',
     body: JSON.stringify({
-      model:'claude-sonnet-4-6', max_tokens:600, call_type:'svg',
+      model:'claude-haiku-4-5', max_tokens:600, call_type:'svg',
       system: CRITIC_SYSTEM,
       messages:[{role:'user', content: [
         'GRADE: '+gradeStr,
@@ -8488,7 +8496,7 @@ async function generateWithAgentLoop(cs, topic, subject, gradeStr) {
       ].filter(Boolean).join('\n')}],
       meta:{type:'svg_critic', grade:gradeStr||null, subject:null}
     })
-  }).then(r=>r?.ok?r.json():null).then(d => { if (d) logNonStreamingUsage(d, { model:'claude-sonnet-4-6', meta:{ type:'svg_critic', grade:gradeStr||null, subject:null }}); return d; }).catch(()=>null);
+  }).then(r=>r?.ok?r.json():null).then(d => { if (d) logNonStreamingUsage(d, { model:'claude-haiku-4-5', meta:{ type:'svg_critic', grade:gradeStr||null, subject:null }}); return d; }).catch(()=>null);
 
   // Attempt 1
   const d1 = await callGenerator();
@@ -9796,10 +9804,15 @@ For score: ✓ (correct or essentially correct), ~ (partial credit — got some 
 Default toward L3 unless there is clear evidence the student is below or above the standard.`;
 
   try {
-    const res = await authFetch('/api/generate', {method:'POST',body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:900,messages:[{role:'user',content:prompt}],meta:{type:'auto_mark',grade:studentObj.grade||null,subject:null}})});
+    // Cost optimization Apr 2026: auto-mark uses Haiku 4.5. HIGH-VOLUME call
+    // (every marked student per assignment). The "Suggest mark" UI framing
+    // means teachers review before accepting, so Haiku's classification
+    // quality is sufficient. If teachers start clicking "Re-suggest" more
+    // often on Haiku-marked work, revert: change model to 'claude-sonnet-4-6'.
+    const res = await authFetch('/api/generate', {method:'POST',body:JSON.stringify({model:'claude-haiku-4-5',max_tokens:900,messages:[{role:'user',content:prompt}],meta:{type:'auto_mark',grade:studentObj.grade||null,subject:null}})});
     if (!res.ok) throw new Error('Server error');
     const data = await res.json();
-    logNonStreamingUsage(data, { model:'claude-sonnet-4-6', meta:{ type:'auto_mark', grade:studentObj.grade||null, subject:null }});
+    logNonStreamingUsage(data, { model:'claude-haiku-4-5', meta:{ type:'auto_mark', grade:studentObj.grade||null, subject:null }});
     if (data.error) throw new Error(data.error.message||'API error');
     const raw = data.content.map(i=>i.text||'').join('');
     let result;
