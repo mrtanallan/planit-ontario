@@ -1426,6 +1426,75 @@ async function retryAuthFetch(url, options, maxRetries=3) {
 // TO REVERT: delete this function + swap any callGenerateStreaming()
 // callers back to authFetch('/api/generate', {...}) + await res.json().
 // ============================================================
+// ============================================================
+// USAGE TRACKING — logs every LLM call to Supabase for cost visibility.
+// Fire-and-forget: failures are swallowed so logging never blocks a user.
+// Anthropic API pricing (Apr 2026, per million tokens):
+//   Sonnet 4.6: $3 input, $15 output, $3.75 cache-write, $0.30 cache-read
+//   Haiku 4.5:  $1 input, $5  output, $1.25 cache-write, $0.10 cache-read
+// Update PRICING below when rates change.
+// ============================================================
+const PRICING = {
+  'claude-sonnet-4-6':   { in: 3.00, out: 15.00, cacheW: 3.75, cacheR: 0.30 },
+  'claude-opus-4-7':     { in: 15.00, out: 75.00, cacheW: 18.75, cacheR: 1.50 },
+  'claude-haiku-4-5':    { in: 1.00, out: 5.00, cacheW: 1.25, cacheR: 0.10 },
+  'claude-sonnet-4-6-20250514': { in: 3.00, out: 15.00, cacheW: 3.75, cacheR: 0.30 },
+};
+function estimateCostCents(model, usage) {
+  const p = PRICING[model] || PRICING['claude-sonnet-4-6'];
+  const inTok = usage.input_tokens || 0;
+  const outTok = usage.output_tokens || 0;
+  const cacheW = usage.cache_creation_input_tokens || 0;
+  const cacheR = usage.cache_read_input_tokens || 0;
+  // Result in cents (×100), with 4 decimal places retained
+  const dollars = (inTok * p.in + outTok * p.out + cacheW * p.cacheW + cacheR * p.cacheR) / 1_000_000;
+  return Math.round(dollars * 10000) / 100;
+}
+async function logUsageEvent(data) {
+  try {
+    if (!currentUser || !currentUser.id) return;
+    if (!data.input_tokens && !data.output_tokens) return; // nothing to log
+    const model = data.model || 'claude-sonnet-4-6';
+    const cents = estimateCostCents(model, data);
+    const row = {
+      user_id: currentUser.id,
+      call_type: (data.call_type || 'unknown').slice(0, 40),
+      model: model.slice(0, 60),
+      input_tokens: data.input_tokens || 0,
+      output_tokens: data.output_tokens || 0,
+      cache_creation_tokens: data.cache_creation_input_tokens || 0,
+      cache_read_tokens: data.cache_read_input_tokens || 0,
+      subject: (data.subject || '').slice(0, 50) || null,
+      grade: (data.grade || '').slice(0, 30) || null,
+      estimated_cost_cents: cents,
+      success: data.success !== false
+    };
+    // Fire and forget. If the table doesn't exist yet, swallow the error
+    // so generation still works — deploy the SQL migration before expecting data.
+    db.from('usage_events').insert(row).then(() => {}, () => {});
+  } catch(_) { /* never throw */ }
+}
+// Convenience wrapper for non-streaming /api/generate responses.
+// Call sites just invoke: logNonStreamingUsage(data, body);
+// Parses the `usage` block Anthropic returns in non-streamed JSON.
+function logNonStreamingUsage(apiData, reqBody) {
+  try {
+    if (!apiData || !apiData.usage) return;
+    const meta = reqBody?.meta || {};
+    logUsageEvent({
+      model: apiData.model || reqBody?.model || 'claude-sonnet-4-6',
+      input_tokens: apiData.usage.input_tokens || 0,
+      output_tokens: apiData.usage.output_tokens || 0,
+      cache_creation_input_tokens: apiData.usage.cache_creation_input_tokens || 0,
+      cache_read_input_tokens: apiData.usage.cache_read_input_tokens || 0,
+      call_type: meta.type || null,
+      grade: meta.grade || null,
+      subject: meta.subject || null,
+      success: true
+    });
+  } catch(_) {}
+}
+
 async function callGenerateStreaming(bodyObj) {
   const body = { ...bodyObj, stream: true };
   // BUILD X: full-stream 529 retry. Anthropic's streaming endpoint
@@ -1489,6 +1558,10 @@ async function callGenerateStreaming(bodyObj) {
     let fullText = '';
     let streamError = null;
     let eventCount = 0;
+    // Token usage tracked via SSE message_start (input_tokens + cache stats)
+    // and message_delta (final output_tokens count). Anthropic sends usage
+    // data even on streamed responses — we just weren't parsing it before.
+    let usageData = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, model: null };
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -1506,6 +1579,17 @@ async function callGenerateStreaming(bodyObj) {
             eventCount++;
             if (evt.type === 'content_block_delta' && evt.delta && evt.delta.type === 'text_delta') {
               fullText += evt.delta.text || '';
+            } else if (evt.type === 'message_start' && evt.message) {
+              // Anthropic sends input_tokens + cache stats in message_start
+              if (evt.message.usage) {
+                usageData.input_tokens = evt.message.usage.input_tokens || 0;
+                usageData.cache_creation_input_tokens = evt.message.usage.cache_creation_input_tokens || 0;
+                usageData.cache_read_input_tokens = evt.message.usage.cache_read_input_tokens || 0;
+              }
+              usageData.model = evt.message.model || null;
+            } else if (evt.type === 'message_delta' && evt.usage) {
+              // Final output_tokens count arrives in message_delta
+              usageData.output_tokens = evt.usage.output_tokens || 0;
             } else if (evt.type === 'error') {
               streamError = evt.error || { message: 'Unknown stream error' };
             }
@@ -1534,12 +1618,16 @@ async function callGenerateStreaming(bodyObj) {
     if (streamError) {
       // Surface as 529 if it's clearly an overload, so callers can show the friendly message.
       const isOverload = isOverloadErr(streamError);
-      return { ok:false, status: isOverload ? 529 : 500, error: streamError, content: [{text: fullText}] };
+      // Log the failure with whatever tokens we accumulated before the error
+      try { logUsageEvent({ ...usageData, call_type: body.meta?.type || body.call_type || null, grade: body.meta?.grade || null, subject: body.meta?.subject || null, success: false }); } catch(_) {}
+      return { ok:false, status: isOverload ? 529 : 500, error: streamError, content: [{text: fullText}], usage: usageData };
     }
     if (isEmptyStream) {
-      return { ok:false, status: 529, error: { type:'overloaded_error', message:'Empty stream from upstream' }, content: [{text:''}] };
+      return { ok:false, status: 529, error: { type:'overloaded_error', message:'Empty stream from upstream' }, content: [{text:''}], usage: usageData };
     }
-    return { ok:true, status: 200, content: [{text: fullText}] };
+    // Success path — log for cost tracking (fire and forget, never breaks generation)
+    try { logUsageEvent({ ...usageData, call_type: body.meta?.type || body.call_type || null, grade: body.meta?.grade || null, subject: body.meta?.subject || null, success: true }); } catch(_) {}
+    return { ok:true, status: 200, content: [{text: fullText}], usage: usageData };
   }
 
   // Exhausted retries (only reached if last loop iteration triggered shouldRetry-but-out-of-budget,
@@ -4940,6 +5028,7 @@ Return ONLY a valid JSON object with this exact shape, no markdown fences, no pr
     })});
     if (!res.ok) throw new Error('Server error (' + res.status + ')');
     const data = await res.json();
+    logNonStreamingUsage(data, { model:'claude-sonnet-4-6', meta:{ type:'worksheet_regen', grade:gradeForBlock||null, subject:subj||null }});
     if (data.error) throw new Error(data.error.message || 'API error');
     let raw = (data.content || []).map(b => b.text || '').join('').trim();
     // Strip any accidental fences before JSON.parse
@@ -8371,7 +8460,7 @@ async function generateWithAgentLoop(cs, topic, subject, gradeStr) {
       messages:[{role:'user', content: fullPrompt}],
       meta:{type:'svg', grade:gradeStr||null, subject:null}
     })
-  }).then(r=>r?.ok?r.json():null).catch(()=>null);
+  }).then(r=>r?.ok?r.json():null).then(d => { if (d) logNonStreamingUsage(d, { model:'claude-sonnet-4-6', meta:{ type:'svg', grade:gradeStr||null, subject:null }}); return d; }).catch(()=>null);
 
   const extractSVG = d => {
     if (!d) return '';
@@ -8399,7 +8488,7 @@ async function generateWithAgentLoop(cs, topic, subject, gradeStr) {
       ].filter(Boolean).join('\n')}],
       meta:{type:'svg_critic', grade:gradeStr||null, subject:null}
     })
-  }).then(r=>r?.ok?r.json():null).catch(()=>null);
+  }).then(r=>r?.ok?r.json():null).then(d => { if (d) logNonStreamingUsage(d, { model:'claude-sonnet-4-6', meta:{ type:'svg_critic', grade:gradeStr||null, subject:null }}); return d; }).catch(()=>null);
 
   // Attempt 1
   const d1 = await callGenerator();
@@ -8437,7 +8526,7 @@ async function generateWithAgentLoop(cs, topic, subject, gradeStr) {
       messages:[{role:'user', content: retryPrompt}],
       meta:{type:'svg_retry', grade:gradeStr||null, subject:null}
     })
-  }).then(r=>r?.ok?r.json():null).catch(()=>null);
+  }).then(r=>r?.ok?r.json():null).then(d => { if (d) logNonStreamingUsage(d, { model:'claude-sonnet-4-6', meta:{ type:'svg_retry', grade:gradeStr||null, subject:null }}); return d; }).catch(()=>null);
   const svg2 = extractSVG(d2);
 
   if (svg2) {
@@ -9710,6 +9799,7 @@ Default toward L3 unless there is clear evidence the student is below or above t
     const res = await authFetch('/api/generate', {method:'POST',body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:900,messages:[{role:'user',content:prompt}],meta:{type:'auto_mark',grade:studentObj.grade||null,subject:null}})});
     if (!res.ok) throw new Error('Server error');
     const data = await res.json();
+    logNonStreamingUsage(data, { model:'claude-sonnet-4-6', meta:{ type:'auto_mark', grade:studentObj.grade||null, subject:null }});
     if (data.error) throw new Error(data.error.message||'API error');
     const raw = data.content.map(i=>i.text||'').join('');
     let result;
@@ -10895,6 +10985,7 @@ Return ONLY the comment text, nothing else.`;
     const res = await authFetch('/api/generate', {method:'POST',body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,messages:[{role:'user',content:prompt}],meta:{type:'report_card',grade:s.grade||null,subject:subj||null}})});
     if (!res.ok) throw new Error('Server error');
     const data = await res.json();
+    logNonStreamingUsage(data, { model:'claude-sonnet-4-6', meta:{ type:'report_card', grade:s.grade||null, subject:subj||null }});
     if (data.error) throw new Error(data.error.message||'API error');
     const comment = data.content.map(i=>i.text||'').join('').trim();
     renderCommentCard(s.id, comment, charLimit);
