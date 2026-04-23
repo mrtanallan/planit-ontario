@@ -70,7 +70,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(
 .tab-r { display: none; }
 #appScreen { display: none; }
 nav {
-  background: var(--ink); display: flex; align-items: center;
+  background: #2D5A40; display: flex; align-items: center;
   padding: 0 20px; height: 52px; position: sticky; top: 0; z-index: 100;
 }
 .logo { font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 700; color: var(--cream); margin-right: 24px; flex-shrink: 0; }
@@ -81,8 +81,8 @@ nav {
 .nav-tabs::-webkit-scrollbar { display: none; }
 .tab-short { display: none; }
 @media(max-width:600px) { .tab-full { display: none; } .tab-short { display: inline; } }
-.tab { padding: 7px 13px; color: #9CA3AF; cursor: pointer; border-radius: 6px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; transition: all 0.15s; user-select: none; display: block; }
-.tab:hover { color: var(--cream); background: rgba(255,255,255,0.08); }
+.tab { padding: 7px 13px; color: rgba(248,244,238,0.65); cursor: pointer; border-radius: 6px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; transition: all 0.15s; user-select: none; display: block; }
+.tab:hover { color: var(--cream); background: rgba(255,255,255,0.1); }
 /* Active tab via CSS radio trick */
 #tr-plan:checked   ~ #appScreen nav .tab[for="tr-plan"],
 #tr-roster:checked ~ #appScreen nav .tab[for="tr-roster"],
@@ -93,7 +93,7 @@ nav {
   color: var(--cream); background: rgba(255,255,255,0.14);
 }
 .nav-user { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.nav-email { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: #9CA3AF; }
+.nav-email { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: rgba(248,244,238,0.65); }
 .signout-btn { padding: 5px 11px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--cream); border-radius: 5px; font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; }
 .signout-btn:hover { background: rgba(255,255,255,0.2); }
 
@@ -128,7 +128,7 @@ nav {
 /* ============================================================
    CARDS & LAYOUT
    ============================================================ */
-.card { background: var(--paper); border: 1px solid var(--border); border-radius: var(--r); padding: 20px; margin-bottom: 16px; }
+.card { background: var(--paper); border: 1px solid var(--border); border-radius: var(--r); padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(22,18,14,.04); }
 .ct { font-family: 'DM Mono', monospace; font-size: 0.62rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
 .fg { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 11px; margin-bottom: 13px; }
 .fi { display: flex; flex-direction: column; gap: 4px; }
@@ -460,7 +460,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 <div id="authScreen">
   <div class="auth-box">
     <div class="auth-logo">Teacher<span>AI</span></div>
-    <div class="auth-tagline">Your first lesson is a minute away.</div>
+    <div class="auth-tagline">Tell us your topic. We'll draft the rest.</div>
     <div class="auth-tabs">
       <div class="auth-tab on" onclick="switchAuth('login',this)">Sign In</div>
       <div class="auth-tab" onclick="switchAuth('signup',this)">Create Account</div>
@@ -565,7 +565,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
         <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">📝</div>
-        <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Student-ready worksheets</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Share a link or print a PDF. Auto-marks student submissions on any device.</div></div>
+        <div><div style="font-weight:600;font-size:.86rem;color:var(--ink);margin-bottom:2px;">Student-ready worksheets</div><div style="font-size:.78rem;color:var(--muted);line-height:1.4;">Share a link or print a PDF. TeacherAI suggests marks and feedback for every submission. You make the final call.</div></div>
       </div>
     </div>
     <button class="btn b-sage" onclick="document.getElementById('s1').style.display='block';document.getElementById('planWelcomeBanner').style.display='none';setTimeout(()=>document.getElementById('s1')?.scrollIntoView({behavior:'smooth',block:'start'}),50);" style="font-size:.92rem;padding:10px 22px;">+ Draft Your First Lesson</button>
@@ -716,7 +716,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
   <!-- ── Step 2: Review & Edit ── -->
   <div id="s2" style="display:none;">
-    <div class="ban ban-s" style="margin-bottom:10px;"><span>✏️</span><span><strong>Review &amp; Edit:</strong> Click "Edit" on any section to modify before sharing with students.</span></div>
+    <div class="ban ban-s" style="margin-bottom:10px;"><span>✏️</span><span><strong>Your draft is ready.</strong> Click Edit on any section to change the wording, swap questions, or add your own touch before sharing with students.</span></div>
     <!-- Floating section nav -->
     <div id="lessonSidebar" style="display:none;margin-bottom:14px;position:sticky;top:60px;z-index:50;background:var(--paper);border:1px solid var(--border);border-radius:40px;padding:5px 8px;box-shadow:0 2px 12px rgba(0,0,0,.08);">
       <div id="sidebarLinks" style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;"></div>
@@ -730,7 +730,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
 
   <!-- ── Step 3: Share (resources) ── -->
   <div id="s3" style="display:none;">
-    <div class="ban ban-b" style="margin-bottom:14px;"><span>📦</span><span><strong>Resources</strong> — Quick access to all shareable content from this lesson.</span></div>
+    <div class="ban ban-b" style="margin-bottom:14px;"><span>📦</span><span><strong>Resources.</strong> Download PDFs, get student links, or copy anything you need from this lesson.</span></div>
     <div id="shareCards"></div>
     <div class="brow" style="margin-top:8px;">
       <button class="btn b-out" onclick="gs(2)">← Back to Review</button>
@@ -749,7 +749,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <div style="font-family:DM Mono,monospace;font-size:.58rem;color:var(--sage);margin-top:2px;" id="assExpCodes"></div>
         </div>
         <div class="brow">
-          <button class="btn b-out b-sm" id="autoMarkAllBtn" onclick="autoMarkAll()" style="display:none;font-size:.7rem;background:#4A7C59;color:white;border:none;">🤖 Auto-mark All</button>
+          <button class="btn b-out b-sm" id="autoMarkAllBtn" onclick="autoMarkAll()" style="display:none;font-size:.7rem;background:#4A7C59;color:white;border:none;">✨ Suggest marks for all</button>
           <button class="btn b-sage b-sm" onclick="saveAss()">💾 Save All</button>
         </div>
       </div>
@@ -3238,18 +3238,18 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     const maxTok = grades.length >= 4 ? Math.min(8000, 2400 + outputCount * 900 + _readingBonus)
       : isSplit ? Math.min(7600, 2000 + outputCount * 800 + _readingBonus)
       : Math.min(6400, 1600 + outputCount * 700 + _readingBonus);
-    setProgress(15,'Reading curriculum expectations...');
+    setProgress(15,'Reading the Ontario curriculum...');
     let progVal = 15;
     progInterval = setInterval(() => {
       if (progVal < 85) {
         progVal += (grades.length >= 4 ? 0.8 : isSplit ? 1.1 : 1.6);
-        const stages = [[15,'Building lesson content...']];
+        const stages = [[15,'Building your lesson...']];
         let sp = 25;
-        if (outputs.includes('lesson_plan'))       { stages.push([sp,'Writing lesson plan...']); sp+=12; }
-        if (outputs.includes('reading_resource'))  { stages.push([sp,'Generating reading resource...']); sp+=12; }
-        if (wsOutputKeys.length)                   { stages.push([sp,'Creating worksheet'+(isSplit?' for each grade...':'...')]); sp+=12; }
-        if (outputs.includes('assessment_rubric')) { stages.push([sp,'Building assessment rubric...']); sp+=10; }
-        if (hasWorksheet)                          { stages.push([sp,'Generating answer key...']); sp+=8; }
+        if (outputs.includes('lesson_plan'))       { stages.push([sp,'Writing your lesson plan...']); sp+=12; }
+        if (outputs.includes('reading_resource'))  { stages.push([sp,'Drafting the reading resource...']); sp+=12; }
+        if (wsOutputKeys.length)                   { stages.push([sp,'Creating worksheet'+(isSplit?'s for each grade...':'...')]); sp+=12; }
+        if (outputs.includes('assessment_rubric')) { stages.push([sp,'Building your rubric...']); sp+=10; }
+        if (hasWorksheet)                          { stages.push([sp,'Writing the answer key...']); sp+=8; }
         stages.push([82,'Matching Ontario expectations...']);
         const stage = stages.filter(([p]) => progVal >= p).pop();
         setProgress(Math.min(progVal,85), stage ? stage[1] : null);
@@ -3262,7 +3262,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       meta:{type:'lesson', grade:(grades||[]).join('/')||null, subject:subj||null}
     });
     clearInterval(progInterval);
-    setProgress(90,'Processing response...');
+    setProgress(90,'Pulling everything together...');
 
     if (!data || !data.ok) {
       const status = data?.status||0;
@@ -3276,7 +3276,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     }
 
     if (data.error) throw new Error(data.error.message||JSON.stringify(data.error));
-    setProgress(95,'Building lesson blocks...');
+    setProgress(95,'Almost there...');
 
     const raw = data.content.map(i=>i.text||'').join('');
     let parsed;
@@ -3490,8 +3490,8 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       : [...outputKeys, ...answerKeyKeys];
     buildEditBlocks(_uiKeys, gradeDesc, subj, topic, lessonExpectations, _unitInfoForBadge);
     buildShareCards(outputKeys);
-    setProgress(100,'Done!');
-    setTimeout(hideLoading, 400);
+    setProgress(100,'Your lesson is ready.');
+    setTimeout(hideLoading, 700);
     // AJ+: K lessons intentionally omit Level 1-4 rubrics because Ontario
     // Kindergarten uses observational assessment. Rather than leave teachers
     // wondering why no rubric appeared, show a one-time info toast pointing
@@ -3579,7 +3579,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       if (insertErr) {
         const { error:insertErr2 } = await db.from('lessons').insert({ teacher_id:currentUser.id, topic, grades, subject:subj, content:parsed, expectations:lessonExpectations });
         if (insertErr2) showToast('⚠️ Lesson not saved — '+insertErr2.message, 6000);
-        else { await renderLessonsList(); dismissWelcomeBanner(true); showToast('✅ Lesson saved to My Lessons'); }
+        else { await renderLessonsList(); dismissWelcomeBanner(true); showToast('✓ Saved to My Lessons. Edit anything below.'); }
       } else {
         // BUILD AL+: stash the new lesson ID on _lessonMeta so persistRegeneratedField
         // can write back to THIS lesson by ID instead of guessing by topic+grades match
@@ -3587,7 +3587,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
         if (window._lessonMeta && insertData && insertData[0] && insertData[0].id) {
           window._lessonMeta.lessonId = insertData[0].id;
         }
-        await renderLessonsList(); dismissWelcomeBanner(true); showToast('✅ Lesson saved to My Lessons');
+        await renderLessonsList(); dismissWelcomeBanner(true); showToast('✓ Saved to My Lessons. Edit anything below.');
       }
     }
   } catch(e) {
@@ -3785,8 +3785,8 @@ function resetBlock(k) {
 }
 function copyBlock(k) {
   navigator.clipboard.writeText(document.getElementById('cbb-'+k).innerText);
-  event.target.textContent='Copied!';
-  setTimeout(()=>event.target.textContent='📋 Copy', 1500);
+  event.target.textContent='✓ Copied';
+  setTimeout(()=>event.target.textContent='📋 Copy', 1800);
 }
 
 // ============================================================
@@ -9480,7 +9480,7 @@ async function renderAssGrid() {
       <div style="margin-top:10px;">
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:7px;">
           <button class="btn b-out b-sm sub-toggle-btn" onclick="toggleSubContent('${s.id}',this)" style="font-size:.7rem;">▼ View submitted work</button>
-          ${canAutoMark ? `<button class="btn b-sm automark-btn" data-sid="${s.id}" style="font-size:.7rem;background:#4A7C59;color:white;border:none;display:flex;align-items:center;gap:4px;">🤖 Auto-mark</button>` : ''}
+          ${canAutoMark ? `<button class="btn b-sm automark-btn" data-sid="${s.id}" style="font-size:.7rem;background:#4A7C59;color:white;border:none;display:flex;align-items:center;gap:4px;">✨ Suggest mark</button>` : ''}
         </div>
         <div id="am-result-${s.id}" style="display:none;"></div>
         <div class="sub-content" id="subcon-${s.id}" style="display:none;">
@@ -9617,14 +9617,14 @@ async function autoMarkAll() {
     await autoMarkStudent(sid, studentObj, sub.responses, answerKey, rubric, ab, totalQuestions);
     marked++;
   }
-  if (btn) { btn.disabled=false; btn.textContent='🤖 Auto-mark All'; }
-  if (marked > 0) showToast(`✅ Auto-marked ${marked} student${marked!==1?'s':''}.`);
+  if (btn) { btn.disabled=false; btn.textContent='✨ Suggest marks for all'; }
+  if (marked > 0) showToast(`✨ Drafted marks for ${marked} student${marked!==1?'s':''}. Review and adjust below.`);
 }
 
 async function autoMarkStudent(sid, studentObj, responses, answerKey, rubric, btn, totalQuestions) {
   const resultDiv = document.getElementById('am-result-'+sid);
   if (!resultDiv) return;
-  btn.disabled=true; btn.textContent='🤖 Marking...';
+  btn.disabled=true; btn.textContent='⏳ Drafting mark...';
   const studentName = studentObj.first+(studentObj.last?' '+studentObj.last:'');
   const answeredEntries = Object.entries(responses).filter(([,v]) => v && (Array.isArray(v)?v.length>0:v!=='—'&&v!==''));
   const answeredCount = answeredEntries.length;
@@ -9832,7 +9832,7 @@ Default toward L3 unless there is clear evidence the student is below or above t
       : '';
     resultDiv.innerHTML = `<div style="background:${bg};border:1.5px dashed ${col};border-radius:8px;padding:11px 13px;margin-bottom:8px;font-size:.82rem;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap;">
-        <span style="font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:${col};">🤖 AI Suggestion</span>
+        <span style="font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:1px;text-transform:uppercase;color:${col};">✨ Suggested mark</span>
         <span style="font-family:DM Mono,monospace;font-size:.8rem;font-weight:600;color:${col};background:white;padding:2px 9px;border-radius:6px;border:1.5px solid ${col};">${label}</span>
         <span style="font-size:.72rem;color:var(--muted);">Review &amp; adjust below</span>
         ${_partialWarning}
@@ -9908,11 +9908,11 @@ Default toward L3 unless there is clear evidence the student is below or above t
     }
 
     try { await saveOneStu(sid,{textContent:'',disabled:false}); } catch(e){}
-    btn.textContent='🤖 Re-mark';
+    btn.textContent='✨ Re-suggest';
   } catch(e) {
     resultDiv.style.display='block';
-    resultDiv.innerHTML=`<div style="color:var(--rust);font-size:.78rem;padding:8px 0;">Auto-mark failed: ${e.message}. Please mark manually.</div>`;
-    btn.textContent='🤖 Auto-mark';
+    resultDiv.innerHTML=`<div style="color:var(--rust);font-size:.78rem;padding:8px 0;">Couldn't suggest a mark: ${e.message}. Please mark manually.</div>`;
+    btn.textContent='✨ Suggest mark';
   }
   btn.disabled=false;
 }
@@ -10017,7 +10017,7 @@ async function loadUnitTestResults() {
           <div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);">${gradesStr} · ${date} · ${subCount} submission${subCount!==1?'s':''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          ${akText ? `<button class="btn b-sage b-sm" onclick="autoMarkUnitTest('${ws.id}')" style="font-size:.72rem;white-space:nowrap;">🤖 Auto-mark All</button>` : ''}
+          ${akText ? `<button class="btn b-sage b-sm" onclick="autoMarkUnitTest('${ws.id}')" style="font-size:.72rem;white-space:nowrap;">✨ Suggest marks for all</button>` : ''}
           <button onclick="deleteUnitAssessment('${ws.id}', ${subCount})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem;padding:4px 6px;opacity:.55;transition:opacity .15s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.55'" title="Delete this assessment">🗑</button>
         </div>
       </div>
@@ -10035,7 +10035,7 @@ async function loadUnitTestResults() {
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
                   <span id="utr-level-${sub.id}" style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);"></span>
-                  ${akText ? `<button class="btn b-out b-sm" onclick="autoMarkOneUnitSub('${ws.id}','${sub.id}',this)" style="font-size:.68rem;">🤖 Mark</button>` : ''}
+                  ${akText ? `<button class="btn b-out b-sm" onclick="autoMarkOneUnitSub('${ws.id}','${sub.id}',this)" style="font-size:.68rem;">✨ Suggest</button>` : ''}
                 </div>
               </div>`;
             }).join('')
@@ -10080,7 +10080,7 @@ async function autoMarkUnitTest(wsId) {
     const btn = document.querySelector(`button[onclick*="autoMarkOneUnitSub('${wsId}','${sub.id}"]`);
     await autoMarkStudent(sub.student_id || sub.id, studentObj, sub.responses||{}, d.akText, '', btn, totalQuestions);
   }
-  showToast('✅ All submissions marked — check Trackers for results.');
+  showToast('✓ All submissions marked. Check Progress for results.');
   loadUnitTestResults();
 }
 
@@ -10121,7 +10121,7 @@ async function renderTracker() {
   if (!students.length) { gTable.innerHTML=`<div style="text-align:center;padding:32px 20px;max-width:520px;margin:0 auto;">
       <div style="font-size:2.4rem;margin-bottom:10px;">📊</div>
       <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.35rem;margin-bottom:6px;color:var(--ink);">Track every student, every assessment</div>
-      <div style="color:var(--muted);font-size:.86rem;margin-bottom:22px;line-height:1.5;">The Trackers tab shows each student's progress across every assessment you give them. Add students to your class roster to start tracking.</div>
+      <div style="color:var(--muted);font-size:.86rem;margin-bottom:22px;line-height:1.5;">The Progress tab shows each student's progress across every assessment you give them. Add students to your class roster to start tracking.</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:22px;text-align:left;">
         <div style="display:flex;align-items:flex-start;gap:12px;padding:11px 14px;background:var(--cream);border:1px solid var(--border);border-radius:9px;">
           <div style="font-size:1.25rem;line-height:1.1;flex-shrink:0;">📈</div>
@@ -10853,7 +10853,7 @@ async function generateReportCards() {
       <div><div style="font-weight:600;font-size:.9rem;">${s.last?s.last+', '+s.first:s.first}</div><div style="font-family:DM Mono,monospace;font-size:.6rem;color:var(--muted);">${s.grade}</div></div>
       <div style="margin-left:auto;"><button class="btn b-out b-sm rc-regen-btn" data-sid="${s.id}" style="font-size:.7rem;">🔄 Regenerate</button></div>
     </div>
-    <div id="rc-nodata-${s.id}" style="display:none;background:var(--amber-l);border:1px solid #E8C98A;border-radius:6px;padding:7px 11px;font-size:.78rem;color:#7A5020;margin-bottom:8px;">⚠️ No assessment data — comment based on grade-level expectations. Add marks in Trackers for richer comments.</div>
+    <div id="rc-nodata-${s.id}" style="display:none;background:var(--amber-l);border:1px solid #E8C98A;border-radius:6px;padding:7px 11px;font-size:.78rem;color:#7A5020;margin-bottom:8px;">⚠️ No assessment data. Comment based on grade-level expectations. Add marks in Progress for richer comments.</div>
     <div id="rc-loading-${s.id}" style="color:var(--muted);font-size:.83rem;font-style:italic;"><div class="dots"><span></span><span></span><span></span></div> Generating...</div>
     <div id="rc-comment-${s.id}" style="display:none;"></div>
   </div>`).join('');
@@ -11485,7 +11485,7 @@ function renderUnitCard(u, linkedLessons, assessments, submissionCounts) {
             <div style="display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;align-items:center;">
               ${isTest ? `<button class="btn b-out b-sm" onclick="copyUnitAssessmentLink('${escHTML(a.id)}','${escHTML(a.share_token||'')}', this)" style="font-size:.68rem;padding:4px 8px;" title="Copy student link">🔗 Link</button>` : ''}
               <button class="btn b-out b-sm" onclick="reviewUnitAssessment('${escHTML(a.id)}')" style="font-size:.68rem;padding:4px 8px;" title="Open assessment">👁 Review</button>
-              ${isTest && subCount > 0 ? `<button class="btn b-sage b-sm" onclick="autoMarkUnitTest('${escHTML(a.id)}')" style="font-size:.68rem;padding:4px 8px;" title="Auto-mark all submissions">🤖 Mark</button>` : ''}
+              ${isTest && subCount > 0 ? `<button class="btn b-sage b-sm" onclick="autoMarkUnitTest('${escHTML(a.id)}')" style="font-size:.68rem;padding:4px 8px;" title="Suggest marks for all submissions">✨ Suggest</button>` : ''}
               <button onclick="deleteUnitAssessment('${escHTML(a.id)}', ${subCount})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:2px 4px;" title="Delete assessment">🗑</button>
             </div>
           </div>`;
@@ -11572,7 +11572,7 @@ async function reviewUnitAssessment(wsId) {
           const answered = Object.values(sub.responses||{}).filter(v => v && v !== '—' && v !== '').length;
           return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);gap:10px;">
             <div><div style="font-weight:500;font-size:.82rem;">${escHTML(name)}</div><div style="font-size:.7rem;color:var(--muted);">${escHTML(submittedAt)} · ${answered} answered</div></div>
-            ${akText ? `<button class="btn b-out b-sm" onclick="autoMarkOneUnitSub('${escHTML(wsId)}','${escHTML(sub.id)}',this)" style="font-size:.68rem;">🤖 Mark</button>` : ''}
+            ${akText ? `<button class="btn b-out b-sm" onclick="autoMarkOneUnitSub('${escHTML(wsId)}','${escHTML(sub.id)}',this)" style="font-size:.68rem;">✨ Suggest</button>` : ''}
           </div>`;
         }).join('')}
       </div>`);
@@ -11585,7 +11585,7 @@ async function reviewUnitAssessment(wsId) {
       <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;background:var(--paper);border-radius:16px 16px 0 0;z-index:1;">
         <div style="font-weight:700;font-size:.92rem;color:var(--ink);">${typeInfo.icon} ${escHTML(ws.topic)}</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          ${isTest && akText && subCount > 0 ? `<button class="btn b-sage b-sm" onclick="autoMarkUnitTest('${escHTML(wsId)}')">🤖 Auto-mark All</button>` : ''}
+          ${isTest && akText && subCount > 0 ? `<button class="btn b-sage b-sm" onclick="autoMarkUnitTest('${escHTML(wsId)}')">✨ Suggest marks for all</button>` : ''}
           <button onclick="navigator.clipboard.writeText(document.querySelector('#unitAssessResultModal .ua-body').innerText||'');showToast('Copied!')" class="btn b-out b-sm">📋 Copy</button>
           <button onclick="document.getElementById('unitAssessResultModal').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:2px 6px;">✕</button>
         </div>
@@ -11846,7 +11846,7 @@ function showUnitAssessmentResult(title, text, topic, grades, isTest, unitId, sa
         <input id="unitTestLinkInput" value="${escHTML(studentLink)}" readonly onclick="this.select()" style="flex:1;padding:7px 10px;border:1.5px solid #A8C4AB;border-radius:7px;font-size:.8rem;font-family:'DM Mono',monospace;background:white;">
         <button onclick="const i=document.getElementById('unitTestLinkInput');i.select();navigator.clipboard.writeText(i.value);showToast('Link copied!')" class="btn b-sage b-sm">Copy</button>
       </div>
-      <div style="font-size:.72rem;color:var(--muted);margin-top:6px;">Students submit answers online · Auto-marked · Results appear in Trackers</div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:6px;">Students submit answers online · Marks suggested by AI · Results appear in Progress</div>
     </div>` : '';
   const savedBadge = savedWsId ? '<span style="font-size:.68rem;color:var(--sage);font-weight:600;margin-left:8px;">✅ Saved to unit</span>' : '';
 
@@ -12033,7 +12033,7 @@ async function loadLessonById(lessonId) {
 async function deleteAllUnitPlans() {
   if (!savedUnitPlans.length) { showToast('No unit plans to delete.'); return; }
   const n = savedUnitPlans.length;
-  if (!confirm(`Delete ALL ${n} unit plan${n!==1?'s':''}? Lessons and assessments WITH submissions will be kept — marks stay in Trackers. Empty assessments will be cleaned up.`)) return;
+  if (!confirm(`Delete ALL ${n} unit plan${n!==1?'s':''}? Lessons and assessments WITH submissions will be kept — marks stay in Progress. Empty assessments will be cleaned up.`)) return;
   try {
     const ids = savedUnitPlans.map(u => u.id);
     // Cascade: clean up empty test worksheets tied to these units before deleting the units themselves.
@@ -12051,13 +12051,13 @@ async function deleteAllUnitPlans() {
 }
 
 async function deleteUnitPlan(id) {
-  if (!confirm('Delete this unit plan? Lessons and assessments WITH submissions will be kept — you\'ll still see marks in Trackers. Empty assessments will be cleaned up.')) return;
+  if (!confirm('Delete this unit plan? Lessons and assessments WITH submissions will be kept — you\'ll still see marks in Progress. Empty assessments will be cleaned up.')) return;
   try {
     await cleanupEmptyUnitAssessments([id]);
     const { error } = await db.from('unit_plans').delete().eq('id', id);
     if (error) throw error;
     savedUnitPlans = savedUnitPlans.filter(u => u.id !== id);
-    showToast('✅ Unit plan deleted. Marks preserved in Trackers.');
+    showToast('✓ Unit plan deleted. Marks preserved in Progress.');
     renderUnitPlansList();
     try { if (typeof loadUnitTestResults === 'function') await loadUnitTestResults(); } catch {}
   } catch (e) {
