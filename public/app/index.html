@@ -580,7 +580,7 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
            top of the app's first-ask form so the experience feels continuous. -->
       <div style="text-align:center;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--border);">
         <p style="font-family:'Fraunces',serif;font-size:1.25rem;line-height:1.35;color:var(--ink);margin:0 0 6px;"><em style="color:var(--sage);font-weight:400;">Tell us your topic.</em> <span style="color:var(--ink);">We'll draft the rest.</span></p>
-        <p style="font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--muted);margin:0;">A full lesson in minutes, tailored to your class.</p>
+        <p style="font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--muted);margin:0;">A full lesson in seconds, tailored to your class.</p>
       </div>
       <!-- Hidden grade selects for JS compatibility -->
       <select id="gA" style="display:none;"><option value="">Select grade...</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
@@ -3405,14 +3405,22 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
     // Worksheet is the highest-stakes artifact — if it's missing the lesson
     // is unusable. Queue background regen using the lesson_plan as source.
     const _missingWorksheets = [];
+    let _missingRubricKey = null; // BUILD AM: auto-regen empty rubrics (was dead-end error)
     outputKeys.forEach(k => {
       const v = parsed[k] || '';
       // BUILD AL+: assessment_rubric and reading_resource sometimes come back
       // empty alongside answer_key when the lesson hits the token cap. Surface
       // an actionable placeholder rather than rendering a blank block.
-      if (!v.trim() && (k === 'assessment_rubric' || k === 'reading_resource')) {
-        const labelMap = {assessment_rubric:'rubric', reading_resource:'reading resource'};
-        const placeholder = `⚠️ The ${labelMap[k]} was not generated. This can happen on very long lessons.\n\nClick **✏️ Edit** to write one manually, or go back to the planning page and generate the lesson again.`;
+      // BUILD AM: rubric now auto-regens in the background (like worksheet and
+      // answer_key), so the placeholder is a spinner, not a dead-end error.
+      // Reading resource still shows the actionable error (lower-impact, and
+      // regen would need more context than we reliably have).
+      if (!v.trim() && k === 'assessment_rubric') {
+        const placeholder = `⏳ Building your rubric...`;
+        genC[k] = {orig:placeholder, cur:placeholder};
+        _missingRubricKey = k;
+      } else if (!v.trim() && k === 'reading_resource') {
+        const placeholder = `⚠️ The reading resource was not generated. This can happen on very long lessons.\n\nClick **✏️ Edit** to write one manually, or go back to the planning page and generate the lesson again.`;
         genC[k] = {orig:placeholder, cur:placeholder};
       } else if (!v.trim() && (k === 'student_worksheet' || k.startsWith('student_worksheet_'))) {
         // BUILD AL+: missing worksheet — show a loading placeholder, queue regen.
@@ -3427,6 +3435,7 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
       }
     });
     window._pendingWorksheetRegens = _missingWorksheets;
+    window._pendingRubricRegenKey = _missingRubricKey; // BUILD AM: auto-regen empty rubric
     // Always create answer key entries (even if empty) so the pill + content block stay in sync.
     // Previously `if (parsed[k])` silently dropped missing keys, producing a pill with no matching content.
     // EXCEPTION: For K-only lessons, skip entirely — K doesn't use traditional answer keys
@@ -3651,6 +3660,17 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
         // regenWorksheetAsync will handle the matching answer key.
         if (!_wsRegenKeys.has(wsKey)) regenAnswerKeyAsync(akKey, wsKey, gradeLabel, topic, subj);
       });
+    }
+
+    // BUILD AM: auto-regen rubric if it came back empty. Mirrors the
+    // worksheet + answer key patterns above — teacher sees spinner in the
+    // rubric tab, then actual rubric appears 5-10s later. No dead-end.
+    if (window._pendingRubricRegenKey) {
+      const rubricKey = window._pendingRubricRegenKey;
+      window._pendingRubricRegenKey = null;
+      const lessonPlanText = genC['lesson_plan']?.cur || '';
+      // gradeLabel is empty for non-split rubrics (single rubric per lesson)
+      regenRubricAsync(rubricKey, '', topic, subj, lessonPlanText);
     }
 
     if (currentUser) {
@@ -8969,15 +8989,26 @@ function stripForeignObject(svgStr) {
 // Render an SVG string to PNG base64 using canvg
 async function svgToPng(svgStr, width, height) {
   try {
+    // Diagnostic logging (remove once cause identified).
+    if (!svgStr || !svgStr.trim()) {
+      console.warn('[svgToPng] empty SVG string received');
+      return null;
+    }
+    console.log('[svgToPng] start — svg length:', svgStr.length, 'target:', width + 'x' + height);
     // canvg is at /canvg.js (self-hosted)
     if (!window.canvg) {
+      console.log('[svgToPng] loading canvg library...');
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
         s.src = '/canvg.js';
-        s.onload = resolve;
-        s.onerror = reject;
+        s.onload = () => { console.log('[svgToPng] canvg loaded'); resolve(); };
+        s.onerror = () => { console.error('[svgToPng] canvg FAILED to load (check /canvg.js is deployed)'); reject(new Error('canvg load failed')); };
         document.head.appendChild(s);
       });
+    }
+    if (!window.canvg || !window.canvg.Canvg) {
+      console.error('[svgToPng] canvg loaded but Canvg class missing. Keys:', window.canvg ? Object.keys(window.canvg) : '(no canvg)');
+      return null;
     }
     const canvas = document.createElement('canvas');
     canvas.width = width || 1200;
@@ -8986,11 +9017,15 @@ async function svgToPng(svgStr, width, height) {
     ctx.fillStyle = '#F4F3EF';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     const cleaned = stripForeignObject(svgStr);
+    console.log('[svgToPng] calling canvg.Canvg.from...');
     const v = await canvg.Canvg.from(ctx, cleaned, { ignoreAnimation: true, ignoreMouse: true });
+    console.log('[svgToPng] rendering...');
     await v.render();
+    console.log('[svgToPng] ✓ SUCCESS');
     return canvas.toDataURL('image/png');
   } catch(e) {
-    console.warn('svgToPng failed:', e.message);
+    console.error('[svgToPng] FAILED:', e.message, e);
+    console.error('[svgToPng] SVG preview:', (svgStr||'').slice(0, 200));
     return null;
   }
 }
@@ -10693,13 +10728,13 @@ async function loadLesson(id) {
     }
     // Empty field — figure out what kind and queue if regen-eligible.
     if (k === 'answer_key' || k.startsWith('answer_key_')) {
-      genC[k] = { orig: '⏳ Generating answer key...', cur: '⏳ Generating answer key...' };
+      genC[k] = { orig: '⏳ Writing the answer key...', cur: '⏳ Writing the answer key...' };
       _missingOnLoad.push({ fieldKey: k, kind: 'answer_key' });
     } else if (k === 'assessment_rubric') {
-      genC[k] = { orig: '⏳ Generating rubric...', cur: '⏳ Generating rubric...' };
+      genC[k] = { orig: '⏳ Building your rubric...', cur: '⏳ Building your rubric...' };
       _missingOnLoad.push({ fieldKey: k, kind: 'rubric' });
     } else if (k === 'student_worksheet' || k.startsWith('student_worksheet_')) {
-      genC[k] = { orig: '⏳ Generating worksheet...', cur: '⏳ Generating worksheet...' };
+      genC[k] = { orig: '⏳ Building your worksheet...', cur: '⏳ Building your worksheet...' };
       _missingOnLoad.push({ fieldKey: k, kind: 'worksheet' });
     } else {
       // Other empty field — keep as empty, don't auto-regen.
