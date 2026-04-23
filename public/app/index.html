@@ -655,7 +655,11 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <label class="chip"><input type="checkbox" id="ck-ws" checked> 📝 Student Worksheet</label>
           <label class="chip"><input type="checkbox" id="ck-rr" checked> 📄 Reading Resource</label>
           <label class="chip"><input type="checkbox" id="ck-rb" checked> 📏 Assessment Rubric</label>
-          <label class="chip"><input type="checkbox" id="ck-dt"> 🔀 Differentiation</label>
+          <!-- Differentiation toggle removed Apr 2026 — redundant with inline ELL/IEP
+               scaffolds already woven into every lesson plan section. The hidden
+               checkbox stays so any JS that reads it won't throw. Re-enable by
+               restoring the visible <label> wrapper if testers request it. -->
+          <input type="checkbox" id="ck-dt" style="display:none;">
         </div>
       </div>
 
