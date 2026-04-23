@@ -492,6 +492,15 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
         Continue with Google
       </button>
+      <!-- BUILD AM+: inline warning about school-account OAuth restrictions.
+           Many Ontario boards (YRDSB, TDSB, PDSB, etc.) block third-party
+           OAuth by default at the Workspace admin level. A teacher clicking
+           "Continue with Google" with only their school account logged in
+           will see a scary "blocked by your organization" error. Making this
+           explicit up front preserves trust. -->
+      <div style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:8px;line-height:1.5;">
+        Your school Google account may be blocked from external sign-in. If so, use a personal Gmail or email above.
+      </div>
     </div>
     <div style="text-align:center;margin-top:14px;font-size:0.75rem;color:var(--muted);">🇨🇦 Data stored in Canada · MFIPPA-conscious design<br><span style="margin-top:6px;display:block;"><a href="/privacy.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Privacy Policy</a> · <a href="/terms.html" target="_blank" style="color:var(--muted);text-decoration:underline;">Terms of Service</a></span></div>
     <div style="text-align:center;margin-top:10px;"><a href="/" style="font-size:.72rem;color:var(--sage);text-decoration:none;font-family:'DM Mono',monospace;letter-spacing:.5px;">← teacherai.ca</a></div>
@@ -574,13 +583,18 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
   <!-- ── Step 1: Generate. Hidden by default — maybeShowPlanWelcome() shows
        this when savedLessons > 0, otherwise shows the empty-state banner above. ── -->
   <div id="s1" style="display:none;">
-    <div class="card">
+    <!-- BUILD AM+: upgraded Plan card. Softer aesthetic to match what
+         teachers expect from modern AI tools (Gemini et al). Larger padding,
+         rounder corners, subtle gradient, softer shadow. Only this first
+         surface is upgraded; downstream cards keep the existing calmer
+         paper/cream brand aesthetic. -->
+    <div class="card plan-primary-card" style="background:linear-gradient(180deg, var(--paper) 0%, #FCFAF5 100%);border:1px solid var(--border);border-radius:20px;padding:32px 28px;box-shadow:0 2px 14px rgba(22,18,14,.05), 0 1px 3px rgba(22,18,14,.03);">
       <!-- Landing-page voice bridge: teachers arriving from teacherai.ca read
            "Tell us your topic. We'll draft the rest." Echo that promise at the
            top of the app's first-ask form so the experience feels continuous. -->
-      <div style="text-align:center;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--border);">
-        <p style="font-family:'Fraunces',serif;font-size:1.25rem;line-height:1.35;color:var(--ink);margin:0 0 6px;"><em style="color:var(--sage);font-weight:400;">Tell us your topic.</em> <span style="color:var(--ink);">We'll draft the rest.</span></p>
-        <p style="font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--muted);margin:0;">A full lesson in seconds, tailored to your class.</p>
+      <div style="text-align:center;margin-bottom:26px;padding-bottom:22px;border-bottom:1px solid rgba(224,216,204,.6);">
+        <p style="font-family:'Fraunces',serif;font-size:1.4rem;line-height:1.3;color:var(--ink);margin:0 0 8px;letter-spacing:-.01em;"><em style="color:var(--sage);font-weight:400;">Tell us your topic.</em> <span style="color:var(--ink);">We'll draft the rest.</span></p>
+        <p style="font-family:'DM Sans',sans-serif;font-size:.86rem;color:var(--muted);margin:0;">A full lesson in seconds, tailored to your class.</p>
       </div>
       <!-- Hidden grade selects for JS compatibility -->
       <select id="gA" style="display:none;"><option value="">Select grade...</option><option>Kindergarten</option><option>Grade 1</option><option>Grade 2</option><option>Grade 3</option><option>Grade 4</option><option>Grade 5</option><option>Grade 6</option><option>Grade 7</option><option>Grade 8</option></select>
@@ -597,34 +611,55 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
       <input type="checkbox" id="splitToggle" style="display:none;">
       <button id="addGradeBtn" style="display:none;"></button>
 
-      <!-- Row 1: Class · Subject -->
-      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);">
-        <div class="fi" id="classSelectorRow" style="display:none;flex:1.5;min-width:140px;">
-          <label>Class</label>
-          <select id="classSelector" onchange="onClassSelect()"></select>
+      <!-- ════════════════════════════════════════════════════════════════
+           SIMPLIFIED PLAN FORM (BUILD AM+)
+           One primary input field. Teacher types what they're teaching
+           naturally ("Grade 3 Social Studies — pioneers"). Parser extracts
+           grade + subject + topic from that string. All legacy fields
+           remain in DOM for downstream compatibility, hidden inside
+           "Options" accordion for teachers who want manual control.
+           ════════════════════════════════════════════════════════════ -->
+
+      <!-- Primary input surface -->
+      <div style="margin-bottom:20px;">
+        <textarea id="planInput" rows="2" placeholder="e.g. Grade 3 Social Studies — Indigenous communities in early Canada"
+          autocapitalize="sentences"
+          style="width:100%;font-family:'DM Sans',sans-serif;font-size:1.05rem;padding:18px 20px;border:1.5px solid var(--border);border-radius:14px;background:var(--paper);color:var(--ink);outline:none;transition:border-color .18s, box-shadow .18s;resize:vertical;line-height:1.45;box-shadow:0 1px 2px rgba(22,18,14,.02) inset;"
+          onfocus="this.style.borderColor='var(--sage)';this.style.boxShadow='0 0 0 3px rgba(74,124,89,.12)';"
+          onblur="this.style.borderColor='var(--border)';this.style.boxShadow='0 1px 2px rgba(22,18,14,.02) inset';"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();smartGenerate();}"></textarea>
+        <div id="planInputHint" style="margin-top:10px;font-size:.8rem;color:var(--muted);line-height:1.55;">
+          <span style="color:var(--sage);">✦</span> Include the grade and subject if you can. Examples: <em>"Grade 4 fractions introduction"</em> · <em>"Gr 6 persuasive writing"</em> · <em>"Kindergarten patterns"</em>
         </div>
-        <div class="fi" style="flex:1.5;min-width:140px;">
-          <label>Subject</label>
-          <select id="subj" onchange="onSubjectChange()">
-            <option>Language / Literacy</option>
-            <option>Mathematics</option>
-            <option>Science &amp; Technology</option>
-            <option data-k-only="1">Health &amp; Physical Education</option>
-            <option data-k-only="1">Social Studies</option>
-            <option data-k-only="1">The Arts</option>
-          </select>
-        </div>
-<input type="hidden" id="dur" value="1 lesson">
+      </div>
+
+      <!-- Class selector — only shown when teacher has multiple classes -->
+      <div class="fi" id="classSelectorRow" style="display:none;margin-bottom:16px;">
+        <label>Class</label>
+        <select id="classSelector" onchange="onClassSelect()"></select>
       </div>
       <div id="classAutoFillNote" style="display:none;"></div>
 
-      <!-- Row 2: Grade pills -->
-      <div style="margin-bottom:18px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <label style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Grade <span style="color:var(--rust);">✱</span></label>
-          <span id="gradeSelectionNote" style="display:none;font-size:.72rem;color:var(--sage);font-style:italic;">✦ Split class — separate worksheets per grade</span>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;" id="gradePillContainer">
+      <!-- Legacy form fields (hidden, populated by parser for generate()) -->
+      <div id="legacyFormFields" style="display:none;">
+        <!-- Legacy Subject (needed by generate()) — populated by parser -->
+        <select id="subj" onchange="onSubjectChange()">
+          <option>Language / Literacy</option>
+          <option>Mathematics</option>
+          <option>Science &amp; Technology</option>
+          <option>Social Studies</option>
+          <option>History and Geography</option>
+          <option>Health &amp; Physical Education</option>
+          <option>Core French</option>
+          <option>French Language Arts</option>
+          <option>Dance</option>
+          <option>Drama</option>
+          <option>Music</option>
+          <option>Visual Arts</option>
+        </select>
+        <input type="hidden" id="dur" value="1 lesson">
+        <!-- Legacy Grade pills (used to sync selects) — hidden but functional -->
+        <div id="gradePillContainer">
           <button type="button" class="grade-pill-btn" data-grade="Kindergarten" onclick="toggleGradePill(this)">K</button>
           <button type="button" class="grade-pill-btn" data-grade="Grade 1" onclick="toggleGradePill(this)">Gr. 1</button>
           <button type="button" class="grade-pill-btn" data-grade="Grade 2" onclick="toggleGradePill(this)">Gr. 2</button>
@@ -635,60 +670,44 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <button type="button" class="grade-pill-btn" data-grade="Grade 7" onclick="toggleGradePill(this)">Gr. 7</button>
           <button type="button" class="grade-pill-btn" data-grade="Grade 8" onclick="toggleGradePill(this)">Gr. 8</button>
         </div>
-      </div>
-
-      <!-- Row 3: Topic input -->
-      <div style="margin-bottom:18px;">
-        <label style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:7px;">What are you teaching? <span style="color:var(--rust);">✱</span></label>
-        <input type="text" id="topic" list="topicSuggestions" placeholder="e.g. Making Inferences, Persuasive Writing, Fractions..." autocapitalize="sentences"
-          style="width:100%;font-family:'DM Sans',sans-serif;font-size:1rem;padding:13px 16px;border:2px solid var(--border);border-radius:10px;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;"
-          onfocus="this.style.borderColor='var(--sage)'" onblur="this.style.borderColor='var(--border)'"
-          oninput="checkGradeAlignment()">
+        <div id="gradeSelectionNote" style="display:none;"></div>
+        <!-- Legacy topic input (populated by parser) -->
+        <input type="text" id="topic" list="topicSuggestions">
         <datalist id="topicSuggestions"></datalist>
-        <div id="gradeAlignmentHint" style="display:none;margin-top:8px;padding:9px 12px;background:var(--amber-l);border:1px solid #E8C98A;border-radius:8px;font-size:.82rem;color:var(--ink);line-height:1.45;">
-          <span style="font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:var(--amber);font-weight:600;display:block;margin-bottom:3px;">ℹ️ Heads up</span>
+        <div id="gradeAlignmentHint" style="display:none;">
           <span id="gradeAlignmentHintText"></span>
         </div>
+        <div id="subjectNote"></div>
+        <!-- Legacy literacy-strand checkboxes (unused in simple mode) -->
+        <input type="checkbox" id="ck-o">
+        <input type="checkbox" id="ck-m">
+        <input type="checkbox" id="ck-r">
+        <input type="checkbox" id="ck-w">
       </div>
 
-      <!-- Subject note for non-literacy subjects -->
-      <div id="subjectNote" style="display:none!important;"></div>
-
-      <!-- Row 4: What to generate -->
-      <div style="margin-bottom:16px;">
-        <div class="ct" style="margin-bottom:9px;">✅ What should we draft?</div>
-        <div class="chips">
-          <label class="chip"><input type="checkbox" id="ck-lp" checked> 🗓 Lesson Plan</label>
-          <label class="chip"><input type="checkbox" id="ck-ws" checked> 📝 Student Worksheet</label>
-          <label class="chip"><input type="checkbox" id="ck-rr" checked> 📄 Reading Resource</label>
-          <label class="chip"><input type="checkbox" id="ck-rb" checked> 📏 Assessment Rubric</label>
-          <!-- Differentiation toggle removed Apr 2026 — redundant with inline ELL/IEP
-               scaffolds already woven into every lesson plan section. The hidden
-               checkbox stays so any JS that reads it won't throw. Re-enable by
-               restoring the visible <label> wrapper if testers request it. -->
-          <input type="checkbox" id="ck-dt" style="display:none;">
-        </div>
-      </div>
-
-      <!-- Row 5: More options (collapsible) -->
-      <div style="border-top:1px solid var(--border);padding-top:12px;">
+      <!-- Options accordion — all controls moved here, collapsed by default -->
+      <div style="margin-top:4px;margin-bottom:4px;">
         <button type="button" onclick="toggleMoreOptions()" id="moreOptionsBtn"
-          style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--muted);padding:0;transition:color .15s;"
+          style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--muted);padding:8px 0;transition:color .15s;"
           onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--muted)'">
           <span id="moreOptionsArrow" style="font-size:.65rem;transition:transform .2s;display:inline-block;">▶</span>
-          <span>⚙️ More options</span>
+          <span>Options</span>
           <span id="moreOptionsSummary" style="font-size:.72rem;color:var(--sage);margin-left:4px;"></span>
         </button>
-        <div id="moreOptionsBody" style="display:none;margin-top:12px;">
-          <div id="strandSection" style="margin-bottom:14px;">
-            <div class="ct" style="margin-bottom:9px;">📖 Literacy Strands</div>
+        <div id="moreOptionsBody" style="display:none;margin-top:12px;padding:16px 18px;background:rgba(248,244,238,.6);border-radius:12px;border:1px solid rgba(224,216,204,.5);">
+          <!-- What to generate -->
+          <div style="margin-bottom:18px;">
+            <div class="ct" style="margin-bottom:9px;">✅ What should we draft?</div>
             <div class="chips">
-              <label class="chip"><input type="checkbox" id="ck-o"> 🎤 Literacy Connections (A)</label>
-              <label class="chip"><input type="checkbox" id="ck-m"> 📚 Foundations of Language (B)</label>
-              <label class="chip"><input type="checkbox" id="ck-r"> 📖 Comprehension (C)</label>
-              <label class="chip"><input type="checkbox" id="ck-w"> ✏️ Composition (D)</label>
+              <label class="chip"><input type="checkbox" id="ck-lp" checked> 🗓 Lesson Plan</label>
+              <label class="chip"><input type="checkbox" id="ck-ws" checked> 📝 Student Worksheet</label>
+              <label class="chip"><input type="checkbox" id="ck-rr" checked> 📄 Reading Resource</label>
+              <label class="chip"><input type="checkbox" id="ck-rb" checked> 📏 Assessment Rubric</label>
+              <input type="checkbox" id="ck-dt" style="display:none;">
             </div>
           </div>
+
+          <!-- Target expectations -->
           <div class="fi full">
             <div style="margin-bottom:6px;">
               <span style="font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">🎯 Target Expectations</span>
@@ -706,9 +725,14 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
         </div>
       </div>
 
-      <div style="height:8px;"></div>
-      <button class="btn b-full" id="genBtn" onclick="generate()" style="background:linear-gradient(135deg,#4A7C59,#2A5FA5);color:white;border:none;font-size:1.05rem;font-weight:600;padding:14px;letter-spacing:.01em;border-radius:var(--r);cursor:pointer;transition:opacity .15s;" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">✨ Draft My Lesson</button>
-      <div id="usageMeter" style="display:none;text-align:center;margin-top:8px;">
+      <div style="height:10px;"></div>
+      <button class="btn b-full" id="genBtn" onclick="smartGenerate()"
+        style="background:linear-gradient(135deg,#4A7C59 0%,#3A6A85 100%);color:white;border:none;font-size:1.08rem;font-weight:600;padding:16px;letter-spacing:.01em;border-radius:14px;cursor:pointer;transition:transform .12s, box-shadow .18s, opacity .15s;box-shadow:0 4px 14px rgba(74,124,89,.25);"
+        onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(74,124,89,.35)';"
+        onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 14px rgba(74,124,89,.25)';"
+        onmousedown="this.style.transform='translateY(0)';"
+        onmouseup="this.style.transform='translateY(-1px)';">✨ Draft My Lesson</button>
+      <div id="usageMeter" style="display:none;text-align:center;margin-top:10px;">
         <span style="font-size:.72rem;color:var(--muted);">📊 <span id="usageCount">—</span> &nbsp;·&nbsp; <span id="usageNote" style="color:var(--sage);"></span></span>
       </div>
     </div>
@@ -861,9 +885,15 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
           <option>Language / Literacy</option>
           <option>Mathematics</option>
           <option>Science &amp; Technology</option>
-          <option data-k-only="1">Health &amp; Physical Education</option>
-          <option data-k-only="1">Social Studies</option>
-          <option data-k-only="1">The Arts</option>
+          <option>Social Studies</option>
+          <option>History and Geography</option>
+          <option>Health &amp; Physical Education</option>
+          <option>Core French</option>
+          <option>French Language Arts</option>
+          <option>Dance</option>
+          <option>Drama</option>
+          <option>Music</option>
+          <option>Visual Arts</option>
         </select>
       </div>
       <div class="fi" style="flex:1;min-width:120px;">
@@ -1186,8 +1216,22 @@ async function loadCurriculum(subject) {
     : subject === 'Mathematics' ? 'math'
     : subject === 'Science & Technology' ? 'science'
     : subject === 'Social Studies' ? 'social_studies'
+    : subject === 'History and Geography' ? 'history_geography'
     : subject === 'Health & Physical Education' ? 'health'
+    // BUILD AM: Arts split into 4 sub-disciplines so curriculum mapping and
+    // slide visual guidance can be precise per discipline. "The Arts" kept as
+    // a fallback alias for any legacy references.
     : subject === 'The Arts' ? 'arts'
+    : subject === 'Dance' ? 'dance'
+    : subject === 'Drama' ? 'drama'
+    : subject === 'Music' ? 'music'
+    : subject === 'Visual Arts' ? 'visual_arts'
+    // BUILD AM++: FSL support. Core French (Gr 4-8) teaches French as a
+    // second language. French Language Arts is for Extended French /
+    // Immersion where French is the medium of instruction. Output language
+    // differs (see slide guidance + prompt notes).
+    : subject === 'Core French' ? 'core_french'
+    : subject === 'French Language Arts' ? 'french_language_arts'
     : null;
   if (!key) return;
   if (_curriculumCache[key]) {
@@ -1236,8 +1280,15 @@ function getExpectations(subject, grades, strands) {
     : subject === 'Mathematics' ? 'math'
     : subject === 'Science & Technology' ? 'science'
     : subject === 'Social Studies' ? 'social_studies'
+    : subject === 'History and Geography' ? 'history_geography'
     : subject === 'Health & Physical Education' ? 'health'
     : subject === 'The Arts' ? 'arts'
+    : subject === 'Dance' ? 'dance'
+    : subject === 'Drama' ? 'drama'
+    : subject === 'Music' ? 'music'
+    : subject === 'Visual Arts' ? 'visual_arts'
+    : subject === 'Core French' ? 'core_french'
+    : subject === 'French Language Arts' ? 'french_language_arts'
     : 'language';
 
   let pool = [];
@@ -2774,6 +2825,311 @@ function switchTrackerView(view) {
 }
 
 // ============================================================
+// NATURAL-LANGUAGE PLAN PARSER (BUILD AM+)
+// ============================================================
+// Sheryl's feedback: "Gemini is just a box. TeacherAI has too many boxes,
+// too much mental load." Fix: one free-text field, parse grade + subject
+// + topic from the input. Existing generate() reads all its inputs from
+// hidden DOM elements, so we populate those and call it unchanged.
+//
+// Strategy: regex first (handles 90%+ of common phrasings at zero cost).
+// If regex can't find grade or subject, we ask inline (cheap, fast) or
+// fall back to a Haiku LLM call for parsing.
+
+const SUBJECT_ALIASES = [
+  // [pattern, canonical subject name]. First match wins.
+  // Patterns are intentionally narrow — they only match explicit subject-
+  // naming words, not topic-naming words. "Grade 6 persuasive writing"
+  // should keep "persuasive writing" as the topic; "Grade 4 fractions"
+  // should keep "fractions" as the topic. Topic-words that IMPLY a subject
+  // are handled in SUBJECT_HINTS below.
+  // FSL checks MUST come before Language/Literacy so "french language arts"
+  // doesn't trigger the generic literacy match.
+  [/\b(french language arts|fran[cç]ais|fla\b|french immersion|extended french|immersion)\b/i, 'French Language Arts'],
+  [/\b(core french|fsl\b|french class|french lesson|french\b(?!\s+(toast|fries|kiss|bread)))/i, 'Core French'],
+  [/\b(language\s*\/\s*literacy|language arts|literacy|ela\b|english language arts)\b/i, 'Language / Literacy'],
+  [/\b(math(ematics)?|arithmetic)\b/i,                                                    'Mathematics'],
+  [/\b(science\s*(and|&)?\s*technology|science|biology|physics|chemistry)\b/i,            'Science & Technology'],
+  [/\b(social studies|socstud|soc\.? studies)\b/i,                                        'Social Studies'],
+  [/\b(history\s*(and|&)\s*geography|history|geography)\b/i,                              'History and Geography'],
+  [/\b(health\s*(and|&)?\s*(physical education|phys ?ed|pe\b)|phys ?ed|physical education|dpa|pe\b|health\b)\b/i, 'Health & Physical Education'],
+  [/\b(dance|choreograph)/i,                                                              'Dance'],
+  [/\b(drama|theatre|theater|role.?play)\b/i,                                             'Drama'],
+  [/\b(music|musical)\b/i,                                                                'Music'],
+  [/\b(visual arts?|vis ?arts?|art class)\b/i,                                            'Visual Arts'],
+];
+
+// Weaker subject hints — consulted only when explicit subject match fails.
+// These are topic-words that imply a subject ("fractions" → Mathematics).
+// When matched, we DO NOT strip them from the topic — they're part of the
+// lesson's actual content.
+const SUBJECT_HINTS = [
+  [/\b(fractions?|decimals?|percentages?|algebra|geometry|multiplication|division|addition|subtraction|place value|probability|patterning)\b/i, 'Mathematics'],
+  [/\b(reading|writing|poetry|grammar|spelling|phonics|punctuation|essay|paragraph|narrative|persuasive|comprehension|vocabulary|inference)\b/i, 'Language / Literacy'],
+  [/\b(water cycle|ecosystem|habitat|food chain|photosynthesis|rocks|minerals|electricity|magnetism|plants|animals|weather)\b/i, 'Science & Technology'],
+  [/\b(pioneers|settlers|indigenous|first nations|canada|map|community|citizenship|government)\b/i, 'Social Studies'],
+  [/\b(rhythm|melody|harmony|pitch|tempo|song writing|notation|musical instrument)\b/i, 'Music'],
+  [/\b(painting|drawing|sculpture|printmaking|collage|elements of design|colour theory|color theory)\b/i, 'Visual Arts'],
+  [/\b(tableau|role ?play|improvisation|script writing|monologue|dramatic)\b/i, 'Drama'],
+  [/\b(choreograph|locomotor|non.?locomotor|dance forms?)\b/i, 'Dance'],
+  [/\b(fitness|nutrition|puberty|mental health|active living|movement skills?|substance use)\b/i, 'Health & Physical Education'],
+];
+
+/**
+ * Parse natural-language input like "Grade 3 Social Studies — Indigenous
+ * communities in early Canada" into structured fields. Returns
+ *   { grades: ['Grade 3'], subject: 'Social Studies', topic: '...',
+ *     needsClarification: false }
+ * When grade or subject can't be determined, needsClarification is set
+ * and the caller can prompt the user.
+ */
+function parsePlanInput(input) {
+  const original = input;
+  let working = input;
+  const grades = [];
+
+  // Grade detection — handles "Grade 3", "Gr.3", "Gr 3", "grade 4/5", "K", "Kindergarten"
+  // Also handles casual "Grade 3s" or "grade 3 students".
+  const gradeRegexes = [
+    // "Grade 4/5" or "Grades 4 and 5" or "4/5 split"
+    /\b(?:grades?\s+)?(\d)\s*\/\s*(\d)\b/i,
+    /\b(?:grades?\s+)?(\d)\s+and\s+(\d)\b/i,
+    // Single grade — tolerant of trailing 's' ("Grade 3s") and words after
+    /\bgrade\s*(\d)s?\b/i,
+    /\bgr\.?\s*(\d)s?\b/i,
+    /\b(\d)(?:st|nd|rd|th)\s+grade\b/i,
+    // Kindergarten
+    /\b(kindergarten|kinder|jk|sk)\b/i,
+    // Bare K — only if not preceded/followed by letters (not "k-means" etc.)
+    /(?:^|\s)(k)(?=\s|$)/i,
+  ];
+
+  // Match grade pairs first (4/5, 3 and 4)
+  for (const re of gradeRegexes.slice(0, 2)) {
+    const m = working.match(re);
+    if (m) {
+      grades.push('Grade ' + m[1]);
+      grades.push('Grade ' + m[2]);
+      working = working.replace(m[0], ' ');
+      break;
+    }
+  }
+  // Then single-grade matches
+  if (!grades.length) {
+    for (const re of gradeRegexes.slice(2)) {
+      const m = working.match(re);
+      if (m) {
+        const captured = m[1] || m[0];
+        if (/kinder|^k$|^jk$|^sk$/i.test(captured.trim())) {
+          grades.push('Kindergarten');
+        } else {
+          const n = captured;
+          if (n >= '1' && n <= '8') grades.push('Grade ' + n);
+        }
+        working = working.replace(m[0], ' ');
+        break;
+      }
+    }
+  }
+
+  // Subject detection — explicit first
+  let subject = null;
+  for (const [re, canonical] of SUBJECT_ALIASES) {
+    const m = working.match(re);
+    if (m) {
+      subject = canonical;
+      working = working.replace(m[0], ' ');
+      break;
+    }
+  }
+  // Fallback to topic-word hints if no explicit subject found
+  if (!subject) {
+    for (const [re, canonical] of SUBJECT_HINTS) {
+      if (re.test(working)) {
+        subject = canonical;
+        // Don't strip — "persuasive writing" stays in the topic
+        break;
+      }
+    }
+  }
+
+  // Topic is whatever remains after stripping grade + subject.
+  // Clean up: remove leading/trailing separators, extra spaces, filler words.
+  let topic = working
+    .replace(/\b(teaching|teach|lesson|lessons|intro|introduction|my|a|an|the|about|on|for|to)\b/gi, ' ')
+    .replace(/[–—]/g, '-')
+    .replace(/^[\s\-:,.]+/, '')
+    .replace(/[\s\-:,.]+$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // If topic is empty but we had a subject, use the subject as implied topic
+  // (teacher typed just "Grade 3 Social Studies" meaning a general intro)
+  if (!topic && subject) {
+    topic = subject + ' — introductory lesson';
+  }
+
+  const needsClarification = !grades.length || !subject || !topic;
+
+  return {
+    grades,
+    subject,
+    topic,
+    needsClarification,
+    needsGrade: !grades.length,
+    needsSubject: !subject,
+    needsTopic: !topic,
+    original,
+  };
+}
+
+/**
+ * After parsing, populate the hidden form elements so generate() can run
+ * against them unchanged. Returns true on success, false if required
+ * fields are missing.
+ */
+function applyParsedPlanToForm(parsed) {
+  if (parsed.needsClarification) return false;
+
+  // Set grade pills (and hidden gA..gF selects that generate() reads)
+  // Clear all pills first
+  document.querySelectorAll('#gradePillContainer .grade-pill-btn').forEach(btn => {
+    btn.classList.remove('selected');
+  });
+  // Then toggle the ones we detected
+  parsed.grades.forEach(g => {
+    const btn = document.querySelector(`#gradePillContainer .grade-pill-btn[data-grade="${g}"]`);
+    if (btn) btn.classList.add('selected');
+  });
+  // Sync pills to hidden selects (existing helper)
+  if (typeof syncGradePillsToSelects === 'function') syncGradePillsToSelects();
+
+  // Subject dropdown
+  const subjEl = document.getElementById('subj');
+  if (subjEl && parsed.subject) {
+    for (const opt of subjEl.options) {
+      if (opt.value === parsed.subject || opt.text === parsed.subject) {
+        subjEl.value = opt.value;
+        if (typeof onSubjectChange === 'function') onSubjectChange();
+        break;
+      }
+    }
+  }
+
+  // Topic text input
+  const topicEl = document.getElementById('topic');
+  if (topicEl) topicEl.value = parsed.topic;
+
+  // Outputs: ensure all defaults are on (lesson + worksheet + reading + rubric)
+  ['ck-lp', 'ck-ws', 'ck-rr', 'ck-rb'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = true;
+  });
+
+  return true;
+}
+
+/**
+ * Entry point from the simplified Plan form. Parses the input, populates
+ * the hidden form, and calls the existing generate().
+ *
+ * If required fields are missing, shows an inline clarification UI.
+ */
+async function smartGenerate() {
+  const rawInput = document.getElementById('planInput')?.value?.trim() || '';
+  if (!rawInput) {
+    const hint = document.getElementById('planInputHint');
+    if (hint) {
+      hint.textContent = 'Tell me what you\'re teaching — include the grade if you can.';
+      hint.style.color = 'var(--rust)';
+    }
+    document.getElementById('planInput')?.focus();
+    return;
+  }
+
+  let parsed = parsePlanInput(rawInput);
+
+  // If we couldn't find a grade, prompt inline with pills (no LLM call needed)
+  if (parsed.needsGrade) {
+    showInlineGradePrompt(parsed);
+    return;
+  }
+  // If subject is missing but we have grade + topic, default to Language/Literacy
+  // or use heuristics. For now, prompt if subject can't be inferred at all.
+  if (parsed.needsSubject) {
+    showInlineSubjectPrompt(parsed);
+    return;
+  }
+
+  if (!applyParsedPlanToForm(parsed)) {
+    alert('Couldn\'t fully understand that — please try including the grade and subject (e.g. "Grade 3 Social Studies — pioneers").');
+    return;
+  }
+
+  // All fields populated. Hand off to existing generator.
+  await generate();
+}
+
+/**
+ * When the parser couldn't find a grade, show an inline pill selector
+ * above the input so the teacher can tap one and retry. This avoids
+ * launching a full modal for something that's one tap.
+ */
+function showInlineGradePrompt(parsed) {
+  const hintEl = document.getElementById('planInputHint');
+  if (!hintEl) return;
+  hintEl.innerHTML = `
+    <div style="padding:10px 12px;background:var(--amber-l);border:1px solid #E8C98A;border-radius:8px;margin-top:8px;">
+      <div style="font-size:.82rem;margin-bottom:7px;color:var(--ink);">Which grade is this for?</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;" id="inlineGradePicker">
+        ${['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8']
+          .map(g => {
+            const short = g === 'Kindergarten' ? 'K' : 'Gr. ' + g.replace('Grade ', '');
+            return `<button type="button" class="grade-pill-btn" data-grade="${g}" onclick="_inlineGradeChoice('${g}')">${short}</button>`;
+          }).join('')}
+      </div>
+    </div>`;
+  hintEl.style.color = '';
+}
+
+function _inlineGradeChoice(grade) {
+  const input = document.getElementById('planInput');
+  if (!input) return;
+  // Prepend the grade to the input so re-parsing picks it up
+  input.value = grade + ' ' + input.value;
+  // Clear the prompt
+  const hintEl = document.getElementById('planInputHint');
+  if (hintEl) { hintEl.innerHTML = ''; hintEl.style.color = ''; }
+  smartGenerate();
+}
+
+function showInlineSubjectPrompt(parsed) {
+  const hintEl = document.getElementById('planInputHint');
+  if (!hintEl) return;
+  const subjects = ['Language / Literacy', 'Mathematics', 'Science & Technology',
+    'Social Studies', 'History and Geography', 'Health & Physical Education',
+    'Dance', 'Drama', 'Music', 'Visual Arts'];
+  hintEl.innerHTML = `
+    <div style="padding:10px 12px;background:var(--amber-l);border:1px solid #E8C98A;border-radius:8px;margin-top:8px;">
+      <div style="font-size:.82rem;margin-bottom:7px;color:var(--ink);">Which subject?</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">
+        ${subjects.map(s => `<button type="button" class="grade-pill-btn" onclick="_inlineSubjectChoice('${s.replace(/'/g, "\\'")}')">${s}</button>`).join('')}
+      </div>
+    </div>`;
+  hintEl.style.color = '';
+}
+
+function _inlineSubjectChoice(subject) {
+  const input = document.getElementById('planInput');
+  if (!input) return;
+  input.value = input.value + ' (' + subject + ')';
+  const hintEl = document.getElementById('planInputHint');
+  if (hintEl) { hintEl.innerHTML = ''; hintEl.style.color = ''; }
+  smartGenerate();
+}
+
+
+// ============================================================
 // GENERATE — main lesson generation function
 // ============================================================
 async function generate() {
@@ -2851,6 +3207,55 @@ async function generate() {
     else if (/machine|technology/.test(topicLower2)) primaryStrand2 = 'D';
     else if (/matter|state|solid|liquid|gas|particle|chemical|physical change|mixture|solution|force|motion|electricity|circuit|light|sound|heat|flight|fluid/.test(topicLower2)) primaryStrand2 = 'C';
     else primaryStrand2 = 'B'; // Life Systems — habitat, ecosystem, biodiversity, food chain, plant, animal, cell, body
+  } else if (subj === 'Social Studies') {
+    // BUILD AM: Social Studies strand routing — Gr 1-6, 2 strands in 2018 curriculum:
+    // A = Heritage and Identity (culture, community, traditions, family, identity, past)
+    // B = People and Environments (geography, maps, regions, environment, government, global)
+    if (/map|region|geograph|environment|climate|natural|physical feature|govern|citizen|global|country|continent|ocean|landform|urban|rural|interact|resource|trade|migration/.test(topicLower2)) primaryStrand2 = 'B';
+    else primaryStrand2 = 'A'; // Default to Heritage and Identity
+  } else if (subj === 'History and Geography') {
+    // BUILD AM: Gr 7-8, History (A) and Geography (B) are separate subjects in the
+    // 2018 curriculum but combined in our tool. Route based on topic keywords.
+    if (/map|region|geograph|landform|climate|economy|resource|urban|rural|population|migration|trade|industry|environment|sustain|physical|spatial|global connection|interact|natural system/.test(topicLower2)) primaryStrand2 = 'B';
+    else primaryStrand2 = 'A'; // History — war, colonization, settlement, Canada, events, change over time
+  } else if (subj === 'Health & Physical Education') {
+    // BUILD AM: H&PE strand routing — 2019 curriculum has 3 strands:
+    // A = Living Skills (decision making, interpersonal, self-awareness) — usually integrated
+    // B = Active Living (active participation, fitness, safety)
+    // C = Movement Competence (skills, concepts, strategies)
+    // D = Healthy Living (understanding health, making healthy choices, connections)
+    if (/health|nutrition|substance|mental health|stress|emotion|relationship|consent|puber|body image|hygiene|safety|illness|disease|screen time|media influence/.test(topicLower2)) primaryStrand2 = 'D';
+    else if (/skill|throw|catch|kick|dribble|strategy|tactic|game play|team sport|individual sport|dance movement|movement concept|body awareness|spatial awareness/.test(topicLower2)) primaryStrand2 = 'C';
+    else if (/fitness|active|cardio|endurance|strength|flexibility|warm.?up|cool.?down|heart rate|physical activity/.test(topicLower2)) primaryStrand2 = 'B';
+    else primaryStrand2 = 'A'; // Living Skills default
+  } else if (subj === 'Dance' || subj === 'Drama' || subj === 'Music' || subj === 'Visual Arts') {
+    // BUILD AM: Arts curriculum — each discipline has 3 strands (2009 curriculum, still current for Gr 1-8):
+    // A = Creating and Presenting (make and share the art form)
+    // B = Reflecting, Responding, and Analysing (analyze works)
+    // C = Exploring Forms and Cultural Contexts (explore traditions, influences, history)
+    if (/analyz|reflect|respond|critique|evaluat|describ|feedback|interpret|perspective|critic/.test(topicLower2)) primaryStrand2 = 'B';
+    else if (/cultural|tradition|history|context|influence|origin|heritage|indigenous|world music|world dance|style|genre|period/.test(topicLower2)) primaryStrand2 = 'C';
+    else primaryStrand2 = 'A'; // Creating and Presenting default — most lessons
+  } else if (subj === 'Core French') {
+    // BUILD AM++: Core French Gr 4-8 (2013 curriculum). 4 strands:
+    // A = Listening
+    // B = Speaking
+    // C = Reading
+    // D = Writing
+    // Most lessons integrate multiple strands; we pick primary by topic keyword.
+    if (/writ|compos|spell|journal|paragraph|describe in writing|letter/.test(topicLower2)) primaryStrand2 = 'D';
+    else if (/read|comprehen|text|story|passage|article/.test(topicLower2)) primaryStrand2 = 'C';
+    else if (/speak|convers|dialogue|present|oral|pronunciation|conversation|role ?play/.test(topicLower2)) primaryStrand2 = 'B';
+    else if (/listen|audio|song|video|podcast|understand spoken/.test(topicLower2)) primaryStrand2 = 'A';
+    else primaryStrand2 = 'B'; // Speaking default — most common in Core French
+  } else if (subj === 'French Language Arts') {
+    // BUILD AM++: Français (Immersion / Extended) Gr 1-8. Strands mirror
+    // Ontario Français curriculum: A = Oral Communication, B = Reading,
+    // C = Writing, D = Media / Multimodal Communication
+    if (/média|medium|multimodal|advertising|video|website|digital|presentation design/.test(topicLower2)) primaryStrand2 = 'D';
+    else if (/writ|écri|compos|paragraph|story writing|essay|journal/.test(topicLower2)) primaryStrand2 = 'C';
+    else if (/read|lire|comprehension|text|literature|passage|story|poem/.test(topicLower2)) primaryStrand2 = 'B';
+    else primaryStrand2 = 'A'; // Oral communication default
   }
   // Filter B1.1 (whole numbers) from topics that aren't about whole numbers
   const isWholeNumberTopic2 = /count|whole number|place value|composing|decomposing/.test(topicLower2);
@@ -3552,6 +3957,24 @@ CRITICAL: Return ONLY valid JSON. No markdown fences.`;
           lessonExpectations = scored.slice(0, 3).map(x => ({...x.exp}));
           genC['_expectations'] = lessonExpectations;
           console.log('[EXPECTATIONS] Applied content-matched fallback:', lessonExpectations.map(e => e.code), 'scores:', scored.slice(0,3).map(x => x.score));
+          // BUILD AM: sync the Lesson Snapshot body to the fallback codes.
+          // Without this, the badges show {B2.3, A1.1, B1.4} while the body
+          // still says "Expectation(s): C1.4" (the LLM's unmatched guess).
+          // Teachers lose trust in curriculum alignment when codes disagree.
+          try {
+            const newCodes = lessonExpectations.map(e => e.code).join(', ');
+            if (parsed.lesson_plan && newCodes) {
+              // Match any "Expectation(s):" line (bolded or not) at the top of the snapshot
+              const expLineRe = /(\*\*Expectation\(s\):\*\*|Expectation\(s\):)\s*[^\n|]*/i;
+              if (expLineRe.test(parsed.lesson_plan)) {
+                parsed.lesson_plan = parsed.lesson_plan.replace(expLineRe, '$1 ' + newCodes);
+                if (genC.lesson_plan) {
+                  genC.lesson_plan.cur = parsed.lesson_plan;
+                  genC.lesson_plan.orig = parsed.lesson_plan;
+                }
+              }
+            }
+          } catch(_) { /* never throw from this sync */ }
         } else {
           console.warn('[EXPECTATIONS] No curriculum codes strongly match lesson content — banner will be suppressed rather than show misleading codes');
         }
@@ -6266,9 +6689,47 @@ async function generateSlideData(callerBtn) {
       '- learning_goals: exactly 2-3',
       '- vocabulary: 3-5 words',
       '- content_slides: exactly '+profile.slideCount+' — choose type that best shows the concept',
-      isMath ? '- MATH SLIDE SEQUENCE: slide1=formula/concept intro, slide2=worked_steps or visual model, slide3=labelled diagram or data visual, slide4=comparison_table or harder worked_steps'
-      : (subject||'').toLowerCase().includes('science') ? '- SCIENCE SLIDE SEQUENCE: slide1=science_diagram or cycle_diagram (introduce concept), slide2=food_chain or cycle_diagram (process/system), slide3=comparison_table or anchor_chart (compare/classify), slide4=concept_card or worked_steps (consolidate). NEVER use math renderers for science.'
-      : '- LITERACY SLIDE SEQUENCE: slide1=anchor_chart or word_web (introduce concept), slide2=story_map or reading_strategy (apply strategy), slide3=sentence_frames (language support), slide4=writing_process or anchor_chart (consolidate). Also valid: concept_card, comparison_table, venn_diagram. NEVER use math renderers for literacy.',
+      // BUILD AM: subject-specific slide sequence guidance. Using existing renderers
+      // (no new SVG types for new subjects) — this keeps scope small for the shipit
+      // week. If a subject needs a domain-specific visual (e.g. a music notation
+      // renderer), that's a future add after we see which subjects actually get used.
+      (function() {
+        if (isMath) return '- MATH SLIDE SEQUENCE: slide1=formula/concept intro, slide2=worked_steps or visual model, slide3=labelled diagram or data visual, slide4=comparison_table or harder worked_steps';
+        const s = (subject||'').toLowerCase();
+        if (s.includes('science')) return '- SCIENCE SLIDE SEQUENCE: slide1=science_diagram or cycle_diagram (introduce concept), slide2=food_chain or cycle_diagram (process/system), slide3=comparison_table or anchor_chart (compare/classify), slide4=concept_card or worked_steps (consolidate). NEVER use math renderers for science.';
+        if (s === 'social studies' || s === 'history and geography') {
+          return '- SOCIAL STUDIES / HISTORY / GEOGRAPHY SLIDE SEQUENCE: slide1=concept_card or anchor_chart (introduce key concept or key question), slide2=comparison_table or venn_diagram (compare perspectives, regions, time periods, or groups), slide3=cycle_diagram for processes (e.g. migration cycles, seasonal patterns, historical sequences) OR anchor_chart (cause/effect, perspectives), slide4=concept_card or sentence_frames (consolidation, inquiry questions). For map-heavy topics use concept_card with map description in image_prompt. NEVER use math renderers (worked_steps, fraction_bar, etc.) for Social Studies or History/Geography.';
+        }
+        if (s === 'health & physical education' || s.includes('health')) {
+          return '- HEALTH & PE SLIDE SEQUENCE: slide1=concept_card (introduce concept — e.g. components of fitness, food group, emotion), slide2=anchor_chart or comparison_table (sort/compare — healthy vs unhealthy, active vs sedentary, good vs poor choices), slide3=cycle_diagram for processes (e.g. stress response, digestive process, skill progression) OR sentence_frames (communication/decision skills), slide4=concept_card or anchor_chart (strategies, action steps). NEVER use math renderers. For physical skill lessons (throw, catch, kick), use concept_card showing the phases of the skill.';
+        }
+        if (s === 'visual arts') {
+          return '- VISUAL ARTS SLIDE SEQUENCE: slide1=concept_card (introduce element of design — line, shape, colour, texture, space, form, value), slide2=comparison_table or venn_diagram (compare artists, styles, techniques, or periods), slide3=anchor_chart (principles, techniques, steps in a process), slide4=concept_card (art criticism framework or cultural context). Use image_prompt heavily to show actual artwork or technique demonstrations. NEVER use math renderers. NEVER use science_diagram or cycle_diagram.';
+        }
+        if (s === 'dance') {
+          return '- DANCE SLIDE SEQUENCE: slide1=concept_card (introduce element of dance — body, space, time, energy, relationships), slide2=comparison_table or anchor_chart (compare dance forms, cultural traditions, choreographic forms like AB/ABA), slide3=cycle_diagram for process (warm-up > exploration > creation > presentation > reflection) OR concept_card for choreographic devices, slide4=sentence_frames (dance vocabulary for reflection) or concept_card (consolidation). NEVER use math renderers. Image_prompt should show dancers in motion, not static diagrams.';
+        }
+        if (s === 'drama') {
+          return '- DRAMA SLIDE SEQUENCE: slide1=concept_card (introduce drama element — role, relationship, time, place, tension, focus), slide2=anchor_chart or comparison_table (compare drama forms — tableau, storytelling, role-play, improvisation), slide3=cycle_diagram for dramatic process OR sentence_frames (character voice, audience communication), slide4=concept_card (reflection framework) or anchor_chart (strategies). NEVER use math renderers. Image_prompt should show drama scenes with clear character action.';
+        }
+        if (s === 'music') {
+          return '- MUSIC SLIDE SEQUENCE: slide1=concept_card (introduce musical element — rhythm, melody, harmony, timbre, dynamics, form, tempo, pitch), slide2=comparison_table or venn_diagram (compare musical styles, cultures, composers, instrument families), slide3=anchor_chart (music theory concept — note values, scale patterns, form) OR cycle_diagram for listening/creating process, slide4=concept_card (vocabulary consolidation, music reflection). NEVER use math renderers. NEVER use fraction_bar even if showing note durations. Image_prompt should show instruments, performers, or musical contexts.';
+        }
+        if (s === 'core french') {
+          return '- CORE FRENCH SLIDE SEQUENCE: slide1=sentence_frames or concept_card (introduce target vocabulary or sentence structures IN FRENCH — e.g. "Je m\'appelle ___", "Je voudrais ___"), slide2=comparison_table (French/English pairings for key vocabulary), slide3=concept_card (grammar focus — verb conjugation, gender agreement) OR anchor_chart (conversational patterns), slide4=sentence_frames (practice prompts for speaking/writing IN FRENCH). \n'
+               + '- LANGUAGE IN OUTPUT: Slide TITLES in English (teachers need to navigate). Slide KEY_POINT and student-facing CONTENT in French (vocabulary, example sentences, prompts). Teacher_script in English (notes on how to deliver). Minds_on hook can be bilingual — describe the scene in English, the question prompt in French. \n'
+               + '- Vocabulary words MUST include French article (le/la/les/un/une/des) and English translation. Example: [{"word": "le chat", "definition": "the cat", "example": "J\'ai un chat noir."}]. \n'
+               + '- Discussion questions and exit_ticket IN FRENCH at grade-appropriate level. NEVER use math renderers. NEVER use science_diagram.';
+        }
+        if (s === 'french language arts') {
+          return '- FRENCH LANGUAGE ARTS SLIDE SEQUENCE: Same pedagogical structure as English Literacy — slide1=anchor_chart or word_web (introduce concept), slide2=story_map or reading_strategy (apply strategy), slide3=sentence_frames (language support), slide4=writing_process or anchor_chart (consolidate).\n'
+               + '- LANGUAGE IN OUTPUT: ENTIRE lesson in French — titles, key_points, teacher_script, student_worksheet, discussion_questions, exit_ticket, rubric. This is for Immersion / Extended French classrooms where French is the language of instruction. Do NOT translate to English. \n'
+               + '- Vocabulary entries: word in French, definition in French (student-friendly), example in French. Use grade-appropriate French register. \n'
+               + '- Grammar references should use French terminology (le nom, le verbe, l\'adjectif). NEVER use math renderers.';
+        }
+        // Language / Literacy fallback
+        return '- LITERACY SLIDE SEQUENCE: slide1=anchor_chart or word_web (introduce concept), slide2=story_map or reading_strategy (apply strategy), slide3=sentence_frames (language support), slide4=writing_process or anchor_chart (consolidate). Also valid: concept_card, comparison_table, venn_diagram. NEVER use math renderers for literacy.';
+      })(),
       '- discussion_questions: exactly 3',
       '- All content age-appropriate for grade '+(gradeStr||'Elementary'),
       '- visual_params must use REAL numbers appropriate for the grade — no placeholders',
