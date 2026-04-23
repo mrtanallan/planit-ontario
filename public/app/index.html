@@ -5052,8 +5052,19 @@ function openPrintWindow(html) {
     alert('Pop-up blocked — allow pop-ups for teacherai.ca and try again.');
     return null;
   }
+  // BUILD AL+: add a hint bar at the top teaching teachers the Save-as-PDF
+  // pattern. Teachers click our 📄 PDF button expecting a download and get a
+  // print dialog, which is confusing. The hint bar is visible on screen but
+  // hidden in print output via the .tai-hint @media print rule.
+  const hintBar = `<div class="tai-hint" style="background:#fff9ef;border-bottom:1px solid rgba(212,149,38,.3);padding:10px 20px;font:13px/1.5 -apple-system,system-ui,sans-serif;color:#7A5A2A;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+<span>💡 <strong>To save as a PDF:</strong> in the print dialog, change <strong>Destination</strong> to <strong>"Save as PDF"</strong> and click Save. Your browser may look different, but every modern browser has this option.</span>
+<button onclick="this.parentElement.remove()" style="background:transparent;border:1px solid rgba(212,149,38,.4);border-radius:4px;padding:4px 10px;cursor:pointer;color:#7A5A2A;font:inherit;">Got it</button>
+</div>
+<style>@media print { .tai-hint { display: none !important; } }</style>`;
+  // Inject the hint bar right after <body> opens
+  const htmlWithHint = html.replace(/<body([^>]*)>/, '<body$1>' + hintBar);
   w.document.open();
-  w.document.write(html);
+  w.document.write(htmlWithHint);
   w.document.close();
   return w;
 }
@@ -6321,8 +6332,55 @@ async function generateSlideData(callerBtn) {
       if (svg) { slides[i].svg_html = svg; console.log('Hardcoded: '+slides[i].visual_type); }
     }
 
-    // ── STEP 3: Wait briefly for images then open deck ──────────────────────────
-    // Race image fetch against a 5s timeout — deck opens either way
+    // ── STEP 3: Generate any agent-loop visuals BEFORE opening the deck ─────────
+    // BUILD AL++: previously the deck opened first and visuals streamed in via
+    // postMessage. If the parent window navigated away, pop-ups were blocked,
+    // or the agent loop failed, teachers saw "Drawing visual..." forever on
+    // slides that need SVG diagrams. Blocking until visuals exist means the
+    // deck NEVER opens with placeholders. Failed visuals get a retry + fallback.
+    const needsAgent = slides.slice(0,4).map((s,i) => !s.svg_html ? i : -1).filter(i => i >= 0);
+    if (needsAgent.length > 0) {
+      let doneCount = 0;
+      const totalAgent = needsAgent.length;
+      const updateProgress = () => {
+        if (callerBtn) callerBtn.textContent = `⏳ Building diagrams... ${doneCount}/${totalAgent}`;
+      };
+      updateProgress();
+      // Generate each agent-loop visual sequentially to avoid rate limiting.
+      // Each slide gets TWO attempts. If both fail, use a last-resort fallback SVG
+      // so the deck never opens with a missing visual.
+      for (const i of needsAgent) {
+        try {
+          let svg = await generateWithAgentLoop(slides[i], topic, subject, gradeStr);
+          // Validate: must be real SVG content, not an empty or malformed response
+          let cleanSvg = svg && svg.length > 200 && svg.includes('<svg') ? svg : null;
+          // If first attempt failed, try one more time
+          if (!cleanSvg) {
+            console.warn('[slides] first agent attempt failed for slide '+i+', retrying');
+            svg = await generateWithAgentLoop(slides[i], topic, subject, gradeStr);
+            cleanSvg = svg && svg.length > 200 && svg.includes('<svg') ? svg : null;
+          }
+          // If still nothing, use a last-resort fallback — a labeled text-only
+          // SVG with the slide's key point. Not pretty but the deck stays usable.
+          if (!cleanSvg) {
+            console.warn('[slides] both agent attempts failed for slide '+i+', using fallback');
+            const kp = (slides[i].key_point || slides[i].title || 'Key concept').replace(/[<>&]/g, '');
+            cleanSvg = `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto"><rect width="600" height="400" fill="#F4F3EF" rx="12"/><foreignObject x="40" y="40" width="520" height="320"><div xmlns="http://www.w3.org/1999/xhtml" style="font-family:system-ui,sans-serif;color:#1D3461;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:16px"><div style="font-size:48px;opacity:.3">📐</div><div style="font-size:18px;font-weight:600;line-height:1.4">${kp}</div><div style="font-size:12px;color:#888;font-style:italic">Visual generation failed. Try regenerating from the Slides tab.</div></div></foreignObject></svg>`;
+          }
+          slides[i].svg_html = cleanSvg;
+        } catch (e) {
+          console.error('[slides] generation error for slide '+i+':', e);
+          // Same fallback on exception
+          const kp = (slides[i].key_point || slides[i].title || 'Key concept').replace(/[<>&]/g, '');
+          slides[i].svg_html = `<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto"><rect width="600" height="400" fill="#F4F3EF" rx="12"/><foreignObject x="40" y="40" width="520" height="320"><div xmlns="http://www.w3.org/1999/xhtml" style="font-family:system-ui,sans-serif;color:#1D3461;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:16px"><div style="font-size:48px;opacity:.3">📐</div><div style="font-size:18px;font-weight:600;line-height:1.4">${kp}</div><div style="font-size:12px;color:#888;font-style:italic">Visual generation failed. Try regenerating from the Slides tab.</div></div></foreignObject></svg>`;
+        }
+        doneCount++;
+        updateProgress();
+      }
+    }
+
+    // ── STEP 4: Wait briefly for background images then open deck ──────────────
+    // Race image fetch against a 15s timeout — deck opens either way
     if (callerBtn) callerBtn.textContent='⏳ Loading images...';
     // Show elapsed time so teacher knows it's working (fal.ai takes 5-15s)
     let imgLoadSecs = 0;
@@ -6348,10 +6406,6 @@ async function generateSlideData(callerBtn) {
       // slides to the wrong lesson when a teacher has duplicate topic+grades.
       persistRegeneratedField('_slideData', _slideToSave);
     }
-
-    // ── STEP 4: Fire agent loop for any slides that didn't get a hardcoded visual ─
-    const needsAgent = slides.slice(0,4).some(s=>!s.svg_html);
-    if (needsAgent) generateAndPushVisuals(slides, topic, subject, gradeStr, deckWindow);
 
     const gsBtn = document.getElementById('gSlidesBtn');
     if (gsBtn && _gToken) gsBtn.style.display='inline-flex';
@@ -8601,10 +8655,7 @@ function openHTMLPresenter(sd, topic, subject, gradeStr, wikiImg, mindsonImg, wi
             </div>
           </div>
           <div id="vis-${i}" style="flex:1;display:flex;align-items:center;justify-content:center;background:white;border-radius:14px;padding:20px;box-shadow:0 2px 14px rgba(0,0,0,.07);min-height:340px;overflow:hidden">
-            ${existingSVG || `<div style="display:flex;flex-direction:column;align-items:center;gap:12px;opacity:.4">
-              <div style="width:48px;height:48px;border:4px solid #3BBFAD;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite"></div>
-              <p style="font-size:14px;color:#888780;margin:0">Drawing visual...</p>
-            </div>`}
+            ${existingSVG || `<p style="font-size:14px;color:#888780;text-align:center">Visual unavailable</p>`}
           </div>
         </div>`,GREY,{script:cs.teacher_script,misconception:cs.misconception});
     }
